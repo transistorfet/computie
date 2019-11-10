@@ -1,0 +1,38 @@
+
+	org	0000h
+	jp	start
+
+	org	0080h
+	seek	0080h
+
+start:
+	ld	sp, 9000h
+	call	_main
+	halt
+
+_main:
+	ld	a, 01h
+	ld	(00FFh), a
+	out	(80FFh), a
+
+	ld	de, msg
+
+loop:
+	ld	a, (de)
+	cp	0
+	jp	Z, loop_end
+	ld	(00FEh), a
+	inc	de
+	jp	loop
+	
+loop_end:
+
+	ret
+; end _main
+
+msg:	defm	"Welcome To Bread80!\n\n\0"
+
+
+; force the size to 512 bytes
+	seek	0200h
+	nop

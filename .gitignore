@@ -1,0 +1,17 @@
+# Editor Files
+.*.sw?
+.local.vimrc
+session.vim
+
+# Source Output Files
+*.o
+*.bin
+*.hex
+*.noi
+*.lst
+
+# EDA Output Files
+*.gbr
+*.drl
+*gbrjob
+

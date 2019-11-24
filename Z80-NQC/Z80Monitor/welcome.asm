@@ -6,14 +6,13 @@
 	seek	0080h
 
 start:
-	ld	sp, 9000h
+	ld	sp, 0200h
 	call	_main
 	halt
 
 _main:
 	ld	a, 01h
-	ld	(00FFh), a
-	out	(80FFh), a
+	out	(00FFh), a
 
 	ld	de, msg
 
@@ -21,7 +20,7 @@ loop:
 	ld	a, (de)
 	cp	0
 	jp	Z, loop_end
-	ld	(00FEh), a
+	out	(00FEh), a
 	inc	de
 	jp	loop
 	

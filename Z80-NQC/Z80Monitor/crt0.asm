@@ -28,7 +28,7 @@
 	.org	0x00080
 
 init:
-	ld	sp, #0x3000
+	ld	sp, #0x0FFF
 	call	gsinit
 	call	_main
 	halt

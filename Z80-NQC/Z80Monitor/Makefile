@@ -19,10 +19,10 @@ image: image.hex
 	z80dasm -at image.bin > image.bin.lst
 
 image.hex: main.rel crt0.o 
-	sdcc -mz80 --no-std-crt0 --code-loc 0x0100 --data-loc 0x2000 --stack-loc 0x3000 -o $@ main.rel crt0.rel
+	sdcc -mz80 --no-std-crt0 --code-loc 0x0100 --data-loc 0x800 --stack-loc 0x0C00 -o $@ main.rel crt0.rel
 
 %.rel: %.c
-	sdcc -mz80 --no-std-crt0 --code-loc 0x0100 --data-loc 0x2000 --stack-loc 0x3000 -c -o $@ $<
+	sdcc -mz80 --no-std-crt0 --code-loc 0x0100 --data-loc 0x800 --stack-loc 0x0C00 -c -o $@ $<
 
 %.o: %.asm
 	sdasz80 -l -o -s $<

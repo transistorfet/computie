@@ -602,14 +602,14 @@ void cpu_start()
 {
 	set_bus_slave();
 	tty_mode = TTY_PASS;
-	digitalWrite(Z80_BUSREQ, 1);
+	release_bus();
 	Serial.print("Running\n");
 }
 
 void cpu_stop()
 {
 	tty_mode = TTY_COMMAND;
-	digitalWrite(Z80_BUSREQ, 0);
+	take_bus();
 	set_bus_master();
 	Serial.print("Stopped\n");
 }

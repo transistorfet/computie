@@ -6,12 +6,16 @@ session.vim
 # Source Output Files
 *.o
 *.bin
+*.elf
 *.hex
 *.noi
 *.lst
+*.rel
+*.sym
 
 # EDA Output Files
 *.gbr
 *.drl
 *gbrjob
+*-bak
 

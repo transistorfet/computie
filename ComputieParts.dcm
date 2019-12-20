@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP HM628512
+D 512K x 8 High-Speed CMOS Static RAM, 55/70ns, DIP-32/SSOP-32
+K RAM SRAM CMOS MEMORY
+F http://www.futurlec.com/Datasheet/Memory/628528.pdf
+$ENDCMP
+#
+#End Doc Library

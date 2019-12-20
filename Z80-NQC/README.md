@@ -16,3 +16,9 @@ port.
 
 Z80Monitor contains programs that run on the Z80, which can either be loaded into the EEPROM, or served by the supervisor.
 
+
+Schematic
+---------
+
+![alt text](https://github.com/transistorfet/computie/raw/master/Z80-NQC/Z80Proto/Z80Proto.svg "Z80 NQC Proto Board")
+

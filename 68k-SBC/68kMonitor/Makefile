@@ -1,44 +1,48 @@
 
 
-all: welcome.bin
+AS = m68k-linux-gnu-as
+CC = m68k-linux-gnu-gcc
+OBJDUMP = m68k-linux-gnu-objdump
+OBJCOPY = m68k-linux-gnu-objcopy
+INCLUDE = ./include
+CFLAGS = -I$(INCLUDE) -m68000 -nostartfiles -nostdlib -g
 
-welcome.bin: welcome.o
-#welcome.elf: welcome.o
+ASLISTING = -alh
+
+
+all: main.bin
+
 main.bin: main.elf
-main.elf: crt0.o main.o
+main.elf: src/crt0.o src/main.o src/string.o src/stdio.o src/dev/tty_arduino.o
+
+welcome:
+	m68k-linux-gnu-as -m68000 -o welcome.elf welcome.s
+	m68k-linux-gnu-objcopy -O binary welcome.elf welcome.bin
+
 
 %.bin: $^
 	#hexdump -v -e '/1 "0x%02x, "' $<; echo ""
-	m68k-linux-gnu-objcopy -O binary -j .text -j .data -j .rodata $^ $@
-	hexdump -v -e '/1 "0x%02x, "' $@; echo ""
+	$(OBJCOPY) -O binary -j .text -j .data -j .rodata $^ $@
+	hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
 
 %.elf: $^
-	m68k-linux-gnu-gcc -m68000 -nostdlib --entry=_start -Ttext=0x0000 -Tdata=0x1000 -g -o $@ $^
+	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0000 -Tdata=0x1000 -o $@ $^
 
 %.o: %.c
-	m68k-linux-gnu-gcc -m68000 -nostdlib -c -g -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 %.o: %.s
-	m68k-linux-gnu-as -m68000 -alh -c -o $@ $<
-
-
-#image: image.hex
-#	objcopy -I ihex $< -O binary image.bin
-#	hexdump -v -e '/1 "0x%02x, "' image.bin; echo ""
-#	z80dasm -at image.bin > image.bin.lst
-#
-#image.hex: main.rel crt0.o 
-#	sdcc -mz80 --no-std-crt0 --code-loc 0x0100 --data-loc 0x800 --stack-loc 0x0C00 -o $@ main.rel crt0.rel
-#
-#%.rel: %.c
-#	sdcc -mz80 --no-std-crt0 --code-loc 0x0100 --data-loc 0x800 --stack-loc 0x0C00 -c -o $@ $<
-#
-#%.o: %.asm
-#	sdasz80 -l -o -s $<
+	$(AS) -c -o $@ $<
 
 dump-main:
-	m68k-linux-gnu-objdump -D main.elf
+	$(OBJDUMP) -D main.elf
 
 clean:
-	rm *.o *.bin
+	find . \( -name "*.o" -or -name "*.bin" -or -name "*.elf" \) -delete -print
 
+
+test: test.o64 src/stdio.o64
+	gcc -o $@ $^
+
+%.o64: %.c
+	gcc -c -o $@ $^

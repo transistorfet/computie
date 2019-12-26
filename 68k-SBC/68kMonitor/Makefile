@@ -1,9 +1,11 @@
 
 
 AS = m68k-linux-gnu-as
+AR = m68k-linux-gnu-ar
 CC = m68k-linux-gnu-gcc
 OBJDUMP = m68k-linux-gnu-objdump
 OBJCOPY = m68k-linux-gnu-objcopy
+RANLIB = m68k-linux-gnu-ranlib
 INCLUDE = ./include
 CFLAGS = -I$(INCLUDE) -m68000 -nostartfiles -nostdlib -g
 
@@ -13,7 +15,11 @@ ASLISTING = -alh
 all: main.bin
 
 main.bin: main.elf
-main.elf: src/crt0.o src/main.o src/string.o src/stdio.o src/dev/tty_arduino.o
+main.elf: src/crt0.o src/main.o src/dev/tty_arduino.o libc68k.a
+
+
+libc68k.a: $(patsubst %.c,%.o, $(wildcard src/libc/**/*.c))
+
 
 welcome:
 	m68k-linux-gnu-as -m68000 -o welcome.elf welcome.s
@@ -28,6 +34,10 @@ welcome:
 %.elf: $^
 	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0000 -Tdata=0x1000 -o $@ $^
 
+%.a: $^
+	$(AR) rc $@ $^
+	$(RANLIB) $@
+
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
@@ -38,7 +48,7 @@ dump-main:
 	$(OBJDUMP) -D main.elf
 
 clean:
-	find . \( -name "*.o" -or -name "*.bin" -or -name "*.elf" \) -delete -print
+	find . \( -name "*.o" -or -name "*.o64" -or -name "*.bin" -or -name "*.elf" \) -delete -print
 
 
 test: test.o64 src/stdio.o64

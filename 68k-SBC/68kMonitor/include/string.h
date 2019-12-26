@@ -8,8 +8,8 @@ int strcmp(const char *, const char *);
 
 int strlen(const char *);
 int strnlen(const char *, int);
-int strcpy(char *, const char *);
-int strncpy(char *, const char *, int);
+char *strcpy(char *, const char *);
+char *strncpy(char *, const char *, int);
 int strcmp(const char *, const char *);
 int strncmp(const char *, const char *, int);
 int strcnt(const char *, const char);

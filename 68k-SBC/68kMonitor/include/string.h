@@ -2,8 +2,6 @@
 #ifndef STRING_H
 #define STRING_H
 
-#define NULL	0
-
 int strcmp(const char *, const char *);
 
 int strlen(const char *);

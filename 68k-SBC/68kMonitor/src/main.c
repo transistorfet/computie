@@ -1,9 +1,9 @@
 
 #include "tty.h"
-//#include "string.h"
-#include "stdio.h"
 #include "stdint.h"
-#include <string.h>
+#include "string.h"
+#include "stdio.h"
+#include "stdlib.h"
 
 
 char *led = (char *) 0x201c;
@@ -77,13 +77,16 @@ void dump(const uint8_t *addr, int len)
 void info(void)
 {
 	int sp;
+	int sv1;
 
 	asm(
 	"move.w	%%a7, %0\n"
-	: "=r" (sp)
+	"move.w	(%%a7), %1\n"
+	: "=r" (sp), "=r" (sv1)
 	);
 
 	printf("SP: %x\n", sp);
+	printf("TOP: %x\n", sv1);
 	return;
 }
 
@@ -111,7 +114,7 @@ void serial_read_loop()
 			if (argc <= 1)
 				puts("You need an address\n");
 			else {
-				dump((const uint8_t *) atoi(args[1]), 0x10);
+				dump((const uint8_t *) strtol(args[1], NULL, 16), 0x10);
 			}
 		}
 	}
@@ -126,7 +129,7 @@ int main()
 	puts("Welcome to the thing!\n");
 
 	//snprintf(buffer, 100, "%s, or will it?\n", "this might work");
-	printf("%d, or %x, or will it?\n", 1235, 0xAF5);
+	//printf("Test %x\n", 0xAF5);
 
 	serial_read_loop();
 

@@ -19,6 +19,7 @@ main.elf: src/crt0.o src/main.o src/dev/tty_arduino.o libc68k.a
 
 
 libc68k.a: $(patsubst %.c,%.o, $(wildcard src/libc/**/*.c))
+#libc68k.a: src/libc/stdio/puts.o
 
 
 welcome:
@@ -27,7 +28,6 @@ welcome:
 
 
 %.bin: $^
-	#hexdump -v -e '/1 "0x%02x, "' $<; echo ""
 	$(OBJCOPY) -O binary -j .text -j .data -j .rodata $^ $@
 	hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
 

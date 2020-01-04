@@ -18,13 +18,13 @@ int vsnprintf(char *buffer, size_t n, const char *fmt, va_list args)
 				s = va_arg(args, const char *);
 				len = strlen(s);
 				strncpy(&buffer[i], s, n - i - 1);
-				i += len;
+				i += len - 1;
 				break;
 			    case 'd':
 			    case 'x':
 				d = va_arg(args, int);
 				itoa(d, &buffer[i], fmt[j] == 'x' ? 16 : 10);
-				i += strlen(&buffer[i]);
+				i += strlen(&buffer[i]) - 1;
 				break;
 			    default:
 				break;

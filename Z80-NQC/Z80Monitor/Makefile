@@ -15,7 +15,8 @@ memtest: memtest.bin
 
 image: image.hex
 	objcopy -I ihex $< -O binary image.bin
-	hexdump -v -e '/1 "0x%02x, "' image.bin; echo ""
+	#hexdump -v -e '/1 "0x%02x, "' image.bin; echo ""
+	hexdump -v -e '/1 "0x%02x, "' image.bin > output.txt
 	z80dasm -at image.bin > image.bin.lst
 
 image.hex: main.rel crt0.o 

@@ -1,10 +1,8 @@
 
 
 * do I need optoisolators for the ftdi?
-* figure out expansion port pin assignments
 
 * you need a proper reset circuit that slowly turns it on through a cap
-* add clock to schematic
 * add an interrupt acknowledge signal (FC0:2 = 111)
 
 

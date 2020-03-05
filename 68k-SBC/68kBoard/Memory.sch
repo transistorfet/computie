@@ -1126,6 +1126,8 @@ F 3 "~" H 4250 3300 50  0001 C CNN
 	1    4250 3300
 	0    1    1    0   
 $EndComp
+Text GLabel 1450 5650 0    50   Input ~ 0
+0SEL
 Wire Wire Line
 	2550 2200 2950 2200
 Wire Bus Line
@@ -1138,6 +1140,4 @@ Wire Bus Line
 	6250 900  6250 5350
 Wire Bus Line
 	8500 900  8500 5750
-Text GLabel 1450 5650 0    50   Input ~ 0
-0SEL
 $EndSCHEMATC

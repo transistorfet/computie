@@ -494,8 +494,6 @@ Text GLabel 2100 5700 2    50   Input ~ 0
 FC1
 Text GLabel 2100 5600 2    50   Input ~ 0
 FC0
-Text GLabel 2100 6700 2    50   Output ~ 0
-CLK
 Text GLabel 2100 5400 2    50   Input ~ 0
 RD
 Text GLabel 2100 5500 2    50   Input ~ 0
@@ -530,22 +528,6 @@ F 3 "" H 1250 4850 50  0001 C CNN
 	1    1250 4850
 	1    0    0    -1  
 $EndComp
-Text GLabel 1100 6700 0    50   Input ~ 0
-IOSEL
-Text GLabel 1100 6100 0    50   Input ~ 0
-RAMSEL
-Text GLabel 1100 5900 0    50   Input ~ 0
-ROMSEL
-Text GLabel 1100 6200 0    50   Input ~ 0
-2SEL
-Text GLabel 1100 6300 0    50   Input ~ 0
-3SEL
-Text GLabel 1100 6400 0    50   Input ~ 0
-4SEL
-Text GLabel 1100 6500 0    50   Input ~ 0
-5SEL
-Text GLabel 1100 6600 0    50   Input ~ 0
-6SEL
 Text GLabel 3250 1750 0    50   Output ~ 0
 IPL2
 Text GLabel 3250 1650 0    50   Output ~ 0
@@ -823,7 +805,7 @@ L Device:LED D1
 U 1 1 5E14D5B7
 P 4300 4950
 F 0 "D1" V 4339 4833 50  0000 R CNN
-F 1 "LED" V 4248 4833 50  0000 R CNN
+F 1 "HALT" V 4248 4833 50  0000 R CNN
 F 2 "LED_THT:LED_D5.0mm" H 4300 4950 50  0001 C CNN
 F 3 "~" H 4300 4950 50  0001 C CNN
 	1    4300 4950
@@ -1466,22 +1448,6 @@ Wire Wire Line
 Wire Wire Line
 	2100 6700 1850 6700
 Wire Wire Line
-	1350 6700 1100 6700
-Wire Wire Line
-	1100 6600 1350 6600
-Wire Wire Line
-	1350 6500 1100 6500
-Wire Wire Line
-	1100 6400 1350 6400
-Wire Wire Line
-	1350 6300 1100 6300
-Wire Wire Line
-	1100 6200 1350 6200
-Wire Wire Line
-	1350 6100 1100 6100
-Wire Wire Line
-	1100 5900 1350 5900
-Wire Wire Line
 	2300 5300 1850 5300
 Wire Wire Line
 	1850 5200 2100 5200
@@ -1572,13 +1538,13 @@ Wire Wire Line
 Connection ~ 4600 6900
 Text GLabel 4850 6900 2    50   Output ~ 0
 CLK
-Text GLabel 2100 6300 2    50   Input ~ 0
-OP2
 Text GLabel 2100 6400 2    50   Input ~ 0
+OP2
+Text GLabel 2100 6500 2    50   Input ~ 0
 OP3
-Text GLabel 2100 6500 2    50   Output ~ 0
-IP2
 Text GLabel 2100 6600 2    50   Output ~ 0
+IP2
+Text GLabel 2100 6700 2    50   Output ~ 0
 IP3
 Wire Wire Line
 	2100 6300 1850 6300
@@ -1588,10 +1554,8 @@ Wire Wire Line
 	2100 6500 1850 6500
 Wire Wire Line
 	1850 6600 2100 6600
-NoConn ~ 1350 5800
-NoConn ~ 1350 5700
 Text GLabel 2100 6200 2    50   Input ~ 0
-IACK
+SIACK
 Wire Wire Line
 	2100 6200 1850 6200
 $Comp
@@ -1607,10 +1571,6 @@ F 3 "74xx\\74LS393.pdf" H 10200 5650 50  0001 C CNN
 	3    10200 5650
 	1    0    0    -1  
 $EndComp
-Text GLabel 1100 6000 0    50   Input ~ 0
-0SEL
-Wire Wire Line
-	1100 6000 1350 6000
 Wire Wire Line
 	1350 5100 1100 5100
 Wire Wire Line
@@ -1633,6 +1593,47 @@ Wire Wire Line
 	1100 5400 1350 5400
 Wire Wire Line
 	1100 5500 1350 5500
+NoConn ~ 1350 5700
+Text GLabel 1100 6700 0    50   Output ~ 0
+CLK
+Wire Wire Line
+	1100 5900 1350 5900
+Text GLabel 1100 5900 0    50   Input ~ 0
+0SEL
+Wire Wire Line
+	1100 5800 1350 5800
+Wire Wire Line
+	1350 6000 1100 6000
+Wire Wire Line
+	1100 6100 1350 6100
+Wire Wire Line
+	1350 6200 1100 6200
+Wire Wire Line
+	1100 6300 1350 6300
+Wire Wire Line
+	1350 6400 1100 6400
+Wire Wire Line
+	1100 6500 1350 6500
+Wire Wire Line
+	1350 6600 1100 6600
+Text GLabel 1100 6500 0    50   Input ~ 0
+6SEL
+Text GLabel 1100 6400 0    50   Input ~ 0
+5SEL
+Text GLabel 1100 6300 0    50   Input ~ 0
+4SEL
+Text GLabel 1100 6200 0    50   Input ~ 0
+3SEL
+Text GLabel 1100 6100 0    50   Input ~ 0
+2SEL
+Text GLabel 1100 5800 0    50   Input ~ 0
+ROMSEL
+Text GLabel 1100 6000 0    50   Input ~ 0
+RAMSEL
+Text GLabel 1100 6600 0    50   Input ~ 0
+IOSEL
+Wire Wire Line
+	1100 6700 1350 6700
 Wire Bus Line
 	1000 750  1000 2500
 Wire Bus Line
@@ -1645,4 +1646,6 @@ Wire Bus Line
 	7350 750  7350 5050
 Wire Bus Line
 	7250 650  7250 3350
+Text GLabel 2100 6300 2    50   Output ~ 0
+SIRQ
 $EndSCHEMATC

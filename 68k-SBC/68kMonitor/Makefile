@@ -15,7 +15,7 @@ ASLISTING = -alh
 all: main.bin
 
 main.bin: main.elf
-main.elf: src/crt0.o src/main.o src/dev/tty_arduino.o libc68k.a
+main.elf: src/crt0.o src/main.o src/dev/tty_68681.o libc68k.a
 
 
 libc68k.a: $(patsubst %.c,%.o, $(wildcard src/libc/**/*.c))

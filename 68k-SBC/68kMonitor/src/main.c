@@ -123,6 +123,7 @@ void serial_read_loop()
 int main()
 {
 	*led = 0x01;
+	init_tty();
 
 	//delay(10000);
 

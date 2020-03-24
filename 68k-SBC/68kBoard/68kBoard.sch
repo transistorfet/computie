@@ -1634,6 +1634,8 @@ Text GLabel 1100 6600 0    50   Input ~ 0
 IOSEL
 Wire Wire Line
 	1100 6700 1350 6700
+Text GLabel 2100 6300 2    50   Output ~ 0
+SIRQ
 Wire Bus Line
 	1000 750  1000 2500
 Wire Bus Line
@@ -1646,6 +1648,4 @@ Wire Bus Line
 	7350 750  7350 5050
 Wire Bus Line
 	7250 650  7250 3350
-Text GLabel 2100 6300 2    50   Output ~ 0
-SIRQ
 $EndSCHEMATC

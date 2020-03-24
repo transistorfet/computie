@@ -14,17 +14,6 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L Interface:68681 U11
-U 1 1 5E11604E
-P 5100 3850
-F 0 "U11" H 5100 5531 50  0000 C CNN
-F 1 "68681" H 5100 5440 50  0000 C CNN
-F 2 "Package_DIP:DIP-40_W15.24mm_Socket_LongPads" H 5100 3850 50  0001 C CNN
-F 3 "" H 5100 3850 50  0001 C CNN
-	1    5100 3850
-	1    0    0    -1  
-$EndComp
-$Comp
 L power:+5V #PWR034
 U 1 1 5E117C77
 P 5400 2350
@@ -249,17 +238,7 @@ Wire Wire Line
 Wire Wire Line
 	8950 4050 8850 4050
 Wire Wire Line
-	6100 3250 7750 3250
-Wire Wire Line
-	7750 3250 7750 2450
-Wire Wire Line
 	6100 2750 7650 2750
-Wire Wire Line
-	7650 2550 8950 2550
-Wire Wire Line
-	8950 3950 8750 3950
-Wire Wire Line
-	8750 4250 6100 4250
 $Comp
 L Connector:Conn_01x06_Female J5
 U 1 1 5E0AA1B9
@@ -272,37 +251,21 @@ F 3 "~" H 9150 3750 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	7650 2750 7650 2550
+	7650 2750 7650 2650
 Wire Wire Line
-	8750 3950 8750 4250
+	7850 2450 8950 2450
 Wire Wire Line
-	6100 2650 8950 2650
+	6100 2950 8050 2950
 Wire Wire Line
-	7750 2450 8950 2450
+	8050 2950 8050 3650
 Wire Wire Line
-	6100 2950 7950 2950
+	6100 3050 7950 3050
 Wire Wire Line
-	7950 2950 7950 3750
-Wire Wire Line
-	7950 3750 8950 3750
-Wire Wire Line
-	6100 3050 7850 3050
-Wire Wire Line
-	7850 3050 7850 3650
-Wire Wire Line
-	7850 3650 8950 3650
+	7950 3050 7950 3750
 Wire Wire Line
 	8950 3550 7750 3550
 Wire Wire Line
-	7750 3550 7750 3350
-Wire Wire Line
-	7750 3350 6100 3350
-Wire Wire Line
-	6100 4150 8050 4150
-Wire Wire Line
-	8050 4150 8050 2850
-Wire Wire Line
-	8050 2850 8950 2850
+	7750 2850 8950 2850
 Text GLabel 3850 4550 0    50   Input ~ 0
 SIACK
 Wire Wire Line
@@ -573,10 +536,6 @@ Wire Wire Line
 	8850 3400 8850 3850
 Wire Wire Line
 	8850 3850 8950 3850
-Wire Bus Line
-	3050 2500 3050 4050
-Wire Bus Line
-	3200 2300 3200 3550
 $Comp
 L Device:LED D3
 U 1 1 5EB7F464
@@ -621,4 +580,49 @@ F 3 "~" H 6750 3650 50  0001 C CNN
 	1    6750 3650
 	1    0    0    -1  
 $EndComp
+$Comp
+L Interface:68681 U11
+U 1 1 5E11604E
+P 5100 3850
+F 0 "U11" H 5100 5531 50  0000 C CNN
+F 1 "68681" H 5100 5440 50  0000 C CNN
+F 2 "Package_DIP:DIP-40_W15.24mm_Socket_LongPads" H 5100 3850 50  0001 C CNN
+F 3 "" H 5100 3850 50  0001 C CNN
+	1    5100 3850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6100 2650 7550 2650
+Wire Wire Line
+	7550 2650 7550 2550
+Wire Wire Line
+	7550 2550 8950 2550
+Wire Wire Line
+	7650 2650 8950 2650
+Wire Wire Line
+	8050 3650 8950 3650
+Wire Wire Line
+	7950 3750 8950 3750
+Wire Wire Line
+	7750 3550 7750 4250
+Wire Wire Line
+	7750 4250 6100 4250
+Wire Wire Line
+	7850 2450 7850 4150
+Wire Wire Line
+	7850 4150 6100 4150
+Wire Wire Line
+	7750 2850 7750 3250
+Wire Wire Line
+	7750 3250 6100 3250
+Wire Wire Line
+	8950 3950 7650 3950
+Wire Wire Line
+	7650 3950 7650 3350
+Wire Wire Line
+	7650 3350 6100 3350
+Wire Bus Line
+	3050 2500 3050 4050
+Wire Bus Line
+	3200 2300 3200 3550
 $EndSCHEMATC

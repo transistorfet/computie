@@ -1,5 +1,8 @@
 
 
+* DTACK assert/de-assert is driving the output, but you'd need to turn it into an input to make it act as an open collector.
+  Currently it has positive logic because the breadboard version has a mosfet acting as an open collector output for the arduino's pin
+
 * do I need optoisolators for the ftdi?
 
 * you need a proper reset circuit that slowly turns it on through a cap

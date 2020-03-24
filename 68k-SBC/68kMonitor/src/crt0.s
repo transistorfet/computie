@@ -6,7 +6,9 @@
 /**
  * Vector Table
  */
-	.section .vectors, "ax"
+
+
+	.org	0x0000
 
 	| Stack Pointer on Reset
 	.word	0x0000
@@ -34,10 +36,11 @@
 	.word	0x0000
 	.word	_error
 
+
 /**
  * Image Start
  */
-	.text
+	.org	0x0020
 
 _start:
 

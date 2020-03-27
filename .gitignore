@@ -5,6 +5,7 @@ session.vim
 
 # Source Output Files
 *.o
+*.a
 *.bin
 *.elf
 *.hex

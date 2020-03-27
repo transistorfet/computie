@@ -43,8 +43,10 @@
 #define M68_IS_LDS()	(!(PINB & 0x02))
 #define M68_IS_WRITE()	(!(PINB & 0x01))
 #define M68_IS_READ()	(PINB & 0x01)
-#define M68_ASSERT_DTACK()	(PORTD = 0x80)
-#define M68_UNASSERT_DTACK()	(PORTD = 0x00)
+//#define M68_ASSERT_DTACK()	(PORTD = 0x80)
+//#define M68_UNASSERT_DTACK()	(PORTD = 0x00)
+#define M68_ASSERT_DTACK()	(DDRD |= 0x80)
+#define M68_UNASSERT_DTACK()	(DDRD &= ~(0x80))
 
 byte bus_request = 0;
 
@@ -118,8 +120,9 @@ void set_bus_slave()
 	pinMode(M68_LDS, INPUT);
 	pinMode(M68_RW, INPUT);
 
-	pinMode(M68_DTACK, OUTPUT);
-	//digitalWrite(M68_DTACK, 1);
+	//PORTD &= 0x7F;
+	//DDRD |= 0x80;
+	digitalWrite(M68_DTACK, 0);
 	M68_UNASSERT_DTACK();
 
 	//pinMode(M68_RESET, OUTPUT);

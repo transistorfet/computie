@@ -1198,11 +1198,11 @@ Wire Wire Line
 Wire Wire Line
 	1850 2000 2100 2000
 Text Label 2100 1900 2    50   ~ 0
-D8
+D1
 Text Label 2100 2000 2    50   ~ 0
-D9
+D3
 Text Label 2100 2100 2    50   ~ 0
-D10
+D5
 Entry Wire Line
 	1100 2100 1000 2000
 Entry Wire Line
@@ -1216,9 +1216,9 @@ Wire Wire Line
 Text Label 1100 1900 0    50   ~ 0
 D0
 Text Label 1100 2000 0    50   ~ 0
-D1
-Text Label 1100 2100 0    50   ~ 0
 D2
+Text Label 1100 2100 0    50   ~ 0
+D4
 Wire Wire Line
 	1350 2100 1100 2100
 Wire Wire Line
@@ -1230,9 +1230,9 @@ Entry Wire Line
 Wire Wire Line
 	1350 2700 800  2700
 Text Label 800  2700 0    50   ~ 0
-A11
+A22
 Text Label 800  2800 0    50   ~ 0
-A10
+A20
 Wire Wire Line
 	1350 2800 800  2800
 Connection ~ 2500 650 
@@ -1251,9 +1251,9 @@ Wire Wire Line
 Text Label 2400 2700 2    50   ~ 0
 A23
 Text Label 2400 2800 2    50   ~ 0
-A22
-Text Label 2400 2900 2    50   ~ 0
 A21
+Text Label 2400 2900 2    50   ~ 0
+A19
 Wire Wire Line
 	2400 2900 1850 2900
 NoConn ~ 1350 3800
@@ -1268,11 +1268,11 @@ Wire Wire Line
 Wire Wire Line
 	1350 2300 1100 2300
 Text Label 1100 2200 0    50   ~ 0
-D3
+D6
 Text Label 1100 2300 0    50   ~ 0
-D4
+D8
 Text Label 1100 2400 0    50   ~ 0
-D5
+D10
 Wire Wire Line
 	1350 2400 1100 2400
 Entry Wire Line
@@ -1282,9 +1282,9 @@ Entry Wire Line
 Wire Wire Line
 	1350 2500 1100 2500
 Text Label 1100 2500 0    50   ~ 0
-D6
+D12
 Text Label 1100 2600 0    50   ~ 0
-D7
+D14
 Wire Wire Line
 	1350 2600 1100 2600
 Entry Wire Line
@@ -1298,11 +1298,11 @@ Wire Wire Line
 Wire Wire Line
 	1850 2300 2100 2300
 Text Label 2100 2200 2    50   ~ 0
-D11
+D7
 Text Label 2100 2300 2    50   ~ 0
-D12
+D9
 Text Label 2100 2400 2    50   ~ 0
-D13
+D11
 Wire Wire Line
 	2100 2400 1850 2400
 Entry Wire Line
@@ -1312,7 +1312,7 @@ Entry Wire Line
 Wire Wire Line
 	1850 2500 2100 2500
 Text Label 2100 2500 2    50   ~ 0
-D14
+D13
 Text Label 2100 2600 2    50   ~ 0
 D15
 Wire Wire Line
@@ -1324,9 +1324,9 @@ Entry Wire Line
 Wire Wire Line
 	1350 2900 800  2900
 Text Label 800  2900 0    50   ~ 0
-A9
+A18
 Text Label 800  3000 0    50   ~ 0
-A8
+A16
 Wire Wire Line
 	1350 3000 800  3000
 Entry Wire Line
@@ -1336,9 +1336,9 @@ Entry Wire Line
 Wire Wire Line
 	1350 3100 800  3100
 Text Label 800  3100 0    50   ~ 0
-A7
+A14
 Text Label 800  3200 0    50   ~ 0
-A6
+A12
 Wire Wire Line
 	1350 3200 800  3200
 Entry Wire Line
@@ -1348,15 +1348,15 @@ Entry Wire Line
 Wire Wire Line
 	1350 3300 800  3300
 Text Label 800  3300 0    50   ~ 0
-A5
+A10
 Text Label 800  3400 0    50   ~ 0
-A4
+A8
 Wire Wire Line
 	1350 3400 800  3400
 Entry Wire Line
 	800  3500 700  3400
 Text Label 800  3500 0    50   ~ 0
-A3
+A6
 Wire Wire Line
 	1350 3500 800  3500
 Entry Wire Line
@@ -1366,9 +1366,9 @@ Entry Wire Line
 Wire Wire Line
 	1350 3600 800  3600
 Text Label 800  3600 0    50   ~ 0
-A2
+A4
 Text Label 800  3700 0    50   ~ 0
-A1
+A2
 Wire Wire Line
 	1350 3700 800  3700
 Entry Wire Line
@@ -1382,11 +1382,11 @@ Wire Wire Line
 Wire Wire Line
 	1850 3100 2400 3100
 Text Label 2400 3000 2    50   ~ 0
-A20
+A17
 Text Label 2400 3100 2    50   ~ 0
-A19
+A15
 Text Label 2400 3200 2    50   ~ 0
-A18
+A13
 Wire Wire Line
 	2400 3200 1850 3200
 Entry Wire Line
@@ -1400,11 +1400,11 @@ Wire Wire Line
 Wire Wire Line
 	1850 3400 2400 3400
 Text Label 2400 3300 2    50   ~ 0
-A17
+A11
 Text Label 2400 3400 2    50   ~ 0
-A16
+A9
 Text Label 2400 3500 2    50   ~ 0
-A15
+A7
 Wire Wire Line
 	2400 3500 1850 3500
 Entry Wire Line
@@ -1418,11 +1418,11 @@ Wire Wire Line
 Wire Wire Line
 	1850 3700 2400 3700
 Text Label 2400 3600 2    50   ~ 0
-A14
+A5
 Text Label 2400 3700 2    50   ~ 0
-A13
+A3
 Text Label 2400 3800 2    50   ~ 0
-A12
+A1
 Wire Wire Line
 	2400 3800 1850 3800
 Wire Wire Line

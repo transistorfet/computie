@@ -22,7 +22,12 @@
 #define CRA_WR_ADDR	0x4005
 #define TBA_WR_ADDR	0x4007
 #define RBA_RD_ADDR	0x4007
-#define ACR_ADDR	0x4009
+#define ACR_WR_ADDR	0x4009
+#define IPCR_RD_ADDR	0x4009
+#define OPCR_WR_ADDR	0x401B
+#define INPUT_RD_ADDR	0x401B
+#define OUT_SET_ADDR	0x401D
+#define OUT_RESET_ADDR	0x401F
 
 
 static char *tty_out = (char *) TBA_WR_ADDR;
@@ -34,22 +39,31 @@ int init_tty()
 	*((char *) MR1A_MR2A_ADDR) = MR1A_MODE_A_REG_1_CONFIG;
 	*((char *) MR1A_MR2A_ADDR) = MR2A_MODE_A_REG_2_CONFIG;
 	*((char *) CSRA_WR_ADDR) = CSRA_CLK_SELECT_REG_A_CONFIG;
-	*((char *) ACR_ADDR) = ACR_AUX_CONTROL_REG_CONFIG;
+	*((char *) ACR_WR_ADDR) = ACR_AUX_CONTROL_REG_CONFIG;
 
 	*((char *) CRA_WR_ADDR) = CMD_ENABLE_TX_RX;
 
 
 	// Turn ON Test LED
-	*((char *) 0x401B) = 0x00;
-	*((char *) 0x401D) = 0xF0;
-	//*((char *) 0x401F) = 0xF0;
+	*((char *) OPCR_WR_ADDR) = 0x00;
+	//*((char *) OUT_SET_ADDR) = 0xF0;
+	*((char *) OUT_RESET_ADDR) = 0xF0;
 }
 
 int getchar(void)
 {
+char in;
 	while (1) {
 		if (*tty_status & 0x01)
 			return *tty_in;
+
+		in = (*((char *) INPUT_RD_ADDR) & 0x0f);
+		if (in & 0x04) {
+			putchar('0' + in);
+			*((char *) OUT_SET_ADDR) = 0xF0;
+		} else {
+			*((char *) OUT_RESET_ADDR) = 0xF0;
+		}
 	}
 }
 

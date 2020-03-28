@@ -354,13 +354,9 @@ F 3 "https://store.arduino.cc/arduino-mega-2560-rev3" H 6950 6600 60  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Bus Line
-	2950 1250 4550 1250
+	1750 850  2950 850 
 Wire Bus Line
-	1750 850  8150 850 
-Wire Bus Line
-	1450 650  8650 650 
-Wire Bus Line
-	3250 1050 8350 1050
+	1450 650  3250 650 
 Entry Wire Line
 	4650 4000 4550 3900
 Entry Wire Line
@@ -410,85 +406,31 @@ D14
 Text Label 4650 4500 0    50   ~ 0
 D15
 Entry Wire Line
-	8550 5000 8650 4900
+	8250 3000 8350 2900
 Entry Wire Line
-	8550 4900 8650 4800
+	8250 2900 8350 2800
 Entry Wire Line
-	8550 5300 8650 5200
+	8250 3300 8350 3200
 Entry Wire Line
-	8550 5200 8650 5100
+	8250 3200 8350 3100
 Entry Wire Line
-	8550 5100 8650 5000
+	8250 3100 8350 3000
 Entry Wire Line
-	8550 5600 8650 5500
+	8250 3600 8350 3500
 Entry Wire Line
-	8550 5500 8650 5400
+	8250 3500 8350 3400
 Entry Wire Line
-	8550 5400 8650 5300
-Entry Wire Line
-	8050 3000 8150 2900
-Entry Wire Line
-	8050 2900 8150 2800
-Entry Wire Line
-	8050 3300 8150 3200
-Entry Wire Line
-	8050 3200 8150 3100
-Entry Wire Line
-	8050 3100 8150 3000
-Entry Wire Line
-	8050 3600 8150 3500
-Entry Wire Line
-	8050 3500 8150 3400
-Entry Wire Line
-	8050 3400 8150 3300
-Entry Wire Line
-	8250 3800 8350 3700
-Entry Wire Line
-	8250 4100 8350 4000
-Entry Wire Line
-	8250 4000 8350 3900
-Entry Wire Line
-	8250 3900 8350 3800
-Entry Wire Line
-	8550 4400 8650 4300
-Entry Wire Line
-	8550 4300 8650 4200
-Entry Wire Line
-	8550 4200 8650 4100
-Entry Wire Line
-	8250 3700 8350 3600
+	8250 3400 8350 3300
 Wire Wire Line
-	8250 3700 7550 3700
+	7550 3200 8250 3200
 Wire Wire Line
-	7550 3800 8250 3800
+	8250 3300 7550 3300
 Wire Wire Line
-	8250 3900 7550 3900
+	7550 3400 8250 3400
 Wire Wire Line
-	7550 4000 8250 4000
+	8250 3500 7550 3500
 Wire Wire Line
-	8250 4100 7550 4100
-Wire Wire Line
-	7550 4200 8550 4200
-Wire Wire Line
-	8550 4300 7550 4300
-Wire Wire Line
-	7550 4400 8550 4400
-Wire Wire Line
-	8050 2900 7550 2900
-Wire Wire Line
-	7550 3000 8050 3000
-Wire Wire Line
-	8050 3100 7550 3100
-Wire Wire Line
-	7550 3200 8050 3200
-Wire Wire Line
-	8050 3300 7550 3300
-Wire Wire Line
-	7550 3400 8050 3400
-Wire Wire Line
-	8050 3500 7550 3500
-Wire Wire Line
-	7550 3600 8050 3600
+	7550 3600 8250 3600
 Wire Wire Line
 	2100 2650 1850 2650
 Entry Wire Line
@@ -519,70 +461,22 @@ Entry Wire Line
 	1850 2150 1750 2050
 Entry Wire Line
 	1850 2250 1750 2150
-Text Label 8050 3600 2    50   ~ 0
+Text Label 8250 3600 2    50   ~ 0
 D7
-Text Label 8050 3500 2    50   ~ 0
+Text Label 8250 3500 2    50   ~ 0
 D6
-Text Label 8050 3400 2    50   ~ 0
+Text Label 8250 3400 2    50   ~ 0
 D5
-Text Label 8050 3300 2    50   ~ 0
+Text Label 8250 3300 2    50   ~ 0
 D4
-Text Label 8050 3200 2    50   ~ 0
+Text Label 8250 3200 2    50   ~ 0
 D3
-Text Label 8050 3100 2    50   ~ 0
+Text Label 8250 3100 2    50   ~ 0
 D2
-Text Label 8050 3000 2    50   ~ 0
+Text Label 8250 3000 2    50   ~ 0
 D1
-Text Label 8050 2900 2    50   ~ 0
+Text Label 8250 2900 2    50   ~ 0
 D0
-Text Label 8550 4400 2    50   ~ 0
-A9
-Text Label 8550 4300 2    50   ~ 0
-A10
-Text Label 8550 4200 2    50   ~ 0
-A11
-Text Label 8250 4100 2    50   ~ 0
-A12
-Text Label 8250 4000 2    50   ~ 0
-A13
-Text Label 8250 3900 2    50   ~ 0
-A14
-Text Label 8250 3800 2    50   ~ 0
-A15
-Text Label 8250 3700 2    50   ~ 0
-A16
-Wire Wire Line
-	8550 4900 7550 4900
-Wire Wire Line
-	7550 5000 8550 5000
-Wire Wire Line
-	8550 5100 7550 5100
-Wire Wire Line
-	7550 5200 8550 5200
-Wire Wire Line
-	8550 5300 7550 5300
-Wire Wire Line
-	7550 5400 8550 5400
-Wire Wire Line
-	8550 5500 7550 5500
-Wire Wire Line
-	7550 5600 8550 5600
-Text Label 8550 4900 2    50   ~ 0
-A8
-Text Label 8550 5000 2    50   ~ 0
-A7
-Text Label 8550 5100 2    50   ~ 0
-A6
-Text Label 8550 5200 2    50   ~ 0
-A5
-Text Label 8550 5300 2    50   ~ 0
-A4
-Text Label 8550 5400 2    50   ~ 0
-A3
-Text Label 8550 5500 2    50   ~ 0
-A2
-Text Label 8550 5600 2    50   ~ 0
-A1
 Text GLabel 8050 6000 2    50   Input ~ 0
 R~W
 Text GLabel 7850 5900 2    50   Input ~ 0
@@ -615,10 +509,10 @@ Wire Wire Line
 	7850 4700 7550 4700
 Wire Wire Line
 	7550 4800 7850 4800
-Text GLabel 7750 2100 2    50   BiDi ~ 0
+Text GLabel 7850 2500 2    50   BiDi ~ 0
 RESET
 Wire Wire Line
-	7550 2100 7750 2100
+	7550 2500 7850 2500
 $Comp
 L power:GND #PWR0105
 U 1 1 5EB32A5A
@@ -753,20 +647,143 @@ Wire Wire Line
 	4550 5100 4550 5200
 Wire Wire Line
 	4550 5700 4550 5650
+Connection ~ 3250 650 
+Wire Wire Line
+	8250 3100 7550 3100
+Wire Wire Line
+	7550 3000 8250 3000
+Wire Wire Line
+	8250 2900 7550 2900
 Wire Bus Line
-	8350 1050 8350 4000
+	3250 650  8650 650 
+Text Label 8550 5600 2    50   ~ 0
+A1
+Text Label 8550 5500 2    50   ~ 0
+A2
+Text Label 8550 5400 2    50   ~ 0
+A3
+Text Label 8550 5300 2    50   ~ 0
+A4
+Text Label 8550 5200 2    50   ~ 0
+A5
+Text Label 8550 5100 2    50   ~ 0
+A6
+Text Label 8550 5000 2    50   ~ 0
+A7
+Text Label 8550 4900 2    50   ~ 0
+A8
+Wire Wire Line
+	7550 5600 8550 5600
+Wire Wire Line
+	8550 5500 7550 5500
+Wire Wire Line
+	7550 5400 8550 5400
+Wire Wire Line
+	8550 5300 7550 5300
+Wire Wire Line
+	7550 5200 8550 5200
+Wire Wire Line
+	8550 5100 7550 5100
+Wire Wire Line
+	7550 5000 8550 5000
+Wire Wire Line
+	8550 4900 7550 4900
+Text Label 8550 4200 2    50   ~ 0
+A11
+Text Label 8550 4300 2    50   ~ 0
+A10
+Text Label 8550 4400 2    50   ~ 0
+A9
+Wire Wire Line
+	7550 4400 8550 4400
+Wire Wire Line
+	8550 4300 7550 4300
+Wire Wire Line
+	7550 4200 8550 4200
+Entry Wire Line
+	8550 4200 8650 4100
+Entry Wire Line
+	8550 4300 8650 4200
+Entry Wire Line
+	8550 4400 8650 4300
+Entry Wire Line
+	8550 5400 8650 5300
+Entry Wire Line
+	8550 5500 8650 5400
+Entry Wire Line
+	8550 5600 8650 5500
+Entry Wire Line
+	8550 5100 8650 5000
+Entry Wire Line
+	8550 5200 8650 5100
+Entry Wire Line
+	8550 5300 8650 5200
+Entry Wire Line
+	8550 4900 8650 4800
+Entry Wire Line
+	8550 5000 8650 4900
+Entry Wire Line
+	8550 3800 8650 3700
+Entry Wire Line
+	8550 4100 8650 4000
+Entry Wire Line
+	8550 4000 8650 3900
+Entry Wire Line
+	8550 3900 8650 3800
+Wire Wire Line
+	7550 3800 8550 3800
+Wire Wire Line
+	8550 3900 7550 3900
+Wire Wire Line
+	7550 4000 8550 4000
+Wire Wire Line
+	8550 4100 7550 4100
+Text Label 8550 4100 2    50   ~ 0
+A12
+Text Label 8550 4000 2    50   ~ 0
+A13
+Text Label 8550 3900 2    50   ~ 0
+A14
+Text Label 8550 3800 2    50   ~ 0
+A15
+Wire Wire Line
+	7850 3700 7550 3700
+Text GLabel 7850 3700 2    50   Input ~ 0
+0SEL
+Connection ~ 2950 850 
 Wire Bus Line
-	2950 1250 2950 2650
+	2950 850  4550 850 
+Connection ~ 4550 850 
 Wire Bus Line
-	4550 1250 4550 4400
+	4550 850  8350 850 
+Text GLabel 7850 2600 2    50   Output ~ 0
+BERR
+Wire Wire Line
+	7550 2600 7850 2600
+Wire Wire Line
+	4950 5500 4950 5400
+Wire Bus Line
+	2950 850  2950 2650
+Wire Bus Line
+	4550 850  4550 4400
+Wire Bus Line
+	8350 850  8350 3500
 Wire Bus Line
 	1750 850  1750 2650
 Wire Bus Line
-	8150 850  8150 3500
-Wire Bus Line
-	8650 650  8650 5500
-Wire Bus Line
-	3250 1050 3250 3850
+	3250 650  3250 3850
 Wire Bus Line
 	1450 650  1450 3750
+Wire Bus Line
+	8650 650  8650 5500
+Connection ~ 4950 5100
+Connection ~ 4950 5200
+Wire Wire Line
+	4950 5200 4950 5100
+Connection ~ 4950 5300
+Wire Wire Line
+	4950 5300 4950 5200
+Connection ~ 4950 5400
+Wire Wire Line
+	4950 5400 4950 5300
 $EndSCHEMATC

@@ -36,7 +36,8 @@
 #define M68_LDS		52 // PB1
 #define M68_RW		53 // PB0
 
-#define M68_RESET	6 // PH3
+#define M68_RESET	10 // PB4
+#define M68_BERR	11 // PB5
 
 #define M68_IS_AS()	(!(PINB & 0x08))
 #define M68_IS_UDS()	(!(PINB & 0x04))

@@ -1,0 +1,18 @@
+
+- the silk screen for the MOSFET is backwards (likely the symbol on the schematic has the wrong pinout)
+ 
+- The pullup resistor for DTACK (R11) at 10k Ohms was too high, resulting in an idle voltage on DTACK that is too low.  This caused the
+  CPU to read from incorrect addresses and stop after 6 cycles.  The breadboard version had a 1k Ohm pullup, but the design called for
+  10k for all pullups.  It seems like ~5k is recommended for TTL circuits, but to play it safer, I installed a 2.2k, which worked, but
+  later switched to a 1k.  I tried a 4.7k resistor after debugging an issue with the serial chip, and that didn't work so well, as it
+  turned out.  Perhaps a better MOSFET would interfer less.
+
+- I should have labeled all chips with their pinouts to aid in debugging.  I also should have added labels to the arduino shield
+
+- the UDS and LDS lines were not included in the memory logic, which is fine for reads, but causes problems when writing one
+  byte at a time (causing the other byte in the memory word to be replaced).  This is a very critical problem.  Fixing it would
+  require another 4 OR gates to compare the LDS/UDS lines with the chip selects or write lines for each of the 4 memory chips.
+  After posting in EEVBlog forums, a temporary fix would be to use a P-channel mosfet for each memory chip, or a 74LVC1G32 or
+  74LVC2G32 to fix the issue.  These could be permanent solutions as well, which would require less reworking of the PCB design
+  but at the expense of requiring more parts to build
+

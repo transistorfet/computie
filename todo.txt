@@ -5,5 +5,9 @@
 * you need a proper reset circuit that slowly turns it on through a cap
 * add an interrupt acknowledge signal (FC0:2 = 111)
 
+68kArduinoShield:
+	* need labels next to all pins
+	* there's no way to reset the arduino with the shield on
+
 
 

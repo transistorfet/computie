@@ -17,7 +17,8 @@ int readline(char *buffer, int max)
 {
 	for (int i = 0; i < max; i++) {
 		buffer[i] = getchar();
-		if (buffer[i] == '\n') {
+		if (buffer[i] == '\n' || buffer[i] == '\r') {
+			buffer[i] = '\n';
 			buffer[++i] = '\0';
 			return i;
 		}
@@ -131,6 +132,16 @@ int main()
 
 	//snprintf(buffer, 100, "%s, or will it?\n", "this might work");
 	//printf("Test %x\n", 0xAF5);
+
+	uint16_t *mem = (uint16_t *) 0x100000;
+	for (int i = 0; i < 20; i++) {
+		mem[i] = (uint16_t) i;
+	}
+	printf("%x\n", sizeof(uint16_t));
+	uint8_t *mem2 = (uint8_t *) 0x100000;
+	for (int i = 0; i < 20; i++) {
+		printf("%x ", (uint8_t) mem2[i]);
+	}
 
 	serial_read_loop();
 

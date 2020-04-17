@@ -16,18 +16,24 @@
 //#define RBA_RD_ADDR	0x800007
 //#define ACR_ADDR	0x800009
 
-#define MR1A_MR2A_ADDR	0x4001
-#define SRA_RD_ADDR	0x4003
-#define CSRA_WR_ADDR	0x4003
-#define CRA_WR_ADDR	0x4005
-#define TBA_WR_ADDR	0x4007
-#define RBA_RD_ADDR	0x4007
-#define ACR_WR_ADDR	0x4009
-#define IPCR_RD_ADDR	0x4009
-#define OPCR_WR_ADDR	0x401B
-#define INPUT_RD_ADDR	0x401B
-#define OUT_SET_ADDR	0x401D
-#define OUT_RESET_ADDR	0x401F
+#define MR1A_MR2A_ADDR	0x700001
+#define SRA_RD_ADDR	0x700003
+#define CSRA_WR_ADDR	0x700003
+#define CRA_WR_ADDR	0x700005
+#define TBA_WR_ADDR	0x700007
+#define RBA_RD_ADDR	0x700007
+#define ACR_WR_ADDR	0x700009
+
+#define CTUR_WR_ADDR	0x70000D
+#define CTLR_WR_ADDR	0x70000F
+#define START_RD_ADDR	0x70001D
+#define STOP_RD_ADDR	0x70001F
+
+#define IPCR_RD_ADDR	0x700009
+#define OPCR_WR_ADDR	0x70001B
+#define INPUT_RD_ADDR	0x70001B
+#define OUT_SET_ADDR	0x70001D
+#define OUT_RESET_ADDR	0x70001F
 
 
 static char *tty_out = (char *) TBA_WR_ADDR;
@@ -46,20 +52,20 @@ int init_tty()
 
 	// Turn ON Test LED
 	*((char *) OPCR_WR_ADDR) = 0x00;
-	//*((char *) OUT_SET_ADDR) = 0xF0;
+	*((char *) OUT_SET_ADDR) = 0xF0;
 	*((char *) OUT_RESET_ADDR) = 0xF0;
 }
 
 int getchar(void)
 {
-char in;
+	char in;
+
 	while (1) {
 		if (*tty_status & 0x01)
 			return *tty_in;
 
-		in = (*((char *) INPUT_RD_ADDR) & 0x0f);
-		if (in & 0x04) {
-			putchar('0' + in);
+		in = (*((char *) INPUT_RD_ADDR) & 0x3f);
+		if (in & 0x10) {
 			*((char *) OUT_SET_ADDR) = 0xF0;
 		} else {
 			*((char *) OUT_RESET_ADDR) = 0xF0;

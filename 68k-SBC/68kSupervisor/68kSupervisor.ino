@@ -1,7 +1,7 @@
 
 #define SERIAL_SPEED	115200
 
-#define MEM_HADDR	0x80
+#define MEM_HADDR	0x00
 #define MEM_SIZE	8192
 
 //#define MEM_HADDR	0x08
@@ -489,28 +489,32 @@ inline byte read_data(word addr)
 
 	return value;
 }
+*/
 
 void run_write_test()
 {
 	set_bus_master();
 	Serial.print("Running Write Test\n");
 
+	M68_HDATA_PORT = 0x00;
+	M68_HDATA_DDR = 0xFF;
 	M68_LDATA_PORT = 0x00;
 	M68_LDATA_DDR = 0xFF;
 	for (word i = 0; i < MEM_SIZE; i++) {
 		//write_data(i, (unsigned char) i);
+		M68_HDATA_PORT = (i & 0x00FF);
 		M68_LDATA_PORT = (i & 0x00FF);
 		M68_HADDR_PORT = (i >> 8) + MEM_HADDR;
 		M68_LADDR_PORT = 0x00FF & i;
-		digitalWrite(M68_WR, 0);
-		digitalWrite(M68_MREQ, 0);
+		digitalWrite(M68_RW, 0);
+		digitalWrite(M68_AS, 0);
 		delayMicroseconds(1);
 		//INLINE_NOP;
 		//INLINE_NOP;
 		//INLINE_NOP;
 		//INLINE_NOP;
-		digitalWrite(M68_WR, 1);
-		digitalWrite(M68_MREQ, 1);
+		digitalWrite(M68_RW, 1);
+		digitalWrite(M68_AS, 1);
 		M68_HADDR_PORT = 0xFF;
 		M68_LADDR_PORT = 0;
 		delayMicroseconds(1);
@@ -528,31 +532,38 @@ void run_write_test()
 
 void run_read_test()
 {
-	int value = 0;
+	int hvalue = 0;
+	int lvalue = 0;
 	int errors = 0;
 
 	set_bus_master();
 	Serial.print("Running Read Test\n");
 
+	M68_HDATA_PORT = 0x00;
+	M68_HDATA_DDR = 0x00;
 	M68_LDATA_PORT = 0x00;
 	M68_LDATA_DDR = 0x00;
 	for (word i = 0; i < MEM_SIZE; i++) {
 		M68_HADDR_PORT = (i >> 8) + MEM_HADDR;
 		M68_LADDR_PORT = 0x00FF & i;
-		digitalWrite(M68_RD, 0);
-		digitalWrite(M68_MREQ, 0);
+		digitalWrite(M68_RW, 0);
+		digitalWrite(M68_AS, 0);
 		delayMicroseconds(1);
 		INLINE_NOP;
-		value = M68_LDATA_PIN;
-		digitalWrite(M68_RD, 1);
-		digitalWrite(M68_MREQ, 1);
+		hvalue = M68_HDATA_PIN;
+		lvalue = M68_LDATA_PIN;
+		digitalWrite(M68_RW, 1);
+		digitalWrite(M68_AS, 1);
 		delayMicroseconds(1);
 		M68_HADDR_PORT = 0xFF;
 		M68_LADDR_PORT = 0;
 
-		if (value != (i & 0x00FF))
+		if (hvalue != (i & 0x00FF))
 			errors += 1;
-		Serial.print(value, HEX);
+		if (lvalue != (i & 0x00FF))
+			errors += 1;
+		Serial.print(hvalue, HEX);
+		Serial.print(lvalue, HEX);
 		Serial.print(" ");
 		if (i % 64 == 63)
 			Serial.print("\n");
@@ -564,6 +575,7 @@ void run_read_test()
 	Serial.print("\n");
 }
 
+/*
 inline byte convert_char(char ch) {
 	if (ch <= 0x39)
 		return ch - 0x30;
@@ -664,13 +676,13 @@ void cpu_reset()
 
 void do_command(String line)
 {
-	/*
 	if (line.equals("read")) {
 		run_read_test();
 	}
 	else if (line.equals("write")) {
 		run_write_test();
 	}
+	/*
 	else if (line.equals("send")) {
 		run_send();
 	}

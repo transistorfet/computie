@@ -3,44 +3,11 @@
 	.global _error
 	.global	main
 
-/**
- * Vector Table
- */
-
-
-	.org	0x0000
-
-	| Stack Pointer on Reset
-	.word	0x0010
-	.word	0x1000
-	| PC on Reset
-	.word	0x0000
-	.word	_start
-
-	| Bus Error
-	.word	0x0000
-	.word	_error
-	| Address Error
-	.word	0x0000
-	.word	_error
-	| Illegal Instruction
-	.word	0x0000
-	.word	_error
-	| Zero Divide
-	.word	0x0000
-	.word	_error
-	| CHK Instruction
-	.word	0x0000
-	.word	_error
-	| TRAPV Instruction
-	.word	0x0000
-	.word	_error
-
+	.section .text
 
 /**
  * Image Start
  */
-	.org	0x0020
 
 _start:
 

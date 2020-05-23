@@ -63,6 +63,19 @@ byte bus_mode = BUS_SLAVE;
 
 byte tty_mode = TTY_COMMAND;
 
+void cpu_stop();
+
+void pciSetup(byte pin)
+{
+	*digitalPinToPCMSK(pin) |= bit (digitalPinToPCMSKbit(pin));  // enable pin
+	PCIFR |= bit (digitalPinToPCICRbit(pin)); // clear any outstanding interrupt
+	PCICR |= bit (digitalPinToPCICRbit(pin)); // enable interrupt for the group
+}
+
+void pciDisable(byte pin)
+{
+	PCICR &= ~(bit (digitalPinToPCICRbit(pin))); // disable interrupt for the group
+}
 
 void take_bus()
 {
@@ -473,20 +486,6 @@ void snoop_bus_cycle()
 	PCICR = 0x01;
 	//interrupts();
 	}
-}
-
-
-
-void pciSetup(byte pin)
-{
-	*digitalPinToPCMSK(pin) |= bit (digitalPinToPCMSKbit(pin));  // enable pin
-	PCIFR |= bit (digitalPinToPCICRbit(pin)); // clear any outstanding interrupt
-	PCICR |= bit (digitalPinToPCICRbit(pin)); // enable interrupt for the group
-}
-
-void pciDisable(byte pin)
-{
-	PCICR &= ~(bit (digitalPinToPCICRbit(pin))); // disable interrupt for the group
 }
 
 void setup()

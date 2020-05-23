@@ -12,10 +12,11 @@ CFLAGS = -I$(INCLUDE) -m68000 -nostartfiles -nostdlib -g
 ASLISTING = -alh
 
 
-all: main.bin
+all: main.elf main.bin
 
-main.bin: main.elf
-main.elf: src/crt0.o src/main.o src/dev/tty_68681.o libc68k.a
+OBJS = src/crt0.o src/main.o src/dev/tty_68681.o libc68k.a
+main.bin: $(OBJS)
+main.elf: $(OBJS)
 
 
 libc68k.a: $(patsubst %.c,%.o, $(wildcard src/libc/**/*.c))
@@ -27,13 +28,18 @@ welcome:
 
 
 %.bin: $^
-	$(OBJCOPY) -O binary -j .text -j .data -j .rodata $^ $@
+	#$(OBJCOPY) -O binary -j .text -j .data -j .rodata $^ $@
+	#hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
+	#$(OBJCOPY) -O binary -j .data $^ $@.data
+	#hexdump -v -e '/1 "0x%02x, "' $@.data > output.data.txt
+
+	$(CC) $(CFLAGS) --entry=_start -Tlinker.ld -o $@ $^
 	hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
-	$(OBJCOPY) -O binary -j .data $^ $@.data
-	hexdump -v -e '/1 "0x%02x, "' $@.data > output.data.txt
 
 %.elf: $^
-	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0000 -Tdata=0x1000 -o $@ $^
+	# Link into an elf file for inspection
+	# With the new linker script, this output isn't used
+	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1000 -o $@ $^
 
 %.a: $^
 	$(AR) rc $@ $^

@@ -1,13 +1,32 @@
 
 
-* do I need optoisolators for the ftdi?
+68k Single Board Computer:
 
-* you need a proper reset circuit that slowly turns it on through a cap
-* add an interrupt acknowledge signal (FC0:2 = 111)
+	* in seems like AS in the interrupt ack is not necessary.  It can acknowledge the interrupt fine without it
 
-68kArduinoShield:
+	* if you have interrupts, and you connect at least one button to one of the IP change interrupts, then you could use the button for breaking into a debugger?
+	* how can you modify the design to be better for debugging, possibly without an arduino.  Can you have step debugging through a hardware button, so that the bus
+	  can be inspected?
+	* can you have an debugger in the monitor software?  There are trap and breakpoint instructions in the processor for debugging, so if you define an interrupt handler
+	  for those, you could have it enter a debugger, that possibly allows single stepping?  I'm not sure how to implement that
+
+	* try running it without the arduino connected
+	* if you can run without the arduino, try running with dtack always 0, to see if that runs.  If so, you might not need the counter (just pull dtack low if memory is addressed)
+
+	* do I need optoisolators for the ftdi?  There is a blip where the arduino resets when the serial converter is connected
+	* you need a proper reset circuit that slowly turns it on through a cap?
+
+	* add interrupt logic to schematic and pcb
+
+68k Arduino Shield:
 	* need labels next to all pins
 	* there's no way to reset the arduino with the shield on
+	* there should be pins on the shield for anything not wired to the arduino directly, so that it can be plugged into despite ribbon cables being used
+	* there should be a way on the arduino shield to enable, disable, or change the arduino's memory space
 
 
+
+* it might be possible to do a 68030 single board computer, with 74LVC244/245 interfaces to an fpga chip, to provide the glue logic, but it would be a
+  lot of surface mount chips, so you'd have to try a few smaller surface mount projects first
+* make a surface mount/PLCC version of the 68k-SBC board to test SMT, since the design should work, and some of the memory chips are available as SMT
 

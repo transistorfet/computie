@@ -1,4 +1,7 @@
 
+Revision 0 Errata and Notes
+===========================
+
 - the silk screen for the MOSFET is backwards (likely the symbol on the schematic has the wrong pinout)
  
 - The pullup resistor for DTACK (R11) at 10k Ohms was too high, resulting in an idle voltage on DTACK that is too low.  This caused the
@@ -15,4 +18,29 @@
   After posting in EEVBlog forums, a temporary fix would be to use a P-channel mosfet for each memory chip, or a 74LVC1G32 or
   74LVC2G32 to fix the issue.  These could be permanent solutions as well, which would require less reworking of the PCB design
   but at the expense of requiring more parts to build
+
+- it would have been better if the arduino could address all memory, so that it could directly write to rom and ram while the
+  cpu is suspended
+
+- if using shrouded headers for the expansions, then the silk screen would be covered by the shroud.  There's not much space where the
+  jumpers are though, to move them over.  This problem of not enough space also applies to the cpu itself
+
+- the arduino shield needs access to the expansion pins not wired to arduino ports, so that they can be debugged or wired up through
+  jumpers.  It would also be handy to have a way of connecting and disconnecting the 0SEL pin to the arduino to test the rom, which
+  I've been doing manually with individual wires on the signals header
+
+- the power capacitor spacing is a lot more than needed, especially for the 5V side cap
+
+
+Observations:
+
+- with external interrupt logic, it doesn't seem to really need to the "NOT AS (ADDRESS SELECT)" signal to be included with the
+  three FCx signals to produce an acknowledge signal.  Adding it in will shorten the pulse by a bit, but the timing diagram for the
+  duart chip shows the irq and irqack signals going low almost at the same time, so it probably shouldn't make a difference
+
+- when running off the memory (no arduino), it's possible to remove the counter chip and wire power directly to the mosfet that pulls
+  dtack low, and have it run correctly.  This seems weird in that the serial chip is also working with an always low dtack, but it might
+  be that the duart chip has a response time lower than the cpu, same as the memory.  The arduino definitely can't work in these
+  conditions but it should be possible to rework the logic a bit to use the same address conditions to activate the mosfet, so that dtack
+  is only pulled low when the memory is addressed.  This would allow us to get rid of yet another chip.
 

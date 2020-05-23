@@ -19,7 +19,6 @@ main.elf: src/crt0.o src/main.o src/dev/tty_68681.o libc68k.a
 
 
 libc68k.a: $(patsubst %.c,%.o, $(wildcard src/libc/**/*.c))
-#libc68k.a: src/libc/stdio/puts.o
 
 
 welcome:
@@ -30,6 +29,8 @@ welcome:
 %.bin: $^
 	$(OBJCOPY) -O binary -j .text -j .data -j .rodata $^ $@
 	hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
+	$(OBJCOPY) -O binary -j .data $^ $@.data
+	hexdump -v -e '/1 "0x%02x, "' $@.data > output.data.txt
 
 %.elf: $^
 	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0000 -Tdata=0x1000 -o $@ $^

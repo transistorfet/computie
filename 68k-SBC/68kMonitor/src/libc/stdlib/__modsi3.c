@@ -1,6 +1,7 @@
 
 
 #ifdef __m68k__
+/*
 int __modsi3(int a, int b)
 {
 	int c;
@@ -16,6 +17,17 @@ int __modsi3(int a, int b)
 	: "%d0", "%d1"
 	);
 	return c;
+}
+*/
+
+int __modsi3(int a, int b)
+{
+	while (1) {
+		if (a < b)
+			break;
+		a -= b;
+	}
+	return a;
 }
 #endif
 

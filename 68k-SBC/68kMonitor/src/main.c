@@ -9,13 +9,13 @@
 char *led = (char *) 0x201c;
 
 
-void delay(int count) {
+void delay(short count) {
 	while (--count > 0) { }
 }
 
-int readline(char *buffer, int max)
+int readline(char *buffer, short max)
 {
-	for (int i = 0; i < max; i++) {
+	for (short i = 0; i < max; i++) {
 		buffer[i] = getchar();
 		if (buffer[i] == '\n' || buffer[i] == '\r') {
 			buffer[i] = '\n';
@@ -28,7 +28,7 @@ int readline(char *buffer, int max)
 
 int parseline(char *input, char **vargs)
 {
-	int j = 0;
+	short j = 0;
 
 	while (*input == ' ')
 		input++;
@@ -56,7 +56,7 @@ char hexchar(uint8_t byte)
 		return byte + 0x37;
 }
 
-void dump(const uint8_t *addr, int len)
+void dump(const uint8_t *addr, short len)
 {
 	char buffer[4];
 
@@ -77,8 +77,8 @@ void dump(const uint8_t *addr, int len)
 
 void info(void)
 {
-	int sp;
-	int sv1;
+	uint16_t sp;
+	uint16_t sv1;
 
 	asm(
 	"move.w	%%a7, %0\n"
@@ -91,12 +91,94 @@ void info(void)
 	return;
 }
 
+#define RAM_ADDR	0x100000
+#define RAM_SIZE	1024
+
+void ramtest(void)
+{
+	uint16_t data;
+	uint16_t errors = 0;
+
+	uint16_t *mem = (uint16_t *) RAM_ADDR;
+	for (int i = 0; i < RAM_SIZE; i++) {
+		mem[i] = (uint16_t) i;
+	}
+
+	
+	//uint8_t *mem2 = (uint8_t *) RAM_ADDR;
+	//for (int i = 0; i < RAM_SIZE; i++) {
+	//	printf("%x ", (uint8_t) mem2[i]);
+	//}
+
+
+	for (int i = 0; i < RAM_SIZE; i++) {
+		data = (uint16_t) mem[i];
+		printf("%x ", data);
+		if (data != i)
+			errors++;
+	}
+
+	printf("\nErrors: %d", errors);
+}
+
+#define ROM_ADDR	0x200000
+#define ROM_SIZE	2200
+
+void readrom(void)
+{
+	uint16_t data;
+	uint16_t reference;
+	uint16_t errors = 0;
+
+	uint16_t *arduino = (uint16_t *) 0x000000;
+	uint16_t *rom = (uint16_t *) ROM_ADDR;
+	for (int i = 0; i < ROM_SIZE; i++) {
+		data = (uint16_t) rom[i];
+		reference = arduino[i];
+		printf("%x %x\n", data, reference);
+		if (data != reference)
+			errors++;
+	}
+
+	printf("\nErrors: %d", errors);
+}
+
+void writerom(void)
+{
+	uint16_t data;
+	uint16_t errors = 0;
+
+	uint16_t *arduino = (uint16_t *) 0x000000;
+	uint16_t *rom = (uint16_t *) ROM_ADDR;
+	for (int i = 0; i < ROM_SIZE; i++) {
+		rom[i] = (uint16_t) arduino[i];
+		for (char j = 0; j < 100; j++) {}
+		printf("%x ", rom[i]);
+	}
+
+	printf("\nWrite complete");
+}
+
+
+void run_rom_from_ram(void)
+{
+	uint16_t *arduino = (uint16_t *) 0x000000;
+	uint16_t *mem = (uint16_t *) RAM_ADDR;
+	for (int i = 0; i < 4200; i++) {
+		mem[i] = arduino[i];
+	}
+
+	void (*entry)() = (void (*)()) (RAM_ADDR + 0x20);
+	((void (*)()) entry)();
+}
+
+
 #define BUF_SIZE	100
 #define ARG_SIZE	10
 
 void serial_read_loop()
 {
-	int argc;
+	int16_t argc;
 	char buffer[BUF_SIZE];
 	char *args[ARG_SIZE];
 
@@ -111,6 +193,18 @@ void serial_read_loop()
 		else if (!strcmp(args[0], "info")) {
 			info();
 		}
+		else if (!strcmp(args[0], "ramtest")) {
+			ramtest();
+		}
+		else if (!strcmp(args[0], "readrom")) {
+			readrom();
+		}
+		else if (!strcmp(args[0], "writerom")) {
+			writerom();
+		}
+		else if (!strcmp(args[0], "runtest")) {
+			run_rom_from_ram();
+		}
 		else if (!strcmp(args[0], "dump")) {
 			if (argc <= 1)
 				puts("You need an address\n");
@@ -121,10 +215,42 @@ void serial_read_loop()
 	}
 }
 
+/*
+const char data_segment[] = { 0x00, 0x00, 0x20, 0x1c, 0x00, 0x70, 0x00, 0x07, 0x00, 0x70, 0x00, 0x07, 0x00, 0x70, 0x00, 0x03 };
+
+void load_data_segment()
+{
+	char *ram = (char *) RAM_ADDR;
+	for (uint16_t i = 0; i < 18; i++) {
+		ram[i] = data_segment[i];
+	}
+}
+*/
+
 int main()
 {
-	*led = 0x01;
+	//typedef void (*interrupt_t)();
+
+	//*((interrupt_t *) 0x3C) = handle_error;
+
+	//load_data_segment();
+
+	//*led = 0x01;
 	init_tty();
+
+	//int a = 10000;
+	//int b = 10;
+	//int c = a % b;
+	//char buffer[2];
+	//buffer[0] = (char) c + 0x30;
+	//buffer[1] = '\0';
+	//puts(buffer);
+	/*
+	if (c == 0)
+		puts("GOOD");
+	else
+		puts("BORK");
+	*/
 
 	//delay(10000);
 
@@ -133,15 +259,22 @@ int main()
 	//snprintf(buffer, 100, "%s, or will it?\n", "this might work");
 	//printf("Test %x\n", 0xAF5);
 
-	uint16_t *mem = (uint16_t *) 0x100000;
-	for (int i = 0; i < 20; i++) {
-		mem[i] = (uint16_t) i;
-	}
-	printf("%x\n", sizeof(uint16_t));
+	//printf("%d\n", (0x100 * 0x10));
+
+
+	/*
 	uint8_t *mem2 = (uint8_t *) 0x100000;
-	for (int i = 0; i < 20; i++) {
+	for (short i = 0; i < 20; i++) {
 		printf("%x ", (uint8_t) mem2[i]);
 	}
+	*/
+
+	/*
+	uint16_t *mem3 = (uint16_t *) 0x200000;
+	for (int i = 0; i < 0x100; i++) {
+		printf("%x ", (uint16_t) mem3[i]);
+	}
+	*/
 
 	serial_read_loop();
 

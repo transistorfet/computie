@@ -6,9 +6,6 @@
 
 //#define MEM_HADDR	0x08
 //#define MEM_SIZE	2048
-//#define MEM_WR		41 // PG0
-//#define MEM_RD		40 // PG1
-//#define MEM_ALE		39 // PG2
 
 #define M68_HADDR_PORT	PORTC
 #define M68_HADDR_PIN	PINC
@@ -259,9 +256,9 @@ byte send_mem[] = {
 
 };
 
-#define MEM_SIZE	4800
-word mem_size = MEM_SIZE;
-byte mem[MEM_SIZE] = {
+#define ROM_SIZE	4800
+word mem_size = ROM_SIZE;
+byte mem[ROM_SIZE] = {
 
 // Nop + Halt
 //0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x08, 0x4e, 0x71, 0x4e, 0x72, 0x00, 0x00,
@@ -376,7 +373,8 @@ void check_bus_cycle()
 			Serial.write('W');
 			Serial.print(addr, HEX);
 			Serial.write('|');
-			Serial.print(M68_LDATA_PIN, HEX);
+			register word data = (M68_HDATA_PIN << 8) | M68_LDATA_PIN;
+			Serial.print(data, HEX);
 			Serial.write('\n');
 			#endif
 
@@ -422,6 +420,62 @@ void check_bus_cycle()
 	//interrupts();
 	}
 }
+
+void snoop_bus_cycle()
+{
+	if (bus_request) {
+	PCICR = 0x00;
+
+	if (M68_IS_AS()) {
+		// Read Operation
+		if (M68_IS_READ()) {
+			register word addr = ((M68_HADDR_PIN << 8) | M68_LADDR_PIN) << 1;
+			register byte type = M68_IS_UDS() & M68_IS_LDS();
+
+			Serial.write('R');
+			Serial.print(addr, HEX);
+			if (addr < mem_size) {
+				Serial.write('|');
+				Serial.print((mem[addr] << 8) | mem[addr + 1], HEX);
+			}
+			Serial.write(type ? 'w' : 'b');
+			Serial.write('\n');
+
+			noInterrupts();
+			M68_ASSERT_DTACK();
+			INLINE_NOP;
+			INLINE_NOP;
+			M68_UNASSERT_DTACK();
+			interrupts();
+		}
+		// Write Operation
+		else if (M68_IS_WRITE()) {
+			register word addr = ((M68_HADDR_PIN << 8) | M68_LADDR_PIN) << 1;
+
+			Serial.write('W');
+			Serial.print(addr, HEX);
+			Serial.write('|');
+			register word data = (M68_HDATA_PIN << 8) | M68_LDATA_PIN;
+			Serial.print(data, HEX);
+			Serial.write('\n');
+
+			noInterrupts();
+			M68_ASSERT_DTACK();
+			INLINE_NOP;
+			INLINE_NOP;
+			M68_UNASSERT_DTACK();
+			interrupts();
+		}
+	}
+
+	bus_request = 0;
+	PCIFR = 0x00;
+	PCICR = 0x01;
+	//interrupts();
+	}
+}
+
+
 
 void pciSetup(byte pin)
 {
@@ -491,16 +545,71 @@ inline byte read_data(word addr)
 }
 */
 
+void run_read_test()
+{
+	int hvalue = 0;
+	int lvalue = 0;
+	int errors = 0;
+
+	set_bus_master();
+	Serial.print("Running Read Test\n");
+
+	M68_HDATA_PORT = 0x00;
+	M68_HDATA_DDR = 0x00;
+	M68_LDATA_PORT = 0x00;
+	M68_LDATA_DDR = 0x00;
+
+	M68_HADDR_PORT = 0xFF;
+	M68_LADDR_PORT = 0;
+	digitalWrite(M68_RW, 1);
+	for (word i = 0; i < MEM_SIZE / 2; i++) {
+		M68_HADDR_PORT = (i >> 8) + MEM_HADDR;
+		M68_LADDR_PORT = 0x00FF & i;
+		digitalWrite(M68_AS, 0);
+		delayMicroseconds(1);
+		INLINE_NOP;
+		hvalue = M68_HDATA_PIN;
+		lvalue = M68_LDATA_PIN;
+		digitalWrite(M68_AS, 1);
+		delayMicroseconds(1);
+		M68_HADDR_PORT = 0xFF;
+		M68_LADDR_PORT = 0;
+
+		if (hvalue != (i & 0x00FF))
+			errors += 1;
+		if (lvalue != (i & 0x00FF))
+			errors += 1;
+		if (hvalue < 10) Serial.print("0");
+		Serial.print(hvalue, HEX);
+		if (lvalue < 10) Serial.print("0");
+		Serial.print(lvalue, HEX);
+		Serial.print(" ");
+		if (i % 32 == 31)
+			Serial.print("\n");
+	}
+
+	Serial.print("\n");
+	Serial.print("Errors: ");
+	Serial.print(errors, DEC);
+	Serial.print("\n");
+}
+
 void run_write_test()
 {
 	set_bus_master();
 	Serial.print("Running Write Test\n");
 
+	digitalWrite(M68_RW, 1);
+	digitalWrite(M68_AS, 1);
+
 	M68_HDATA_PORT = 0x00;
 	M68_HDATA_DDR = 0xFF;
 	M68_LDATA_PORT = 0x00;
 	M68_LDATA_DDR = 0xFF;
-	for (word i = 0; i < MEM_SIZE; i++) {
+
+	M68_HADDR_PORT = 0xFF;
+	M68_LADDR_PORT = 0;
+	for (word i = 0; i < MEM_SIZE / 2; i++) {
 		//write_data(i, (unsigned char) i);
 		M68_HDATA_PORT = (i & 0x00FF);
 		M68_LDATA_PORT = (i & 0x00FF);
@@ -530,50 +639,49 @@ void run_write_test()
 	Serial.print("Complete\n");
 }
 
-void run_read_test()
+void run_send_mem()
 {
-	int hvalue = 0;
-	int lvalue = 0;
-	int errors = 0;
+	word addr = (MEM_HADDR << 8);
 
 	set_bus_master();
-	Serial.print("Running Read Test\n");
 
 	M68_HDATA_PORT = 0x00;
-	M68_HDATA_DDR = 0x00;
+	M68_HDATA_DDR = 0xFF;
 	M68_LDATA_PORT = 0x00;
-	M68_LDATA_DDR = 0x00;
-	for (word i = 0; i < MEM_SIZE; i++) {
-		M68_HADDR_PORT = (i >> 8) + MEM_HADDR;
-		M68_LADDR_PORT = 0x00FF & i;
+	M68_LDATA_DDR = 0xFF;
+	delayMicroseconds(1);
+	for (word i = 0; i < mem_size; i += 2, addr += 1) {
+		//write_data(addr++, mem[i]);
+		M68_HDATA_PORT = mem[i];
+		M68_LDATA_PORT = mem[i + 1];
+		M68_HADDR_PORT = addr >> 8;
+		M68_LADDR_PORT = addr & 0xFF;
 		digitalWrite(M68_RW, 0);
 		digitalWrite(M68_AS, 0);
 		delayMicroseconds(1);
-		INLINE_NOP;
-		hvalue = M68_HDATA_PIN;
-		lvalue = M68_LDATA_PIN;
+		//INLINE_NOP;
+		//INLINE_NOP;
+		//INLINE_NOP;
+		//INLINE_NOP;
 		digitalWrite(M68_RW, 1);
 		digitalWrite(M68_AS, 1);
-		delayMicroseconds(1);
 		M68_HADDR_PORT = 0xFF;
 		M68_LADDR_PORT = 0;
-
-		if (hvalue != (i & 0x00FF))
-			errors += 1;
-		if (lvalue != (i & 0x00FF))
-			errors += 1;
-		Serial.print(hvalue, HEX);
-		Serial.print(lvalue, HEX);
-		Serial.print(" ");
-		if (i % 64 == 63)
-			Serial.print("\n");
+		delayMicroseconds(1);
+		//INLINE_NOP;
+		//INLINE_NOP;
+		//INLINE_NOP;
+		//INLINE_NOP;
+		if ((addr % 64) == 63) {
+			delayMicroseconds(10000);
+		}
 	}
 
-	Serial.print("\n");
-	Serial.print("Errors: ");
-	Serial.print(errors, DEC);
-	Serial.print("\n");
+	Serial.print("Sending complete\n");
 }
+
+
+
 
 /*
 inline byte convert_char(char ch) {
@@ -614,23 +722,6 @@ void run_send()
 
 	Serial.print("Sending complete\n");
 }
-
-void run_send_mem()
-{
-	word addr = (MEM_HADDR << 8);
-
-	set_bus_master();
-
-	M68_LDATA_PORT = 0x00;
-	M68_LDATA_DDR = 0xFF;
-	delayMicroseconds(1);
-	for (word i = addr; i < mem_size; i++) {
-		write_data(addr++, mem[i]);
-	}
-
-	Serial.print("Sending complete\n");
-}
-
 
 void run_clear_mem()
 {
@@ -682,12 +773,12 @@ void do_command(String line)
 	else if (line.equals("write")) {
 		run_write_test();
 	}
+	else if (line.equals("send")) {
+		run_send_mem();
+	}
 	/*
 	else if (line.equals("send")) {
 		run_send();
-	}
-	else if (line.equals("send_mem")) {
-		run_send_mem();
 	}
 	else if (line.equals("clear")) {
 		run_clear_mem();
@@ -730,16 +821,7 @@ void loop()
 	}
 
 	check_bus_cycle();
-/*
-	tty_mode = TTY_PASS;
-	read_serial();
-	if (serial_read_head != serial_read_tail) {
-		Serial.write(serial_get_byte());
-		Serial.write('\n');
-		Serial.print(serial_read_tail - serial_read_head, DEC);
-		Serial.write('\n');
-	}
-*/
+	//snoop_bus_cycle();
 }
 
 

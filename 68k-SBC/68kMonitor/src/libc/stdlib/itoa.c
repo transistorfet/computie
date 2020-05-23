@@ -2,7 +2,7 @@
 #include "stdio.h"
 
 
-char *itoa(int num, char *buffer, char radix)
+char *itoa(int num, char *buffer, int radix)
 {
 	char c;
 	int i = 0;
@@ -10,7 +10,7 @@ char *itoa(int num, char *buffer, char radix)
 
 	if (num < 0) {
 		sign = 1;
-		num *= -1;
+		num = -num;
 	}
 
 	do {

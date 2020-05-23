@@ -1100,25 +1100,25 @@ $EndComp
 $Comp
 L 74xx:74HC14 U1
 U 7 1 5E377C41
-P 9200 5650
-F 0 "U1" H 9200 5967 50  0000 C CNN
-F 1 "74HC14" H 9200 5876 50  0000 C CNN
-F 2 "Package_DIP:DIP-14_W7.62mm_LongPads" H 9200 5650 50  0001 C CNN
-F 3 "http://www.ti.com/lit/gpn/sn74HC14" H 9200 5650 50  0001 C CNN
-	7    9200 5650
+P 8700 5650
+F 0 "U1" H 8700 5967 50  0000 C CNN
+F 1 "74HC14" H 8700 5876 50  0000 C CNN
+F 2 "Package_DIP:DIP-14_W7.62mm_LongPads" H 8700 5650 50  0001 C CNN
+F 3 "http://www.ti.com/lit/gpn/sn74HC14" H 8700 5650 50  0001 C CNN
+	7    8700 5650
 	1    0    0    -1  
 $EndComp
 $Comp
 L 74xx:74LS32 U4
 U 5 1 5E3CE265
-P 9700 5650
+P 9200 5650
 AR Path="/5E3CE265" Ref="U4"  Part="5" 
 AR Path="/5E081AED/5E3CE265" Ref="U?"  Part="2" 
-F 0 "U4" H 9700 5975 50  0000 C CNN
-F 1 "74LS32" H 9700 5884 50  0000 C CNN
-F 2 "Package_DIP:DIP-14_W7.62mm_LongPads" H 9700 5650 50  0001 C CNN
-F 3 "http://www.ti.com/lit/gpn/sn74LS32" H 9700 5650 50  0001 C CNN
-	5    9700 5650
+F 0 "U4" H 9200 5975 50  0000 C CNN
+F 1 "74LS32" H 9200 5884 50  0000 C CNN
+F 2 "Package_DIP:DIP-14_W7.62mm_LongPads" H 9200 5650 50  0001 C CNN
+F 3 "http://www.ti.com/lit/gpn/sn74LS32" H 9200 5650 50  0001 C CNN
+	5    9200 5650
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -1135,14 +1135,14 @@ $EndComp
 Wire Wire Line
 	9700 6150 9700 6250
 Wire Wire Line
-	9200 5150 9700 5150
+	8700 5150 9200 5150
 Connection ~ 9700 5150
 Wire Wire Line
 	9700 5150 10200 5150
 Wire Wire Line
 	9700 5150 9700 5050
 Wire Wire Line
-	9200 6150 9700 6150
+	8700 6150 9200 6150
 Connection ~ 9700 6150
 Wire Wire Line
 	9700 6150 10200 6150
@@ -1636,6 +1636,25 @@ Wire Wire Line
 	1100 6700 1350 6700
 Text GLabel 2100 6300 2    50   Output ~ 0
 SIRQ
+Connection ~ 9200 5150
+Wire Wire Line
+	9200 5150 9700 5150
+Connection ~ 9200 6150
+Wire Wire Line
+	9200 6150 9700 6150
+$Comp
+L 74xx:74LS32 U?
+U 5 1 5ECAD265
+P 9700 5650
+AR Path="/5ECAD265" Ref="U?"  Part="5" 
+AR Path="/5E081AED/5ECAD265" Ref="U?"  Part="2" 
+F 0 "U?" H 9700 5975 50  0000 C CNN
+F 1 "74LS32" H 9700 5884 50  0000 C CNN
+F 2 "Package_DIP:DIP-14_W7.62mm_LongPads" H 9700 5650 50  0001 C CNN
+F 3 "http://www.ti.com/lit/gpn/sn74LS32" H 9700 5650 50  0001 C CNN
+	5    9700 5650
+	1    0    0    -1  
+$EndComp
 Wire Bus Line
 	1000 750  1000 2500
 Wire Bus Line

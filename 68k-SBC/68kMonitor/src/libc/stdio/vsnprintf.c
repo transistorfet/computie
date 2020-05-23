@@ -1,5 +1,6 @@
 
 #include "stdio.h"
+#include "stdlib.h"
 #include "string.h"
 
 
@@ -26,6 +27,9 @@ int vsnprintf(char *buffer, size_t n, const char *fmt, va_list args)
 				itoa(d, &buffer[i], fmt[j] == 'x' ? 16 : 10);
 				i += strlen(&buffer[i]) - 1;
 				break;
+			    case 'c':
+				d = va_arg(args, int);
+				buffer[i++] = (char) d;
 			    default:
 				break;
 			}

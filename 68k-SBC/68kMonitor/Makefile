@@ -14,7 +14,13 @@ ASLISTING = -alh
 
 all: main.elf main.bin
 
-OBJS = src/crt0.o src/main.o src/dev/tty_68681.o libc68k.a
+OBJS = \
+	src/crt0.o \
+	src/main.o \
+	src/kernel/interrupts.o \
+	src/dev/tty_68681.o \
+	libc68k.a
+
 main.bin: $(OBJS)
 main.elf: $(OBJS)
 

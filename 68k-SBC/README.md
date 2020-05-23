@@ -31,7 +31,7 @@ Breadboard Version
 Revision 0
 ----------
 
-![alt text](https://github.com/transistorfet/computie/raw/master/68k-SBC/images/PBC-rev0-front.jpg "68k-SBC PCB Front")
+![alt text](https://github.com/transistorfet/computie/raw/master/68k-SBC/images/PCB-rev0-front.jpg "68k-SBC PCB Front")
 ![alt text](https://github.com/transistorfet/computie/raw/master/68k-SBC/images/SBC-rev0.jpg "68k-SBC")
 ![alt text](https://github.com/transistorfet/computie/raw/master/68k-SBC/images/PCB-rev0-patch.jpg "68k-SBC patch for design mistake")
 

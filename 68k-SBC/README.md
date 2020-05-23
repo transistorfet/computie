@@ -4,8 +4,8 @@ The 68k Single Board Computer
 
 A simple single board computer using a Motorola 68000 CPU, which can connect to a host computer via USB/TTL-Serial.
 It has a bus for connecting a supervisor arduino or expansion devices, but it can operate standalone using the onboard
-UARTs.  It has 64kB of onboard EEPROM, 1MB of onboard SRAM, and a 68681 Dual UART chip with GPIO.  The GPIO not
-used for the serial ports is wired to 4 general purpose LEDs and 2 general purpose buttons.
+UARTs.  It has 64kB of onboard EEPROM, 1MB of onboard SRAM, and a 68681 Dual UART chip with GPIO.  Some of the GPIO
+pins are wired to 4 general purpose LEDs and 2 general purpose buttons.
 
 [68k Board Schematics](https://github.com/transistorfet/computie/raw/master/68k-SBC/68kBoard/68kBoard.pdf)
 
@@ -22,4 +22,21 @@ connected arduino can boot the 68000 directly.
 I decided to use discrete 74 Series chips for the glue logic to keep it simple and easy for others to build.  I tried
 to minimize the amount of logic chips needed, so decided not to include interrupt support, which would have required at
 least 2 more chips.  The interrupt acknowledge circuitry can be provided externally.
+
+Breadboard Version
+------------------
+
+![alt text](https://github.com/transistorfet/computie/raw/master/68k-SBC/images/Breadboard-serial.jpg "68k-SBC Breadboard")
+
+Revision 0
+----------
+
+![alt text](https://github.com/transistorfet/computie/raw/master/68k-SBC/images/PBC-rev0-front.jpg "68k-SBC PCB Front")
+![alt text](https://github.com/transistorfet/computie/raw/master/68k-SBC/images/SBC-rev0.jpg "68k-SBC")
+![alt text](https://github.com/transistorfet/computie/raw/master/68k-SBC/images/PCB-rev0-patch.jpg "68k-SBC patch for design mistake")
+
+I made a mistake and left out the logic for LDS/UDS in the chip select for the high and low memory chips.  When writing a
+single byte to memory, it would also attempt to write to both the high and low chips, instead of only one.  Thanks to a poster
+on EEVblog who suggested patching it with a P-channel MOSFET shown soldered to the back of the SRAM chips to interpose the UDS/LDS
+signals into the chip selects, with the original traces cut.
 

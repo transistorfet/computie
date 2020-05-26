@@ -5,7 +5,7 @@
 long int strtol(const char *str, const char **endptr, int base)
 {
 	char b, sign = 1;
-	long int num = 0;
+	int num = 0;
 
 	while (*str == ' ' || *str == '\n' || *str == '\t' || *str == '\r')
 		str++;

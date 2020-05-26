@@ -7,15 +7,15 @@
 extern void _start();
 extern void _error();
 
-const void *init_vectors[8] __attribute__((section(".vectors"))) = {
-	(void *) STACK_POINTER_INIT,
-	(void *) _start,
-	(void *) _error,
-	(void *) _error,
-	(void *) _error,
-	(void *) _error,
-	(void *) _error,
-	(void *) _error,
+const interrupt_handler_t init_vectors[8] __attribute__((section(".vectors"))) = {
+	(interrupt_handler_t) STACK_POINTER_INIT,
+	_start,
+	_error,
+	_error,
+	_error,
+	_error,
+	_error,
+	_error,
 };
 
 

@@ -6,9 +6,6 @@
 #include "stdlib.h"
 
 
-char *led = (char *) 0x201c;
-
-
 void delay(short count) {
 	while (--count > 0) { }
 }
@@ -215,6 +212,8 @@ void serial_read_loop()
 	}
 }
 
+char *led = (char *) 0x201c;
+
 /*
 const char data_segment[] = { 0x00, 0x00, 0x20, 0x1c, 0x00, 0x70, 0x00, 0x07, 0x00, 0x70, 0x00, 0x07, 0x00, 0x70, 0x00, 0x03 };
 
@@ -229,38 +228,14 @@ void load_data_segment()
 
 int main()
 {
-	//typedef void (*interrupt_t)();
-
-	//*((interrupt_t *) 0x3C) = handle_error;
-
 	//load_data_segment();
 
 	//*led = 0x01;
 	init_tty();
 
-	//int a = 10000;
-	//int b = 10;
-	//int c = a % b;
-	//char buffer[2];
-	//buffer[0] = (char) c + 0x30;
-	//buffer[1] = '\0';
-	//puts(buffer);
-	/*
-	if (c == 0)
-		puts("GOOD");
-	else
-		puts("BORK");
-	*/
-
 	//delay(10000);
 
 	puts("Welcome to the thing!\n");
-
-	//snprintf(buffer, 100, "%s, or will it?\n", "this might work");
-	//printf("Test %x\n", 0xAF5);
-
-	//printf("%d\n", (0x100 * 0x10));
-
 
 	/*
 	uint8_t *mem2 = (uint8_t *) 0x100000;

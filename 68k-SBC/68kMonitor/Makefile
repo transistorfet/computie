@@ -25,7 +25,9 @@ main.bin: $(OBJS)
 main.elf: $(OBJS)
 
 
-libc68k.a: $(patsubst %.c,%.o, $(wildcard src/libc/**/*.c))
+libc68k.a: \
+	$(patsubst %.c,%.o, $(wildcard src/libc/**/*.c)) \
+	$(patsubst %.s,%.o, $(wildcard src/libc/**/*.s))
 
 
 welcome:
@@ -61,7 +63,7 @@ dump-main:
 	$(OBJDUMP) -D main.elf
 
 clean:
-	find . \( -name "*.o" -or -name "*.o64" -or -name "*.bin" -or -name "*.elf" \) -delete -print
+	find . \( -name "*.o" -or -name "*.o64" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" \) -delete -print
 
 
 test: test.o64 src/stdio.o64

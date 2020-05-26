@@ -2,7 +2,12 @@
 
 68k Single Board Computer:
 
+	* make it possible to upload a program over serial and run it, rather than having it in the image
+
 	* in seems like AS in the interrupt ack is not necessary.  It can acknowledge the interrupt fine without it
+	* a counter is not strictly needed for memory
+
+	* add interrupt logic to schematic and pcb
 
 	* if you have interrupts, and you connect at least one button to one of the IP change interrupts, then you could use the button for breaking into a debugger?
 	* how can you modify the design to be better for debugging, possibly without an arduino.  Can you have step debugging through a hardware button, so that the bus
@@ -10,13 +15,13 @@
 	* can you have an debugger in the monitor software?  There are trap and breakpoint instructions in the processor for debugging, so if you define an interrupt handler
 	  for those, you could have it enter a debugger, that possibly allows single stepping?  I'm not sure how to implement that
 
-	* try running it without the arduino connected
-	* if you can run without the arduino, try running with dtack always 0, to see if that runs.  If so, you might not need the counter (just pull dtack low if memory is addressed)
-
 	* do I need optoisolators for the ftdi?  There is a blip where the arduino resets when the serial converter is connected
 	* you need a proper reset circuit that slowly turns it on through a cap?
 
-	* add interrupt logic to schematic and pcb
+	* can you add a video/lcd expansion via the expansion connector?  Maybe you could get ends to directly connect it?  Would it be via parallel interface?
+	  would you need a PIT 68230 to interface?  How complex are the interfaces of those graphic ones?
+	* can you connect an esp01 as a wifi device?  I suppose you could connect it to the other serial port, even though it would be slow.  Is there another
+	  way to get ethernet or wifi?
 
 68k Arduino Shield:
 	* need labels next to all pins

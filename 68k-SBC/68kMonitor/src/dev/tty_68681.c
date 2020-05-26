@@ -83,8 +83,7 @@ int putchar(int ch)
 __attribute__((interrupt)) void handle_serial_irq()
 {
 	uint8_t status = *((uint8_t *) IPCR_RD_ADDR);
-	//puts("ERR\n");
-	//printf("%x\n", status);
+
 }
 
 

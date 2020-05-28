@@ -88,6 +88,7 @@ void info(void)
 	return;
 }
 
+/*
 #define RAM_ADDR	0x100000
 #define RAM_SIZE	1024
 
@@ -168,6 +169,7 @@ void run_rom_from_ram(void)
 	void (*entry)() = (void (*)()) (RAM_ADDR + 0x20);
 	((void (*)()) entry)();
 }
+*/
 
 
 #define BUF_SIZE	100
@@ -190,6 +192,7 @@ void serial_read_loop()
 		else if (!strcmp(args[0], "info")) {
 			info();
 		}
+/*
 		else if (!strcmp(args[0], "ramtest")) {
 			ramtest();
 		}
@@ -202,6 +205,7 @@ void serial_read_loop()
 		else if (!strcmp(args[0], "runtest")) {
 			run_rom_from_ram();
 		}
+*/
 		else if (!strcmp(args[0], "dump")) {
 			if (argc <= 1)
 				puts("You need an address\n");
@@ -229,13 +233,39 @@ void load_data_segment()
 int main()
 {
 	//load_data_segment();
+	init_heap((void *) 0x101000, 0x1000);
 
 	//*led = 0x01;
 	init_tty();
 
 	//delay(10000);
 
-	puts("Welcome to the thing!\n");
+	puts("Welcome to the \x1b[32mthing!\x1b[0m\n");
+
+	/*
+	int *data = malloc(sizeof(int) * 10);
+	data[0] = 0;
+	data[1] = 1;
+	data[2] = 2;
+	printf("%x %x %x\n", &data[0], &data[1], &data[2]);
+	printf("%d\n", *(data - 3));
+	free(data);
+
+	int *data2 = malloc(4);
+	printf("%x %d\n", data2, *(data2 - 3));
+
+	int *data3 = malloc(sizeof(int) * 2);
+	printf("%x %d\n", data3, *(data3 - 3));
+
+	free(data2);
+	//printf("%x %d\n", data2, *(data2 - 3));
+	print_free();
+
+	int *data4 = malloc(sizeof(int) * 10);
+	printf("%x %d\n", data4, *(data4 - 3));
+	
+	print_free();
+	*/
 
 	/*
 	uint8_t *mem2 = (uint8_t *) 0x100000;

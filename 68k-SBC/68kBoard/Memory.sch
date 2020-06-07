@@ -979,14 +979,12 @@ Wire Wire Line
 	3950 1600 4100 1600
 Wire Wire Line
 	4100 1700 3950 1700
-Text GLabel 6650 3300 0    50   Input ~ 0
+Wire Wire Line
+	6300 3300 6700 3300
+Text GLabel 5800 5750 0    50   Input ~ 0
 ROMSEL
 Wire Wire Line
-	6650 3300 6700 3300
-Text GLabel 6650 5850 0    50   Input ~ 0
-ROMSEL
-Wire Wire Line
-	6650 5850 6700 5850
+	6550 5850 6700 5850
 Text GLabel 10000 2400 2    50   Input ~ 0
 RAMSEL
 Wire Wire Line
@@ -1043,12 +1041,12 @@ F 3 "~" H 5200 4400 50  0001 C CNN
 	1    5200 4400
 	1    0    0    -1  
 $EndComp
-Text GLabel 4450 3050 2    50   Input ~ 0
+Text GLabel 1800 3150 2    50   Input ~ 0
 0SEL
-Text GLabel 3950 3300 0    50   Output ~ 0
+Text GLabel 1300 3400 0    50   Output ~ 0
 ROMSEL
 Wire Wire Line
-	4450 3050 4250 3050
+	1800 3150 1600 3150
 $Comp
 L Jumper:Jumper_3_Bridged12 JP1
 U 1 1 5E203DDE
@@ -1061,7 +1059,7 @@ F 3 "~" H 1600 5400 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 Wire Wire Line
-	3950 3300 4100 3300
+	1300 3400 1450 3400
 $Comp
 L 74xx:74LS32 U?
 U 3 1 5E2862DA
@@ -1112,22 +1110,62 @@ $EndComp
 Wire Wire Line
 	1100 5150 1600 5150
 Wire Wire Line
-	4450 3550 4250 3550
-Text GLabel 4450 3550 2    50   Input ~ 0
+	1800 3650 1600 3650
+Text GLabel 1800 3650 2    50   Input ~ 0
 2SEL
 $Comp
 L Jumper:Jumper_3_Bridged12 JP2
 U 1 1 5E0E862B
-P 4250 3300
-F 0 "JP2" V 4204 3367 50  0000 L CNN
-F 1 "ROMJMP" V 4295 3367 50  0000 L CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" H 4250 3300 50  0001 C CNN
-F 3 "~" H 4250 3300 50  0001 C CNN
-	1    4250 3300
+P 1600 3400
+F 0 "JP2" V 1554 3467 50  0000 L CNN
+F 1 "ROMJMP" V 1645 3467 50  0000 L CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" H 1600 3400 50  0001 C CNN
+F 3 "~" H 1600 3400 50  0001 C CNN
+	1    1600 3400
 	0    1    1    0   
 $EndComp
 Text GLabel 1450 5650 0    50   Input ~ 0
 0SEL
+$Comp
+L 74xx:74LS32 U?
+U 2 1 5ECE03D9
+P 6250 5850
+AR Path="/5ECE03D9" Ref="U?"  Part="1" 
+AR Path="/5E081AED/5ECE03D9" Ref="U12"  Part="2" 
+F 0 "U12" H 6250 6175 50  0000 C CNN
+F 1 "74LS32" H 6250 6084 50  0000 C CNN
+F 2 "Package_DIP:DIP-14_W7.62mm_LongPads" H 6250 5850 50  0001 C CNN
+F 3 "http://www.ti.com/lit/gpn/sn74LS32" H 6250 5850 50  0001 C CNN
+	2    6250 5850
+	1    0    0    -1  
+$EndComp
+Text GLabel 5800 5950 0    50   Input ~ 0
+UDS
+Wire Wire Line
+	5800 5750 5950 5750
+Wire Wire Line
+	5950 5950 5800 5950
+Text GLabel 5550 3200 0    50   Input ~ 0
+ROMSEL
+$Comp
+L 74xx:74LS32 U?
+U 1 1 5ED2DF47
+P 6000 3300
+AR Path="/5ED2DF47" Ref="U?"  Part="1" 
+AR Path="/5E081AED/5ED2DF47" Ref="U12"  Part="1" 
+F 0 "U12" H 6000 3625 50  0000 C CNN
+F 1 "74LS32" H 6000 3534 50  0000 C CNN
+F 2 "Package_DIP:DIP-14_W7.62mm_LongPads" H 6000 3300 50  0001 C CNN
+F 3 "http://www.ti.com/lit/gpn/sn74LS32" H 6000 3300 50  0001 C CNN
+	1    6000 3300
+	1    0    0    -1  
+$EndComp
+Text GLabel 5550 3400 0    50   Input ~ 0
+LDS
+Wire Wire Line
+	5550 3200 5700 3200
+Wire Wire Line
+	5700 3400 5550 3400
 Wire Wire Line
 	2550 2200 2950 2200
 Wire Bus Line
@@ -1142,15 +1180,15 @@ Wire Bus Line
 	8500 900  8500 5750
 $Comp
 L 74xx:74LS32 U?
-U 1 1 5ECE03D9
-P 4950 6300
-AR Path="/5ECE03D9" Ref="U?"  Part="1" 
-AR Path="/5E081AED/5ECE03D9" Ref="U?"  Part="1" 
-F 0 "U?" H 4950 6625 50  0000 C CNN
-F 1 "74LS32" H 4950 6534 50  0000 C CNN
-F 2 "Package_DIP:DIP-14_W7.62mm_LongPads" H 4950 6300 50  0001 C CNN
-F 3 "http://www.ti.com/lit/gpn/sn74LS32" H 4950 6300 50  0001 C CNN
-	1    4950 6300
-	1    0    0    -1  
+U 2 1 5EDCA36B
+P 10800 3000
+AR Path="/5EDCA36B" Ref="U?"  Part="1" 
+AR Path="/5E081AED/5EDCA36B" Ref="U13"  Part="2" 
+F 0 "U13" H 10800 3325 50  0000 C CNN
+F 1 "74LS32" H 10800 3234 50  0000 C CNN
+F 2 "Package_DIP:DIP-14_W7.62mm_LongPads" H 10800 3000 50  0001 C CNN
+F 3 "http://www.ti.com/lit/gpn/sn74LS32" H 10800 3000 50  0001 C CNN
+	2    10800 3000
+	-1   0    0    1   
 $EndComp
 $EndSCHEMATC

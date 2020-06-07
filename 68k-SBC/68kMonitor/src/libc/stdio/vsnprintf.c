@@ -30,6 +30,7 @@ int vsnprintf(char *buffer, size_t n, const char *fmt, va_list args)
 			    case 'c':
 				d = va_arg(args, int);
 				buffer[i++] = (char) d;
+				break;
 			    default:
 				break;
 			}

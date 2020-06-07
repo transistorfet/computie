@@ -14,9 +14,8 @@ int readline(char *buffer, short max)
 {
 	for (short i = 0; i < max; i++) {
 		buffer[i] = getchar();
-		if (buffer[i] == '\n' || buffer[i] == '\r') {
-			buffer[i] = '\n';
-			buffer[++i] = '\0';
+		if (buffer[i] == '\n') {
+			buffer[i] = '\0';
 			return i;
 		}
 	}
@@ -31,7 +30,7 @@ int parseline(char *input, char **vargs)
 		input++;
 
 	vargs[j++] = input;
-	for (; *input != '\0' && *input != '\n'; input++) {
+	for (; *input != '\0' && *input != '\n' && *input != '\r'; input++) {
 		if (*input == ' ') {
 			*input = '\0';
 			input++;
@@ -64,7 +63,7 @@ void dump(const uint8_t *addr, short len)
 		for (int8_t i = 0; i < 16 && len > 0; i++, len--) {
 			buffer[0] = hexchar(addr[i] >> 4);
 			buffer[1] = hexchar(addr[i] & 0x0F);
-			puts(buffer);
+			putsn(buffer);
 		}
 		putchar('\n');
 		addr -= 16;
@@ -88,10 +87,13 @@ void info(void)
 	return;
 }
 
-/*
 #define RAM_ADDR	0x100000
 #define RAM_SIZE	1024
 
+#define ROM_ADDR	0x200000
+#define ROM_SIZE	0x1400
+
+/*
 void ramtest(void)
 {
 	uint16_t data;
@@ -119,8 +121,6 @@ void ramtest(void)
 	printf("\nErrors: %d", errors);
 }
 
-#define ROM_ADDR	0x200000
-#define ROM_SIZE	2200
 
 void readrom(void)
 {
@@ -141,22 +141,6 @@ void readrom(void)
 	printf("\nErrors: %d", errors);
 }
 
-void writerom(void)
-{
-	uint16_t data;
-	uint16_t errors = 0;
-
-	uint16_t *arduino = (uint16_t *) 0x000000;
-	uint16_t *rom = (uint16_t *) ROM_ADDR;
-	for (int i = 0; i < ROM_SIZE; i++) {
-		rom[i] = (uint16_t) arduino[i];
-		for (char j = 0; j < 100; j++) {}
-		printf("%x ", rom[i]);
-	}
-
-	printf("\nWrite complete");
-}
-
 
 void run_rom_from_ram(void)
 {
@@ -171,6 +155,98 @@ void run_rom_from_ram(void)
 }
 */
 
+void writerom(void)
+{
+	uint16_t data;
+	uint16_t errors = 0;
+
+	uint16_t *arduino = (uint16_t *) 0x000000;
+	uint16_t *rom = (uint16_t *) ROM_ADDR;
+	for (int i = 0; i < ROM_SIZE; i++) {
+		rom[i] = (uint16_t) arduino[i];
+		for (char j = 0; j < 100; j++) {}
+		printf("%x ", rom[i]);
+	}
+
+	puts("\nWrite complete");
+}
+
+
+uint16_t fetch_word()
+{
+	char buffer[4];
+
+	for (char i = 0; i < 4; i++) {
+		buffer[i] = getchar();
+		buffer[i] = buffer[i] <= '9' ? buffer[i] - 0x30 : buffer[i] - 0x37;
+	}
+
+	return (buffer[0] << 12) | (buffer[1] << 8) | (buffer[2] << 4) | buffer[3];
+}
+void load(void)
+{
+	uint16_t size;
+	uint16_t data;
+	uint16_t *mem = (uint16_t *) RAM_ADDR;
+
+	size = fetch_word();
+	size >>= 1;
+	//printf("Expecting %d\n", size);
+
+	//size = 6;
+	for (short i = 0; i < size; i++) {
+		data = fetch_word();
+		mem[i] = data;
+	}
+
+/*
+	size = 24;
+
+	short i;
+	char buffer[100];
+	for (i = 0; i < size; i++)
+		buffer[i] = getchar();
+
+	buffer[i] = '\0';
+	puts(buffer);
+*/
+
+	puts("Load complete");
+
+	for (short i = 0; i < size; i++) {
+		printf("%x ", mem[i]);
+		if (i % 16 == 15)
+			putchar('\n');
+	}
+	putchar('\n');
+}
+/*
+void load(void)
+{
+	uint16_t size;
+	uint16_t data;
+	uint16_t *mem = (uint16_t *) RAM_ADDR;
+
+	size = fetch_word();
+	size >>= 1;
+	printf("Expecting %d\n", size);
+
+	for (short i = 0; i < size; i++) {
+		data = fetch_word();
+		printf("%x\n", data);
+		mem[i] = data;
+	}
+
+	puts("Load complete");
+}
+*/
+
+void boot(void)
+{
+	//void (*entry)() = (void (*)()) ((char *) RAM_ADDR + 0x20);
+	void (*entry)() = (void (*)()) RAM_ADDR;
+	((void (*)()) entry)();
+}
 
 #define BUF_SIZE	100
 #define ARG_SIZE	10
@@ -182,15 +258,22 @@ void serial_read_loop()
 	char *args[ARG_SIZE];
 
 	while (1) {
+		putsn("> ");
 		readline(buffer, BUF_SIZE);
 		puts(buffer);
 		argc = parseline(buffer, args);
 
 		if (!strcmp(args[0], "test")) {
-			puts("this is only a test\n");
+			puts("this is only a test");
 		}
 		else if (!strcmp(args[0], "info")) {
 			info();
+		}
+		else if (!strcmp(args[0], "load")) {
+			load();
+		}
+		else if (!strcmp(args[0], "boot")) {
+			boot();
 		}
 /*
 		else if (!strcmp(args[0], "ramtest")) {
@@ -199,16 +282,16 @@ void serial_read_loop()
 		else if (!strcmp(args[0], "readrom")) {
 			readrom();
 		}
-		else if (!strcmp(args[0], "writerom")) {
-			writerom();
-		}
 		else if (!strcmp(args[0], "runtest")) {
 			run_rom_from_ram();
 		}
 */
+		else if (!strcmp(args[0], "writerom")) {
+			writerom();
+		}
 		else if (!strcmp(args[0], "dump")) {
 			if (argc <= 1)
-				puts("You need an address\n");
+				puts("You need an address");
 			else {
 				dump((const uint8_t *) strtol(args[1], NULL, 16), 0x10);
 			}
@@ -218,29 +301,16 @@ void serial_read_loop()
 
 char *led = (char *) 0x201c;
 
-/*
-const char data_segment[] = { 0x00, 0x00, 0x20, 0x1c, 0x00, 0x70, 0x00, 0x07, 0x00, 0x70, 0x00, 0x07, 0x00, 0x70, 0x00, 0x03 };
-
-void load_data_segment()
-{
-	char *ram = (char *) RAM_ADDR;
-	for (uint16_t i = 0; i < 18; i++) {
-		ram[i] = data_segment[i];
-	}
-}
-*/
-
 int main()
 {
-	//load_data_segment();
-	init_heap((void *) 0x101000, 0x1000);
+	//init_heap((void *) 0x101000, 0x1000);
 
-	//*led = 0x01;
 	init_tty();
 
 	//delay(10000);
 
-	puts("Welcome to the \x1b[32mthing!\x1b[0m\n");
+	puts("\n\nWelcome to the 68k Monitor!\n");
+	//dev_write(0, "\n\nWelcome to the \x1b[32mthing!\n", 29);
 
 	/*
 	int *data = malloc(sizeof(int) * 10);
@@ -279,6 +349,12 @@ int main()
 	for (int i = 0; i < 0x100; i++) {
 		printf("%x ", (uint16_t) mem3[i]);
 	}
+	*/
+
+	/*
+	// Cause an address exception
+	char test[10];
+	*((short *) &test[1]) = 10;
 	*/
 
 	serial_read_loop();

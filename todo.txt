@@ -1,4 +1,9 @@
 
+* the issue at the moment is that pasting text into the serial terminal is causing characters to be lost on the 68k end, and it's not clear what the cause is.
+  It could be miniterm doesn't properly handle RTS/CTS signals, or that they aren't configured correctly on the 68681 end.  There are status bits for overrun
+  and other errors that might result in lost data.  I can indicate those somehow.
+
+* you need a way of netbooting.  Can you somehow cat a special file to serial which executes a command and then expects a file to be sent
 
 68k Single Board Computer:
 

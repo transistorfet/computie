@@ -12,28 +12,54 @@ CFLAGS = -I$(INCLUDE) -m68000 -nostartfiles -nostdlib -g
 ASLISTING = -alh
 
 
-all: main.elf main.bin
-
-OBJS = \
-	src/crt0.o \
-	src/main.o \
-	src/kernel/interrupts.o \
-	src/dev/tty_68681.o \
+MONITOR_OBJS = \
+	src/monitor/crt0.o \
+	src/monitor/monitor.o \
+	src/monitor/vectors.o \
+	src/monitor/tty_68681.o \
 	libc68k.a
 
-main.bin: $(OBJS)
-main.elf: $(OBJS)
-
+KERNEL_OBJS = \
+	src/kernel/crt0.o \
+	src/kernel/main.o \
+	src/kernel/interrupts.o \
+	src/kernel/driver.o \
+	src/kernel/inode.o \
+	src/kernel/filedesc.o \
+	src/kernel/drivers/tty_68681.o \
+	libc68k.a
 
 libc68k.a: \
 	$(patsubst %.c,%.o, $(wildcard src/libc/**/*.c)) \
 	$(patsubst %.s,%.o, $(wildcard src/libc/**/*.s))
+
+#monitor.bin: $(MONITOR_OBJS)
+#monitor.elf: $(MONITOR_OBJS)
+
+#kernel.bin: $(KERNEL_OBJS)
+#kernel.elf: $(KERNEL_OBJS)
+
+
+all: monitor.bin kernel.bin
 
 
 welcome:
 	m68k-linux-gnu-as -m68000 -o welcome.elf welcome.s
 	m68k-linux-gnu-objcopy -O binary welcome.elf welcome.bin
 
+monitor.bin: $(MONITOR_OBJS)
+	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1200 -o $@.elf $^
+	$(CC) $(CFLAGS) --entry=_start -Tmonitor.ld -o $@ $^
+	hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
+
+kernel.bin: $(KERNEL_OBJS)
+	$(CC) $(CFLAGS) --entry=_start -Ttext=0x100000 -Tdata=0x101400 -o $@.elf $^
+	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@ $^
+
+	# Create load script
+	echo "load" > kernel.load
+	wc -c kernel.bin | awk '{printf "%04x", $$1}' >> kernel.load
+	hexdump -v -e '/1 "%02X"' $@ >> kernel.load
 
 %.bin: $^
 	#$(OBJCOPY) -O binary -j .text -j .data -j .rodata $^ $@
@@ -41,13 +67,14 @@ welcome:
 	#$(OBJCOPY) -O binary -j .data $^ $@.data
 	#hexdump -v -e '/1 "0x%02x, "' $@.data > output.data.txt
 
-	$(CC) $(CFLAGS) --entry=_start -Tlinker.ld -o $@ $^
+	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@ $^
 	hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
+	hexdump -v -e '/1 "%02x"' $@ > kernel.bin.txt
 
 %.elf: $^
 	# Link into an elf file for inspection
 	# With the new linker script, this output isn't used
-	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1000 -o $@ $^
+	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1200 -o $@ $^
 
 %.a: $^
 	$(AR) rc $@ $^

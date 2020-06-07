@@ -269,7 +269,7 @@ byte send_mem[] = {
 
 };
 
-#define ROM_SIZE	4800
+#define ROM_SIZE	0x1600
 word mem_size = ROM_SIZE;
 byte mem[ROM_SIZE] = {
 
@@ -487,29 +487,6 @@ void snoop_bus_cycle()
 	//interrupts();
 	}
 }
-
-void setup()
-{
-	Serial.begin(SERIAL_SPEED);
-
-	pinMode(M68_RESET, OUTPUT);
-	digitalWrite(M68_RESET, 1);
-
-	pinMode(M68_BR, OUTPUT);
-	pinMode(M68_BGACK, OUTPUT);
-	pinMode(M68_BG, INPUT);
-	digitalWrite(M68_BR, 0);
-	digitalWrite(M68_BGACK, 0);
-
-	//set_bus_master();
-	set_bus_slave();
-
-	pinMode(13, OUTPUT);
-	digitalWrite(13, 0);
-
-	Serial.print("> ");
-}
-
 
 
 /*
@@ -789,7 +766,7 @@ void do_command(String line)
 	}
 	*/
 
-	if (line.equals("run")) {
+	else if (line.equals("run")) {
 		cpu_reset();
 		cpu_start();
 	}
@@ -800,6 +777,32 @@ void do_command(String line)
 		set_bus_slave();
 		cpu_reset();
 	}
+}
+
+void setup()
+{
+	Serial.begin(SERIAL_SPEED);
+
+	pinMode(M68_RESET, OUTPUT);
+	digitalWrite(M68_RESET, 1);
+
+	pinMode(M68_BR, OUTPUT);
+	pinMode(M68_BGACK, OUTPUT);
+	pinMode(M68_BG, INPUT);
+	digitalWrite(M68_BR, 0);
+	digitalWrite(M68_BGACK, 0);
+
+	//set_bus_master();
+	set_bus_slave();
+
+	pinMode(13, OUTPUT);
+	digitalWrite(13, 0);
+
+	Serial.print("> ");
+
+	// Run by default
+	cpu_reset();
+	cpu_start();
 }
 
 void loop()

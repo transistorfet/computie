@@ -171,6 +171,21 @@ void writerom(void)
 	puts("\nWrite complete");
 }
 
+void verifyrom(void)
+{
+	uint16_t data;
+	uint16_t errors = 0;
+
+	uint16_t *arduino = (uint16_t *) 0x000000;
+	uint16_t *rom = (uint16_t *) ROM_ADDR;
+	for (int i = 0; i < ROM_SIZE; i++) {
+		if (rom[i] != arduino[i]) {
+			printf("F @ %x\n", i);
+		}
+	}
+
+	puts("\nVerification complete");
+}
 
 uint16_t fetch_word()
 {
@@ -183,6 +198,7 @@ uint16_t fetch_word()
 
 	return (buffer[0] << 12) | (buffer[1] << 8) | (buffer[2] << 4) | buffer[3];
 }
+
 void load(void)
 {
 	uint16_t size;
@@ -191,59 +207,19 @@ void load(void)
 
 	size = fetch_word();
 	size >>= 1;
-	//printf("Expecting %d\n", size);
-
-	//size = 6;
-	for (short i = 0; i < size; i++) {
-		data = fetch_word();
-		mem[i] = data;
-	}
-
-/*
-	size = 24;
-
-	short i;
-	char buffer[100];
-	for (i = 0; i < size; i++)
-		buffer[i] = getchar();
-
-	buffer[i] = '\0';
-	puts(buffer);
-*/
-
-	puts("Load complete");
-
-	for (short i = 0; i < size; i++) {
-		printf("%x ", mem[i]);
-		if (i % 16 == 15)
-			putchar('\n');
-	}
-	putchar('\n');
-}
-/*
-void load(void)
-{
-	uint16_t size;
-	uint16_t data;
-	uint16_t *mem = (uint16_t *) RAM_ADDR;
-
-	size = fetch_word();
-	size >>= 1;
-	printf("Expecting %d\n", size);
+	//printf("Expecting %x\n", size);
 
 	for (short i = 0; i < size; i++) {
 		data = fetch_word();
-		printf("%x\n", data);
+		//printf("%x ", data);
 		mem[i] = data;
 	}
 
 	puts("Load complete");
 }
-*/
 
 void boot(void)
 {
-	//void (*entry)() = (void (*)()) ((char *) RAM_ADDR + 0x20);
 	void (*entry)() = (void (*)()) RAM_ADDR;
 	((void (*)()) entry)();
 }
@@ -274,6 +250,9 @@ void serial_read_loop()
 		}
 		else if (!strcmp(args[0], "boot")) {
 			boot();
+		}
+		else if (!strcmp(args[0], "verifyrom")) {
+			verifyrom();
 		}
 /*
 		else if (!strcmp(args[0], "ramtest")) {

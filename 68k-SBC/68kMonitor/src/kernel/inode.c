@@ -13,6 +13,7 @@ void init_inode()
 	}
 }
 
+// TODO this function should take a path, but I have no path mapping yet, so take a device_t
 //struct inode *new_inode(char *path, file_mode_t mode)
 struct inode *new_inode(device_t dev, file_mode_t mode)
 {
@@ -30,12 +31,19 @@ struct inode *new_inode(device_t dev, file_mode_t mode)
 
 struct inode *get_inode(device_t dev, inode_t num)
 {
-
+	for (char i = 0; i < MAX_INODES; i++) {
+		if (inode_table[i].device == dev && inode_table[i].i_num == num) {
+			// TODO is this supposed to increment the refcount
+			return &inode_table[i];
+		}
+	}
+	return NULL;
 }
 
 int free_inode(struct inode *inode)
 {
-
+	inode->refcount--;
+	return 0;
 }
 
 

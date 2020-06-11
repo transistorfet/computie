@@ -12,9 +12,6 @@ int register_driver(devmajor_t major, struct driver *driver)
 	if (major >= MAX_DRIVERS)
 		return -1;
 
-	if (drv_table[major])
-		return -1;
-
 	drv_table[major] = driver;
 }
 

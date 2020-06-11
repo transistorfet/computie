@@ -3,28 +3,28 @@
 #include "tty.h"
 
 // MC68681 Register Addresses
-#define MR1A_MR2A_ADDR	((uint8_t *) 0x700001)
-#define SRA_RD_ADDR	((uint8_t *) 0x700003)
-#define CSRA_WR_ADDR	((uint8_t *) 0x700003)
-#define CRA_WR_ADDR	((uint8_t *) 0x700005)
-#define TBA_WR_ADDR	((uint8_t *) 0x700007)
-#define RBA_RD_ADDR	((uint8_t *) 0x700007)
-#define ACR_WR_ADDR	((uint8_t *) 0x700009)
+#define MR1A_MR2A_ADDR	((volatile uint8_t *) 0x700001)
+#define SRA_RD_ADDR	((volatile uint8_t *) 0x700003)
+#define CSRA_WR_ADDR	((volatile uint8_t *) 0x700003)
+#define CRA_WR_ADDR	((volatile uint8_t *) 0x700005)
+#define TBA_WR_ADDR	((volatile uint8_t *) 0x700007)
+#define RBA_RD_ADDR	((volatile uint8_t *) 0x700007)
+#define ACR_WR_ADDR	((volatile uint8_t *) 0x700009)
 
-#define CTUR_WR_ADDR	((uint8_t *) 0x70000D)
-#define CTLR_WR_ADDR	((uint8_t *) 0x70000F)
-#define START_RD_ADDR	((uint8_t *) 0x70001D)
-#define STOP_RD_ADDR	((uint8_t *) 0x70001F)
+#define CTUR_WR_ADDR	((volatile uint8_t *) 0x70000D)
+#define CTLR_WR_ADDR	((volatile uint8_t *) 0x70000F)
+#define START_RD_ADDR	((volatile uint8_t *) 0x70001D)
+#define STOP_RD_ADDR	((volatile uint8_t *) 0x70001F)
 
-#define IPCR_RD_ADDR	((uint8_t *) 0x700009)
-#define OPCR_WR_ADDR	((uint8_t *) 0x70001B)
-#define INPUT_RD_ADDR	((uint8_t *) 0x70001B)
-#define OUT_SET_ADDR	((uint8_t *) 0x70001D)
-#define OUT_RESET_ADDR	((uint8_t *) 0x70001F)
+#define IPCR_RD_ADDR	((volatile uint8_t *) 0x700009)
+#define OPCR_WR_ADDR	((volatile uint8_t *) 0x70001B)
+#define INPUT_RD_ADDR	((volatile uint8_t *) 0x70001B)
+#define OUT_SET_ADDR	((volatile uint8_t *) 0x70001D)
+#define OUT_RESET_ADDR	((volatile uint8_t *) 0x70001F)
 
-#define ISR_RD_ADDR	((uint8_t *) 0x70000B)
-#define IMR_WR_ADDR	((uint8_t *) 0x70000B)
-#define IVR_WR_ADDR	((uint8_t *) 0x700019)
+#define ISR_RD_ADDR	((volatile uint8_t *) 0x70000B)
+#define IMR_WR_ADDR	((volatile uint8_t *) 0x70000B)
+#define IVR_WR_ADDR	((volatile uint8_t *) 0x700019)
 
 
 // MC68681 Command Numbers

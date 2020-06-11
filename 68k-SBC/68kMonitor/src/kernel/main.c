@@ -1,9 +1,11 @@
 
 #include "tty.h"
-#include "stdint.h"
-#include "string.h"
-#include "stdio.h"
-#include "stdlib.h"
+#include <stdint.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <kernel/filedesc.h>
 
 
 void delay(short count) {
@@ -213,22 +215,12 @@ void serial_read_loop()
 				dump((const uint8_t *) strtol(args[1], NULL, 16), 0x10);
 			}
 		}
+		else if (!strcmp(args[0], "exit")) {
+			return;
+		}
 	}
 }
 
-/*
-const char data_segment[] = { 0x00, 0x00, 0x20, 0x1c, 0x00, 0x70, 0x00, 0x07, 0x00, 0x70, 0x00, 0x07, 0x00, 0x70, 0x00, 0x03 };
-
-void load_data_segment()
-{
-	char *ram = (char *) RAM_ADDR;
-	for (uint16_t i = 0; i < 18; i++) {
-		ram[i] = data_segment[i];
-	}
-}
-*/
-
-#include <kernel/filedesc.h>
 extern struct inode *tty_inode;
 static fd_table_t fd_table;
 
@@ -236,17 +228,28 @@ int main()
 {
 	//load_data_segment();
 	init_heap((void *) 0x110000, 0x1000);
+	init_interrupts();
+	init_syscall();
 
 	init_inode();
 	init_fd_table(fd_table);
 	init_tty();
 
 	int fd = new_fd(fd_table, tty_inode);
+	dev_write(tty_inode->device, "\nTEST\n", 6);
+	//tty_68681_write(tty_inode->device, "\nTEST\n", 6);
 
 	//delay(10000);
 
 	puts("\n\nWelcome to the \x1b[32mOS!\n");
 	//dev_write(0, "\n\nWelcome to the \x1b[32mthing!\n", 29);
+
+	// Force an address error
+	//uint16_t *data = (uint16_t *) 0x100001;
+	//uint16_t value = *data;
+	char *str = "Hey syscall";
+	asm("move.l	%0, %%d0\n": : "r" (str));
+	asm("trap	#1\n");
 
 	/*
 	int *data = malloc(sizeof(int) * 10);

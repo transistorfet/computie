@@ -1,18 +1,21 @@
 
-* the issue at the moment is that pasting text into the serial terminal is causing characters to be lost on the 68k end, and it's not clear what the cause is.
-  It could be miniterm doesn't properly handle RTS/CTS signals, or that they aren't configured correctly on the 68681 end.  There are status bits for overrun
-  and other errors that might result in lost data.  I can indicate those somehow.
+* in order to support a unix/file-based os, I need to have a a block device of some kind, be it a ramdisk, a physical device of some kind, or a
+  serial protocol that runs a disk emulator on a computer
 
-* you need a way of netbooting.  Can you somehow cat a special file to serial which executes a command and then expects a file to be sent
+* I need to make the interrupt handler print the number and info better, to make it easier to debug when serial-booting the kernel
+
+* pasting text into the serial terminal is causing characters to be lost on the 68k end, and it's not clear what the cause is.  The overrun bit is set.
+  It could be miniterm doesn't properly handle RTS/CTS signals, or that they aren't configured correctly on the 68681 end.  I've got a workaround to
+  send bytes of a file slowly so it doesn't overrun, but even reading exclusively from the input as fast as possible when run from rom doesn't make the
+  problem disappear completely
+
 
 68k Single Board Computer:
 
-	* make it possible to upload a program over serial and run it, rather than having it in the image
-
 	* in seems like AS in the interrupt ack is not necessary.  It can acknowledge the interrupt fine without it
 	* a counter is not strictly needed for memory
-
 	* add interrupt logic to schematic and pcb
+	* you need a proper reset circuit that slowly turns it on through a cap?
 
 	* if you have interrupts, and you connect at least one button to one of the IP change interrupts, then you could use the button for breaking into a debugger?
 	* how can you modify the design to be better for debugging, possibly without an arduino.  Can you have step debugging through a hardware button, so that the bus
@@ -21,7 +24,6 @@
 	  for those, you could have it enter a debugger, that possibly allows single stepping?  I'm not sure how to implement that
 
 	* do I need optoisolators for the ftdi?  There is a blip where the arduino resets when the serial converter is connected
-	* you need a proper reset circuit that slowly turns it on through a cap?
 
 	* can you add a video/lcd expansion via the expansion connector?  Maybe you could get ends to directly connect it?  Would it be via parallel interface?
 	  would you need a PIT 68230 to interface?  How complex are the interfaces of those graphic ones?

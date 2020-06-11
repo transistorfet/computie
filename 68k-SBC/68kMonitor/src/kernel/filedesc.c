@@ -19,3 +19,8 @@ int new_fd(fd_table_t table, struct inode *inode)
 	}
 }
 
+struct file *get_fd(fd_table_t table, int fd)
+{
+	return &table[fd];
+}
+

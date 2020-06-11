@@ -7,7 +7,8 @@ OBJDUMP = m68k-linux-gnu-objdump
 OBJCOPY = m68k-linux-gnu-objcopy
 RANLIB = m68k-linux-gnu-ranlib
 INCLUDE = ./include
-CFLAGS = -I$(INCLUDE) -m68000 -nostartfiles -nostdlib -g
+CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -mpcrel -O3
+#CFLAGS += -z max-page-size=0x04	# reduce the elf output size by reducing the alignment
 
 ASLISTING = -alh
 
@@ -26,6 +27,7 @@ KERNEL_OBJS = \
 	src/kernel/driver.o \
 	src/kernel/inode.o \
 	src/kernel/filedesc.o \
+	src/kernel/syscall.o \
 	src/kernel/drivers/tty_68681.o \
 	libc68k.a
 
@@ -40,41 +42,53 @@ libc68k.a: \
 #kernel.elf: $(KERNEL_OBJS)
 
 
-all: monitor.bin kernel.bin
+
+all: monitor.bin kernel.bin kernel.load
 
 
 welcome:
-	m68k-linux-gnu-as -m68000 -o welcome.elf welcome.s
-	m68k-linux-gnu-objcopy -O binary welcome.elf welcome.bin
+	$(AS) -m68000 -o welcome.elf welcome.s
+	$(OBJCOPY) -O binary welcome.elf welcome.bin
 
 monitor.bin: $(MONITOR_OBJS)
 	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1200 -o $@.elf $^
 	$(CC) $(CFLAGS) --entry=_start -Tmonitor.ld -o $@ $^
-	hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
+	hexdump -v -e '/1 "0x%02X, "' $@ > output.txt
 
 kernel.bin: $(KERNEL_OBJS)
-	$(CC) $(CFLAGS) --entry=_start -Ttext=0x100000 -Tdata=0x101400 -o $@.elf $^
+	$(CC) $(CFLAGS) --entry=_start -Ttext=0x100000 -o $@.elf $^
 	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@ $^
 
-	# Create load script
-	echo "load" > kernel.load
-	wc -c kernel.bin | awk '{printf "%04x", $$1}' >> kernel.load
-	hexdump -v -e '/1 "%02X"' $@ >> kernel.load
+%.load: %.bin
+	echo "load" > $@
+	wc -c $^ | awk '{printf "%04X", $$1}' >> $@
+	hexdump -v -e '/1 "%02X"' $^ >> $@
 
-%.bin: $^
-	#$(OBJCOPY) -O binary -j .text -j .data -j .rodata $^ $@
-	#hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
-	#$(OBJCOPY) -O binary -j .data $^ $@.data
-	#hexdump -v -e '/1 "0x%02x, "' $@.data > output.data.txt
+# TODO this was to test the optimization
+#optest: libc68k.a src/monitor/tty_68681.o  src/commands/tty.o src/commands/test.bin
+#	cat vectors.data src/commands/test.bin > test.bin
+#	hexdump -v -e '/1 "0x%02X, "' test.bin > output.txt
 
-	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@ $^
-	hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
-	hexdump -v -e '/1 "%02x"' $@ > kernel.bin.txt
 
-%.elf: $^
-	# Link into an elf file for inspection
-	# With the new linker script, this output isn't used
-	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1200 -o $@ $^
+%.bin: %.o
+	$(CC) $(CFLAGS) --entry=main -Ttext=0 -o $@.elf $< src/monitor/tty_68681.o libc68k.a
+	$(OBJCOPY) -O binary -j .text -j .rodata -j .data $@.elf $@
+
+#%.bin: %.elf
+#	#$(OBJCOPY) -O binary -j .text -j .data -j .rodata $^ $@
+#	#hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
+#	#$(OBJCOPY) -O binary -j .data $^ $@.data
+#	#hexdump -v -e '/1 "0x%02x, "' $@.data > output.data.txt
+#
+#	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@ $^
+#	hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
+#	hexdump -v -e '/1 "%02x"' $@ > kernel.bin.txt
+#
+#%.elf: $^
+#	# Link into an elf file for inspection
+#	# With the new linker script, this output isn't used
+#	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1200 -o $@ $^
+
 
 %.a: $^
 	$(AR) rc $@ $^
@@ -90,7 +104,7 @@ dump-main:
 	$(OBJDUMP) -D main.elf
 
 clean:
-	find . \( -name "*.o" -or -name "*.o64" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" \) -delete -print
+	find . \( -name "*.o" -or -name "*.o64" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" -or -name "*.load" \) -delete -print
 
 
 test: test.o64 src/stdio.o64

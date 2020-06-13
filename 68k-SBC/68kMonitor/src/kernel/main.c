@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #include <kernel/filedesc.h>
+#include <kernel/syscall.h>
 
 
 void delay(short count) {
@@ -95,68 +96,6 @@ void info(void)
 #define ROM_ADDR	0x200000
 #define ROM_SIZE	0x1400
 
-/*
-void ramtest(void)
-{
-	uint16_t data;
-	uint16_t errors = 0;
-
-	uint16_t *mem = (uint16_t *) RAM_ADDR;
-	for (int i = 0; i < RAM_SIZE; i++) {
-		mem[i] = (uint16_t) i;
-	}
-
-	
-	//uint8_t *mem2 = (uint8_t *) RAM_ADDR;
-	//for (int i = 0; i < RAM_SIZE; i++) {
-	//	printf("%x ", (uint8_t) mem2[i]);
-	//}
-
-
-	for (int i = 0; i < RAM_SIZE; i++) {
-		data = (uint16_t) mem[i];
-		printf("%x ", data);
-		if (data != i)
-			errors++;
-	}
-
-	printf("\nErrors: %d", errors);
-}
-
-
-void readrom(void)
-{
-	uint16_t data;
-	uint16_t reference;
-	uint16_t errors = 0;
-
-	uint16_t *arduino = (uint16_t *) 0x000000;
-	uint16_t *rom = (uint16_t *) ROM_ADDR;
-	for (int i = 0; i < ROM_SIZE; i++) {
-		data = (uint16_t) rom[i];
-		reference = arduino[i];
-		printf("%x %x\n", data, reference);
-		if (data != reference)
-			errors++;
-	}
-
-	printf("\nErrors: %d", errors);
-}
-
-
-void run_rom_from_ram(void)
-{
-	uint16_t *arduino = (uint16_t *) 0x000000;
-	uint16_t *mem = (uint16_t *) RAM_ADDR;
-	for (int i = 0; i < 4200; i++) {
-		mem[i] = arduino[i];
-	}
-
-	void (*entry)() = (void (*)()) (RAM_ADDR + 0x20);
-	((void (*)()) entry)();
-}
-*/
-
 void writerom(void)
 {
 	uint16_t data;
@@ -172,6 +111,46 @@ void writerom(void)
 
 	printf("\nWrite complete");
 }
+
+uint16_t *program_mem = NULL;
+
+uint16_t fetch_word()
+{
+	char buffer[4];
+
+	for (char i = 0; i < 4; i++) {
+		buffer[i] = getchar();
+		buffer[i] = buffer[i] <= '9' ? buffer[i] - 0x30 : buffer[i] - 0x37;
+	}
+
+	return (buffer[0] << 12) | (buffer[1] << 8) | (buffer[2] << 4) | buffer[3];
+}
+
+void load(void)
+{
+	uint16_t size;
+	uint16_t data;
+	uint16_t *mem = (uint16_t *) program_mem;
+
+	size = fetch_word();
+	size >>= 1;
+	//printf("Expecting %x\n", size);
+
+	for (short i = 0; i < size; i++) {
+		data = fetch_word();
+		//printf("%x ", data);
+		mem[i] = data;
+	}
+
+	puts("Load complete");
+}
+
+void boot(void)
+{
+	void (*entry)() = (void (*)()) program_mem;
+	((void (*)()) entry)();
+}
+
 
 
 #define BUF_SIZE	100
@@ -194,17 +173,12 @@ void serial_read_loop()
 		else if (!strcmp(args[0], "info")) {
 			info();
 		}
-/*
-		else if (!strcmp(args[0], "ramtest")) {
-			ramtest();
+		else if (!strcmp(args[0], "load")) {
+			load();
 		}
-		else if (!strcmp(args[0], "readrom")) {
-			readrom();
+		else if (!strcmp(args[0], "boot")) {
+			boot();
 		}
-		else if (!strcmp(args[0], "runtest")) {
-			run_rom_from_ram();
-		}
-*/
 		else if (!strcmp(args[0], "writerom")) {
 			writerom();
 		}
@@ -235,11 +209,21 @@ int main()
 	init_fd_table(fd_table);
 	init_tty();
 
-	int fd = new_fd(fd_table, tty_inode);
-	dev_write(tty_inode->device, "\nTEST\n", 6);
-	//tty_68681_write(tty_inode->device, "\nTEST\n", 6);
 
-	//delay(10000);
+	// Allocate memory for loading a processess
+	program_mem = malloc(0x1000);
+
+
+	int fd = new_fd(fd_table, tty_inode);
+
+
+	struct file *f = get_fd(fd_table, fd);
+	//if (!f)
+	//	return 0;
+	dev_write(f->inode->device, "\nTEST\n", 6);
+
+
+
 
 	puts("\n\nWelcome to the \x1b[32mOS!\n");
 	//dev_write(0, "\n\nWelcome to the \x1b[32mthing!\n", 29);
@@ -247,9 +231,17 @@ int main()
 	// Force an address error
 	//uint16_t *data = (uint16_t *) 0x100001;
 	//uint16_t value = *data;
-	char *str = "Hey syscall";
-	asm("move.l	%0, %%d0\n": : "r" (str));
-	asm("trap	#1\n");
+
+	//char *str = "Hey syscall, %d";
+	//asm(
+	//"move.l	#2, %%d0\n"
+	//"move.l	%0, %%d1\n"
+	//"move.l	#125, %%a0\n"
+	//"trap	#1\n"
+	//: : "r" (str)
+	//);
+
+	SYSCALL(2, "Hey There, %d\n", 1337, 0);
 
 	/*
 	int *data = malloc(sizeof(int) * 10);

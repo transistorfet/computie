@@ -1,15 +1,27 @@
 
+#include <stdio.h>
+
 #include "interrupts.h"
 
-__attribute__((interrupt)) void handle_syscall()
+#define SYSCALL_MAX	4
+
+
+void test()
 {
-	char *str;
-
-	asm("move.l	%%d0, %0\n": "=r" (str));
-	puts(str);
 	printf("It's the first trap!\n");
-
 }
+
+
+#include "tty.h"
+
+void *syscall_table[SYSCALL_MAX] = {
+	test,
+	puts,
+	printf,
+	putchar,
+};
+
+extern void handle_syscall();
 
 void init_syscall()
 {

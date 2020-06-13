@@ -1,4 +1,7 @@
 
+#include <stddef.h>
+
+#include <errno.h>
 #include <kernel/filedesc.h>
 
 
@@ -21,6 +24,8 @@ int new_fd(fd_table_t table, struct inode *inode)
 
 struct file *get_fd(fd_table_t table, int fd)
 {
+	if (fd >= OPEN_MAX || !table[fd].inode)
+		return NULL;
 	return &table[fd];
 }
 

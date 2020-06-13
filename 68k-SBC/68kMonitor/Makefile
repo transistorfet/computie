@@ -18,7 +18,7 @@ MONITOR_OBJS = \
 	src/monitor/monitor.o \
 	src/monitor/vectors.o \
 	src/monitor/tty_68681.o \
-	libc68k.a
+	libc-68k-none.a
 
 KERNEL_OBJS = \
 	src/kernel/crt0.o \
@@ -28,12 +28,24 @@ KERNEL_OBJS = \
 	src/kernel/inode.o \
 	src/kernel/filedesc.o \
 	src/kernel/syscall.o \
+	src/kernel/syscall_entry.o \
 	src/kernel/drivers/tty_68681.o \
-	libc68k.a
+	libc-68k-none.a
 
-libc68k.a: \
+LIBC_BASE_OBJS = $(filter-out src/libc/arch/*, \
 	$(patsubst %.c,%.o, $(wildcard src/libc/**/*.c)) \
-	$(patsubst %.s,%.o, $(wildcard src/libc/**/*.s))
+	$(patsubst %.s,%.o, $(wildcard src/libc/**/*.s)) \
+)
+
+ARCH = 68k-os
+
+LIBC_ARCH_OBJS = $(filter-out src/libc/arch/*, \
+	$(patsubst %.c,%.o, $(wildcard src/libc/arch/$(ARCH)/*.c)) \
+	$(patsubst %.s,%.o, $(wildcard src/libc/arch/$(ARCH)/*.s)) \
+)
+
+libc-68k-none.a: $(LIBC_BASE_OBJS)
+libc-68k-os.a: $(LIBC_BASE_OBJS) $(LIBC_ARCH_OBJS)
 
 #monitor.bin: $(MONITOR_OBJS)
 #monitor.elf: $(MONITOR_OBJS)
@@ -70,8 +82,9 @@ kernel.bin: $(KERNEL_OBJS)
 #	hexdump -v -e '/1 "0x%02X, "' test.bin > output.txt
 
 
-%.bin: %.o
-	$(CC) $(CFLAGS) --entry=main -Ttext=0 -o $@.elf $< src/monitor/tty_68681.o libc68k.a
+# This is specifically for commands
+%.bin: %.o libc-68k-os.a
+	$(CC) $(CFLAGS) --entry=main -Ttext=0 -o $@.elf $< libc-68k-os.a
 	$(OBJCOPY) -O binary -j .text -j .rodata -j .data $@.elf $@
 
 #%.bin: %.elf

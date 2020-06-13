@@ -13,6 +13,7 @@ session.vim
 *.lst
 *.rel
 *.sym
+*.load
 
 # EDA Output Files
 *.gbr

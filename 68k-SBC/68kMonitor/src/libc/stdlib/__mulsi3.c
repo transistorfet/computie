@@ -1,6 +1,7 @@
 
 
 #ifdef __m68k__
+// TODO this only supports positive integers atm
 int __mulsi3(int a, int b)
 {
 	int c;

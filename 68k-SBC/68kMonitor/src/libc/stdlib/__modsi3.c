@@ -1,6 +1,7 @@
 
 
 #ifdef __m68k__
+// TODO this only supports a positive 32bit numerator and a positive 16bit denominator
 int __modsi3(int a, int b)
 {
 	int c;

@@ -33,28 +33,13 @@ static interrupt_handler_t vector_table[INTERRUPT_MAX] = {
 	NULL,		// Trace
 };
 
-//static interrupt_handler_t *vector_table = NULL;
-
 void init_interrupts()
 {
-	//vector_table = malloc(sizeof(interrupt_handler_t) * 128);
-
-	/*
-	// NOTE these reset vectors wont be used because VBR will be set to 0 on reset
-	vector_table[0] = (interrupt_handler_t) STACK_POINTER_INIT;
-	vector_table[1] = _start;
-
-	// Initialize the first few exceptions with a fatal error function that will halt
-	for (char i = 2; i <= 8; i++)
-		vector_table[i] = fatal_error;
-
-	// Set all other vectors to NULL
-	for (char i = 9; i < INTERRUPT_MAX; i++)
-		vector_table[i] = NULL;
-	*/
-
-	vector_table[IV_TRAP1] = handle_trap_1;
-	asm("movec	%0, %%vbr\n" : : "r" (vector_table) : );
+	// Load the VBR register with the address of our vector table
+	asm(
+	"movec	%0, %%vbr\n"
+	: : "r" (vector_table) :
+	);
 }
 
 void set_interrupt(char iv_num, interrupt_handler_t handler)
@@ -69,12 +54,4 @@ __attribute__((interrupt)) void fatal_error()
 	printf("Fatl Error at %x, %x, %x, %x, %x, %x: Halting...\n", *addr, *(addr + 1), *(addr + 2), *(addr + 3), *(addr + 4), *(addr + 5));
 	asm("stop #0x2700\n");
 }
-
-__attribute__((interrupt)) void handle_trap_1()
-{
-	printf("It's the first trap!\n");
-	asm("stop #0x2700\n");
-}
-
-
 

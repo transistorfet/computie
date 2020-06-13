@@ -36,6 +36,8 @@
 
 typedef void (*interrupt_handler_t)();
 
+void init_interrupts();
+void set_interrupt(char iv_num, interrupt_handler_t handler);
 
 #endif
 

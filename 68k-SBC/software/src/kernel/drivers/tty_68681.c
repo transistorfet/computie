@@ -5,7 +5,6 @@
 #include <kernel/inode.h>
 #include <kernel/driver.h>
 
-#include "tty.h"
 
 int tty_68681_open(devminor_t minor, int access);
 int tty_68681_close(devminor_t minor);

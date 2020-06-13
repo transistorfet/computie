@@ -1,5 +1,4 @@
 
-#include "tty.h"
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -7,6 +6,8 @@
 
 #include <kernel/filedesc.h>
 #include <kernel/syscall.h>
+
+#include "interrupts.h"
 
 
 void delay(short count) {
@@ -194,6 +195,11 @@ void serial_read_loop()
 		}
 	}
 }
+
+
+extern void init_tty();
+extern void init_syscall();
+
 
 extern struct inode *tty_inode;
 static fd_table_t fd_table;

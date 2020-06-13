@@ -1,6 +1,5 @@
 
 #include <stdint.h>
-#include "tty.h"
 
 // MC68681 Register Addresses
 #define MR1A_MR2A_ADDR	((volatile uint8_t *) 0x700001)

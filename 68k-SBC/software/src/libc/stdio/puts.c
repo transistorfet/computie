@@ -1,6 +1,5 @@
 
-#include "tty.h"
-#include "stdio.h"
+#include <stdio.h>
 
 
 int puts(const char *str)

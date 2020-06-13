@@ -12,8 +12,6 @@ void test()
 }
 
 
-#include "tty.h"
-
 void *syscall_table[SYSCALL_MAX] = {
 	test,
 	puts,

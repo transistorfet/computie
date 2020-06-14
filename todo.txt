@@ -1,4 +1,7 @@
 
+* rewrite the math functions to use fewer registers (this ain't a risc processor)
+
+
 * in order to support a unix/file-based os, I need to have a a block device of some kind, be it a ramdisk, a physical device of some kind, or a
   serial protocol that runs a disk emulator on a computer
 

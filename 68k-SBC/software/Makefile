@@ -21,6 +21,7 @@ MONITOR_OBJS = \
 	libc-68k-none.a
 
 KERNEL_OBJS = \
+	include/kernel/syscall.h \
 	src/kernel/crt0.o \
 	src/kernel/main.o \
 	src/kernel/interrupts.o \
@@ -30,6 +31,7 @@ KERNEL_OBJS = \
 	src/kernel/syscall.o \
 	src/kernel/syscall_entry.o \
 	src/kernel/drivers/tty_68681.o \
+	src/kernel/sh.o \
 	libc-68k-none.a
 
 LIBC_BASE_OBJS = $(filter-out src/libc/arch/*, \
@@ -40,8 +42,8 @@ LIBC_BASE_OBJS = $(filter-out src/libc/arch/*, \
 ARCH = 68k-os
 
 LIBC_ARCH_OBJS = $(filter-out src/libc/arch/*, \
-	$(patsubst %.c,%.o, $(wildcard src/libc/arch/$(ARCH)/*.c)) \
-	$(patsubst %.s,%.o, $(wildcard src/libc/arch/$(ARCH)/*.s)) \
+	$(patsubst %.c,%.o, $(wildcard src/libc/arch/$(ARCH)/**/*.c)) \
+	$(patsubst %.s,%.o, $(wildcard src/libc/arch/$(ARCH)/**/*.s)) \
 )
 
 libc-68k-none.a: $(LIBC_BASE_OBJS)

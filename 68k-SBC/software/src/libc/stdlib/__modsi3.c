@@ -24,8 +24,8 @@ int __modsi3(int a, int b)
 	"clr.w	%%d0\n"
 	"swap	%%d0\n"
 	"move.w	%%d0, %0\n"
-	: "=r" (c)
-	: "r" (a), "r" (b)
+	: "=g" (c)
+	: "g" (a), "g" (b)
 	: "%d0", "%d1", "%d2"
 	);
 	return c;

@@ -27,8 +27,8 @@ int __mulsi3(int a, int b)
 	"add.l	%%d2,%%d0\n"	// add up the results
 	"add.l	%%d1,%%d0\n"
 	"move.l	%%d0, %0\n"
-	: "=r" (c)
-	: "r" (a), "r" (b)
+	: "=g" (c)
+	: "g" (a), "g" (b)
 	: "%d0", "%d1", "%d2", "%d3"
 	);
 	return c;

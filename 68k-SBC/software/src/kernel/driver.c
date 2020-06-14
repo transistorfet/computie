@@ -45,7 +45,7 @@ int dev_read(device_t dev, char *buffer, size_t size)
 	return drv_table[major]->read(minor, buffer, size);
 }
 
-int dev_write(device_t dev, char *buffer, size_t size)
+int dev_write(device_t dev, const char *buffer, size_t size)
 {
 	devmajor_t major = dev >> 8;
 	devminor_t minor = (devminor_t) dev;

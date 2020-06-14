@@ -28,6 +28,7 @@ KERNEL_OBJS = \
 	src/kernel/driver.o \
 	src/kernel/inode.o \
 	src/kernel/filedesc.o \
+	src/kernel/process.o \
 	src/kernel/syscall.o \
 	src/kernel/syscall_entry.o \
 	src/kernel/drivers/tty_68681.o \
@@ -41,10 +42,10 @@ LIBC_BASE_OBJS = $(filter-out src/libc/arch/*, \
 
 ARCH = 68k-os
 
-LIBC_ARCH_OBJS = $(filter-out src/libc/arch/*, \
+LIBC_ARCH_OBJS = \
 	$(patsubst %.c,%.o, $(wildcard src/libc/arch/$(ARCH)/**/*.c)) \
-	$(patsubst %.s,%.o, $(wildcard src/libc/arch/$(ARCH)/**/*.s)) \
-)
+	$(patsubst %.s,%.o, $(wildcard src/libc/arch/$(ARCH)/**/*.s))
+
 
 libc-68k-none.a: $(LIBC_BASE_OBJS)
 libc-68k-os.a: $(LIBC_BASE_OBJS) $(LIBC_ARCH_OBJS)

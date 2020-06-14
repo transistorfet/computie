@@ -9,7 +9,7 @@
 int tty_68681_open(devminor_t minor, int access);
 int tty_68681_close(devminor_t minor);
 int tty_68681_read(devminor_t minor, char *buffer, size_t size);
-int tty_68681_write(devminor_t minor, char *buffer, size_t size);
+int tty_68681_write(devminor_t minor, const char *buffer, size_t size);
 int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp);
 
 struct driver tty_68681_driver = {
@@ -131,7 +131,7 @@ int tty_68681_read(devminor_t minor, char *buffer, size_t size)
 		*buffer = getchar();
 }
 
-int tty_68681_write(devminor_t minor, char *buffer, size_t size)
+int tty_68681_write(devminor_t minor, const char *buffer, size_t size)
 {
 	for (; size > 0; size--, buffer++)
 		putchar(*buffer);

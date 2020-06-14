@@ -2,6 +2,8 @@
 #ifndef STRING_H
 #define STRING_H
 
+#include <stddef.h>
+
 int strcmp(const char *, const char *);
 
 int strlen(const char *);
@@ -15,5 +17,7 @@ const char *strstr(const char *, const char *);
 char *strchr(const char *, int);
 char *strrchr(const char *, int);
 
+void *memcpy(void *dest, const void *src, size_t num);
+void *memset_s(void *ptr, int value, size_t num);		// NOTE it seems if this is called "memset", it will always be optimized away
 
 #endif

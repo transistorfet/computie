@@ -9,7 +9,7 @@
 #define SYS_WRITE	3
 
 
-inline int SYSCALL1(int n, int a1)
+static inline int SYSCALL1(int n, int a1)
 {
 	register int ret;
 
@@ -31,7 +31,7 @@ inline int SYSCALL1(int n, int a1)
 	return ret;
 }
 
-inline int SYSCALL3(int n, int a1, void *a2, void *a3)
+static inline int SYSCALL3(int n, int a1, void *a2, void *a3)
 {
 	register int ret;
 

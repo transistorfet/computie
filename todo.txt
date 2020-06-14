@@ -1,17 +1,18 @@
 
 * rewrite the math functions to use fewer registers (this ain't a risc processor)
+* there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
 
-
-* in order to support a unix/file-based os, I need to have a a block device of some kind, be it a ramdisk, a physical device of some kind, or a
-  serial protocol that runs a disk emulator on a computer
 
 * I need to make the interrupt handler print the number and info better, to make it easier to debug when serial-booting the kernel
+* in order to support a unix/file-based os, I need to have a a block device of some kind, be it a ramdisk, a physical device of some kind, or a
+  serial protocol that runs a disk emulator on a computer
 
 * pasting text into the serial terminal is causing characters to be lost on the 68k end, and it's not clear what the cause is.  The overrun bit is set.
   It could be miniterm doesn't properly handle RTS/CTS signals, or that they aren't configured correctly on the 68681 end.  I've got a workaround to
   send bytes of a file slowly so it doesn't overrun, but even reading exclusively from the input as fast as possible when run from rom doesn't make the
   problem disappear completely
 
+* there is one spot in syscall_entry that has an absolute reference, which I think is the only thing that makes the kernel unrelocatable
 
 68k Single Board Computer:
 

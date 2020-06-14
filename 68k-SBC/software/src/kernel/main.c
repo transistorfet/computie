@@ -8,6 +8,7 @@
 #include <kernel/syscall.h>
 
 #include "interrupts.h"
+#include "process.h"
 
 
 extern void sh_task();
@@ -18,7 +19,13 @@ extern void init_syscall();
 
 
 extern struct inode *tty_inode;
-fd_table_t proc_fd_table;
+struct process *current_proc;
+
+
+const char hello_task[100] = {
+#include "../test.txt"
+};
+
 
 int main()
 {
@@ -28,20 +35,28 @@ int main()
 	init_syscall();
 
 	init_inode();
-	init_fd_table(proc_fd_table);
 	init_tty();
 
 
 
-	int fd = new_fd(proc_fd_table, tty_inode);
+	// TODO we don't use inodes yet, so passing in NULL
+	current_proc = new_proc(NULL);
+	int fd = new_fd(current_proc->fd_table, tty_inode);
 
 
-	struct file *f = get_fd(proc_fd_table, fd);
+	struct file *f = get_fd(current_proc->fd_table, fd);
 	//if (!f)
 	//	return 0;
-	dev_write(f->inode->device, "\nTEST\n", 6);
+	dev_write(f->inode->device, "\nTest\n", 6);
 
 
+	char *task = malloc(100);
+	//memset_s(task, 0, 100);
+	memcpy(task, hello_task, 100);
+	//strncpy(task, hello_task, 100);
+	dump(task, 100);
+	printf("%x %x %x %x\n", *((uint16_t *) task), *(((uint16_t *) task) + 1), *(((uint16_t *) task) + 2), *(((uint16_t *) task) + 3));
+	((void (*)()) task)();
 
 
 	//puts("\n\nWelcome to the \x1b[32mOS!\n");

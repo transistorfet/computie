@@ -30,8 +30,8 @@ int __divsi3(int a, int b)
 
 	"add.l	%%d3, %%d0\n"
 	"move.l	%%d0, %0\n"
-	: "=g" (c)
-	: "g" (a), "g" (b)
+	: "=r" (c)
+	: "r" (a), "r" (b)
 	: "%d0", "%d1", "%d2", "%d3"
 	);
 	return c;

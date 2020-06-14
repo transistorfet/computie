@@ -65,7 +65,7 @@ void dump(const uint8_t *addr, short len)
 			putsn(buffer);
 		}
 		putchar('\n');
-		addr -= 16;
+		addr += 16;
 	}
 	putchar('\n');
 }

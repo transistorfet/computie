@@ -68,7 +68,7 @@ void dump(const uint8_t *addr, short len)
 			putsn(buffer);
 		}
 		putchar('\n');
-		addr -= 16;
+		addr += 16;
 	}
 	putchar('\n');
 }
@@ -291,7 +291,6 @@ int main()
 	//delay(10000);
 
 	puts("\n\nWelcome to the 68k Monitor!\n");
-	//dev_write(0, "\n\nWelcome to the \x1b[32mthing!\n", 29);
 
 	/*
 	int *data = malloc(sizeof(int) * 10);

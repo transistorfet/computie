@@ -1,7 +1,8 @@
 
 	.global _start
-	.global _error
+	.global exception_entry
 	.global	main
+	.global	fatal_error
 
 	.section .text
 
@@ -14,16 +15,13 @@ _start:
 	move.w	#0x2000, %sr		| enable all interrupts
 	bsr	main
 	|stop	#0x2700
-	rts
-
+	rts				| return to the monitor
 
 /**
  * Error Handler
  */
-_error:
-	move.b	#0x01, %d0
-	lea	0x201d, %a0
-	move.b	%d0, (%a0)		| set the arduino led as an error indicator
-
-	stop	#0x2700	
+exception_entry:
+	move.l	%sp, %a5
+	| TODO this is the second absolute reference that prevents the kernel from being relocatable
+	jmp	fatal_error
 

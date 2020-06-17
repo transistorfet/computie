@@ -36,11 +36,28 @@
 #define CSRA_CLK_SELECT_REG_A_CONFIG	0b10111011	// 9600 bps @ 3.6864MHz (19200 @ 7.3728 MHz)
 #define ACR_AUX_CONTROL_REG_CONFIG	0b11110000	// Set2, External Clock / 16, IRQs disabled
 
-#define TTY_READ_BUFFER		32
+
+// Interrupt Status/Mask Bits
+#define ISR_INPUT_CHANGE		0x80
+#define ISR_CH_B_BREAK_CHANGE		0x40
+#define ISR_CH_B_RX_READY_FULL		0x20
+#define ISR_CH_B_TX_READY		0x10
+#define ISR_TIMER_CHANGE		0x08
+#define ISR_CH_A_BREAK_CHANGE		0x04
+#define ISR_CH_A_RX_READY_FULL		0x02
+#define ISR_CH_A_TX_READY		0x01
+
+#define TTY_INT_VECTOR			7
+
+
+#define TTY_READ_BUFFER			32
 
 static char tty_read_in = 0;
 static char tty_read_out = 0;
 static char tty_read_buffer[TTY_READ_BUFFER];
+
+// TODO remove after debugging
+//char tick = 0;
 
 int init_tty()
 {
@@ -50,6 +67,16 @@ int init_tty()
 	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
 
 	*CRA_WR_ADDR = CMD_ENABLE_TX_RX;
+
+	// Configure timer
+	//*CTUR_WR_ADDR = 0xFF;
+	//*CTLR_WR_ADDR = 0xFF;
+	
+
+	// Enable interrupts
+	//*IVR_WR_ADDR = TTY_INT_VECTOR;
+	//*IMR_WR_ADDR = ISR_TIMER_CHANGE;
+	//*IMR_WR_ADDR = ISR_INPUT_CHANGE; // | ISR_TIMER_CHANGE;
 
 	// Enable rx interrupt
 	//*IVR_WR_ADDR = 0x07;
@@ -91,6 +118,20 @@ int getchar(void)
 			*OUT_RESET_ADDR = 0xF0;
 		}
 		*/
+
+		/*
+		// Debugging - Set LEDs on timer
+		if (*ISR_RD_ADDR & ISR_TIMER_CHANGE) {
+			if (tick) {
+				tick = 0;
+				*OUT_SET_ADDR = 0x80;
+			} else {
+				tick = 1;
+				*OUT_RESET_ADDR = 0x80;
+			}
+			register char reset = *STOP_RD_ADDR;
+		}
+		*/
 	}
 }
 
@@ -103,6 +144,7 @@ int putchar(int ch)
 
 __attribute__((interrupt)) void handle_serial_irq()
 {
+	/*
 	while (*SRA_RD_ADDR & 0x01) {
 		tty_read_buffer[tty_read_in++] = *RBA_RD_ADDR;
 	}
@@ -112,5 +154,32 @@ __attribute__((interrupt)) void handle_serial_irq()
 		*OUT_SET_ADDR = in;
 		*OUT_RESET_ADDR = (~in & 0xF0);
 	}
+	*/
+
+	/*
+	register char isr = *ISR_RD_ADDR;
+
+	if (isr & ISR_TIMER_CHANGE) {
+		register char data = *STOP_RD_ADDR;
+		//tty_68681_write(0, "Time\n", 5);
+		tick = !tick;
+		*((volatile unsigned char *) 0x201D) = tick;
+	}
+	*/
+/*
+	if (*ISR_RD_ADDR & ISR_TIMER_CHANGE) {
+		register sp;
+		asm volatile("move.l	%%sp, %0" : "=g" (sp));
+		printf("%x %x\n", *((uint16_t *) sp), *(((uint16_t *) sp) + 1));
+		if (tick) {
+			tick = 0;
+			*OUT_SET_ADDR = 0x80;
+		} else {
+			tick = 1;
+			*OUT_RESET_ADDR = 0x80;
+		}
+		register char reset = *STOP_RD_ADDR;
+	}
+*/
 }
 

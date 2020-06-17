@@ -6,6 +6,7 @@
 
 #include <kernel/filedesc.h>
 #include <kernel/syscall.h>
+#include <kernel/driver.h>
 
 #include "interrupts.h"
 #include "process.h"
@@ -27,16 +28,87 @@ const char hello_task[100] = {
 };
 
 
+int run_task() {
+/*
+	// TODO we don't use inodes yet, so passing in NULL
+	struct process *proc = new_proc(NULL);
+	if (!proc) {
+		puts("Ran out of procs\n");
+		return;
+	}
+	int fd = new_fd(proc->fd_table, tty_inode);
+
+	printf("FD: %d\n", fd);
+*/
+
+/*
+	struct file *f = get_fd(proc->fd_table, fd);
+	//if (!f)
+	//	return 0;
+	//dev_write(f->inode->device, "\nTest\n", 6);
+*/
+
+	int task_size = 1000;
+	char *task = malloc(task_size);
+	//memset_s(task, 0, task_size);
+	memcpy(task, hello_task, 100);
+	//strncpy(task, hello_task, task_size);
+
+	char *kernel_stack_p;
+	char *task_stack_p = task + task_size;
+
+	/*
+	asm volatile(
+	"move.l	%%sp, %0\n"
+	"move.l %1, %%sp\n"
+	: "=g" (kernel_stack_p)
+	: "g" (task_stack_p)
+	);
+	*/
+
+	/*
+	asm volatile("move.l	%%sp, %0\n" : "=g" (kernel_stack_p));
+	asm volatile("move.l	%0, %%sp\n" : : "g" (task_stack_p));
+
+	char *tmp;
+	asm volatile("move.l %%sp, %0\n" : "=g" (tmp));
+
+	printf("SP: %x\n", tmp);
+
+	((void (*)()) task)();
+
+	asm volatile("move.l %0, %%sp\n" : : "g" (kernel_stack_p));
+
+	char *tmp2;
+	asm volatile("move.l %%sp, %0\n" : "=g" (tmp2));
+	printf("SP: %x\n", tmp2);
+
+	*/
+
+	asm volatile(
+	"move.l	%%sp, %%d2\n"
+	"move.l %0, %%sp\n"
+	"jsr	(%1)\n"
+	"move.l %%d2, %%sp\n"
+	: 
+	: "r" (task_stack_p), "r" (task)
+	: "%d2"
+	);
+
+	free(task);
+	//free_proc(proc);
+}
+
+
 int main()
 {
-	//load_data_segment();
-	init_heap((void *) 0x110000, 0x1000);
+	init_heap((void *) 0x110000, 0x20000);
 	init_interrupts();
+	init_proc();
 	init_syscall();
 
 	init_inode();
 	init_tty();
-
 
 
 	// TODO we don't use inodes yet, so passing in NULL
@@ -49,14 +121,7 @@ int main()
 	//	return 0;
 	dev_write(f->inode->device, "\nTest\n", 6);
 
-
-	char *task = malloc(100);
-	//memset_s(task, 0, 100);
-	memcpy(task, hello_task, 100);
-	//strncpy(task, hello_task, 100);
-	dump(task, 100);
-	printf("%x %x %x %x\n", *((uint16_t *) task), *(((uint16_t *) task) + 1), *(((uint16_t *) task) + 2), *(((uint16_t *) task) + 3));
-	((void (*)()) task)();
+	run_task();
 
 
 	//puts("\n\nWelcome to the \x1b[32mOS!\n");

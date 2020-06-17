@@ -3,7 +3,7 @@
 
 #include "process.h"
 
-#define PROCESS_MAX	10
+#define PROCESS_MAX	6
 static int next_pid = 1;
 static struct process table[PROCESS_MAX];
 
@@ -27,6 +27,7 @@ struct process *new_proc(struct inode *inode)
 			return &table[i];
 		}
 	}
+	return NULL;
 }
 
 void free_proc(int pid)
@@ -35,7 +36,7 @@ void free_proc(int pid)
 		if (table[i].pid == pid) {
 			table[i].pid = 0;
 			// TODO free all the things
-			return;
+			break;
 		}
 	}
 }

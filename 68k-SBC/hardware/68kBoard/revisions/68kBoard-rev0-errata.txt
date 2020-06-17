@@ -31,6 +31,9 @@ Revision 0 Errata and Notes
 
 - the power capacitor spacing is a lot more than needed, especially for the 5V side cap
 
+- It might be convenient to have a write protect jumper for the eeprom to disable the write pin, because I think the program sometimes
+  writes to the arduino memory and corrupts it which requires a reset of the arduino (needs more investigation)
+
 
 Observations:
 

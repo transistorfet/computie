@@ -34,6 +34,9 @@
 #define IV_TRAP14		46
 #define IV_TRAP15		47
 
+#define IV_USER_VECTORS		64
+
+
 typedef void (*interrupt_handler_t)();
 
 void init_interrupts();

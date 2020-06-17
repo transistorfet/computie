@@ -71,8 +71,10 @@ monitor.bin: $(MONITOR_OBJS)
 	hexdump -v -e '/1 "0x%02X, "' $@ > output.txt
 
 kernel.bin: $(KERNEL_OBJS)
-	$(CC) $(CFLAGS) --entry=_start -Ttext=0x100000 -o $@.elf $^
-	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@ $^
+	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@.elf $^
+	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -Wl,--oformat=binary -o $@ $^
+	# TODO this works, but I'd like to get rid of all the special sections.  The old linker script worked fine
+	#$(OBJCOPY) -O binary  -j .text -j .text.startup -j .rodata -j .rodata.str1.1 -j .data -j .data.rel -j .data.rel.local -j .bss $@.elf $@
 
 %.load: %.bin
 	echo "load" > $@

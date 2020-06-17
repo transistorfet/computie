@@ -1,4 +1,4 @@
-OUTPUT_FORMAT(binary)
+/* OUTPUT_FORMAT(binary) */
 ENTRY(_start)
 EXTERN(_start)
 SECTIONS
@@ -11,4 +11,5 @@ SECTIONS
   .rodata : { *(.rodata) }
   /* . = 0x101400; */
   .data : { *(.data) }
+  .bss : { *(.bss) } /* TODO for now, we want to reserve space for this */
 }

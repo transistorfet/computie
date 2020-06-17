@@ -24,4 +24,8 @@ struct process {
 	fd_table_t fd_table;
 };
 
+void init_proc();
+struct process *new_proc(struct inode *inode);
+void free_proc(int pid);
+
 #endif

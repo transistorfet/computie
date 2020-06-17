@@ -15,7 +15,7 @@
 #define INTERRUPT_MAX		128
 
 extern void _start();
-extern void _error();
+extern void exception_entry();
 
 void fatal_error();
 void handle_trap_1();
@@ -23,14 +23,14 @@ void handle_trap_1();
 static interrupt_handler_t vector_table[INTERRUPT_MAX] = {
 	(interrupt_handler_t) STACK_POINTER_INIT,
 	_start,
-	fatal_error,	// Bus Error
-	fatal_error,	// Address Error
-	fatal_error,	// Illegal Instruction
-	fatal_error,	// Zero Divide
-	fatal_error,	// CHK Instruction
-	fatal_error,	// TRAPV Instruction
-	fatal_error,	// Privilege Violation
-	NULL,		// Trace
+	exception_entry,	// Bus Error
+	exception_entry,	// Address Error
+	exception_entry,	// Illegal Instruction
+	exception_entry,	// Zero Divide
+	exception_entry,	// CHK Instruction
+	exception_entry,	// TRAPV Instruction
+	exception_entry,	// Privilege Violation
+	NULL,			// Trace
 };
 
 void init_interrupts()
@@ -47,11 +47,26 @@ void set_interrupt(char iv_num, interrupt_handler_t handler)
 	vector_table[iv_num] = handler;
 }
 
+
+struct exception_stack_frame {
+	uint16_t status;
+	uint16_t *pc;
+	uint16_t vector;
+};
+
 __attribute__((interrupt)) void fatal_error()
 {
-	uint16_t *addr;
-	asm("move.l	%%sp,%0\n" : "=r" (addr));
-	printf("Fatl Error at %x, %x, %x, %x, %x, %x: Halting...\n", *addr, *(addr + 1), *(addr + 2), *(addr + 3), *(addr + 4), *(addr + 5));
+	struct exception_stack_frame *frame;
+	asm("move.l	%%a5, %0\n" : "=r" (frame));	// NOTE the exception_entry function pushes %sp into %a5 and then jumps here
+	printf("Fatl Error at %x (status: %x, vector: %x). Halting...\n", frame->pc, frame->status, frame->vector);
+
+	// Dump code where the error occurred
+	for (char i = 0; i < 12; i++) {
+		printf("%x ", frame->pc[i]);
+		if (i & 0x3 == 0x3)
+			putchar('\n');
+	}
+
 	asm("stop #0x2700\n");
 }
 

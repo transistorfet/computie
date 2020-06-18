@@ -177,6 +177,7 @@ int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
 
 __attribute__((interrupt)) void handle_serial_irq()
 {
+	DISABLE_INTS();
 /*
 	register char isr = *ISR_RD_ADDR;
 
@@ -191,6 +192,7 @@ __attribute__((interrupt)) void handle_serial_irq()
 	// TODO this is required to reset a pin change interrupt
 	uint8_t status = *IPCR_RD_ADDR;
 */
+
 	if (*ISR_RD_ADDR & ISR_TIMER_CHANGE) {
 		if (tick) {
 			tick = 0;
@@ -200,10 +202,15 @@ __attribute__((interrupt)) void handle_serial_irq()
 			*OUT_RESET_ADDR = 0x80;
 		}
 
-		//run_task();
+		run_task();
+
+		//for (int i = 0; i < 1000000; i++) {
+		//	asm volatile("");
+		//}
 
 		register char reset = *STOP_RD_ADDR;
 	}
+	ENABLE_INTS();
 }
 
 

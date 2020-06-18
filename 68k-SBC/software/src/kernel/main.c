@@ -48,14 +48,18 @@ int run_task() {
 	//dev_write(f->inode->device, "\nTest\n", 6);
 */
 
+	char *kernel_stack_p;
+
 	int task_size = 1000;
 	char *task = malloc(task_size);
-	//memset_s(task, 0, task_size);
-	memcpy(task, hello_task, 100);
-	//strncpy(task, hello_task, task_size);
-
-	char *kernel_stack_p;
 	char *task_stack_p = task + task_size;
+	//printf("Task Address: %x\n", task);
+	//printf("Task Stack: %x\n", task_stack_p);
+	memset_s(task, 0, task_size);
+	memcpy_s(task, hello_task, 100);
+	//strncpy(task, hello_task, task_size);
+	//dump(task, 1000);
+
 
 	/*
 	asm volatile(
@@ -91,9 +95,13 @@ int run_task() {
 	"jsr	(%1)\n"
 	"move.l %%d2, %%sp\n"
 	: 
-	: "r" (task_stack_p), "r" (task)
+	: "r" (task_stack_p), "a" (task)
 	: "%d2"
 	);
+
+	//((void (*)()) task)();
+
+	//dump(task, 1000);
 
 	free(task);
 	//free_proc(proc);
@@ -121,7 +129,7 @@ int main()
 	//	return 0;
 	dev_write(f->inode->device, "\nTest\n", 6);
 
-	run_task();
+	//run_task();
 
 
 	//puts("\n\nWelcome to the \x1b[32mOS!\n");

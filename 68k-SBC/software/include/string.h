@@ -17,7 +17,7 @@ const char *strstr(const char *, const char *);
 char *strchr(const char *, int);
 char *strrchr(const char *, int);
 
-void *memcpy(void *dest, const void *src, size_t num);
+void *memcpy_s(void *dest, const void *src, size_t num);	// NOTE it seems if this is called "memcpy", it will always be optimized away
 void *memset_s(void *ptr, int value, size_t num);		// NOTE it seems if this is called "memset", it will always be optimized away
 
 #endif

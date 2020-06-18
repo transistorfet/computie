@@ -7,7 +7,7 @@ OBJDUMP = m68k-linux-gnu-objdump
 OBJCOPY = m68k-linux-gnu-objcopy
 RANLIB = m68k-linux-gnu-ranlib
 INCLUDE = ./include
-CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -mpcrel -O3
+CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -mpcrel -Os
 #CFLAGS += -z max-page-size=0x04	# reduce the elf output size by reducing the alignment
 
 ASLISTING = -alh

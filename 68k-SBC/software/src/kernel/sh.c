@@ -72,12 +72,12 @@ void dump(const uint8_t *addr, short len)
 
 void info(void)
 {
-	uint16_t sp;
-	uint16_t sv1;
+	uint32_t sp;
+	uint32_t sv1;
 
 	asm(
-	"move.w	%%a7, %0\n"
-	"move.w	(%%a7), %1\n"
+	"move.l	%%sp, %0\n"
+	"move.l	(%%sp), %1\n"
 	: "=r" (sp), "=r" (sv1)
 	);
 

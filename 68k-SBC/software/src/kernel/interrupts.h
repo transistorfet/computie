@@ -42,5 +42,8 @@ typedef void (*interrupt_handler_t)();
 void init_interrupts();
 void set_interrupt(char iv_num, interrupt_handler_t handler);
 
+#define DISABLE_INTS()		asm volatile("or.w	#0x0700, %sr");
+#define ENABLE_INTS()		asm volatile("and.w	#0xF8FF, %sr");
+
 #endif
 

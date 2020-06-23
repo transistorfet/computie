@@ -55,7 +55,7 @@ struct driver tty_68681_driver = {
 #define MR1A_MODE_A_REG_1_CONFIG	0b10010011	// RTS Enabled, 8 bits, No Parity
 #define MR2A_MODE_A_REG_2_CONFIG	0b00010111	// Normal mode, CTS Enabled, 1 stop bit
 #define CSRA_CLK_SELECT_REG_A_CONFIG	0b10111011	// 9600 bps @ 3.6864MHz (19200 @ 7.3728 MHz)
-#define ACR_AUX_CONTROL_REG_CONFIG	0b11110000	// Set2, External Clock / 16, IRQs disabled
+#define ACR_AUX_CONTROL_REG_CONFIG	0b11111000	// Set2, External Clock / 16, IRQs disabled except IP3
 
 // Interrupt Status/Mask Bits
 #define ISR_INPUT_CHANGE		0x80
@@ -70,7 +70,8 @@ struct driver tty_68681_driver = {
 #define TTY_INT_VECTOR			IV_USER_VECTORS
 
 
-__attribute__((interrupt)) void handle_serial_irq();
+extern void enter_irq();
+//__attribute__((interrupt)) void handle_serial_irq();
 
 struct inode *tty_inode = NULL;
 
@@ -94,9 +95,9 @@ int init_tty()
 	*CTLR_WR_ADDR = 0xFF;
 
 	// Enable interrupts
-	set_interrupt(TTY_INT_VECTOR, handle_serial_irq);
+	set_interrupt(TTY_INT_VECTOR, enter_irq);
 	*IVR_WR_ADDR = TTY_INT_VECTOR;
-	*IMR_WR_ADDR = ISR_TIMER_CHANGE;
+	*IMR_WR_ADDR = ISR_TIMER_CHANGE | ISR_INPUT_CHANGE;
 
 
 	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
@@ -174,26 +175,22 @@ int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
 
 }
 
-
-__attribute__((interrupt)) void handle_serial_irq()
+//asm(
+//"handle_serial_irq_entry:\n"
+//	"move.l	%sp, %a6\n"
+//	"bra	handle_serial_irq\n"
+//);
+//__attribute__((interrupt)) void handle_serial_irq()
+void handle_serial_irq()
 {
-	DISABLE_INTS();
-/*
+	//DISABLE_INTS();
+
 	register char isr = *ISR_RD_ADDR;
 
 	if (isr & ISR_TIMER_CHANGE) {
-		register char data = *STOP_RD_ADDR;
-		//tty_68681_write(0, "Time\n", 5);
-		tick = !tick;
-		*((volatile unsigned char *) 0x201D) = tick;
-	}
+		// Clear the interrupt bit by reading the stop address
+		register char reset = *STOP_RD_ADDR;
 
-
-	// TODO this is required to reset a pin change interrupt
-	uint8_t status = *IPCR_RD_ADDR;
-*/
-
-	if (*ISR_RD_ADDR & ISR_TIMER_CHANGE) {
 		if (tick) {
 			tick = 0;
 			*OUT_SET_ADDR = 0x80;
@@ -202,15 +199,36 @@ __attribute__((interrupt)) void handle_serial_irq()
 			*OUT_RESET_ADDR = 0x80;
 		}
 
-		run_task();
+		//run_task();
+		schedule();
 
 		//for (int i = 0; i < 1000000; i++) {
 		//	asm volatile("");
 		//}
 
-		register char reset = *STOP_RD_ADDR;
 	}
-	ENABLE_INTS();
+	else if (isr & ISR_INPUT_CHANGE) {
+/*
+// TODO commenting out because with the context switch, this code doesn't work correctly
+
+		// Reading from the IPCR register will clear the interrupt
+		uint8_t status = *IPCR_RD_ADDR;
+
+		printf("%x\n", status);
+
+		if (*INPUT_RD_ADDR & 0x08) {
+			asm(
+			"move.w	(%a6), %d0\n"
+			"not.w	%d0\n"
+			"and.w	#0x8000, %d0\n"
+			"or.w	%d0, (%a6)\n"
+			);
+		}
+*/
+		TRACE_ON();
+	}
+
+	//ENABLE_INTS();
 }
 
 

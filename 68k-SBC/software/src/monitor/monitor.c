@@ -75,12 +75,12 @@ void dump(const uint8_t *addr, short len)
 
 void info(void)
 {
-	uint16_t sp;
-	uint16_t sv1;
+	uint32_t sp;
+	uint32_t sv1;
 
 	asm(
-	"move.w	%%a7, %0\n"
-	"move.w	(%%a7), %1\n"
+	"move.l	%%sp, %0\n"
+	"move.l	(%%sp), %1\n"
 	: "=r" (sp), "=r" (sv1)
 	);
 
@@ -94,6 +94,37 @@ void info(void)
 
 #define ROM_ADDR	0x200000
 #define ROM_SIZE	0x1400
+
+
+#define TEST_BUF_SIZE 	32
+uint16_t test_buffer[TEST_BUF_SIZE] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
+
+void ramtest()
+{
+	uint16_t data;
+
+	uint16_t *ram = (uint16_t *) 0x100000;
+	for (int i = 0; i < TEST_BUF_SIZE; i++) {
+		*ram++ = test_buffer[i];
+	}
+
+	int j = 0;
+	while (ram < 0x200000) {
+		if (*ram++ == test_buffer[j]) {
+			j++;
+		}
+		else
+			j = 0;
+
+		if (j >= 5) {
+			printf("Found a match at %x\n", ram);
+			j = 0;
+		}
+	}
+
+	printf("\nComplete");
+}
+
 
 /*
 void ramtest(void)
@@ -256,6 +287,12 @@ void serial_read_loop()
 		else if (!strcmp(args[0], "verifyrom")) {
 			verifyrom();
 		}
+		else if (!strcmp(args[0], "ramtest")) {
+			ramtest();
+		}
+		else if (!strcmp(args[0], "dumpram")) {
+			dump(RAM_ADDR, 0x1800);
+		}
 /*
 		else if (!strcmp(args[0], "ramtest")) {
 			ramtest();
@@ -282,11 +319,16 @@ void serial_read_loop()
 
 char *led = (char *) 0x201c;
 
+#define ARDUINO_TRACE_ON()	asm volatile("movea.l	#0x2019, %%a0\n" "move.b	#1, (%%a0)" : : : "%a0");
+#define ARDUINO_TRACE_OFF()	asm volatile("movea.l	#0x2019, %%a0\n" "move.b	#0, (%%a0)" : : : "%a0");
+
 int main()
 {
 	//init_heap((void *) 0x101000, 0x1000);
 
 	init_tty();
+
+	ARDUINO_TRACE_OFF();
 
 	//delay(10000);
 

@@ -11,7 +11,6 @@ int vprintf(const char *fmt, va_list args)
 	char buffer[_STDIO_MAX_STRING];
 
 	r = vsnprintf(buffer, _STDIO_MAX_STRING, fmt, args);
-
 	putsn(buffer);
 
 	return r;

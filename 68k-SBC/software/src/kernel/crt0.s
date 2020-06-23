@@ -11,11 +11,9 @@
  */
 
 _start:
-
-	move.w	#0x2000, %sr		| enable all interrupts
+	move.l	#0x200000, %sp		| re-initialize the stack pointer
 	bsr	main
-	|stop	#0x2700
-	rts				| return to the monitor
+	stop	#2700			| halt, since we clobbered the stack on entry
 
 /**
  * Error Handler

@@ -70,7 +70,23 @@ void dump(const uint8_t *addr, short len)
 	putchar('\n');
 }
 
-void info(void)
+void print_stack()
+{
+	uint32_t sp;
+
+	asm("move.l %%sp, %0\n" : "=r" (sp));
+
+	printf("SP: %x\n", sp);
+	dump(sp, 64);
+	return;
+}
+
+void print_queue()
+{
+	print_run_queue();
+}
+
+void info()
 {
 	uint32_t sp;
 	uint32_t sv1;
@@ -92,7 +108,7 @@ void info(void)
 #define ROM_ADDR	0x200000
 #define ROM_SIZE	0x1400
 
-void writerom(void)
+void writerom()
 {
 	uint16_t data;
 	uint16_t errors = 0;
@@ -122,7 +138,7 @@ uint16_t fetch_word()
 	return (buffer[0] << 12) | (buffer[1] << 8) | (buffer[2] << 4) | buffer[3];
 }
 
-void load(void)
+void load()
 {
 	uint16_t size;
 	uint16_t data;
@@ -141,7 +157,7 @@ void load(void)
 	puts("Load complete");
 }
 
-void boot(void)
+void boot()
 {
 	void (*entry)() = (void (*)()) program_mem;
 	((void (*)()) entry)();
@@ -174,6 +190,9 @@ void serial_read_loop()
 		}
 		else if (!strcmp(args[0], "boot")) {
 			boot();
+		}
+		else if (!strcmp(args[0], "queue")) {
+			print_queue();
 		}
 		else if (!strcmp(args[0], "writerom")) {
 			writerom();

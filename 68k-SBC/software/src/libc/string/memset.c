@@ -4,10 +4,10 @@
 
 void *memset_s(void *ptr, int value, size_t num)
 {
-	volatile unsigned char *dest = ptr;
+	register unsigned char *dest = ptr;
 
 	for (; num > 0; num--)
-		*dest++ = value;
+		*dest++ = (char) value;
 	/*
 	asm volatile(
 	"move.l	%0, %%a0\n"

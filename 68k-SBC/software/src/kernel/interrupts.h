@@ -45,5 +45,11 @@ void set_interrupt(char iv_num, interrupt_handler_t handler);
 #define DISABLE_INTS()		asm volatile("or.w	#0x0700, %sr");
 #define ENABLE_INTS()		asm volatile("and.w	#0xF8FF, %sr");
 
+#define TRACE_ON()		asm volatile("or.w	#0x8000, %sr");
+#define TRACE_OFF()		asm volatile("and.w	#0x7FFF, %sr");
+
+#define ARDUINO_TRACE_ON()	asm volatile("movea.l	#0x2019, %%a0\n" "move.b	#1, (%%a0)" : : : "%a0");
+#define ARDUINO_TRACE_OFF()	asm volatile("movea.l	#0x2019, %%a0\n" "move.b	#0, (%%a0)" : : : "%a0");
+
 #endif
 

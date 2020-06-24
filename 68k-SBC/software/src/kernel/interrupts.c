@@ -24,29 +24,19 @@ void handle_trace();
 static interrupt_handler_t vector_table[INTERRUPT_MAX] = {
 	(interrupt_handler_t) STACK_POINTER_INIT,
 	_start,
-	exception_entry,	// Bus Error
-	exception_entry,	// Address Error
-	exception_entry,	// Illegal Instruction
-	exception_entry,	// Zero Divide
-	exception_entry,	// CHK Instruction
-	exception_entry,	// TRAPV Instruction
-	exception_entry,	// Privilege Violation
-	NULL,			// Trace
 };
 
 void init_interrupts()
 {
+	extern void enter_fatal_error();
 	for (short i = 2; i < INTERRUPT_MAX; i++)
-		vector_table[i] = exception_entry;
+		vector_table[i] = enter_fatal_error;
 
-	extern void trace_entry();
-	set_interrupt(IV_TRACE, trace_entry);
+	extern void enter_handle_trace();
+	set_interrupt(IV_TRACE, enter_handle_trace);
 
 	// Load the VBR register with the address of our vector table
-	asm(
-	"movec	%0, %%vbr\n"
-	: : "r" (vector_table) :
-	);
+	asm("movec	%0, %%vbr\n" : : "r" (vector_table));
 }
 
 void set_interrupt(char iv_num, interrupt_handler_t handler)
@@ -60,6 +50,18 @@ struct exception_stack_frame {
 	uint16_t *pc;
 	uint16_t vector;
 };
+
+
+#define INTERRUPT_ENTRY(name)				\
+__attribute__((naked, noreturn)) void enter_##name()	\
+{							\
+	asm(						\
+	"move.l	%sp, %a5\n"				\
+	"bra	" #name "\n"				\
+	);						\
+}
+
+INTERRUPT_ENTRY(fatal_error);
 
 __attribute__((interrupt)) void fatal_error()
 {
@@ -92,32 +94,7 @@ __attribute__((interrupt)) void fatal_error()
 	asm("stop #0x2700\n");
 }
 
-/*
-#define ENTRY(name) 				\
-	asm(					\
-	name ":\n"				\
-		"move.l	%sp, %a6\n"		\
-		"bra	handle_trace\n"		\
-	);
-
-ENTRY("trace_entry")
-*/
-
-/*
-__attribute__((naked)) void trace_entry()
-{
-	asm(
-	"move.l	%sp, %a6\n"
-	"bra	handle_trace\n"
-	);
-}
-*/
-
-asm(
-"trace_entry:\n"
-	"move.l	%sp, %a5\n"
-	"bra	handle_trace\n"
-);
+INTERRUPT_ENTRY(handle_trace);
 
 __attribute__((interrupt)) void handle_trace()
 {

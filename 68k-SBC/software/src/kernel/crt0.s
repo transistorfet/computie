@@ -15,11 +15,3 @@ _start:
 	bsr	main
 	stop	#2700			| halt, since we clobbered the stack on entry
 
-/**
- * Error Handler
- */
-exception_entry:
-	move.l	%sp, %a5
-	| TODO this is the second absolute reference that prevents the kernel from being relocatable
-	jmp	fatal_error
-

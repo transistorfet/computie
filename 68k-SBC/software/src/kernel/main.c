@@ -241,17 +241,8 @@ int main()
 
 	//print_run_queue();
 
-	//extern void exit_syscall();
-	//exit_syscall();
-
-	//TRACE_ON();
-
-
 	extern void *kernel_stack;
 	extern void *current_proc_stack;
-
-	extern void exit_syscall();
-	//TRACE_ON();
 
 	current_proc = task;
 	current_proc_stack = task->sp;
@@ -259,7 +250,7 @@ int main()
 
 	//asm("stop #0x2700");
 
-	asm("bra exit_syscall\n");
+	asm("bra restore_context\n");
 
 	// Start Multitasking
 	//ENABLE_INTS();

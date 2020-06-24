@@ -175,16 +175,10 @@ int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
 
 }
 
-//asm(
-//"handle_serial_irq_entry:\n"
-//	"move.l	%sp, %a6\n"
-//	"bra	handle_serial_irq\n"
-//);
-//__attribute__((interrupt)) void handle_serial_irq()
+// NOTE the entry to this is in syscall_entry.s
+
 void handle_serial_irq()
 {
-	//DISABLE_INTS();
-
 	register char isr = *ISR_RD_ADDR;
 
 	if (isr & ISR_TIMER_CHANGE) {
@@ -218,17 +212,15 @@ void handle_serial_irq()
 
 		if (*INPUT_RD_ADDR & 0x08) {
 			asm(
-			"move.w	(%a6), %d0\n"
+			"move.w	(%a5), %d0\n"
 			"not.w	%d0\n"
 			"and.w	#0x8000, %d0\n"
-			"or.w	%d0, (%a6)\n"
+			"or.w	%d0, (%a5)\n"
 			);
 		}
 */
 		TRACE_ON();
 	}
-
-	//ENABLE_INTS();
 }
 
 

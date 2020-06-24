@@ -95,65 +95,12 @@ void schedule()
 
 	printf("next sp: %x\n", next->sp);
 
-	// TODO just doing an equal time to each process
-
-	//TRACE_ON();
-	// TODO context switch from current_proc to next
-	//context_switch(&current_proc->sp, &next->sp);
-
 	current_proc->sp = current_proc_stack;
 	current_proc = next;
 	current_proc_stack = next->sp;
 
 	//printf("prev sp: %x\n", current_proc->sp);
 	//printf("next sp: %x\n", next->sp);
-
-}
-
-
-void context_switch(void *old_sp, void *new_sp)
-{
-	asm volatile(
-	"move.l	%%d0, -(%%sp)\n"
-	"move.l	%%d1, -(%%sp)\n"
-	"move.l	%%d2, -(%%sp)\n"
-	"move.l	%%d3, -(%%sp)\n"
-	"move.l	%%d4, -(%%sp)\n"
-	"move.l	%%d5, -(%%sp)\n"
-	"move.l	%%d6, -(%%sp)\n"
-	"move.l	%%d7, -(%%sp)\n"
-	"move.l	%%a0, -(%%sp)\n"
-	"move.l	%%a1, -(%%sp)\n"
-	"move.l	%%a2, -(%%sp)\n"
-	"move.l	%%a3, -(%%sp)\n"
-	"move.l	%%a4, -(%%sp)\n"
-	"move.l	%%a5, -(%%sp)\n"
-	"move.l	%%a6, -(%%sp)\n"
-
-	"move.l	%%sp, (%0)\n"
-	"move.l	(%1), %%sp\n"
-
-	"move.l	(%%sp)+, %%a6\n"
-	"move.l	(%%sp)+, %%a5\n"
-	"move.l	(%%sp)+, %%a4\n"
-	"move.l	(%%sp)+, %%a3\n"
-	"move.l	(%%sp)+, %%a2\n"
-	"move.l	(%%sp)+, %%a1\n"
-	"move.l	(%%sp)+, %%a0\n"
-	"move.l	(%%sp)+, %%d7\n"
-	"move.l	(%%sp)+, %%d6\n"
-	"move.l	(%%sp)+, %%d5\n"
-	"move.l	(%%sp)+, %%d4\n"
-	"move.l	(%%sp)+, %%d3\n"
-	"move.l	(%%sp)+, %%d2\n"
-	"move.l	(%%sp)+, %%d1\n"
-	"move.l	(%%sp)+, %%d0\n"
-
-	"or.w	#0x8000, %%sr\n"
-	"and.w	#0xF8FF, %%sr\n"
-	: // No Outputs
-	: "a" (old_sp), "a" (new_sp)
-	);
 }
 
 static inline void _queue_insert(struct process *proc)

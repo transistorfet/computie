@@ -28,6 +28,7 @@ int getchar(void);
 
 int fputc(int ch, FILE *stream);
 int fputs(const char *str, FILE *stream);
+int putsn(const char *str);	// Non-standard, same as puts but without the extra newline
 int puts(const char *str);
 int putchar(int);
 

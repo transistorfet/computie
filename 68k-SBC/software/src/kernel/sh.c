@@ -217,7 +217,7 @@ int sh_task()
 	// Allocate memory for loading a processess
 	program_mem = malloc(0x1000);
 
-	puts("\n\nWelcome to the \x1b[32mOS!\n");
+	puts("\n\nThe Pseudo Shell!\n");
 
 	serial_read_loop();
 

@@ -44,13 +44,27 @@ void set_interrupt(char iv_num, interrupt_handler_t handler)
 	vector_table[iv_num] = handler;
 }
 
+__attribute__((noreturn)) void panic(const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	vprintf(fmt, args);
+	va_end(args);
+
+	asm("stop #0x2700\n");
+}
+
+
+/**
+ * Interrupt Handlers
+ */
 
 struct exception_stack_frame {
 	uint16_t status;
 	uint16_t *pc;
 	uint16_t vector;
 };
-
 
 #define INTERRUPT_ENTRY(name)				\
 __attribute__((naked, noreturn)) void enter_##name()	\
@@ -61,6 +75,10 @@ __attribute__((naked, noreturn)) void enter_##name()	\
 	);						\
 }
 
+#define GET_FRAME(frame_ptr)		\
+	asm("move.l	%%a5, %0\n" : "=r" (frame_ptr))
+
+
 INTERRUPT_ENTRY(fatal_error);
 
 __attribute__((interrupt)) void fatal_error()
@@ -68,17 +86,27 @@ __attribute__((interrupt)) void fatal_error()
 	DISABLE_INTS();
 
 	struct exception_stack_frame *frame;
-	asm("move.l	%%a5, %0\n" : "=r" (frame));	// NOTE the exception_entry function pushes %sp into %a5 and then jumps here
-	printf("Fatl Error at %x (status: %x, vector: %x). Halting...\n", frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
+
+	GET_FRAME(frame);
+
+	printf("\n\nFatal Error at %x (status: %x, vector: %x). Halting...\n", frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
 
 	char *sp;
 	asm volatile("move.l  %%sp, %0\n" : "=r" (sp));
-	printf("SP: %x\n", sp);
+
+	// Dump stack
+	printf("Stack: %x\n", sp);
+	for (char i = 0; i < 16; i++) {
+		printf("%04x ", ((uint16_t *) frame)[i]);
+		if ((i & 0x3) == 0x3)
+			putchar('\n');
+	}
 
 	// Dump code where the error occurred
-	for (char i = 0; i < 12; i++) {
-		printf("%x ", frame->pc[i]);
-		if (i & 0x3 == 0x3)
+	puts("\nCode:");
+	for (char i = 0; i < 16; i++) {
+		printf("%04x ", frame->pc[i]);
+		if ((i & 0x3) == 0x3)
 			putchar('\n');
 	}
 
@@ -86,7 +114,7 @@ __attribute__((interrupt)) void fatal_error()
 	asm(
 	"move.l	#0, %a0\n"
 	"movec	%a0, %vbr\n"
-	//"move.l	(%a0)+, %sp\n"
+	//"move.l	(%a0)+, %sp\n"		// TODO it's safer to reset the stack pointer for the monitor, but if we keep the old one, it's easier to debug fatals
 	"move.l	#4, %a0\n"
 	"jmp	(%a0)\n"
 	);
@@ -99,6 +127,8 @@ INTERRUPT_ENTRY(handle_trace);
 __attribute__((interrupt)) void handle_trace()
 {
 	struct exception_stack_frame *frame;
-	asm("move.l	%%a5, %0\n" : "=r" (frame));	// NOTE the exception_entry function pushes %sp into %a5 and then jumps here
+
+	GET_FRAME(frame);
+
 	printf("Trace %x (%x)\n", frame->pc, *frame->pc);
 }

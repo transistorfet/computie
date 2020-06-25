@@ -36,11 +36,7 @@
 
 #define IV_USER_VECTORS		64
 
-
-typedef void (*interrupt_handler_t)();
-
-void init_interrupts();
-void set_interrupt(char iv_num, interrupt_handler_t handler);
+/*** Macros ***/
 
 #define DISABLE_INTS()		asm volatile("or.w	#0x0700, %sr");
 #define ENABLE_INTS()		asm volatile("and.w	#0xF8FF, %sr");
@@ -50,6 +46,13 @@ void set_interrupt(char iv_num, interrupt_handler_t handler);
 
 #define ARDUINO_TRACE_ON()	asm volatile("movea.l	#0x2019, %%a0\n" "move.b	#1, (%%a0)" : : : "%a0");
 #define ARDUINO_TRACE_OFF()	asm volatile("movea.l	#0x2019, %%a0\n" "move.b	#0, (%%a0)" : : : "%a0");
+
+
+typedef void (*interrupt_handler_t)();
+
+void init_interrupts();
+void set_interrupt(char iv_num, interrupt_handler_t handler);
+void panic(const char *fmt, ...);
 
 #endif
 

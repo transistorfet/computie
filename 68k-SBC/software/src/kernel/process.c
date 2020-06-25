@@ -121,8 +121,10 @@ static inline void _queue_remove(struct process *proc)
 			else
 				run_queue = cur->nextq;
 
-			if (current_proc == proc)
-				current_proc = NULL; // TODO you kinda need to switch to it properly.  If you make this NULL, it'll start from the head of the queue though
+			if (current_proc == proc) {
+				current_proc = NULL;
+				schedule();
+			}
 			break;
 		}
 	}

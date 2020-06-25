@@ -1,8 +1,10 @@
 
 	.global enter_syscall
 	.global enter_irq
+	.global create_context
 	.global save_context
 	.global restore_context
+	.global _exit
 
 	.global	syscall_table
 	.global kernel_stack
@@ -69,6 +71,41 @@ enter_irq:
 
 
 /**
+ * Create a new context given a future stack address, return address
+ * 	void *create_context(void *user_stack, void *entry);
+ */
+create_context:
+	move.l	(4,%sp), %a0
+	move.l	(8,%sp), %a1
+
+	| Push _exit return address for when main returns
+	|move.l	_exit, -(%a0)
+	| Push starting address
+	move.l	%a1, -(%a0)
+	| Push flags
+	move.w #0x2000, -(%a0)
+
+	| Push zeros for all registers
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+	move.l	#0, -(%a0)
+
+	move.l	%a0, %d0
+	rts
+
+/**
  * Save all registers to the current user stack and switch to the kernel stack
  */
 save_context:
@@ -131,4 +168,12 @@ restore_context:
 
 	rte
 
+
+_exit:
+	| Execute the exit syscall to terminate the current process
+	moveq	#5, %d0		| TODO the syscall number might change
+	trap	#1
+
+	| This shouldn't run because the syscall should never return
+	stop	#2000
 

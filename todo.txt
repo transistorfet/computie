@@ -1,6 +1,8 @@
 
-* rewrite the math functions to use fewer registers (this ain't a risc processor)
+* get the exit syscall working
+* improve the dump command to format as words and take an optional length
 * there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
+
 
 
 * I need to make the interrupt handler print the number and info better, to make it easier to debug when serial-booting the kernel
@@ -13,6 +15,9 @@
   problem disappear completely
 
 * there is one spot in syscall_entry that has an absolute reference, which I think is the only thing that makes the kernel unrelocatable
+
+* rewrite the math functions to use fewer registers (this ain't a risc processor)
+* you need some tests, but ideally it would use a simple emulator.  Maybe easy68k or something could be used
 
 68k Single Board Computer:
 

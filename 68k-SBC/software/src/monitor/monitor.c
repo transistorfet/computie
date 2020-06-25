@@ -109,7 +109,7 @@ void ramtest()
 	}
 
 	int j = 0;
-	while (ram < 0x200000) {
+	while ((int) ram < 0x200000) {
 		if (*ram++ == test_buffer[j]) {
 			j++;
 		}
@@ -291,7 +291,7 @@ void serial_read_loop()
 			ramtest();
 		}
 		else if (!strcmp(args[0], "dumpram")) {
-			dump(RAM_ADDR, 0x1800);
+			dump((char *) RAM_ADDR, 0x1800);
 		}
 /*
 		else if (!strcmp(args[0], "ramtest")) {

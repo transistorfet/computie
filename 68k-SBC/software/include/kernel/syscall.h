@@ -8,6 +8,7 @@
 #define SYS_READ	2
 #define SYS_WRITE	3
 #define SYS_FORK	4
+#define SYS_EXIT	5
 
 
 static inline int SYSCALL1(int n, int a1)

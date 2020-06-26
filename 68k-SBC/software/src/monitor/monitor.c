@@ -54,21 +54,23 @@ char hexchar(uint8_t byte)
 		return byte + 0x37;
 }
 
-void dump(const uint8_t *addr, short len)
+void dump(const uint16_t *addr, short len)
 {
-	char buffer[4];
+	char buffer[6];
 
-	buffer[2] = ' ';
-	buffer[3] = '\0';
+	buffer[4] = ' ';
+	buffer[5] = '\0';
 	while (len > 0) {
 		printf("%x: ", addr);
-		for (int8_t i = 0; i < 16 && len > 0; i++, len--) {
-			buffer[0] = hexchar(addr[i] >> 4);
-			buffer[1] = hexchar(addr[i] & 0x0F);
+		for (short i = 0; i < 8 && len > 0; i++, len--) {
+			buffer[0] = hexchar((addr[i] >> 12) & 0xF);
+			buffer[1] = hexchar((addr[i] >> 8) & 0xF);
+			buffer[2] = hexchar((addr[i] >> 4) & 0xF);
+			buffer[3] = hexchar(addr[i] & 0x0F);
 			putsn(buffer);
 		}
 		putchar('\n');
-		addr += 16;
+		addr += 8;
 	}
 	putchar('\n');
 }
@@ -311,7 +313,11 @@ void serial_read_loop()
 			if (argc <= 1)
 				puts("You need an address");
 			else {
-				dump((const uint8_t *) strtol(args[1], NULL, 16), 0x10);
+				short length = 0x40;
+
+				if (argc >= 3)
+					length = strtol(args[2], NULL, 16);
+				dump((const uint8_t *) strtol(args[1], NULL, 16), length);
 			}
 		}
 	}

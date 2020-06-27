@@ -7,6 +7,7 @@ OBJDUMP = m68k-linux-gnu-objdump
 OBJCOPY = m68k-linux-gnu-objcopy
 RANLIB = m68k-linux-gnu-ranlib
 INCLUDE = ./include
+ASFLAGS = -m68010 --defsym __mc68010__=1
 CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -mpcrel -Os
 #CFLAGS += -z max-page-size=0x04	# reduce the elf output size by reducing the alignment
 
@@ -116,7 +117,7 @@ kernel.bin: $(KERNEL_OBJS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 %.o: %.s
-	$(AS) -c -o $@ $<
+	$(AS) $(ASFLAGS) -c -o $@ $<
 
 dump-main:
 	$(OBJDUMP) -D main.elf

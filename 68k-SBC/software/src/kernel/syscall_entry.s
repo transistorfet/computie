@@ -79,7 +79,15 @@ create_context:
 	move.l	(8,%sp), %a1
 
 	| Push _exit return address for when main returns
-	|move.l	_exit, -(%a0)
+	move.l	%a5, -(%sp)
+	lea	_exit, %a5
+	move.l	%a5, -(%a0)
+	move.l	(%sp)+, %a5
+
+	| Push the 68010 Format/Vector Word
+	.ifdef __mc68010__
+	move.w	#0, -(%a0)
+	.endif
 	| Push starting address
 	move.l	%a1, -(%a0)
 	| Push flags
@@ -175,5 +183,5 @@ _exit:
 	trap	#1
 
 	| This shouldn't run because the syscall should never return
-	stop	#2000
+	stop	#0x2000
 

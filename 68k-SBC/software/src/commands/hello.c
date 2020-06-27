@@ -9,7 +9,7 @@ int main()
 {
 	const char *msg = "Hello !\n";
 
-	while (1) {
+	//while (1) {
 		puts("Hello, World!");
 		//write(0, msg, 14);
 		//putchar('#');
@@ -18,10 +18,10 @@ int main()
 		//SYSCALL3(SYS_WRITE, 0, msg, 14);
 
 
-		for (int i = 0; i < 1000000; i++) {
-			asm volatile("");
-		}
-	}
+		//for (int i = 0; i < 1000000; i++) {
+		//	asm volatile("");
+		//}
+	//}
 
 	return 0;
 }

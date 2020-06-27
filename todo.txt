@@ -1,6 +1,4 @@
 
-* get the exit syscall working
-* improve the dump command to format as words and take an optional length
 * there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
 
 

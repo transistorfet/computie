@@ -17,6 +17,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_read,
 	do_write,
 	do_fork,
+	do_exit,
 };
 
 extern void enter_syscall();
@@ -82,9 +83,17 @@ int do_exit()
 {
 	puts("Exiting process");
 
-	free(current_proc->memory.base);
 	free_proc(current_proc);
 
 	return 0;
 }
 
+/*
+void test_int()
+{
+	uint32_t ret;
+	asm("move.l	%%a5, %0\n": "=r" (ret) : : "%a6");
+
+	printf("%x\n", ret);
+}
+*/

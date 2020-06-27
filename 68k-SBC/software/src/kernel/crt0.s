@@ -13,5 +13,5 @@
 _start:
 	move.l	#0x200000, %sp		| re-initialize the stack pointer
 	bsr	main
-	stop	#2700			| halt, since we clobbered the stack on entry
+	stop	#0x2700			| halt, since we clobbered the stack on entry
 

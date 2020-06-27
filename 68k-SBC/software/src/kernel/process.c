@@ -89,9 +89,13 @@ void schedule()
 	else
 		next = current_proc->nextq;
 
-
-	if (!next || current_proc == next)
+	if (!next) {
+		panic("No processes left to run... Halting\n");
 		return;		// TODO queue is empty...
+	}
+
+	if (current_proc == next)
+		return;
 
 	printf("next sp: %x\n", next->sp);
 

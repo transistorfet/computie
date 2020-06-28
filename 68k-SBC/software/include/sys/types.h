@@ -2,11 +2,18 @@
 #ifndef _TYPES_H
 #define _TYPES_H
 
+typedef long time_t;
+
+typedef int pid_t;
 typedef short device_t;
-typedef unsigned short mode_t;
+
+typedef unsigned short file_mode_t;
 typedef unsigned short inode_t;
 typedef unsigned long offset_t;
-typedef unsigned short file_mode_t;
+typedef unsigned short zone_nr_t;
+
+typedef unsigned short uid_t;
+typedef unsigned short gid_t;
 
 
 #define O_ACCMODE	00003

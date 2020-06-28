@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 #include <sys/stat.h>
-#include <kernel/inode.h>
+#include <kernel/vnode.h>
 #include <kernel/driver.h>
 
 #include "../interrupts.h"
@@ -73,7 +73,7 @@ struct driver tty_68681_driver = {
 extern void enter_irq();
 //__attribute__((interrupt)) void handle_serial_irq();
 
-struct inode *tty_inode = NULL;
+struct vnode *tty_vnode = NULL;
 
 // TODO remove after debugging
 char tick = 0;
@@ -101,8 +101,8 @@ int init_tty()
 
 
 	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
-	// TODO this is a hack because we don't have another way of creating the inode yet
-	tty_inode = new_inode((DEVMAJOR_TTY << 8), S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO);
+	// TODO this is a hack because we don't have another way of creating the vnode yet
+	tty_vnode = new_vnode((DEVMAJOR_TTY << 8), S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO);
 
 
 	// Flash LEDs briefly at boot
@@ -175,8 +175,10 @@ int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
 
 }
 
-// NOTE the entry to this is in syscall_entry.s
 
+extern void schedule();
+
+// NOTE the entry to this is in syscall_entry.s
 void handle_serial_irq()
 {
 	register char isr = *ISR_RD_ADDR;

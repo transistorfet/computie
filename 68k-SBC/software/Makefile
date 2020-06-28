@@ -23,15 +23,15 @@ MONITOR_OBJS = \
 
 KERNEL_OBJS = \
 	include/kernel/syscall.h \
-	src/kernel/crt0.o \
+	src/kernel/start.o \
 	src/kernel/main.o \
 	src/kernel/interrupts.o \
-	src/kernel/driver.o \
-	src/kernel/inode.o \
-	src/kernel/filedesc.o \
-	src/kernel/process.o \
-	src/kernel/syscall.o \
 	src/kernel/syscall_entry.o \
+	src/kernel/syscall.o \
+	src/kernel/process.o \
+	src/kernel/driver.o \
+	src/kernel/fs/vnode.o \
+	src/kernel/fs/filedesc.o \
 	src/kernel/drivers/tty_68681.o \
 	src/kernel/sh.o \
 	libc-68k-none.a

@@ -31,7 +31,7 @@ struct process {
 };
 
 void init_proc();
-struct process *new_proc(struct inode *inode);
+struct process *new_proc(struct vnode *vnode);
 void free_proc(struct process *proc);
 
 #endif

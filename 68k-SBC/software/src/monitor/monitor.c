@@ -293,7 +293,7 @@ void serial_read_loop()
 			ramtest();
 		}
 		else if (!strcmp(args[0], "dumpram")) {
-			dump((char *) RAM_ADDR, 0x1800);
+			dump((uint16_t *) RAM_ADDR, 0x1800);
 		}
 /*
 		else if (!strcmp(args[0], "ramtest")) {
@@ -317,7 +317,7 @@ void serial_read_loop()
 
 				if (argc >= 3)
 					length = strtol(args[2], NULL, 16);
-				dump((const uint8_t *) strtol(args[1], NULL, 16), length);
+				dump((const uint16_t *) strtol(args[1], NULL, 16), length);
 			}
 		}
 	}

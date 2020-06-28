@@ -79,13 +79,8 @@ void print_stack()
 	asm("move.l %%sp, %0\n" : "=r" (sp));
 
 	printf("SP: %x\n", sp);
-	dump(sp, 64);
+	dump((uint16_t *) sp, 64);
 	return;
-}
-
-void print_queue()
-{
-	print_run_queue();
 }
 
 void info()
@@ -166,6 +161,9 @@ void boot()
 }
 
 
+// In process.c
+extern void print_run_queue();
+
 
 #define BUF_SIZE	100
 #define ARG_SIZE	10
@@ -194,7 +192,7 @@ void serial_read_loop()
 			boot();
 		}
 		else if (!strcmp(args[0], "queue")) {
-			print_queue();
+			print_run_queue();
 		}
 		else if (!strcmp(args[0], "writerom")) {
 			writerom();
@@ -207,7 +205,7 @@ void serial_read_loop()
 
 				if (argc >= 3)
 					length = strtol(args[2], NULL, 16);
-				dump((const uint8_t *) strtol(args[1], NULL, 16), length);
+				dump((const uint16_t *) strtol(args[1], NULL, 16), length);
 			}
 		}
 		else if (!strcmp(args[0], "exit")) {

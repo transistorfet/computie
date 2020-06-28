@@ -16,8 +16,9 @@ extern void sh_task();
 
 
 extern void init_tty();
+extern void init_syscall();
 
-extern struct inode *tty_inode;
+extern struct vnode *tty_vnode;
 extern struct process *current_proc;
 
 
@@ -51,13 +52,13 @@ const char hello_task[400] = {
 void *create_context(void *user_stack, void *entry);
 
 struct process *run_task() {
-	// TODO we don't use inodes yet, so passing in NULL
+	// TODO we don't use vnodes yet, so passing in NULL
 	struct process *proc = new_proc(NULL);
 	if (!proc) {
 		puts("Ran out of procs\n");
-		return;
+		return NULL;
 	}
-	int fd = new_fd(proc->fd_table, tty_inode);
+	int fd = new_fd(proc->fd_table, tty_vnode);
 
 	printf("FD: %d\n", fd);
 
@@ -104,9 +105,9 @@ struct process *run_sh()
 	struct process *proc = new_proc(NULL);
 	if (!proc) {
 		puts("Ran out of procs\n");
-		return;
+		return NULL;
 	}
-	int fd = new_fd(proc->fd_table, tty_inode);
+	int fd = new_fd(proc->fd_table, tty_vnode);
 
 
 	int stack_size = 0x800;
@@ -140,7 +141,7 @@ int main()
 	init_syscall();
 	init_proc();
 
-	init_inode();
+	init_vnode();
 	init_tty();
 
 

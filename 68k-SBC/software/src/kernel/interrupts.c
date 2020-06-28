@@ -53,6 +53,7 @@ __attribute__((noreturn)) void panic(const char *fmt, ...)
 	va_end(args);
 
 	asm("stop #0x2700\n");
+	__builtin_unreachable();
 }
 
 
@@ -67,15 +68,16 @@ struct exception_stack_frame {
 };
 
 #define INTERRUPT_ENTRY(name)				\
-__attribute__((naked, noreturn)) void enter_##name()	\
+__attribute__((noreturn)) void enter_##name()		\
 {							\
 	asm(						\
 	"move.l	%sp, %a5\n"				\
 	"bra	" #name "\n"				\
 	);						\
+	__builtin_unreachable();			\
 }
 
-#define GET_FRAME(frame_ptr)		\
+#define GET_FRAME(frame_ptr)				\
 	asm("move.l	%%a5, %0\n" : "=r" (frame_ptr))
 
 

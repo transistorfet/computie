@@ -1,4 +1,8 @@
 
+#include <stdio.h>	// TODO for debugging only
+
+#include <stdlib.h>
+
 #include <kernel/filedesc.h>
 
 #include "process.h"
@@ -28,7 +32,7 @@ void init_proc()
 	}
 }
 
-struct process *new_proc(struct inode *inode)
+struct process *new_proc(struct vnode *vnode)
 {
 	for (char i = 0; i < PROCESS_MAX; i++) {
 		if (!table[i].pid) {

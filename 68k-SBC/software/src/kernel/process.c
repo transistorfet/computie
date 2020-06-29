@@ -32,7 +32,7 @@ void init_proc()
 	}
 }
 
-struct process *new_proc(struct vnode *vnode)
+struct process *new_proc()
 {
 	for (char i = 0; i < PROCESS_MAX; i++) {
 		if (!table[i].pid) {
@@ -44,8 +44,11 @@ struct process *new_proc(struct vnode *vnode)
 
 			// TODO use the inode to load an executable into memory?
 
-			table[i].memory.base = NULL;
-			table[i].memory.length = 0;
+			// Clear memory records
+			for (char j = 0; j < NUM_SEGMENTS; j++) {
+				table[i].segments[j].base = NULL;
+				table[i].segments[j].length = 0;
+			}
 			table[i].sp = NULL;
 
 			_queue_insert(&table[i]);
@@ -64,8 +67,10 @@ void free_proc(struct process *proc)
 			proc->pid = 0;
 			// TODO free all the things
 
-			if (proc->memory.base)
-				free(proc->memory.base);
+			for (char j = 0; j < NUM_SEGMENTS; j++) {
+				if (proc->segments[j].base)
+					free(proc->segments[j].base);
+			}
 
 			_queue_remove(proc);
 
@@ -95,7 +100,7 @@ void schedule()
 
 	if (!next) {
 		panic("No processes left to run... Halting\n");
-		return;		// TODO queue is empty...
+		return;
 	}
 
 	if (current_proc == next)

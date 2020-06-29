@@ -2,7 +2,7 @@
 #ifndef _SRC_KERNEL_INTERRUPTS_H
 #define _SRC_KERNEL_INTERRUPTS_H
 
-
+// 68k Interrupt Vectors Numbers
 #define IV_BUS_ERROR		2
 #define IV_ADDRESS_ERROR	3
 #define IV_ILLEGAL_INSTRUCTION	4

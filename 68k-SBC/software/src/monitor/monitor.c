@@ -79,15 +79,18 @@ void info(void)
 {
 	uint32_t sp;
 	uint32_t sv1;
+	uint16_t flags;
 
 	asm(
 	"move.l	%%sp, %0\n"
 	"move.l	(%%sp), %1\n"
-	: "=r" (sp), "=r" (sv1)
+	"move.w	%%sr, %2\n"
+	: "=r" (sp), "=r" (sv1), "=r" (flags)
 	);
 
 	printf("SP: %x\n", sp);
 	printf("TOP: %x\n", sv1);
+	printf("SR: %x\n", flags);
 	return;
 }
 

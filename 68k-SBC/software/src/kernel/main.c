@@ -20,6 +20,7 @@ extern void init_syscall();
 
 extern struct vnode *tty_vnode;
 extern struct process *current_proc;
+extern void *current_proc_stack;
 
 
 const char hello_task[400] = {
@@ -52,8 +53,7 @@ const char hello_task[400] = {
 void *create_context(void *user_stack, void *entry);
 
 struct process *run_task() {
-	// TODO we don't use vnodes yet, so passing in NULL
-	struct process *proc = new_proc(NULL);
+	struct process *proc = new_proc();
 	if (!proc) {
 		puts("Ran out of procs\n");
 		return NULL;
@@ -91,8 +91,8 @@ struct process *run_task() {
 
 	//dump(task_stack_p, 0x40);
 
-	proc->memory.base = task;
-	proc->memory.length = task_size;
+	proc->segments[S_TEXT].base = task;
+	proc->segments[S_TEXT].length = task_size;
 	proc->sp = task_stack_p;
 
 	printf("After: %x\n", task_stack_p);
@@ -102,7 +102,7 @@ struct process *run_task() {
 
 struct process *run_sh()
 {
-	struct process *proc = new_proc(NULL);
+	struct process *proc = new_proc();
 	if (!proc) {
 		puts("Ran out of procs\n");
 		return NULL;
@@ -119,8 +119,10 @@ struct process *run_sh()
 
  	stack_p = create_context(stack_p, sh_task);
 
-	proc->memory.base = NULL;
-	proc->memory.length = 0x10000;
+	proc->segments[S_TEXT].base = NULL;
+	proc->segments[S_TEXT].length = 0x10000;
+	proc->segments[S_STACK].base = stack;
+	proc->segments[S_STACK].length = stack_size;
 	proc->sp = stack_p;
 
 	printf("After: %x\n", stack_p);
@@ -147,17 +149,11 @@ int main()
 
 	struct process *task = run_task();
 	run_sh();
-	//do_fork();
-
-	//print_run_queue();
 
 	//for (int i = 0; i < 0x2800; i++)
 	//	asm volatile("");
 
 	//printf("THINGS %x\n", current_proc);
-
-
-	extern void *current_proc_stack;
 
 	current_proc = task;
 	current_proc_stack = task->sp;

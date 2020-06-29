@@ -5,12 +5,12 @@
 #include <stddef.h>
 #include <kernel/filedesc.h>
 
-#define	NUM_SEGMENTS	3
+#define	NUM_SEGMENTS	2
 
 typedef enum {
-	TEXT,
-	DATA,
-	STACK
+	S_TEXT,
+	//S_DATA,
+	S_STACK
 } proc_seg_t;
 
 struct mem_seg {
@@ -23,15 +23,14 @@ struct process {
 	uint16_t status;
 	struct process *nextq;
 
-	//struct mem_seg segments[NUM_SEGMENTS];
-	struct mem_seg memory;
+	struct mem_seg segments[NUM_SEGMENTS];
 	void *sp;
 
 	fd_table_t fd_table;
 };
 
 void init_proc();
-struct process *new_proc(struct vnode *vnode);
+struct process *new_proc();
 void free_proc(struct process *proc);
 
 #endif

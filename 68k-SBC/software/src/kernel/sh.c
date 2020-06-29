@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <kernel/syscall.h>
+
 
 void delay(short count) {
 	while (--count > 0) { }
@@ -87,15 +89,18 @@ void info()
 {
 	uint32_t sp;
 	uint32_t sv1;
+	uint16_t flags;
 
 	asm(
 	"move.l	%%sp, %0\n"
 	"move.l	(%%sp), %1\n"
-	: "=r" (sp), "=r" (sv1)
+	"move.w	%%sr, %2\n"
+	: "=r" (sp), "=r" (sv1), "=r" (flags)
 	);
 
 	printf("SP: %x\n", sp);
 	printf("TOP: %x\n", sv1);
+	printf("SR: %x\n", flags);
 	return;
 }
 
@@ -160,6 +165,20 @@ void boot()
 	((void (*)()) entry)();
 }
 
+void sh_fork()
+{
+	int pid = SYSCALL1(SYS_FORK, 0);
+
+	if (pid) {
+		printf("The child's pid is %d\n", pid);
+	}
+	else {
+		puts("I AM THE CHILD!");
+		SYSCALL1(SYS_EXIT, 0);
+	}
+}
+
+
 
 // In process.c
 extern void print_run_queue();
@@ -207,6 +226,9 @@ void serial_read_loop()
 					length = strtol(args[2], NULL, 16);
 				dump((const uint16_t *) strtol(args[1], NULL, 16), length);
 			}
+		}
+		else if (!strcmp(args[0], "fork")) {
+			sh_fork();
 		}
 		else if (!strcmp(args[0], "exit")) {
 			return;

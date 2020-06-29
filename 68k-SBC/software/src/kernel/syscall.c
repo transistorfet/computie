@@ -31,6 +31,7 @@ void init_syscall()
 // TODO this is temporary until you have processes working correctly
 extern struct vnode *tty_vnode;
 extern struct process *current_proc;
+extern void *current_proc_stack;
 
 void *create_context(void *user_stack, void *entry);
 
@@ -55,30 +56,40 @@ size_t do_write(int fd, const char *buf, size_t nbytes)
 
 int do_fork()
 {
-	// TODO we don't use vnodes yet, so passing in NULL
-	struct process *proc = new_proc(NULL);
+	struct process *proc;
+
+	proc = new_proc();
 	if (!proc)
 		panic("Ran out of procs\n");
-	int fd = new_fd(proc->fd_table, tty_vnode);
+	// TODO this is only here because we don't clone the fd table
+	new_fd(proc->fd_table, tty_vnode);
 
-	printf("FD: %d\n", fd);
+	// Save the current process's stack pointer back to it's struct, which
+	// normally only happens in the schedule() function
+	current_proc->sp = current_proc_stack;
 
-	int task_size = 0x1000;
-	char *task = malloc(task_size);
-	char *task_stack_p = task + task_size;
-	printf("Task Address: %x\n", task);
-	printf("Task Stack Address: %x\n", task_stack_p);
+	int stack_size = current_proc->segments[S_STACK].length;
+	char *stack = malloc(stack_size);
+	char *stack_pointer = (stack + stack_size) - ((current_proc->segments[S_STACK].base + current_proc->segments[S_STACK].length) - current_proc->sp);
 
-	//memcpy_s(task, hello_task, 400);
-	//dump(task, task_size);
+	memcpy_s(stack, current_proc->segments[S_STACK].base, current_proc->segments[S_STACK].length);
 
-	//print_stack();
+	printf("Parent Stack Pointer: %x\n", current_proc->sp);
 
- 	task_stack_p = create_context(task_stack_p, task);
+	printf("Fork Stack: %x\n", stack);
+	printf("Fork Stack Top: %x\n", stack + stack_size);
+	printf("Fork Stack Pointer: %x\n", stack_pointer);
 
-	proc->memory.base = task;
-	proc->memory.length = task_size;
-	proc->sp = task_stack_p;
+	proc->segments[S_STACK].base = stack;
+	proc->segments[S_STACK].length = stack_size;
+	proc->sp = stack_pointer;
+
+	// Apply return values to the context on the stack (%d0 is at the top)
+	*((uint32_t *) current_proc->sp) = proc->pid;
+	*((uint32_t *) proc->sp) = 0;
+
+	//dump((uint16_t *) current_proc->sp, 0x100);
+	//dump((uint16_t *) proc->sp, 0x100);
 
 	return 0;
 }

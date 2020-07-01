@@ -3,12 +3,18 @@
 #define KERNEL_SYSCALL_H
 
 
-#define SYS_GETCHAR	0
-#define SYS_PUTCHAR	1
-#define SYS_READ	2
-#define SYS_WRITE	3
-#define SYS_FORK	4
-#define SYS_EXIT	5
+#define SYS_TEST	0
+#define SYS_EXIT	1
+#define SYS_FORK	2
+#define SYS_READ	3
+#define SYS_WRITE	4
+#define SYS_OPEN	5
+#define SYS_CLOSE	6
+//#define SYS_WAIT	7
+//#define SYS_CREAT	8
+//#define SYS_LINK	9
+//#define SYS_UNLINK	10
+//#define SYS_EXEC	11
 
 
 static inline int SYSCALL1(int n, int a1)

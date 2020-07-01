@@ -4,7 +4,8 @@ import serial
 import argparse
 
 filename = '/dev/ttyUSB0'
-baud = 9600
+#baud = 9600
+baud = 38400
 
 def main():
     parser = argparse.ArgumentParser(prog='load', description='Load a program over serial into Computie68k')
@@ -23,7 +24,7 @@ def main():
             ch = f.read(1)
             if not ch:
                 break
-            time.sleep(0.005)
+            time.sleep(0.002)
             tty.write(bytes(ch, 'ascii'))
 
     tty.close()

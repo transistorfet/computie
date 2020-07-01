@@ -179,7 +179,7 @@ restore_context:
 
 _exit:
 	| Execute the exit syscall to terminate the current process
-	moveq	#5, %d0		| TODO the syscall number might change
+	moveq	#1, %d0
 	trap	#1
 
 	| This shouldn't run because the syscall should never return

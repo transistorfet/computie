@@ -1,7 +1,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include <errno.h>
 #include <kernel/driver.h>
 #include <kernel/filedesc.h>
 
@@ -11,14 +13,16 @@
 
 #define SYSCALL_MAX	10
 
+void test() { puts("It's a test!\n"); }
 
 void *syscall_table[SYSCALL_MAX] = {
-	getchar,
-	putchar,
+	test,
+	do_exit,
+	do_fork,
 	do_read,
 	do_write,
-	do_fork,
-	do_exit,
+	do_open,
+	do_close,
 };
 
 extern void enter_syscall();
@@ -36,12 +40,31 @@ extern void *current_proc_stack;
 void *create_context(void *user_stack, void *entry);
 
 
+int do_open(const char *path, int oflags)
+{
+	int fd;
+	struct vnode *vnode;
+
+	if (!strcmp(path, "/dev/tty"))
+		vnode = tty_vnode;
+	else
+		return -ENOENT;
+
+	fd = new_fd(current_proc->fd_table, vnode);
+	return fd;
+}
+
+int do_close(int fd)
+{
+	free_fd(current_proc->fd_table, fd);
+	return 0;
+}
 
 size_t do_read(int fd, char *buf, size_t nbytes)
 {
 	struct file *f = get_fd(current_proc->fd_table, fd);
 	if (!f)
-		return 0;
+		return -1;
 	return dev_read(f->vnode->device, buf, nbytes);
 }
 
@@ -50,7 +73,7 @@ size_t do_write(int fd, const char *buf, size_t nbytes)
 {
 	struct file *f = get_fd(current_proc->fd_table, fd);
 	if (!f)
-		return 0;
+		return -1;
 	return dev_write(f->vnode->device, buf, nbytes);
 }
 

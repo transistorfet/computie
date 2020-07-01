@@ -17,9 +17,17 @@ int new_fd(fd_table_t table, struct vnode *vnode)
 	for (char i = 0; i < OPEN_MAX; i++) {
 		if (!table[i].vnode) {
 			table[i].vnode = vnode;
+			table[i].position = 0;
 			return i;
 		}
 	}
+}
+
+void free_fd(fd_table_t table, int fd)
+{
+	struct file *f = get_fd(table, fd);
+	if (f)
+		f->vnode = NULL;
 }
 
 struct file *get_fd(fd_table_t table, int fd)

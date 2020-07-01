@@ -1,8 +1,11 @@
  
+#include <unistd.h>
 #include <kernel/syscall.h>
 
 int putchar(int ch)
 {
-	return SYSCALL1(SYS_PUTCHAR, ch);
-	//return SYSCALL3(SYS_PUTCHAR, ch, 0, 0);
+	unsigned char c = ch;
+	write(0, &c, 1);
+	//return SYSCALL1(SYS_TEST, ch);
+	return ch;
 }

@@ -32,6 +32,7 @@ KERNEL_OBJS = \
 	src/kernel/driver.o \
 	src/kernel/fs/vnode.o \
 	src/kernel/fs/filedesc.o \
+	src/kernel/fs/minix/minix.o \
 	src/kernel/drivers/tty_68681.o \
 	src/kernel/sh.o \
 	libc-68k-none.a

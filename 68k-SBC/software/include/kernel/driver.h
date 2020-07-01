@@ -27,4 +27,17 @@ int dev_read(device_t dev, char *buffer, size_t size);
 int dev_write(device_t dev, const char *buffer, size_t size);
 int dev_ioctl(device_t dev, unsigned int request, void *argp);
 
+
+
+struct block_driver {
+	int (*open)(devminor_t minor, int access);
+	int (*close)(devminor_t minor);
+	//prepare
+	int (*transfer)(devminor_t minor, offset_t position, char *buffer, size_t size);
+	int (*ioctl)(devminor_t minor, unsigned int request, void *argp);
+	//geometry
+};
+
+
+
 #endif

@@ -20,8 +20,11 @@ struct mem_seg {
 
 struct process {
 	int pid;
-	uint16_t status;
+	// parent
 	struct process *nextq;
+
+	uint16_t status;
+	int exitcode;
 
 	struct mem_seg segments[NUM_SEGMENTS];
 	void *sp;

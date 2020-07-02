@@ -269,9 +269,10 @@ byte send_mem[] = {
 
 };
 
-#define ROM_SIZE	0x1600
-word mem_size = ROM_SIZE;
-byte mem[ROM_SIZE] = {
+#define ROM_SIZE	0x1200
+#define MEM_SIZE	0x1800
+word mem_size = MEM_SIZE;
+byte mem[MEM_SIZE] = {
 
 // Nop + Halt
 //0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x08, 0x4e, 0x71, 0x4e, 0x72, 0x00, 0x00,
@@ -300,8 +301,12 @@ byte mem[ROM_SIZE] = {
 
 };
 
-#define BUS_DEBUG	0
+#define READ_BUS_DEBUG	1
+#define WRITE_BUS_DEBUG	1
+#define WRITE_PROTECT	1
 #define IO_SPACE_HADDR	(0x20 >> 1)	// address 0x2000
+
+char trace = 0;
 
 ISR (PCINT0_vect) {
 	bus_request = 1;
@@ -320,15 +325,17 @@ void check_bus_cycle()
 			M68_LDATA_DDR = 0xFF;
 			M68_HDATA_DDR = 0xFF;
 
-			#if BUS_DEBUG
-			Serial.write('R');
-			Serial.print(addr, HEX);
-			if (addr < mem_size) {
-				Serial.write('|');
-				Serial.print((mem[addr] << 8) | mem[addr + 1], HEX);
+			//#if READ_BUS_DEBUG
+			if (READ_BUS_DEBUG || (trace && addr >= ROM_SIZE)) {
+				Serial.write('R');
+				Serial.print(addr, HEX);
+				if (addr < mem_size) {
+					Serial.write('|');
+					Serial.print((mem[addr] << 8) | mem[addr + 1], HEX);
+				}
+				Serial.write('\n');
 			}
-			Serial.write('\n');
-			#endif
+			//#endif
 
 			if (M68_HADDR_PIN == IO_SPACE_HADDR) {
 				//Serial.write('S');
@@ -382,14 +389,16 @@ void check_bus_cycle()
 		else if (M68_IS_WRITE()) {
 			register word addr = ((M68_HADDR_PIN << 8) | M68_LADDR_PIN) << 1;
 
-			#if BUS_DEBUG
-			Serial.write('W');
-			Serial.print(addr, HEX);
-			Serial.write('|');
-			register word data = (M68_HDATA_PIN << 8) | M68_LDATA_PIN;
-			Serial.print(data, HEX);
-			Serial.write('\n');
-			#endif
+			//#if WRITE_BUS_DEBUG
+			if (WRITE_BUS_DEBUG || (trace && addr >= ROM_SIZE)) {
+				Serial.write('W');
+				Serial.print(addr, HEX);
+				Serial.write('|');
+				register word data = (M68_HDATA_PIN << 8) | M68_LDATA_PIN;
+				Serial.print(data, HEX);
+				Serial.write('\n');
+			}
+			//#endif
 
 			if (M68_HADDR_PIN == IO_SPACE_HADDR) {
 				//Serial.write('X');
@@ -399,6 +408,10 @@ void check_bus_cycle()
 					Serial.write(M68_LDATA_PIN);
 					//serial_add_byte(M68_LDATA_PIN);
 					break;
+				    case 0x0c:
+					trace = (M68_LDATA_PIN & 0x01);
+					Serial.println(trace ? "Trace On" : "Trace Off");
+					break;
 				    case 0x0e:
 					digitalWrite(13, (M68_LDATA_PIN & 0x01));
 					break;
@@ -407,10 +420,12 @@ void check_bus_cycle()
 				}
 			}
 			else if (addr < mem_size) {
-				if (M68_IS_LDS())
-					mem[addr + 1] = M68_LDATA_PIN;
-				if (M68_IS_UDS())
-					mem[addr] = M68_HDATA_PIN;
+				if (!WRITE_PROTECT || addr >= ROM_SIZE) {
+					if (M68_IS_LDS())
+						mem[addr + 1] = M68_LDATA_PIN;
+					if (M68_IS_UDS())
+						mem[addr] = M68_HDATA_PIN;
+				}
 			}
 
 			//delayMicroseconds(1000);

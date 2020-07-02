@@ -1,20 +1,43 @@
- 
+
 #include <stdio.h>
+#include <string.h>
 
-#include <unistd.h>
-#include <kernel/syscall.h>
+#define BUF_SIZE	100
 
+int readline(char *buffer, short max)
+{
+	for (short i = 0; i < max; i++) {
+		buffer[i] = getchar();
+		putchar(buffer[i]);
+		if (buffer[i] == '\n') {
+			buffer[i] = '\0';
+			if (i > 0 && buffer[i - 1] == '\r')
+				buffer[i - 1] = '\0';
+			return i;
+		}
+	}
+	return 0;
+}
 
 int main()
 {
-	const char *msg = "Hello !\n";
+	char buffer[BUF_SIZE];
 
-	puts("Hello, World!");
-	//write(0, msg, 14);
-	//putchar('#');
-	//SYSCALL1(SYS_PUTCHAR, '!');
-	//SYSCALL3(SYS_WRITE, 0, "Hello, World!\n", 14);
-	//SYSCALL3(SYS_WRITE, 0, msg, 14);
+	putchar('\n');
+
+	while (1) {
+		putsn("% ");
+
+		readline(buffer, BUF_SIZE);
+		puts(buffer);
+
+		if (!strcmp(buffer, "exit")) {
+			break;
+		}
+		else if (!strcmp(buffer, "test")) {
+			puts("A User Program Test");
+		}
+	}
 
 	return 0;
 }

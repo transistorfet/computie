@@ -15,14 +15,3 @@ _start:
 	bsr	main
 	stop	#0x2700
 
-
-/**
- * Error Handler
- */
-_error:
-	move.b	#0x01, %d0
-	lea	0x201d, %a0
-	move.b	%d0, (%a0)		| set the arduino led as an error indicator
-
-	stop	#0x2700	
-

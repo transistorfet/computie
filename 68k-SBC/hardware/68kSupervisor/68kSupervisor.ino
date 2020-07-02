@@ -301,7 +301,7 @@ byte mem[MEM_SIZE] = {
 
 };
 
-#define READ_BUS_DEBUG	1
+#define READ_BUS_DEBUG	0
 #define WRITE_BUS_DEBUG	1
 #define WRITE_PROTECT	1
 #define IO_SPACE_HADDR	(0x20 >> 1)	// address 0x2000

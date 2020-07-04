@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <errno.h>
+#include <kernel/vfs.h>
 #include <kernel/driver.h>
 #include <kernel/filedesc.h>
 
@@ -43,38 +44,44 @@ void *create_context(void *user_stack, void *entry);
 int do_open(const char *path, int oflags)
 {
 	int fd;
+	int error;
+	struct vfile *file;
 	struct vnode *vnode;
 
-	if (!strcmp(path, "/dev/tty"))
-		vnode = tty_vnode;
-	else
-		return -ENOENT;
+	if ((error = vfs_lookup(path, &vnode)))
+		return error;
 
-	fd = new_fd(current_proc->fd_table, vnode);
+	fd = find_unused_fd(current_proc->fd_table);
+	if (fd < 0)
+		return fd;
+
+	vfs_open(vnode, 0, &file);
+	set_fd(current_proc->fd_table, fd, file);
+
 	return fd;
 }
 
 int do_close(int fd)
 {
-	free_fd(current_proc->fd_table, fd);
+	//free_fd(current_proc->fd_table, fd);
 	return 0;
 }
 
 size_t do_read(int fd, char *buf, size_t nbytes)
 {
-	struct file *f = get_fd(current_proc->fd_table, fd);
-	if (!f)
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file)
 		return -1;
-	return dev_read(f->vnode->device, buf, nbytes);
+	return vfs_read(file, buf, nbytes);
 }
 
 
 size_t do_write(int fd, const char *buf, size_t nbytes)
 {
-	struct file *f = get_fd(current_proc->fd_table, fd);
-	if (!f)
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file)
 		return -1;
-	return dev_write(f->vnode->device, buf, nbytes);
+	return vfs_write(file, buf, nbytes);
 }
 
 int do_fork()
@@ -84,8 +91,7 @@ int do_fork()
 	proc = new_proc();
 	if (!proc)
 		panic("Ran out of procs\n");
-	// TODO this is only here because we don't clone the fd table
-	new_fd(proc->fd_table, tty_vnode);
+	dup_fd_table(&proc->fd_table, &current_proc->fd_table);
 
 	// Save the current process's stack pointer back to it's struct, which
 	// normally only happens in the schedule() function

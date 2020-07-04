@@ -2,12 +2,14 @@
 #include <stdint.h>
 
 #include <sys/stat.h>
-#include <kernel/vnode.h>
+#include <kernel/vfs.h>
 #include <kernel/driver.h>
 
 #include "../interrupts.h"
+#include "../fs/devfs/devfs.h"
 
 // Driver Definition
+int tty_68681_init();
 int tty_68681_open(devminor_t minor, int access);
 int tty_68681_close(devminor_t minor);
 int tty_68681_read(devminor_t minor, char *buffer, size_t size);
@@ -15,6 +17,7 @@ int tty_68681_write(devminor_t minor, const char *buffer, size_t size);
 int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp);
 
 struct driver tty_68681_driver = {
+	tty_68681_init,
 	tty_68681_open,
 	tty_68681_close,
 	tty_68681_read,
@@ -92,8 +95,6 @@ static struct serial_channel channel_b;
 
 extern void enter_irq();
 
-struct vnode *tty_vnode = NULL;
-
 // TODO remove after debugging
 char tick = 0;
 
@@ -108,7 +109,7 @@ static inline char _buf_get(struct circular_buffer *cb, char *data, char size);
 static inline char _buf_put(struct circular_buffer *cb, const char *data, char size);
 
 
-int init_tty()
+int tty_68681_init()
 {
 	// Configure channel A serial port
 	*MR1A_MR2A_ADDR = MR1A_MODE_A_REG_1_CONFIG;
@@ -131,16 +132,14 @@ int init_tty()
 	*IVR_WR_ADDR = TTY_INT_VECTOR;
 	*IMR_WR_ADDR = ISR_TIMER_CHANGE | ISR_INPUT_CHANGE | ISR_CH_A_RX_READY_FULL;
 
-
-	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
-	// TODO this is a hack because we don't have another way of creating the vnode yet
-	tty_vnode = new_vnode((DEVMAJOR_TTY << 8), S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO);
-
-
 	// Flash LEDs briefly at boot
 	*OPCR_WR_ADDR = 0x00;
 	*OUT_SET_ADDR = 0xF0;
 	*OUT_RESET_ADDR = 0xF0;
+
+	extern struct vnode *tty_vnode;
+	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
+	devfs_mknod(devfs_root, "tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, 0, &tty_vnode);
 }
 
 int getchar(void)

@@ -11,6 +11,7 @@ typedef unsigned char devmajor_t;
 typedef unsigned char devminor_t;
 
 struct driver {
+	int (*init)();
 	int (*open)(devminor_t minor, int access);
 	int (*close)(devminor_t minor);
 	int (*read)(devminor_t minor, char *buffer, size_t size);
@@ -30,6 +31,7 @@ int dev_ioctl(device_t dev, unsigned int request, void *argp);
 
 
 struct block_driver {
+	int (*init)();
 	int (*open)(devminor_t minor, int access);
 	int (*close)(devminor_t minor);
 	//prepare

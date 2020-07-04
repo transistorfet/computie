@@ -1,24 +1,25 @@
 
 #include <stddef.h>
-#include <kernel/vnode.h>
+#include <kernel/vfs.h>
 
-#define MAX_INODES	10
+#define MAX_VNODES	10
 
-static struct vnode vnode_table[MAX_INODES];
+static struct vnode vnode_table[MAX_VNODES];
 
 void init_vnode()
 {
-	for (char i = 0; i < MAX_INODES; i++) {
+	for (char i = 0; i < MAX_VNODES; i++) {
 		vnode_table[i].refcount = 0;
 	}
 }
 
 // TODO this function should take a path, but I have no path mapping yet, so take a device_t
-//struct inode *new_inode(char *path, file_mode_t mode)
-struct vnode *new_vnode(device_t dev, file_mode_t mode)
+//struct inode *new_inode(char *path, mode_t mode)
+struct vnode *new_vnode(device_t dev, mode_t mode, struct vnode_ops *ops)
 {
-	for (char i = 0; i < MAX_INODES; i++) {
+	for (char i = 0; i < MAX_VNODES; i++) {
 		if (vnode_table[i].refcount == 0) {
+			vnode_table[i].ops = ops;
 			vnode_table[i].mode = mode;
 			vnode_table[i].device = dev;
 			vnode_table[i].i_num = 0;
@@ -29,9 +30,9 @@ struct vnode *new_vnode(device_t dev, file_mode_t mode)
 	return NULL;
 }
 
-struct vnode *get_vnode(device_t dev, inode_t num)
+struct vnode *get_vnode(device_t dev, short num)
 {
-	for (char i = 0; i < MAX_INODES; i++) {
+	for (char i = 0; i < MAX_VNODES; i++) {
 		if (vnode_table[i].device == dev && vnode_table[i].i_num == num) {
 			// TODO is this supposed to increment the refcount
 			return &vnode_table[i];

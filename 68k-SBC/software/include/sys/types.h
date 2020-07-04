@@ -7,10 +7,8 @@ typedef long time_t;
 typedef int pid_t;
 typedef short device_t;
 
-typedef unsigned short file_mode_t;
-typedef unsigned short inode_t;
+typedef unsigned short mode_t;
 typedef unsigned long offset_t;
-typedef unsigned short zone_nr_t;
 
 typedef unsigned short uid_t;
 typedef unsigned short gid_t;

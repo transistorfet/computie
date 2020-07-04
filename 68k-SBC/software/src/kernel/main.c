@@ -4,9 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <sys/stat.h>
+
 #include <kernel/filedesc.h>
 #include <kernel/syscall.h>
 #include <kernel/driver.h>
+#include <kernel/vfs.h>
 
 #include "interrupts.h"
 #include "process.h"
@@ -15,10 +18,17 @@
 extern void sh_task();
 
 
-extern void init_tty();
 extern void init_syscall();
 
-extern struct vnode *tty_vnode;
+extern struct driver *tty_68681_driver;
+extern struct vnode_ops devfs_vnode_ops;
+
+struct driver *drivers[] = {
+	&tty_68681_driver,
+	NULL	// Null Termination of Driver List
+};
+
+struct vnode *tty_vnode;
 extern struct process *current_proc;
 extern void *current_proc_stack;
 
@@ -31,15 +41,26 @@ const char hello_task[TASK_SIZE] = {
 
 void *create_context(void *user_stack, void *entry);
 
-struct process *run_task() {
+struct process *run_task()
+{
+	int error = 0;
+
 	struct process *proc = new_proc();
 	if (!proc) {
 		puts("Ran out of procs\n");
 		return NULL;
 	}
-	int fd = new_fd(proc->fd_table, tty_vnode);
 
+	current_proc = proc;
+
+	int fd = do_open("tty", 0);
+	if (fd < 0) {
+		printf("Error opening file tty %d\n", error);
+		return NULL;
+	}
 	printf("FD: %d\n", fd);
+
+	do_write(fd, "Hey\n", 4);
 
 
 	//for (int i = 0; i < 0x4000; i++)
@@ -81,12 +102,22 @@ struct process *run_task() {
 
 struct process *run_sh()
 {
+	int error = 0;
+
 	struct process *proc = new_proc();
 	if (!proc) {
 		puts("Ran out of procs\n");
 		return NULL;
 	}
-	int fd = new_fd(proc->fd_table, tty_vnode);
+
+	current_proc = proc;
+
+	int fd = do_open("tty", 0);
+	if (fd < 0) {
+		printf("Error opening file tty %d\n", error);
+		return NULL;
+	}
+	printf("FD: %d\n", fd);
 
 
 	int stack_size = 0x800;
@@ -123,7 +154,13 @@ int main()
 	init_proc();
 
 	init_vnode();
-	init_tty();
+	init_file_table();
+	init_devfs();
+
+	// Initialize drivers
+	for (char i = 0; drivers[i]; i++) {
+		drivers[i]->init();
+	}
 
 
 	struct process *task = run_task();

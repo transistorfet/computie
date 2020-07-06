@@ -32,11 +32,11 @@ struct mallocfs_node {
 
 extern struct vnode *mallocfs_root;
 
-int mallocfs_lookup(struct vnode *vnode, const char *name, struct vnode **result);
 int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result);
 int mallocfs_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, struct vnode **result);
+int mallocfs_lookup(struct vnode *vnode, const char *name, struct vnode **result);
 
-int mallocfs_open(struct vfile *file, mode_t mode);
+int mallocfs_open(struct vfile *file, int flags);
 int mallocfs_close(struct vfile *file);
 int mallocfs_read(struct vfile *file, char *buf, size_t nbytes);
 int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes);

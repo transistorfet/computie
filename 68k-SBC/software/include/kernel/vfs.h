@@ -26,9 +26,9 @@ struct mount_ops {
 struct vnode_ops {
 	struct vfile_ops *fops;
 
-	int (*lookup)(struct vnode *vnode, const char *filename, struct vnode **result);
 	int (*create)(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result);
 	int (*mknod)(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result);
+	int (*lookup)(struct vnode *vnode, const char *filename, struct vnode **result);
 	int (*unlink)(struct vnode *vnode);
 	//mkdir (or can it be done through create)
 	//rmdir (or can it be done through unlink)
@@ -38,7 +38,7 @@ struct vnode_ops {
 
 // TODO should you just integrate this with the vnode ops
 struct vfile_ops {
-	int (*open)(struct vfile *file, mode_t mode);
+	int (*open)(struct vfile *file, int flags);
 	int (*close)(struct vfile *file);
 	int (*read)(struct vfile *file, char *buffer, size_t size);
 	int (*write)(struct vfile *file, const char *buffer, size_t size);
@@ -71,8 +71,9 @@ struct vnode {
 
 struct vfile {
 	struct vnode *vnode;
-	offset_t position;
 	int refcount;
+	//int flags;
+	offset_t position;
 };
 
 struct vdir {
@@ -85,9 +86,9 @@ int vfs_mount(struct mount *mp);
 int vfs_umount(struct mount *mp);
 int vfs_sync(struct mount *mp);
 
-int vfs_lookup(const char *filename, struct vnode **result);
 int vfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result);
-int vfs_open(const char *filename, mode_t mode, struct vfile **file);
+int vfs_lookup(const char *filename, int flags, struct vnode **result);
+int vfs_open(const char *path, int flags, struct vfile **file);
 
 int vfs_close(struct vfile *file);
 int vfs_read(struct vfile *file, char *buffer, size_t size);

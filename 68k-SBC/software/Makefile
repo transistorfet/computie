@@ -36,7 +36,8 @@ KERNEL_OBJS = \
 	src/kernel/fs/mallocfs/mallocfs.o \
 	src/kernel/drivers/tty_68681.o \
 	src/kernel/sh.o \
-	libc-68k-none.a
+	libc-68k-none.a \
+	libc-68k-os.a		# For unistd syscall functions only
 
 LIBC_BASE_OBJS = $(filter-out src/libc/arch/*, \
 	$(patsubst %.c,%.o, $(wildcard src/libc/**/*.c)) \

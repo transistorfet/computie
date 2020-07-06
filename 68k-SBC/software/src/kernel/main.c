@@ -154,8 +154,8 @@ void file_test()
 		return;
 	}
 
-	if (vfs_write(file, "This is a file test\n", 20) != 20) {
-		printf("Error when writing\n");
+	if ((error = vfs_write(file, "This is a file test\n", 20)) <= 0) {
+		printf("Error when writing %d\n", error);
 		return;
 	}
 
@@ -172,6 +172,24 @@ void file_test()
 	buffer[error] = '\0';
 
 	puts(buffer);
+
+	vfs_close(file);
+
+
+	if ((error = vfs_open("/hello", O_CREAT, &file))) {
+		printf("Error at open new file %d\n", error);
+		return;
+	}
+
+	if ((error = vfs_write(file, hello_task, 256)) <= 0) {
+		printf("Error when writing %d\n", error);
+		return;
+	}
+
+	vfs_close(file);
+
+	puts("done");
+
 }
 
 void dir_test()
@@ -197,6 +215,8 @@ void dir_test()
 			printf("File: %d:%s\n", error, dir.name);
 		}
 	}
+
+
 }
 
 

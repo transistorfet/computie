@@ -22,9 +22,9 @@ struct vfile_ops devfs_vfile_ops = {
 
 struct vnode_ops devfs_vnode_ops = {
 	&devfs_vfile_ops,
-	devfs_lookup,
 	NULL,
 	devfs_mknod,
+	devfs_lookup,
 };
 
 
@@ -41,25 +41,6 @@ int init_devfs()
 
 	for (char i = 0; i < DEVFS_DIRENT_MAX; i++)
 		devices[i].vnode = NULL;
-}
-
-int devfs_lookup(struct vnode *vnode, const char *filename, struct vnode **result)
-{
-	// If a valid pointer isn't provided, return invalid argument
-	if (!result)
-		return EINVAL;
-
-	// Only support a single level of vnodes below the root vnode
-	if (vnode != devfs_root)
-		return ENOTDIR;
-
-	for (char i = 0; i < DEVFS_DIRENT_MAX; i++) {
-		if (devices[i].vnode && !strcmp(filename, devices[i].name)) {
-			*result = devices[i].vnode;
-			return 0;
-		}
-	}
-	return ENOENT;
 }
 
 int devfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result)
@@ -90,7 +71,26 @@ int devfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t
 	return 0;
 }
 
-int devfs_open(struct vfile *file, mode_t mode)
+int devfs_lookup(struct vnode *vnode, const char *filename, struct vnode **result)
+{
+	// If a valid pointer isn't provided, return invalid argument
+	if (!result)
+		return EINVAL;
+
+	// Only support a single level of vnodes below the root vnode
+	if (vnode != devfs_root)
+		return ENOTDIR;
+
+	for (char i = 0; i < DEVFS_DIRENT_MAX; i++) {
+		if (devices[i].vnode && !strcmp(filename, devices[i].name)) {
+			*result = devices[i].vnode;
+			return 0;
+		}
+	}
+	return ENOENT;
+}
+
+int devfs_open(struct vfile *file, int flags)
 {
 	return 0;
 }

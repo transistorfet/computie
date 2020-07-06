@@ -27,11 +27,11 @@ struct devfs_node {
 
 extern struct vnode *devfs_root;
 
-int devfs_lookup(struct vnode *vnode, const char *name, struct vnode **result);
 int devfs_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result);
 int devfs_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, struct vnode **result);
+int devfs_lookup(struct vnode *vnode, const char *name, struct vnode **result);
 
-int devfs_open(struct vfile *file, mode_t mode);
+int devfs_open(struct vfile *file, int flags);
 int devfs_close(struct vfile *file);
 int devfs_read(struct vfile *file, char *buf, size_t nbytes);
 int devfs_write(struct vfile *file, const char *buf, size_t nbytes);

@@ -1,9 +1,13 @@
 
+
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <unistd.h>
+
+#include <kernel/vfs.h>
 #include <kernel/syscall.h>
 
 
@@ -167,6 +171,7 @@ void boot()
 
 void sh_fork()
 {
+	//int pid = SYSCALL1(SYS_FORK, 0);
 	int pid = SYSCALL1(SYS_FORK, 0);
 
 	if (pid) {
@@ -175,6 +180,49 @@ void sh_fork()
 	else {
 		puts("I AM THE CHILD!");
 		SYSCALL1(SYS_EXIT, 0);
+	}
+}
+
+void ls()
+{
+	int fd;
+	int error;
+	struct vdir dir;
+	struct vfile *file;
+	char *cwd = "/";
+
+	if ((fd = open(cwd, 0)) < 0) {
+		printf("Error opening %s: %d\n", cwd, fd);
+		return;
+	}
+
+	while (1) {
+		error = readdir(fd, &dir);
+		if (error < 0) {
+			printf("Error at readdir %d\n", error);
+			return;
+		}
+
+		if (error == 0)
+			break;
+		else
+			printf("File: %s\n", dir.name);
+	}
+
+	close(fd);
+}
+
+
+void command_exec(char *path)
+{
+	int pid = fork();
+
+	if (pid) {
+		printf("The child's pid is %d\n", pid);
+	}
+	else {
+		puts("I AM THE CHILD!");
+		exec(path);
 	}
 }
 
@@ -227,8 +275,18 @@ void serial_read_loop()
 				dump((const uint16_t *) strtol(args[1], NULL, 16), length);
 			}
 		}
+		else if (!strcmp(args[0], "exec")) {
+			if (argc <= 1)
+				puts("You need file name");
+			else {
+				command_exec(args[1]);
+			}
+		}
 		else if (!strcmp(args[0], "fork")) {
 			sh_fork();
+		}
+		else if (!strcmp(args[0], "ls")) {
+			ls();
 		}
 		else if (!strcmp(args[0], "exit")) {
 			return;

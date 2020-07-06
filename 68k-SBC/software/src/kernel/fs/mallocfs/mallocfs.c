@@ -28,9 +28,9 @@ struct vfile_ops mallocfs_vfile_ops = {
 
 struct vnode_ops mallocfs_vnode_ops = {
 	&mallocfs_vfile_ops,
-	mallocfs_lookup,
 	mallocfs_create,
 	mallocfs_mknod,
+	mallocfs_lookup,
 };
 
 
@@ -61,25 +61,6 @@ int init_mallocfs()
 	else
 		printf("Created at %x\n", vn->block);
 
-}
-
-int mallocfs_lookup(struct vnode *vnode, const char *filename, struct vnode **result)
-{
-	// If a valid pointer isn't provided, return invalid argument
-	if (!result)
-		return EINVAL;
-
-	if (!(vnode->mode & S_IFDIR))
-		return ENOTDIR;
-
-	struct mallocfs_block *block = vnode->block;
-	for (char i = 0; i < MALLOCFS_DIRENTS; i++) {
-		if (block->entries[i].vnode && !strcmp(filename, block->entries[i].name)) {
-			*result = block->entries[i].vnode;
-			return 0;
-		}
-	}
-	return ENOENT;
 }
 
 int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result)
@@ -129,7 +110,26 @@ int mallocfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, devic
 	return 0;
 }
 
-int mallocfs_open(struct vfile *file, mode_t mode)
+int mallocfs_lookup(struct vnode *vnode, const char *filename, struct vnode **result)
+{
+	// If a valid pointer isn't provided, return invalid argument
+	if (!result)
+		return EINVAL;
+
+	if (!(vnode->mode & S_IFDIR))
+		return ENOTDIR;
+
+	struct mallocfs_block *block = vnode->block;
+	for (char i = 0; i < MALLOCFS_DIRENTS; i++) {
+		if (block->entries[i].vnode && !strcmp(filename, block->entries[i].name)) {
+			*result = block->entries[i].vnode;
+			return 0;
+		}
+	}
+	return ENOENT;
+}
+
+int mallocfs_open(struct vfile *file, int flags)
 {
 	return 0;
 }

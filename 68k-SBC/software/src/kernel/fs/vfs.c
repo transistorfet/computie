@@ -1,4 +1,6 @@
 
+#include <string.h>
+
 #include <errno.h>
 #include <kernel/vfs.h>
 #include <kernel/filedesc.h>
@@ -27,7 +29,13 @@ int vfs_umount(struct mount *mp);
 struct vnode *vfs_root(struct mount *mp);
 int vfs_sync(struct mount *mp);
 
-int vfs_lookup(const char *filename, struct vnode **result)
+
+int vfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result)
+{
+	return vnode->ops->mknod(vnode, filename, mode, dev, result);
+}
+
+int vfs_lookup(const char *filename, int flags, struct vnode **result)
 {
 	// TODO this is temporary because we don't have mounts yet
 	extern struct vnode *mallocfs_root;
@@ -56,21 +64,21 @@ int vfs_lookup(const char *filename, struct vnode **result)
 			i += 1;
 		component[j] = '\0';
 
+		// If creating, then skip the last component lookup
+		if (flags & O_CREAT && filename[i] == '\0')
+			continue;
+
+		//if (!(flags & O_CREAT) || filename[i] != '\0') {
 		error = cur->ops->lookup(cur, component, &cur);
 		if (error)
 			return error;
+		//}
 	}
 
 	return ENOENT;
 }
 
-
-int vfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result)
-{
-	return vnode->ops->mknod(vnode, filename, mode, dev, result);
-}
-
-int vfs_open(const char *filename, mode_t mode, struct vfile **file)
+int vfs_open(const char *path, int flags, struct vfile **file)
 {
 	int error;
 	struct vnode *vnode;
@@ -78,20 +86,36 @@ int vfs_open(const char *filename, mode_t mode, struct vfile **file)
 	if (!file)
 		return EINVAL;
 
-	if (mode & O_CREAT) {
-		// TODO you need to do a sublookup and call (*create), which will give you the vnode to open
-		// but do you pass a special arg to lookup, or somehow remove the last path component
-	}
-
-	error = vfs_lookup(filename, &vnode);
+	error = vfs_lookup(path, flags, &vnode);
 	if (error)
 		return error;
+
+	if (flags & O_CREAT) {
+		// TODO you need to do a sublookup and call (*create), which will give you the vnode to open
+		// but do you pass a special arg to lookup, or somehow remove the last path component
+
+		int i = strlen(path) - 1;
+		for (; i >= 0; i--) {
+			if (path[i] == VFS_SEP) {
+				i += 1;
+				break;
+			}
+		}
+
+		printf("Creating %s\n", &path[i]);
+
+		error = vnode->ops->create(vnode, &path[i], 0755, &vnode);
+		if (error)
+			return error;
+	}
+
+
 
 	*file = new_fileptr(vnode);
 	if (!*file)
 		return EMFILE;
 
-	error = vnode->ops->fops->open(*file, mode);
+	error = vnode->ops->fops->open(*file, flags);
 	if (error)
 		free_fileptr(*file);
 	return error;

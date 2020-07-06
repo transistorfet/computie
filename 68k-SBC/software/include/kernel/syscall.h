@@ -10,6 +10,8 @@
 #define SYS_WRITE	4
 #define SYS_OPEN	5
 #define SYS_CLOSE	6
+#define SYS_READDIR	7
+#define SYS_EXEC	8
 //#define SYS_WAIT	7
 //#define SYS_CREAT	8
 //#define SYS_LINK	9
@@ -30,14 +32,31 @@ static inline int SYSCALL1(int n, int a1)
 	: "%d0", "%d1"
 	);
 
-	// HACK somehow this works. Being a separate block, the clobber list is empty, so it can chose to
-	//	use %d0 as "ret" and thus no instructions are inserted and %d0 is returned
-	//	Using an output operand above generates unnecessary move instructions
-	//	I have a feeling this could break if the compiler decides to use another register
-	asm("" : "=g" (ret));
+	asm volatile("move.l	%%d0, %0\n" : "=g" (ret) : : "%d0");
 
 	return ret;
 }
+
+static inline int SYSCALL2(int n, const char *a1, int a2)
+{
+	register int ret;
+
+	asm volatile(
+	"move.l	%0, %%d0\n"
+	"move.l	%1, %%d1\n"
+	"move.l	%2, %%a0\n"
+	"trap	#1\n"
+	: // Output in %d0
+	: "g" (n), "g" (a1), "g" (a2)
+	: "%d0", "%d1", "%a0"
+	);
+
+	asm volatile("move.l	%%d0, %0\n" : "=g" (ret) : : "%d0");
+
+	return ret;
+}
+
+
 
 static inline int SYSCALL3(int n, int a1, void *a2, void *a3)
 {
@@ -54,11 +73,7 @@ static inline int SYSCALL3(int n, int a1, void *a2, void *a3)
 	: "%d0", "%d1", "%a0", "%a1"
 	);
 
-	// HACK somehow this works. Being a separate block, the clobber list is empty, so it can chose to
-	//	use %d0 as "ret" and thus no instructions are inserted and %d0 is returned
-	//	Using an output operand above generates unnecessary move instructions
-	//	I have a feeling this could break if the compiler decides to use another register
-	asm("" : "=g" (ret));
+	asm volatile("move.l	%%d0, %0\n" : "=g" (ret) : : "%d0");
 
 	return ret;
 }

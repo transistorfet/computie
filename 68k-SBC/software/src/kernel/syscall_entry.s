@@ -33,7 +33,7 @@ enter_syscall:
 	move.l	%d1, -(%sp)
 
 	| Calculate the index into the syscall table
-	| TODO this is so far the only non-pc-relative address
+	| TODO this is so far the only non-pc-relative address (there are more now)
 	lea	syscall_table, %a0	
 	lsl.l	#2, %d0
 	add.l	%d0, %a0
@@ -41,6 +41,10 @@ enter_syscall:
 
 	| Call the C function registered in the syscall table
 	jsr	(%a1)
+
+	| Save the return value to the context's %d0 slot
+	move.l	current_proc_stack, %a0
+	move.l	%d0, (%a0)
 
 	| Restore the argument registers
 	move.l	(%sp)+, %d1

@@ -24,6 +24,8 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_write,
 	do_open,
 	do_close,
+	do_readdir,
+	do_exec,
 };
 
 extern void enter_syscall();
@@ -51,7 +53,7 @@ int do_open(const char *path, int oflags)
 	if (fd < 0)
 		return fd;
 
-	error = vfs_open(path, 0, &file);
+	error = vfs_open(path, oflags, &file);
 	if (error)
 		return error;
 
@@ -90,6 +92,15 @@ size_t do_write(int fd, const char *buf, size_t nbytes)
 	return vfs_write(file, buf, nbytes);
 }
 
+int do_readdir(int fd, struct vdir *dir)
+{
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file)
+		return EBADF;
+	return vfs_readdir(file, dir);
+}
+
+
 int do_fork()
 {
 	struct process *proc;
@@ -126,12 +137,52 @@ int do_fork()
 	//dump((uint16_t *) current_proc->sp, 0x100);
 	//dump((uint16_t *) proc->sp, 0x100);
 
-	return 0;
+	printf("PID: %d\n", proc->pid);
+
+	return proc->pid;
 }
 
-int do_exit()
+void do_exit(int exitcode)
 {
 	free_proc(current_proc);
-	return 0;
 }
 
+int do_exec(const char *path)
+{
+	int fd;
+	int error;
+
+	if ((fd = do_open(path, O_RDONLY)) < 0) {
+		printf("Error opening %s: %d\n", path, fd);
+		return fd;
+	}
+
+	// TODO use stat to find size
+	int task_size = 0x1000;
+	char *task_text = malloc(task_size);
+
+	error = do_read(fd, task_text, task_size);
+	do_close(fd);
+
+	if (error < 0) {
+		printf("Error reading file %s: %d\n", path, error);
+		return error;
+	}
+
+	// TODO overwriting this could be a memory leak.  How do I refcount segments?
+	current_proc->segments[S_TEXT].base = task_text;
+	current_proc->segments[S_TEXT].length = task_size;
+
+	// Reset the stack to start our new process
+	char *task_stack_pointer = current_proc->segments[S_TEXT].base + current_proc->segments[S_TEXT].length;
+ 	task_stack_pointer = create_context(task_stack_pointer, task_text);
+	current_proc->sp = task_stack_pointer;
+	current_proc_stack = task_stack_pointer;
+
+	printf("Exec Text: %x\n", task_text);
+	printf("Exec Stack Pointer: %x\n", task_stack_pointer);
+
+	dump((uint16_t *) task_text, 400);
+
+	return 0;
+}

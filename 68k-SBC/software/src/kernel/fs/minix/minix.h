@@ -26,7 +26,7 @@ struct minix_inode {
 	uint32_t mtime;
 	uint8_t gid;
 	uint8_t nlinks;
-	uint32_t zones[MINIX_INODE_ZONES];
+	uint16_t zones[MINIX_INODE_ZONES];
 };
 
 struct minix_dirent {

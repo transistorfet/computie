@@ -11,8 +11,9 @@
 #include <kernel/driver.h>
 #include <kernel/vfs.h>
 
-#include "interrupts.h"
+#include "api.h"
 #include "process.h"
+#include "interrupts.h"
 
 
 extern void sh_task();
@@ -21,7 +22,7 @@ extern void sh_task();
 extern void init_syscall();
 
 extern struct driver *tty_68681_driver;
-extern struct vnode_ops devfs_vnode_ops;
+extern struct vnode_ops mallocfs_vnode_ops;
 
 struct driver *drivers[] = {
 	&tty_68681_driver,
@@ -142,26 +143,85 @@ struct process *run_sh()
 	return proc;
 }
 
+
+void file_test()
+{
+	int error;
+	struct vfile *file;
+
+	if ((error = vfs_open("dir/test", 0, &file))) {
+		printf("Error at open %d\n", error);
+		return;
+	}
+
+	if (vfs_write(file, "This is a file test\n", 20) != 20) {
+		printf("Error when writing\n");
+		return;
+	}
+
+	vfs_seek(file, 0, 0);
+
+	char buffer[256];
+
+	error = vfs_read(file, buffer, 256);
+	if (error < 0) {
+		printf("Error when reading\n");
+		return;
+	}
+	printf("Read: %d\n", error);
+	buffer[error] = '\0';
+
+	puts(buffer);
+}
+
+void dir_test()
+{
+	int error;
+	struct vfile *file;
+	struct vdir dir;
+
+	if ((error = vfs_open("/", 0, &file))) {
+		printf("Error at open %d\n", error);
+		return;
+	}
+
+	while (1) {
+		error = vfs_readdir(file, &dir);
+		if (error < 0) {
+			printf("Error at readdir %d\n", error);
+			return;
+		}
+		else if (error == 0)
+			break;
+		else {
+			printf("File: %d:%s\n", error, dir.name);
+		}
+	}
+}
+
+
 int main()
 {
 	DISABLE_INTS();
 
 
-	init_heap((void *) 0x110000, 0x20000);
+	init_heap((void *) 0x110000, 0xD0000);
 
 	init_interrupts();
 	init_syscall();
 	init_proc();
 
 	init_vnode();
-	init_file_table();
-	init_devfs();
+	init_fileptr_table();
+	init_mallocfs();
 
 	// Initialize drivers
 	for (char i = 0; drivers[i]; i++) {
 		drivers[i]->init();
 	}
 
+	file_test();
+	dir_test();
 
 	struct process *task = run_task();
 	run_sh();

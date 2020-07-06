@@ -46,16 +46,15 @@ int do_open(const char *path, int oflags)
 	int fd;
 	int error;
 	struct vfile *file;
-	struct vnode *vnode;
-
-	if ((error = vfs_lookup(path, &vnode)))
-		return error;
 
 	fd = find_unused_fd(current_proc->fd_table);
 	if (fd < 0)
 		return fd;
 
-	vfs_open(vnode, 0, &file);
+	error = vfs_open(path, 0, &file);
+	if (error)
+		return error;
+
 	set_fd(current_proc->fd_table, fd, file);
 
 	return fd;
@@ -63,7 +62,14 @@ int do_open(const char *path, int oflags)
 
 int do_close(int fd)
 {
-	//free_fd(current_proc->fd_table, fd);
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file)
+		return EBADF;
+
+	vfs_close(file);
+
+	free_fileptr(file);
+	free_fd(current_proc->fd_table, fd);
 	return 0;
 }
 
@@ -71,7 +77,7 @@ size_t do_read(int fd, char *buf, size_t nbytes)
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file)
-		return -1;
+		return EBADF;
 	return vfs_read(file, buf, nbytes);
 }
 
@@ -80,7 +86,7 @@ size_t do_write(int fd, const char *buf, size_t nbytes)
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file)
-		return -1;
+		return EBADF;
 	return vfs_write(file, buf, nbytes);
 }
 

@@ -12,14 +12,14 @@
 struct vfile file_table[FILE_TABLE_MAX];
 
 
-void init_file_table()
+void init_fileptr_table()
 {
 	for (char i = 0; i < FILE_TABLE_MAX; i++) {
 		file_table[i].vnode = NULL;
 	}
 }
 
-struct vfile *new_file(struct vnode *vnode)
+struct vfile *new_fileptr(struct vnode *vnode)
 {
 	for (char i = 0; i < FILE_TABLE_MAX; i++) {
 		if (!file_table[i].vnode) {
@@ -32,10 +32,18 @@ struct vfile *new_file(struct vnode *vnode)
 	return NULL;
 }
 
-void free_file(struct vfile *file)
+struct vfile *dup_fileptr(struct vfile *file)
 {
-	file->vnode = NULL;
+	file->refcount++;
+	return file;
 }
+
+void free_fileptr(struct vfile *file)
+{
+	if (--file->refcount <= 0)
+		file->vnode = NULL;
+}
+
 
 
 
@@ -45,11 +53,19 @@ void init_fd_table(fd_table_t table)
 		table[i] = NULL;
 }
 
+void release_fd_table(fd_table_t table)
+{
+	for (char i = 0; i < OPEN_MAX; i++)
+		free_fileptr(table[i]);
+}
+
 void dup_fd_table(fd_table_t dest, fd_table_t source)
 {
 	for (char i = 0; i < OPEN_MAX; i++)
-		dest[i] = source[i];
+		dest[i] = dup_fileptr(source[i]);
 }
+
+
 
 int find_unused_fd(fd_table_t table)
 {
@@ -57,14 +73,14 @@ int find_unused_fd(fd_table_t table)
 		if (!table[i])
 			return i;
 	}
-	return -EMFILE;
+	return EMFILE;
 }
 
 void free_fd(fd_table_t table, int fd)
 {
 	table[fd]->refcount -= 1;
 	if (table[fd]->refcount <= 0)
-		free_file(table[fd]);
+		free_fileptr(table[fd]);
 	table[fd] = NULL;
 }
 

@@ -33,7 +33,7 @@ KERNEL_OBJS = \
 	src/kernel/fs/vfs.o \
 	src/kernel/fs/vnode.o \
 	src/kernel/fs/filedesc.o \
-	src/kernel/fs/devfs/devfs.o \
+	src/kernel/fs/mallocfs/mallocfs.o \
 	src/kernel/drivers/tty_68681.o \
 	src/kernel/sh.o \
 	libc-68k-none.a

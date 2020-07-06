@@ -9,8 +9,10 @@
  
 #include "devfs.h"
 #include "../vnode.h"
+#include "../../slab.h"
 
 struct vfile_ops devfs_vfile_ops = {
+	devfs_open,
 	devfs_close,
 	devfs_read,
 	devfs_write,
@@ -21,19 +23,10 @@ struct vfile_ops devfs_vfile_ops = {
 struct vnode_ops devfs_vnode_ops = {
 	&devfs_vfile_ops,
 	devfs_lookup,
+	NULL,
 	devfs_mknod,
-	devfs_open,
 };
 
-#define DEVFS_MAX_FILENAME	14
-
-struct devfs_dirent {
-	struct vnode *vnode;
-	char name[DEVFS_MAX_FILENAME];
-};
-
-
-#define DEVFS_DIRENT_MAX	8
 
 struct vnode *devfs_root;
 static struct devfs_dirent devices[DEVFS_DIRENT_MAX];
@@ -46,18 +39,12 @@ int init_devfs()
 {
 	devfs_root = new_vnode(0, 0755, &devfs_vnode_ops);
 
-	for (char i = 0; i < DEVFS_DIRENT_MAX; i++) {
+	for (char i = 0; i < DEVFS_DIRENT_MAX; i++)
 		devices[i].vnode = NULL;
-	}
-
-
-	//devfs_mknod(devfs_root, "tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, 0, &tty_vnode);
 }
 
 int devfs_lookup(struct vnode *vnode, const char *filename, struct vnode **result)
 {
-	char i;
-
 	// If a valid pointer isn't provided, return invalid argument
 	if (!result)
 		return EINVAL;
@@ -66,13 +53,13 @@ int devfs_lookup(struct vnode *vnode, const char *filename, struct vnode **resul
 	if (vnode != devfs_root)
 		return ENOTDIR;
 
-	for (i = 0; i < DEVFS_DIRENT_MAX; i++) {
+	for (char i = 0; i < DEVFS_DIRENT_MAX; i++) {
 		if (devices[i].vnode && !strcmp(filename, devices[i].name)) {
 			*result = devices[i].vnode;
 			return 0;
 		}
 	}
-	return -ENOENT;
+	return ENOENT;
 }
 
 int devfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result)
@@ -103,7 +90,7 @@ int devfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t
 	return 0;
 }
 
-int devfs_open(struct vnode *vnode, mode_t mode, struct vfile **file)
+int devfs_open(struct vfile *file, mode_t mode)
 {
 	return 0;
 }

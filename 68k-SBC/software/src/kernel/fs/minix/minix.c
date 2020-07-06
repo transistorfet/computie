@@ -7,7 +7,13 @@ static inline void _adjust_inode(struct minix_inode *inode);
 
 
 
-void minix_read_superblock()
+
+
+
+
+
+
+static void _minix_read_superblock()
 {
 	struct minix_superblock super;
 
@@ -33,5 +39,5 @@ static inline void _adjust_inode(struct minix_inode *inode)
 	BYTEORDER_SWAP_LONG(inode->size);
 	BYTEORDER_SWAP_LONG(inode->mtime);
 	for (char i = 0; i < MINIX_INODE_ZONES; i++)
-		BYTEORDER_SWAP_LONG(inode->zones[i]);
+		BYTEORDER_SWAP_SHORT(inode->zones[i]);
 }

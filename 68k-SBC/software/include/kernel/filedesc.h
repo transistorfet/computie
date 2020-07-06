@@ -8,11 +8,13 @@
 
 typedef struct vfile *fd_table_t[OPEN_MAX];
 
-void init_file_table();
-struct vfile *new_file(struct vnode *vnode);
-void free_file(struct vfile *file);
+void init_fileptr_table();
+struct vfile *new_fileptr(struct vnode *vnode);
+struct vfile *dup_fileptr(struct vfile *file);
+void free_fileptr(struct vfile *file);
 
 void init_fd_table(fd_table_t table);
+void release_fd_table(fd_table_t table);
 void dup_fd_table(fd_table_t dest, fd_table_t source);
 int find_unused_fd(fd_table_t table);
 void free_fd(fd_table_t table, int fd);

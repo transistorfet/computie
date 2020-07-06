@@ -1,4 +1,13 @@
 
+* the vfs_lookup function (or a rename of it) should take the full path and parse it, but the filesystem-specific lookup function should only get one name component and
+  return a direct vnode, and the vfs_lookup function will handle the various complexities
+* make a malloc-backed file system, similar to devfs, possibly even a... parent class to devfs... that can store files in malloc'd blocks instead of a traditional ramdisk
+  it will help bootstrapping the file system interfaces
+* a page allocator is more needed, to replace the use of malloc for allocating the program space
+* a slab allocator would maybe help, but I don't think it's as important at the moment
+
+
+
 * there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
 
 

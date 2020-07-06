@@ -61,22 +61,15 @@ struct process *new_proc()
 
 void free_proc(struct process *proc)
 {
-	//for (char i = 0; i < PROCESS_MAX; i++) {
-	//	if (table[i].pid == pid) {
-			//table[i].pid = 0;
-			proc->pid = 0;
-			// TODO free all the things
+	proc->pid = 0;
+	release_fd_table(proc->fd_table);
 
-			for (char j = 0; j < NUM_SEGMENTS; j++) {
-				if (proc->segments[j].base)
-					free(proc->segments[j].base);
-			}
+	for (char j = 0; j < NUM_SEGMENTS; j++) {
+		if (proc->segments[j].base)
+			free(proc->segments[j].base);
+	}
 
-			_queue_remove(proc);
-
-	//		break;
-	//	}
-	//}
+	_queue_remove(proc);
 }
 
 
@@ -106,14 +99,11 @@ void schedule()
 	if (current_proc == next)
 		return;
 
-	printf("next sp: %x\n", next->sp);
+	//printf("next sp: %x\n", next->sp);
 
 	current_proc->sp = current_proc_stack;
 	current_proc = next;
 	current_proc_stack = next->sp;
-
-	//printf("prev sp: %x\n", current_proc->sp);
-	//printf("next sp: %x\n", next->sp);
 }
 
 static inline void _queue_insert(struct process *proc)

@@ -20,20 +20,21 @@ struct vnode *new_vnode(device_t dev, mode_t mode, struct vnode_ops *ops)
 	for (char i = 0; i < MAX_VNODES; i++) {
 		if (vnode_table[i].refcount == 0) {
 			vnode_table[i].ops = ops;
-			vnode_table[i].mode = mode;
-			vnode_table[i].device = dev;
-			vnode_table[i].i_num = 0;
 			vnode_table[i].refcount = 1;
+			vnode_table[i].mode = mode;
+			vnode_table[i].size = 0;
+			vnode_table[i].device = dev;
+			vnode_table[i].block = NULL;
 			return &vnode_table[i];
 		}
 	}
 	return NULL;
 }
 
-struct vnode *get_vnode(device_t dev, short num)
+struct vnode *get_vnode(device_t dev)
 {
 	for (char i = 0; i < MAX_VNODES; i++) {
-		if (vnode_table[i].device == dev && vnode_table[i].i_num == num) {
+		if (vnode_table[i].device == dev) {
 			// TODO is this supposed to increment the refcount
 			return &vnode_table[i];
 		}

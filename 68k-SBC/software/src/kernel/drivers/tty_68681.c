@@ -6,7 +6,7 @@
 #include <kernel/driver.h>
 
 #include "../interrupts.h"
-#include "../fs/devfs/devfs.h"
+#include "../fs/mallocfs/mallocfs.h"
 
 // Driver Definition
 int tty_68681_init();
@@ -124,7 +124,7 @@ int tty_68681_init()
 	_buf_init(&channel_a.tx);
 
 	// Configure timer
-	*CTUR_WR_ADDR = 0x0F;
+	*CTUR_WR_ADDR = 0x1F;
 	*CTLR_WR_ADDR = 0xFF;
 
 	// Enable interrupts
@@ -139,7 +139,7 @@ int tty_68681_init()
 
 	extern struct vnode *tty_vnode;
 	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
-	devfs_mknod(devfs_root, "tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, 0, &tty_vnode);
+	mallocfs_mknod(mallocfs_root, "tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, 0, &tty_vnode);
 }
 
 int getchar(void)

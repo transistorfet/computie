@@ -7,9 +7,10 @@
 
 #include "process.h"
 #include "interrupts.h"
+#include "queue.h"
 
-static inline void _queue_insert(struct process *proc);
-static inline void _queue_remove(struct process *proc);
+void schedule();
+
 
 void *kernel_stack;
 void *current_proc_stack;
@@ -17,14 +18,16 @@ struct process *current_proc;
 
 #define PROCESS_MAX	6
 static int next_pid;
-static struct process *run_queue;
+static struct queue run_queue;
+static struct queue blocked_queue;
 static struct process table[PROCESS_MAX];
 
 
 void init_proc()
 {
 	next_pid = 1;
-	run_queue = NULL;
+	//run_queue = NULL;
+	_queue_init(&run_queue);
 	current_proc = NULL;
 
 	for (char i = 0; i < PROCESS_MAX; i++) {
@@ -37,8 +40,9 @@ struct process *new_proc()
 	for (char i = 0; i < PROCESS_MAX; i++) {
 		if (!table[i].pid) {
 			table[i].pid = next_pid++;
-			table[i].status = 0;
-			table[i].nextq = NULL;
+			table[i].state = PS_READY;
+			table[i].node.next = NULL;
+			table[i].node.prev = NULL;
 
 			init_fd_table(table[i].fd_table);
 
@@ -51,7 +55,7 @@ struct process *new_proc()
 			}
 			table[i].sp = NULL;
 
-			_queue_insert(&table[i]);
+			_queue_insert(&run_queue, &table[i].node);
 
 			return &table[i];
 		}
@@ -69,14 +73,40 @@ void free_proc(struct process *proc)
 			free(proc->segments[j].base);
 	}
 
-	_queue_remove(proc);
+	_queue_remove(&run_queue, &proc->node);
+
+	if (current_proc == proc) {
+		current_proc = NULL;
+		schedule();
+	}
 }
+
+void ready_proc(struct process *proc)
+{
+	if (proc->state != PS_BLOCKED)
+		return;
+	 _queue_remove(&blocked_queue, &proc->node);
+	 _queue_insert(&run_queue, &proc->node);
+	proc->state = PS_READY;
+}
+
+void unready_proc(struct process *proc)
+{
+	if (proc->state != PS_READY)
+		return;
+	 _queue_remove(&run_queue, &proc->node);
+	 _queue_insert(&blocked_queue, &proc->node);
+	proc->state = PS_BLOCKED;
+}
+
+
 
 
 void print_run_queue()
 {
-	for (struct process *cur = run_queue; cur; cur = cur->nextq) {
-		printf("%d: sp = %x\n", cur->pid, cur->sp);
+	for (struct queue_node *cur = run_queue.head; cur; cur = cur->next) {
+		struct process *proc = (struct process *) cur;
+		printf("%d: sp = %x\n", proc->pid, proc->sp);
 	}
 }
 
@@ -86,26 +116,27 @@ void schedule()
 
 	putchar('!');
 
-	if (!current_proc || !current_proc->nextq)
-		next = run_queue;
+	if (!current_proc || !current_proc->node.next)
+		next = (struct process *) run_queue.head;
 	else
-		next = current_proc->nextq;
+		next = (struct process *) current_proc->node.next;
 
 	if (!next) {
 		panic("No processes left to run... Halting\n");
 		return;
 	}
 
+	//printf("next sp: %x\n", next->sp);
+
 	if (current_proc == next)
 		return;
-
-	//printf("next sp: %x\n", next->sp);
 
 	current_proc->sp = current_proc_stack;
 	current_proc = next;
 	current_proc_stack = next->sp;
 }
 
+/*
 static inline void _queue_insert(struct process *proc)
 {
 	proc->nextq = run_queue;
@@ -132,3 +163,4 @@ static inline void _queue_remove(struct process *proc)
 		}
 	}
 }
+*/

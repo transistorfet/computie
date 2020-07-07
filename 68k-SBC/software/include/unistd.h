@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 struct vdir;
+struct stat;
 
 int fork();
 void exit(int exitcode);
@@ -14,5 +15,6 @@ int close(int fd);
 size_t read(int fd, char *buf, size_t nbytes);
 size_t write(int fd, const char *buf, size_t nbytes);
 int readdir(int fd, struct vdir *dir);
+int stat(const char *path, struct stat *statbuf);
 
 #endif

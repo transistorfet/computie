@@ -2,6 +2,7 @@
 #ifndef _STAT_H
 #define _STAT_H
 
+#include <sys/types.h>
 
 #define S_IFBLK  060000		/* block special */
 #define S_IFDIR  040000  	/* directory */
@@ -26,5 +27,13 @@
 #define S_IWOTH   00002		/* others: -------w- */
 #define S_IXOTH   00001		/* others: --------x */
 
+
+struct stat {
+	device_t st_dev;
+	mode_t st_mode;
+	uid_t st_uid;
+	gid_t st_gid;
+	offset_t st_size;
+};
 
 #endif

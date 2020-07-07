@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <errno.h>
+#include <sys/stat.h>
 #include <kernel/vfs.h>
 #include <kernel/driver.h>
 #include <kernel/filedesc.h>
@@ -26,6 +27,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_close,
 	do_readdir,
 	do_exec,
+	do_stat,
 };
 
 extern void enter_syscall();
@@ -108,7 +110,7 @@ int do_fork()
 	proc = new_proc();
 	if (!proc)
 		panic("Ran out of procs\n");
-	dup_fd_table(&proc->fd_table, &current_proc->fd_table);
+	dup_fd_table(proc->fd_table, current_proc->fd_table);
 
 	// Save the current process's stack pointer back to it's struct, which
 	// normally only happens in the schedule() function
@@ -151,14 +153,23 @@ int do_exec(const char *path)
 {
 	int fd;
 	int error;
+	struct stat statbuf;
+
+	if ((error = do_stat(path, &statbuf))) {
+		printf("Error stating %s: %d\n", path, error);
+		return error;
+	}
 
 	if ((fd = do_open(path, O_RDONLY)) < 0) {
 		printf("Error opening %s: %d\n", path, fd);
 		return fd;
 	}
 
-	// TODO use stat to find size
-	int task_size = 0x1000;
+	printf("Size: %d\n", statbuf.st_size);
+
+	// The extra data is for the bss segment
+	int task_size = statbuf.st_size + 0x100;
+	//int task_size = 0x1000;
 	char *task_text = malloc(task_size);
 
 	error = do_read(fd, task_text, task_size);
@@ -182,7 +193,25 @@ int do_exec(const char *path)
 	printf("Exec Text: %x\n", task_text);
 	printf("Exec Stack Pointer: %x\n", task_stack_pointer);
 
-	dump((uint16_t *) task_text, 400);
+	//dump((uint16_t *) task_text, 400);
 
 	return 0;
 }
+
+int do_stat(const char *path, struct stat *statbuf)
+{
+	int error;
+	struct vnode *vnode;
+
+	if ((error = vfs_lookup(path, 0, &vnode)))
+		return error;
+
+	statbuf->st_dev = 0;
+	statbuf->st_mode = vnode->mode;
+	statbuf->st_uid = vnode->uid;
+	statbuf->st_gid = vnode->gid;
+	statbuf->st_size = vnode->size;
+
+	return 0;
+}
+

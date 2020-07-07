@@ -102,8 +102,6 @@ int vfs_open(const char *path, int flags, struct vfile **file)
 			}
 		}
 
-		printf("Creating %s\n", &path[i]);
-
 		error = vnode->ops->create(vnode, &path[i], 0755, &vnode);
 		if (error)
 			return error;

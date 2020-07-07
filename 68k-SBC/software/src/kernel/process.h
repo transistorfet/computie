@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <kernel/filedesc.h>
 
+#include "queue.h"
+
 #define	NUM_SEGMENTS	2
 
 typedef enum {
@@ -18,13 +20,23 @@ struct mem_seg {
 	size_t length;
 };
 
+typedef enum {
+	PS_READY,
+	PS_BLOCKED,
+	PS_WAITING,
+	PS_EXITED,
+} proc_state_t;
+
+
 struct process {
+	struct queue_node node;
 	int pid;
 	// parent
-	struct process *nextq;
+	//struct process *nextq;
 
-	uint16_t status;
+	uint16_t state;		// proc_state_t
 	int exitcode;
+	// syscall restart info
 
 	struct mem_seg segments[NUM_SEGMENTS];
 	void *sp;

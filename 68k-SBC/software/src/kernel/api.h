@@ -2,6 +2,8 @@
 #ifndef _SRC_KERNEL_API_H
 #define _SRC_KERNEL_API_H
 
+#include <sys/stat.h>
+
 extern void init_syscall();
 
 extern void do_exit(int exitcode);
@@ -12,5 +14,6 @@ extern int do_open(const char *path, int oflags);
 extern int do_close(int fd);
 extern int do_readdir(int fd, struct vdir *dir);
 extern int do_exec(const char *path);
+extern int do_stat(const char *path, struct stat *statbuf);
 
 #endif

@@ -168,6 +168,10 @@ int getchar(void)
 	}
 	*/
 
+	//uint16_t status;
+	//asm("move.w	%%sr, %0\n" : "=g" (status));
+	//printf("Status: %x\n", status);
+
 	while (_buf_is_empty(&channel_a.rx)) {
 		asm volatile("");
 		//putchar('^');

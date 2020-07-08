@@ -9,6 +9,8 @@
 	.global	syscall_table
 	.global kernel_stack
 	.global current_proc_stack
+	.global current_syscall
+	.global do_syscall
 
 	.equ	CONTEXT_SIZE, 60		| The size of the saved registers on the stack (not including the interrupt return)
 
@@ -27,11 +29,16 @@ enter_syscall:
 	or.w	#0x0700, %sr
 	bsr	save_context
 
+	move.l	%d0, -(%sp)
+
 	| Save the arguments in right to left order to match the C calling convention
 	move.l	%a1, -(%sp)
 	move.l	%a0, -(%sp)
 	move.l	%d1, -(%sp)
 
+	move.l	%sp, current_syscall
+
+	/*
 	| Calculate the index into the syscall table
 	| TODO this is so far the only non-pc-relative address (there are more now)
 	lea	syscall_table, %a0	
@@ -45,11 +52,16 @@ enter_syscall:
 	| Save the return value to the context's %d0 slot
 	move.l	current_proc_stack, %a0
 	move.l	%d0, (%a0)
+	*/
+
+	jsr	do_syscall
 
 	| Restore the argument registers
 	move.l	(%sp)+, %d1
 	move.l	(%sp)+, %a0
 	move.l	(%sp)+, %a1
+
+	add.l	(%sp)+, %d0
 
 	| Jump to the syscall interrupt return
 	bra	restore_context

@@ -19,7 +19,6 @@
 //#define SYS_UNLINK	10
 //#define SYS_EXEC	11
 
-
 static inline int SYSCALL1(int n, int a1)
 {
 	register int ret;
@@ -78,5 +77,22 @@ static inline int SYSCALL3(int n, int a1, void *a2, void *a3)
 
 	return ret;
 }
+
+
+struct syscall_record {
+	int arg1;
+	int arg2;
+	int arg3;
+	int syscall;
+};
+
+static inline void SYSCALL_SAVE(struct syscall_record *r, int n, int a1, int a2, int a3)
+{
+	r->arg1 = a1;
+	r->arg2 = a2;
+	r->arg3 = a3;
+	r->syscall = n;
+}
+
 
 #endif

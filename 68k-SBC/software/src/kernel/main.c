@@ -20,8 +20,10 @@ extern void sh_task();
 
 
 extern void init_syscall();
+extern void init_vnode();
+extern void init_mallocfs();
 
-extern struct driver *tty_68681_driver;
+extern struct driver tty_68681_driver;
 extern struct vnode_ops mallocfs_vnode_ops;
 
 struct driver *drivers[] = {

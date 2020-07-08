@@ -5,6 +5,7 @@
 #include <kernel/vfs.h>
 #include <kernel/driver.h>
 
+#include "../process.h"
 #include "../interrupts.h"
 #include "../fs/mallocfs/mallocfs.h"
 
@@ -215,14 +216,23 @@ int tty_68681_close(devminor_t minor)
 
 int tty_68681_read(devminor_t minor, char *buffer, size_t size)
 {
-	for (; size > 0; size--, buffer++)
+	int i = size;
+
+	for (; i > 0; i--, buffer++) {
+		if (_buf_is_empty(&channel_a.rx)) {
+			suspend_current_proc();
+			return size - i;
+		}
 		*buffer = getchar();
+	}
+	return size;
 }
 
 int tty_68681_write(devminor_t minor, const char *buffer, size_t size)
 {
 	for (; size > 0; size--, buffer++)
 		putchar(*buffer);
+	return size;
 }
 
 int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
@@ -230,8 +240,6 @@ int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
 
 }
 
-
-extern void schedule();
 
 // NOTE the entry to this is in syscall_entry.s
 void handle_serial_irq()
@@ -246,6 +254,8 @@ void handle_serial_irq()
 		else {
 			printf("Lost: %d %d\n", channel_a.rx.in, channel_a.rx.out);
 		}
+		// TODO this is a hack
+		resume_proc(NULL);
 	}
 
 	/*

@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 
 extern void init_syscall();
+void do_syscall();
 
 extern void do_exit(int exitcode);
 extern int do_fork();

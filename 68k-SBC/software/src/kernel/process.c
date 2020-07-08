@@ -9,18 +9,22 @@
 #include "interrupts.h"
 #include "queue.h"
 
-void schedule();
 
-
+// Info for Current Running Process (accessed by syscall interface)
 void *kernel_stack;
 void *current_proc_stack;
 struct process *current_proc;
+struct syscall_record *current_syscall;
 
+
+// Process Table and Queues
 #define PROCESS_MAX	6
 static int next_pid;
 static struct queue run_queue;
 static struct queue blocked_queue;
 static struct process table[PROCESS_MAX];
+
+static int idle_task();
 
 
 void init_proc()
@@ -34,6 +38,8 @@ void init_proc()
 	for (char i = 0; i < PROCESS_MAX; i++) {
 		table[i].pid = 0;
 	}
+
+	create_kernel_task(idle_task);
 }
 
 struct process *new_proc()
@@ -67,6 +73,7 @@ struct process *new_proc()
 void free_proc(struct process *proc)
 {
 	proc->pid = 0;
+	proc->state = PS_EXITED;
 	release_fd_table(proc->fd_table);
 
 	for (char j = 0; j < NUM_SEGMENTS; j++) {
@@ -75,30 +82,34 @@ void free_proc(struct process *proc)
 	}
 
 	_queue_remove(&run_queue, &proc->node);
-
-	if (current_proc == proc) {
-		current_proc = NULL;
-		schedule();
-	}
 }
 
-void ready_proc(struct process *proc)
+
+void suspend_current_proc()
 {
+	current_proc->blocked_call = *current_syscall;
+
+	if (current_proc->state != PS_READY)
+		return;
+	_queue_remove(&run_queue, &current_proc->node);
+	_queue_insert(&blocked_queue, &current_proc->node);
+	current_proc->state = PS_BLOCKED;
+}
+
+void resume_proc(struct process *proc)
+{
+
+	if (!blocked_queue.head)
+		return;
+	proc = blocked_queue.head;
+
 	if (proc->state != PS_BLOCKED)
 		return;
 	_queue_remove(&blocked_queue, &proc->node);
 	_queue_insert(&run_queue, &proc->node);
-	proc->state = PS_READY;
+	proc->state = PS_RESUMING;
 }
 
-void unready_proc(struct process *proc)
-{
-	if (proc->state != PS_READY)
-		return;
-	_queue_remove(&run_queue, &proc->node);
-	_queue_insert(&blocked_queue, &proc->node);
-	proc->state = PS_BLOCKED;
-}
 
 
 
@@ -135,33 +146,40 @@ void schedule()
 	current_proc->sp = current_proc_stack;
 	current_proc = next;
 	current_proc_stack = next->sp;
-}
 
-/*
-static inline void _queue_insert(struct process *proc)
-{
-	proc->nextq = run_queue;
-	run_queue = proc;
-}
-
-static inline void _queue_remove(struct process *proc)
-{
-	struct process *prev = NULL;
-	struct process *cur = run_queue;
-
-	for (; cur; prev = cur, cur = cur->nextq) {
-		if (cur == proc) {
-			if (prev)
-				prev->nextq = cur->nextq;
-			else
-				run_queue = cur->nextq;
-
-			if (current_proc == proc) {
-				current_proc = NULL;
-				schedule();
-			}
-			break;
-		}
+	if (current_proc->state == PS_RESUMING) {
+		current_proc->state = PS_READY;
+		current_syscall = &current_proc->blocked_call;
+		do_syscall();
 	}
 }
-*/
+
+struct process *create_kernel_task(int (*task_start)())
+{
+	int error = 0;
+
+	struct process *proc = new_proc();
+	if (!proc)
+		panic("Ran out of procs\n");
+
+	int stack_size = 0x800;
+	char *stack = malloc(stack_size);
+	char *stack_pointer = stack + stack_size;
+
+ 	stack_pointer = create_context(stack_pointer, task_start);
+
+	proc->segments[S_TEXT].base = NULL;
+	proc->segments[S_TEXT].length = 0x10000;
+	proc->segments[S_STACK].base = stack;
+	proc->segments[S_STACK].length = stack_size;
+	proc->sp = stack_pointer;
+
+	return proc;
+}
+
+static int idle_task()
+{
+	while (1) { }
+}
+
+

@@ -15,6 +15,8 @@
 
 #define SYSCALL_MAX	10
 
+typedef int (*syscall_t)(int, int, int);
+
 void test() { puts("It's a test!\n"); }
 
 void *syscall_table[SYSCALL_MAX] = {
@@ -38,11 +40,27 @@ void init_syscall()
 }
 
 // TODO this is temporary until you have processes working correctly
-extern struct vnode *tty_vnode;
 extern struct process *current_proc;
 extern void *current_proc_stack;
+extern struct syscall_record *current_syscall;
 
-void *create_context(void *user_stack, void *entry);
+
+//
+// Perform a system call and pass the return value to the calling process
+//
+void do_syscall()
+{
+	int ret;
+	ret = ((syscall_t) syscall_table[current_syscall->syscall])(current_syscall->arg1, current_syscall->arg2, current_syscall->arg3);
+	if (current_proc->state == PS_READY) {
+		// If the process is still in the ready state, then set the return value in the process's context
+		*((uint32_t *) current_proc_stack) = ret;
+	}
+	else {
+		// If the process has been suspended, we wont return as normal but instead schedule another process
+		schedule();
+	}
+}
 
 
 int do_open(const char *path, int oflags)

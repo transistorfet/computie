@@ -18,8 +18,8 @@ void delay(short count) {
 int readline(char *buffer, short max)
 {
 	for (short i = 0; i < max; i++) {
-		buffer[i] = getchar();
-		//read(0, &buffer[i], 1);
+		//buffer[i] = getchar();
+		int ret = read(0, &buffer[i], 1);
 		if (buffer[i] == '\n') {
 			buffer[i] = '\0';
 			return i;
@@ -145,11 +145,19 @@ uint16_t fetch_word()
 	return (buffer[0] << 12) | (buffer[1] << 8) | (buffer[2] << 4) | buffer[3];
 }
 
-void load()
+void send_file(const char *name)
 {
+	int fd;
 	uint16_t size;
 	uint16_t data;
 	uint16_t *mem = (uint16_t *) program_mem;
+
+	printf("Loading file %s\n", name);
+
+	if ((fd = open(name, O_CREAT | O_WRONLY)) < 0) {
+		printf("Error opening %s: %d\n", name, fd);
+		return;
+	}
 
 	size = fetch_word();
 	size >>= 1;
@@ -158,8 +166,11 @@ void load()
 	for (short i = 0; i < size; i++) {
 		data = fetch_word();
 		//printf("%x ", data);
-		mem[i] = data;
+		//mem[i] = data;
+		write(fd, &data, 2);
 	}
+
+	close(fd);
 
 	puts("Load complete");
 }
@@ -173,14 +184,14 @@ void boot()
 void sh_fork()
 {
 	//int pid = SYSCALL1(SYS_FORK, 0);
-	int pid = SYSCALL1(SYS_FORK, 0);
+	int pid = fork();
 
 	if (pid) {
 		printf("The child's pid is %d\n", pid);
 	}
 	else {
 		puts("I AM THE CHILD!");
-		SYSCALL1(SYS_EXIT, 0);
+		exit(0);
 	}
 }
 
@@ -224,6 +235,7 @@ void command_exec(char *path)
 	else {
 		puts("I AM THE CHILD!");
 		exec(path);
+		exit(-1);
 	}
 }
 
@@ -253,8 +265,11 @@ void serial_read_loop()
 		else if (!strcmp(args[0], "info")) {
 			info();
 		}
-		else if (!strcmp(args[0], "load")) {
-			load();
+		else if (!strcmp(args[0], "send")) {
+			if (argc <= 1)
+				puts("You need file name");
+			else
+				send_file(args[1]);
 		}
 		else if (!strcmp(args[0], "boot")) {
 			boot();

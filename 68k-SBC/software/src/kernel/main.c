@@ -258,6 +258,7 @@ int main()
 
 	// Start Multitasking
 	asm("bra restore_context\n");
+	//asm("stop #0x2700\n");
 
 
 	// Force an address error

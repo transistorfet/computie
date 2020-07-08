@@ -13,7 +13,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        tty = serial.Serial(filename, baud)
+        tty = serial.Serial(filename, baud, dsrdtr=True)
     except serial.serialutil.SerialException as exc:
         print("serial error: " + str(exc))
         return
@@ -24,7 +24,7 @@ def main():
             ch = f.read(1)
             if not ch:
                 break
-            time.sleep(0.002)
+            time.sleep(0.001)
             tty.write(bytes(ch, 'ascii'))
 
     tty.close()

@@ -1,5 +1,6 @@
 
-* need to be able to create files through open
+* need to be able to suspend processes waiting for I/O
+* changing sh's getchar to read() causes some weird behaviour
 
 * a page allocator is more needed, to replace the use of malloc for allocating the program space
 * a slab allocator would maybe help, but I don't think it's as important at the moment
@@ -8,18 +9,15 @@
 
 * there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
 
-
-
-* I need to make the interrupt handler print the number and info better, to make it easier to debug when serial-booting the kernel
-* in order to support a unix/file-based os, I need to have a a block device of some kind, be it a ramdisk, a physical device of some kind, or a
-  serial protocol that runs a disk emulator on a computer
+* there are writes being made to the arduino's program space, which seem to be happening after multitasking is started, but I'm not sure what's causing it.
+  If it wasn't for the write protection in the arduino, it would trash the monitor program and require an arduino reset t work again
 
 * pasting text into the serial terminal is causing characters to be lost on the 68k end, and it's not clear what the cause is.  The overrun bit is set.
   It could be miniterm doesn't properly handle RTS/CTS signals, or that they aren't configured correctly on the 68681 end.  I've got a workaround to
   send bytes of a file slowly so it doesn't overrun, but even reading exclusively from the input as fast as possible when run from rom doesn't make the
   problem disappear completely
 
-* there is one spot in syscall_entry that has an absolute reference, which I think is the only thing that makes the kernel unrelocatable
+* can you make the kernel relocatable again?
 
 * rewrite the math functions to use fewer registers (this ain't a risc processor)
 * you need some tests, but ideally it would use a simple emulator.  Maybe easy68k or something could be used

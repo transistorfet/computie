@@ -26,9 +26,10 @@ static struct process table[PROCESS_MAX];
 void init_proc()
 {
 	next_pid = 1;
-	//run_queue = NULL;
-	_queue_init(&run_queue);
 	current_proc = NULL;
+
+	_queue_init(&run_queue);
+	_queue_init(&blocked_queue);
 
 	for (char i = 0; i < PROCESS_MAX; i++) {
 		table[i].pid = 0;
@@ -85,8 +86,8 @@ void ready_proc(struct process *proc)
 {
 	if (proc->state != PS_BLOCKED)
 		return;
-	 _queue_remove(&blocked_queue, &proc->node);
-	 _queue_insert(&run_queue, &proc->node);
+	_queue_remove(&blocked_queue, &proc->node);
+	_queue_insert(&run_queue, &proc->node);
 	proc->state = PS_READY;
 }
 
@@ -94,8 +95,8 @@ void unready_proc(struct process *proc)
 {
 	if (proc->state != PS_READY)
 		return;
-	 _queue_remove(&run_queue, &proc->node);
-	 _queue_insert(&blocked_queue, &proc->node);
+	_queue_remove(&run_queue, &proc->node);
+	_queue_insert(&blocked_queue, &proc->node);
 	proc->state = PS_BLOCKED;
 }
 

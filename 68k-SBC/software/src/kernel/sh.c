@@ -19,7 +19,7 @@ int readline(char *buffer, short max)
 {
 	for (short i = 0; i < max; i++) {
 		buffer[i] = getchar();
-		//read(stdout, &buffer[i], 1);
+		//read(0, &buffer[i], 1);
 		if (buffer[i] == '\n') {
 			buffer[i] = '\0';
 			return i;

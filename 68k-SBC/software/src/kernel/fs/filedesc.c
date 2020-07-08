@@ -16,6 +16,7 @@ void init_fileptr_table()
 {
 	for (char i = 0; i < FILE_TABLE_MAX; i++) {
 		file_table[i].vnode = NULL;
+		file_table[i].refcount = 0;
 	}
 }
 
@@ -55,8 +56,10 @@ void init_fd_table(fd_table_t table)
 
 void release_fd_table(fd_table_t table)
 {
-	for (char i = 0; i < OPEN_MAX; i++)
-		free_fileptr(table[i]);
+	for (char i = 0; i < OPEN_MAX; i++) {
+		if (table[i])
+			free_fileptr(table[i]);
+	}
 }
 
 void dup_fd_table(fd_table_t dest, fd_table_t source)

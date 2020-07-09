@@ -30,6 +30,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_readdir,
 	do_exec,
 	do_stat,
+	do_fstat,
 };
 
 extern void enter_syscall();
@@ -229,6 +230,23 @@ int do_stat(const char *path, struct stat *statbuf)
 	statbuf->st_uid = vnode->uid;
 	statbuf->st_gid = vnode->gid;
 	statbuf->st_size = vnode->size;
+
+	return 0;
+}
+
+int do_fstat(int fd, struct stat *statbuf)
+{
+	struct vfile *file;
+
+	file = get_fd(current_proc->fd_table, fd);
+	if (!file)
+		return EBADF;
+
+	statbuf->st_dev = 0;
+	statbuf->st_mode = file->vnode->mode;
+	statbuf->st_uid = file->vnode->uid;
+	statbuf->st_gid = file->vnode->gid;
+	statbuf->st_size = file->vnode->size;
 
 	return 0;
 }

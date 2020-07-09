@@ -5,8 +5,6 @@
 
 int stat(const char *path, struct stat *statbuf)
 {
-	return SYSCALL2(SYS_EXEC, path, (int) statbuf);
+	return SYSCALL2(SYS_STAT, path, (int) statbuf);
 }
-
-
 

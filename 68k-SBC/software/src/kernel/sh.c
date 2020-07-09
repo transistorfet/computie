@@ -7,6 +7,7 @@
 
 #include <unistd.h>
 
+#include <sys/stat.h>
 #include <kernel/vfs.h>
 #include <kernel/syscall.h>
 
@@ -20,7 +21,14 @@ int readline(char *buffer, short max)
 	for (short i = 0; i < max; i++) {
 		//buffer[i] = getchar();
 		int ret = read(0, &buffer[i], 1);
-		if (buffer[i] == '\n') {
+		putchar(buffer[i]);
+		if (ret != 1) {
+			printf("Input error: %d\n", ret);
+		}
+		else if (buffer[i] == 0x08) {
+			i -= 2;
+		}
+		else if (buffer[i] == '\n') {
 			buffer[i] = '\0';
 			return i;
 		}
@@ -150,7 +158,6 @@ void send_file(const char *name)
 	int fd;
 	uint16_t size;
 	uint16_t data;
-	uint16_t *mem = (uint16_t *) program_mem;
 
 	printf("Loading file %s\n", name);
 
@@ -175,12 +182,6 @@ void send_file(const char *name)
 	puts("Load complete");
 }
 
-void boot()
-{
-	void (*entry)() = (void (*)()) program_mem;
-	((void (*)()) entry)();
-}
-
 void sh_fork()
 {
 	//int pid = SYSCALL1(SYS_FORK, 0);
@@ -195,18 +196,25 @@ void sh_fork()
 	}
 }
 
-void ls()
+void ls(char *path)
 {
 	int fd;
 	int error;
 	struct vdir dir;
 	struct vfile *file;
-	char *cwd = "/";
+	struct stat statbuf;
+	char filename[100];
 
-	if ((fd = open(cwd, 0)) < 0) {
-		printf("Error opening %s: %d\n", cwd, fd);
+	if ((fd = open(path, 0)) < 0) {
+		printf("Error opening %s: %d\n", path, fd);
 		return;
 	}
+
+	int start = strlen(path) - 1;
+	strcpy(filename, path);
+	if (filename[start] != '/')
+		filename[++start] = '/';
+	start++;
 
 	while (1) {
 		error = readdir(fd, &dir);
@@ -217,8 +225,16 @@ void ls()
 
 		if (error == 0)
 			break;
-		else
-			printf("File: %s\n", dir.name);
+
+		strlen(dir.name);
+		strcpy(&filename[start], dir.name);
+		error = stat(filename, &statbuf);
+		if (error < 0) {
+			printf("Error at stat %s (%d)\n", filename, error);
+			return;
+		}
+
+		printf("%s: %s  (%d)\n", (statbuf.st_mode & S_IFDIR) ? "Dir" : "File", dir.name, statbuf.st_size);
 	}
 
 	close(fd);
@@ -255,8 +271,8 @@ void serial_read_loop()
 	char *args[ARG_SIZE];
 
 	while (1) {
+		putsn("% ");
 		readline(buffer, BUF_SIZE);
-		puts(buffer);
 		argc = parseline(buffer, args);
 
 		if (!strcmp(args[0], "test")) {
@@ -270,9 +286,6 @@ void serial_read_loop()
 				puts("You need file name");
 			else
 				send_file(args[1]);
-		}
-		else if (!strcmp(args[0], "boot")) {
-			boot();
 		}
 		else if (!strcmp(args[0], "queue")) {
 			print_run_queue();
@@ -302,10 +315,13 @@ void serial_read_loop()
 			sh_fork();
 		}
 		else if (!strcmp(args[0], "ls")) {
-			ls();
+			ls(argc > 1 ? args[1] : "/");
 		}
 		else if (!strcmp(args[0], "exit")) {
 			return;
+		}
+		else if (*args[0]) {
+			puts("Command not found");
 		}
 	}
 }

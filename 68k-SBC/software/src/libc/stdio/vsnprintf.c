@@ -44,7 +44,7 @@ int vsnprintf(char *buffer, size_t n, const char *fmt, va_list args)
 				s = va_arg(args, const char *);
 				len = strlen(s);
 				strncpy(&buffer[i], s, n - i - 1);
-				i += len - 1;
+				i += len;
 				break;
 			    }
 			    case 'd':
@@ -54,7 +54,7 @@ int vsnprintf(char *buffer, size_t n, const char *fmt, va_list args)
 
 				d = va_arg(args, int);
 				itoa_padded(d, &buffer[i], type == 'x' ? 16 : 10, width, zeropad);
-				i += strlen(&buffer[i]) - 1;
+				i += strlen(&buffer[i]);
 				break;
 			    }
 			    case 'c': {

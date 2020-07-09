@@ -91,16 +91,12 @@ int vfs_open(const char *path, int flags, struct vfile **file)
 		return error;
 
 	if (flags & O_CREAT) {
-		// TODO you need to do a sublookup and call (*create), which will give you the vnode to open
-		// but do you pass a special arg to lookup, or somehow remove the last path component
-
-		int i = strlen(path) - 1;
+		short i = strlen(path) - 1;
 		for (; i >= 0; i--) {
-			if (path[i] == VFS_SEP) {
-				i += 1;
+			if (path[i] == VFS_SEP)
 				break;
-			}
 		}
+		i += 1;
 
 		error = vnode->ops->create(vnode, &path[i], 0755, &vnode);
 		if (error)

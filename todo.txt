@@ -1,6 +1,11 @@
 
-* need to be able to suspend processes waiting for I/O
-* changing sh's getchar to read() causes some weird behaviour
+* need a 'more' or hexdump type command for files
+* send file is not working with the load script.  It causes a lockup of some kind because the buffer isn't read fast enough.  I think it might be related to task
+  switching or a bug in the blocking logic
+* what does the read() syscall docs say about returning without reading everything?  Perhaps passing a big buffer into read will help the serial input speed
+* the resume checker isn't checking, but instead unblocking everything in the list to see if a second attempt fails
+* get pipes working
+* get exec/process arguments working
 
 * a page allocator is more needed, to replace the use of malloc for allocating the program space
 * a slab allocator would maybe help, but I don't think it's as important at the moment

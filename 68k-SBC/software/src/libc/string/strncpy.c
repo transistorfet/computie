@@ -8,6 +8,8 @@ char *strncpy(char *dest, const char *src, int n)
 
 	for (; n > 0; n--)
 		*dest++ = (*src != '\0') ? *src++ : 0;
+	if (n > 0)
+		*dest = '\0';
 	return ret;
 }
 

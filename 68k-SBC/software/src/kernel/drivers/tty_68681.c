@@ -77,7 +77,7 @@ struct driver tty_68681_driver = {
 #define TTY_INT_VECTOR			IV_USER_VECTORS
 
 
-#define MAX_BUFFER	32
+#define MAX_BUFFER	128
 
 struct circular_buffer {
 	volatile char in;
@@ -255,7 +255,7 @@ void handle_serial_irq()
 			printf("Lost: %d %d\n", channel_a.rx.in, channel_a.rx.out);
 		}
 		// TODO this is a hack
-		resume_proc(NULL);
+		resume_all_procs();
 	}
 
 	/*

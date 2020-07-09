@@ -13,6 +13,7 @@
 // Info for Current Running Process (accessed by syscall interface)
 void *kernel_stack;
 void *current_proc_stack;
+struct process *idle_proc;
 struct process *current_proc;
 struct syscall_record *current_syscall;
 
@@ -39,7 +40,8 @@ void init_proc()
 		table[i].pid = 0;
 	}
 
-	create_kernel_task(idle_task);
+	idle_proc = create_kernel_task(idle_task);
+	_queue_remove(&run_queue, &idle_proc->node);
 }
 
 struct process *new_proc()
@@ -98,11 +100,6 @@ void suspend_current_proc()
 
 void resume_proc(struct process *proc)
 {
-
-	if (!blocked_queue.head)
-		return;
-	proc = blocked_queue.head;
-
 	if (proc->state != PS_BLOCKED)
 		return;
 	_queue_remove(&blocked_queue, &proc->node);
@@ -110,6 +107,13 @@ void resume_proc(struct process *proc)
 	proc->state = PS_RESUMING;
 }
 
+void resume_all_procs()
+{
+	struct process *cur = (struct process *) blocked_queue.tail;
+
+	for (; cur; cur = cur->node.prev)
+		resume_proc(cur);
+}
 
 
 
@@ -126,7 +130,7 @@ void schedule()
 {
 	struct process *next;
 
-	putchar('!');
+	//putchar('!');
 
 	if (!current_proc || !current_proc->node.next)
 		next = (struct process *) run_queue.head;
@@ -134,8 +138,9 @@ void schedule()
 		next = (struct process *) current_proc->node.next;
 
 	if (!next) {
-		panic("No processes left to run... Halting\n");
-		return;
+		next = idle_proc;
+		//panic("No processes left to run... Halting\n");
+		//return;
 	}
 
 	//printf("next sp: %x\n", next->sp);

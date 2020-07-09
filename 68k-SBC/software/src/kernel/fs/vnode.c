@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <kernel/vfs.h>
 
-#define MAX_VNODES	10
+#define MAX_VNODES	20
 
 static struct vnode vnode_table[MAX_VNODES];
 

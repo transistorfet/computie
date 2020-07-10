@@ -30,12 +30,20 @@ struct vnode *vfs_root(struct mount *mp);
 int vfs_sync(struct mount *mp);
 
 
-int vfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result)
+int vfs_mknod(const char *path, mode_t mode, device_t dev, struct vnode **result)
 {
+	int error;
+	struct vnode *vnode;
+
+	error = vfs_lookup(path, O_CREAT, &vnode);
+	if (error)
+		return error;
+
+	const char *filename = path_last_component(path);
 	return vnode->ops->mknod(vnode, filename, mode, dev, result);
 }
 
-int vfs_lookup(const char *filename, int flags, struct vnode **result)
+int vfs_lookup(const char *path, int flags, struct vnode **result)
 {
 	// TODO this is temporary because we don't have mounts yet
 	extern struct vnode *mallocfs_root;
@@ -49,33 +57,47 @@ int vfs_lookup(const char *filename, int flags, struct vnode **result)
 		return EINVAL;
 
 	// We are always starting from the root node, so ignore a leading slash
-	if (filename[0] == VFS_SEP)
+	if (path[0] == VFS_SEP)
 		i += 1;
 
 	while (1) {
-		if (filename[i] == '\0') {
+		if (path[i] == '\0') {
 			*result = cur;
 			return 0;
 		}
 
-		for (j = 0; filename[i] && filename[i] != VFS_SEP; i++, j++)
-			component[j] = filename[i];
-		if (filename[i] == VFS_SEP)
+		for (j = 0; path[i] && path[i] != VFS_SEP; i++, j++)
+			component[j] = path[i];
+		if (path[i] == VFS_SEP)
 			i += 1;
 		component[j] = '\0';
 
 		// If creating, then skip the last component lookup
-		if (flags & O_CREAT && filename[i] == '\0')
+		if (flags & O_CREAT && path[i] == '\0')
 			continue;
 
-		//if (!(flags & O_CREAT) || filename[i] != '\0') {
 		error = cur->ops->lookup(cur, component, &cur);
 		if (error)
 			return error;
-		//}
 	}
 
 	return ENOENT;
+}
+
+int vfs_unlink(const char *path)
+{
+	int error;
+	struct vnode *vnode;
+
+	// TODO this might need to get the parent and pass it to unlink
+	error = vfs_lookup(path, 0, &vnode);
+	if (error)
+		return error;
+
+	error = vnode->ops->unlink(vnode);
+	if (error)
+		return error;
+	return 0;
 }
 
 int vfs_open(const char *path, int flags, struct vfile **file)
@@ -91,16 +113,14 @@ int vfs_open(const char *path, int flags, struct vfile **file)
 		return error;
 
 	if (flags & O_CREAT) {
-		short i = strlen(path) - 1;
-		for (; i >= 0; i--) {
-			if (path[i] == VFS_SEP)
-				break;
-		}
-		i += 1;
+		const char *filename = path_last_component(path);
 
-		error = vnode->ops->create(vnode, &path[i], 0755, &vnode);
-		if (error)
-			return error;
+		// Lookup the last path component, or create a new file if an error occurs during lookup
+		if (vnode->ops->lookup(vnode, filename, &vnode)) {
+			error = vnode->ops->create(vnode, filename, 0755, &vnode);
+			if (error)
+				return error;
+		}
 	}
 
 
@@ -143,4 +163,16 @@ offset_t vfs_seek(struct vfile *file, offset_t position, int whence)
 int vfs_readdir(struct vfile *file, struct vdir *dir)
 {
 	return file->vnode->ops->fops->readdir(file, dir);
+}
+
+
+const char *path_last_component(const char *path)
+{
+	short i = strlen(path) - 1;
+	for (; i >= 0; i--) {
+		if (path[i] == VFS_SEP)
+			break;
+	}
+	i += 1;
+	return &path[i];
 }

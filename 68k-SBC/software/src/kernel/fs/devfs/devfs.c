@@ -30,7 +30,6 @@ struct vnode_ops devfs_vnode_ops = {
 
 struct vnode *devfs_root;
 static struct devfs_dirent devices[DEVFS_DIRENT_MAX];
-struct vnode *tty_vnode;
 
 
 static inline struct devfs_dirent *_new_dirent();

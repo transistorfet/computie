@@ -1,4 +1,12 @@
 
+
+* there is still an issue with (or a new issue with) writing to arduino memory, likely due to a NULL reference being derefenced as a struct, from the looks of the addresses
+  It happens when running 'exec hello' on default boot
+
+* syscalls to implement: wait, pipe, unlink, chdir, chmod, chown, lseek?, getuid/setuid, mount/umount, alarm, pause, time, kill
+
+
+* get file deleting/unlinking working
 * need a 'more' or hexdump type command for files
 * send file is not working with the load script.  It causes a lockup of some kind because the buffer isn't read fast enough.  I think it might be related to task
   switching or a bug in the blocking logic
@@ -6,6 +14,7 @@
 * the resume checker isn't checking, but instead unblocking everything in the list to see if a second attempt fails
 * get pipes working
 * get exec/process arguments working
+* add brk/sbrk/stack guard protection
 
 * a page allocator is more needed, to replace the use of malloc for allocating the program space
 * a slab allocator would maybe help, but I don't think it's as important at the moment

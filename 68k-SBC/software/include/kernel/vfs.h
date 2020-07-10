@@ -10,6 +10,7 @@
 #define VFS_SEP			'/'
 #define VFS_FILENAME_MAX	14
 
+
 struct mount;
 struct vnode;
 struct vfile;
@@ -81,13 +82,17 @@ struct vdir {
 	char name[VFS_FILENAME_MAX];
 };
 
+#define VLOOKUP_NORMAL	0000
+#define VLOOKUP_PARENT	0001
+
 
 int vfs_mount(struct mount *mp);
 int vfs_umount(struct mount *mp);
 int vfs_sync(struct mount *mp);
 
-int vfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result);
-int vfs_lookup(const char *filename, int flags, struct vnode **result);
+int vfs_mknod(const char *path, mode_t mode, device_t dev, struct vnode **result);
+int vfs_lookup(const char *path, int flags, struct vnode **result);
+int vfs_unlink(const char *path);
 int vfs_open(const char *path, int flags, struct vfile **file);
 
 int vfs_close(struct vfile *file);
@@ -96,6 +101,9 @@ int vfs_write(struct vfile *file, const char *buffer, size_t size);
 int vfs_ioctl(struct vfile *file, unsigned int request, void *argp);
 offset_t vfs_seek(struct vfile *file, offset_t position, int whence);
 int vfs_readdir(struct vfile *file, struct vdir *dir);
+
+
+const char *path_last_component(const char *path);
 
 #endif
 

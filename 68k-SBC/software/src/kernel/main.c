@@ -31,7 +31,6 @@ struct driver *drivers[] = {
 	NULL	// Null Termination of Driver List
 };
 
-struct vnode *tty_vnode;
 extern struct process *current_proc;
 extern void *current_proc_stack;
 
@@ -94,8 +93,8 @@ struct process *run_task()
 
 	//dump(task_stack_p, 0x40);
 
-	proc->segments[S_TEXT].base = task;
-	proc->segments[S_TEXT].length = task_size;
+	proc->segments[M_TEXT].base = task;
+	proc->segments[M_TEXT].length = task_size;
 	proc->sp = task_stack_p;
 
 	printf("After: %x\n", task_stack_p);
@@ -132,10 +131,10 @@ struct process *run_sh()
 
  	stack_p = create_context(stack_p, sh_task);
 
-	proc->segments[S_TEXT].base = NULL;
-	proc->segments[S_TEXT].length = 0x10000;
-	proc->segments[S_STACK].base = stack;
-	proc->segments[S_STACK].length = stack_size;
+	proc->segments[M_TEXT].base = NULL;
+	proc->segments[M_TEXT].length = 0x10000;
+	proc->segments[M_STACK].base = stack;
+	proc->segments[M_STACK].length = stack_size;
 	proc->sp = stack_p;
 
 	printf("After: %x\n", stack_p);

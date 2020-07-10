@@ -7,7 +7,7 @@
 
 #include "../process.h"
 #include "../interrupts.h"
-#include "../fs/mallocfs/mallocfs.h"
+
 
 // Driver Definition
 int tty_68681_init();
@@ -57,14 +57,26 @@ struct driver tty_68681_driver = {
 
 
 // MC68681 Default Configuration Values
-#define MR1A_MODE_A_REG_1_CONFIG	0b10010011	// RTS Enabled, 8 bits, No Parity
+#define MR1A_MODE_A_REG_1_CONFIG	0b10010011	// RxRTS Enabled, 8 bits, No Parity
 #define MR2A_MODE_A_REG_2_CONFIG	0b00010111	// Normal mode, CTS Enabled, 1 stop bit
 //#define CSRA_CLK_SELECT_REG_A_CONFIG	0b10111011	// 9600 bps @ 3.6864MHz (19200 @ 7.3728 MHz)
 //#define ACR_AUX_CONTROL_REG_CONFIG	0b11111000	// Set2, External Clock / 16, IRQs disabled except IP3
 #define CSRA_CLK_SELECT_REG_A_CONFIG	0b11001100	// 38400 bps @ 3.6864MHz
 #define ACR_AUX_CONTROL_REG_CONFIG	0b01111000	// Set1, External Clock / 16, IRQs disabled except IP3
 
-// Interrupt Status/Mask Bits
+
+// Status Register Bits (SRA/SRB)
+#define SR_RECEIVED_BREAK		0x80
+#define SR_FRAMING_ERROR		0x40
+#define SR_PARITY_ERROR			0x20
+#define SR_OVERRUN_ERROR		0x10
+#define SR_TX_EMPTY			0x08
+#define SR_TX_READY			0x04
+#define SR_RX_FULL			0x02
+#define SR_RX_READY			0x01
+
+
+// Interrupt Status/Mask Bits (ISR/IVR)
 #define ISR_INPUT_CHANGE		0x80
 #define ISR_CH_B_BREAK_CHANGE		0x40
 #define ISR_CH_B_RX_READY_FULL		0x20
@@ -74,14 +86,15 @@ struct driver tty_68681_driver = {
 #define ISR_CH_A_RX_READY_FULL		0x02
 #define ISR_CH_A_TX_READY		0x01
 
+
 #define TTY_INT_VECTOR			IV_USER_VECTORS
 
 
 #define MAX_BUFFER	128
 
 struct circular_buffer {
-	volatile char in;
-	volatile char out;
+	volatile short in;
+	volatile short out;
 	unsigned char buffer[MAX_BUFFER];
 };
 
@@ -103,11 +116,12 @@ char tick = 0;
 static inline void _buf_init(struct circular_buffer *cb);
 static inline char _buf_is_full(struct circular_buffer *cb);
 static inline char _buf_is_empty(struct circular_buffer *cb);
-static inline char _buf_next_in(struct circular_buffer *cb);
+static inline short _buf_next_in(struct circular_buffer *cb);
+static inline short _buf_free_space(struct circular_buffer *cb);
 static inline int _buf_get_char(struct circular_buffer *cb);
 static inline int _buf_put_char(struct circular_buffer *cb, char ch);
-static inline char _buf_get(struct circular_buffer *cb, char *data, char size);
-static inline char _buf_put(struct circular_buffer *cb, const char *data, char size);
+static inline short _buf_get(struct circular_buffer *cb, char *data, short size);
+static inline short _buf_put(struct circular_buffer *cb, const char *data, short size);
 
 
 int tty_68681_init()
@@ -138,9 +152,13 @@ int tty_68681_init()
 	*OUT_SET_ADDR = 0xF0;
 	*OUT_RESET_ADDR = 0xF0;
 
-	extern struct vnode *tty_vnode;
+	// Assert CTS
+	*OUT_SET_ADDR = 0x01;
+
 	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
-	mallocfs_mknod(mallocfs_root, "tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, 0, &tty_vnode);
+	vfs_mknod("tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, 0, NULL);
+
+	*((char *) 0x201d) = 0x00;
 }
 
 int getchar(void)
@@ -149,7 +167,7 @@ int getchar(void)
 	char in;
 
 	while (1) {
-		if (*SRA_RD_ADDR & 0x01)
+		if (*SRA_RD_ADDR & SR_RX_READY)
 			return *RBA_RD_ADDR;
 
 		// Debugging - Set all LEDs on if an input is active
@@ -173,6 +191,9 @@ int getchar(void)
 	//asm("move.w	%%sr, %0\n" : "=g" (status));
 	//printf("Status: %x\n", status);
 
+	// Assert CTS
+	*OUT_SET_ADDR = 0x01;
+
 	while (_buf_is_empty(&channel_a.rx)) {
 		asm volatile("");
 		//putchar('^');
@@ -180,38 +201,39 @@ int getchar(void)
 	return _buf_get_char(&channel_a.rx);
 }
 
-int putchar_direct(int ch)
+int putchar(int ch)
 {
-	while (!(*SRA_RD_ADDR & 0x04)) { }
+	while (!(*SRA_RD_ADDR & SR_TX_READY)) { }
 	*TBA_WR_ADDR = (char) ch;
 	return ch;
 }
 
-int putchar(int ch)
+int putchar_indirect(int ch)
 {
+	/*
 	while (!(*SRA_RD_ADDR & 0x04)) { }
 	*TBA_WR_ADDR = (char) ch;
 	return ch;
-	/*
+	*/
 	char data = ch;
-	if (_buf_is_full(&channel_a.tx)) {
-		putchar_direct('@');
+	while (_buf_is_full(&channel_a.tx)) {
+		asm volatile("");
+		//putchar_direct('@');
 	}
 	_buf_put(&channel_a.tx, &data, 1);
 	*IMR_WR_ADDR |= ISR_CH_A_TX_READY;
 	return ch;
-	*/
 }
 
 
 int tty_68681_open(devminor_t minor, int access)
 {
-
+	return 0;
 }
 
 int tty_68681_close(devminor_t minor)
 {
-
+	return 0;
 }
 
 int tty_68681_read(devminor_t minor, char *buffer, size_t size)
@@ -220,7 +242,9 @@ int tty_68681_read(devminor_t minor, char *buffer, size_t size)
 
 	for (; i > 0; i--, buffer++) {
 		if (_buf_is_empty(&channel_a.rx)) {
-			suspend_current_proc();
+			// Suspend the process only if we haven't read any data yet
+			if (size == i)
+				suspend_current_proc();
 			return size - i;
 		}
 		*buffer = getchar();
@@ -230,7 +254,16 @@ int tty_68681_read(devminor_t minor, char *buffer, size_t size)
 
 int tty_68681_write(devminor_t minor, const char *buffer, size_t size)
 {
-	for (; size > 0; size--, buffer++)
+	int i = size;
+
+	// TODO with this method, each write's size must always be smaller than buffer size
+	//if (_buf_free_space(&channel_a.tx) < size) {
+	//	suspend_current_proc();
+	//	return 0;
+	//}
+
+	for (; i > 0; i--, buffer++)
+		//putchar_indirect(*buffer);
 		putchar(*buffer);
 	return size;
 }
@@ -245,15 +278,35 @@ int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
 void handle_serial_irq()
 {
 	register char isr = *ISR_RD_ADDR;
+	register char status = *SRA_RD_ADDR;
+
+	if (status & SR_RX_FULL) {
+		// De-Assert CTS
+		*OUT_RESET_ADDR = 0x01;
+	}
+
+	// TODO this is for debugging
+	if (status & (SR_OVERRUN_ERROR | SR_PARITY_ERROR | SR_FRAMING_ERROR)) {
+		*OUT_SET_ADDR = 0x10;
+		puts("Game Over");
+		asm("stop #0x2700\n");
+	}
 
 	if (isr & ISR_CH_A_RX_READY_FULL) {
-		char ch = *RBA_RD_ADDR;
-		if (!_buf_is_full(&channel_a.rx)) {
-			_buf_put_char(&channel_a.rx, ch);
+		while (*SRA_RD_ADDR & SR_RX_READY) {
+			if (!_buf_is_full(&channel_a.rx)) {
+				char ch = *RBA_RD_ADDR;
+				_buf_put_char(&channel_a.rx, ch);
+			}
+			else {
+				*((char *) 0x201d) = 0x01;
+				// De-Assert CTS
+				*OUT_RESET_ADDR = 0x01;
+				//printf("Lost: %d %d\n", channel_a.rx.in, channel_a.rx.out);
+				break;
+			}
 		}
-		else {
-			printf("Lost: %d %d\n", channel_a.rx.in, channel_a.rx.out);
-		}
+
 		// TODO this is a hack
 		resume_all_procs();
 	}
@@ -265,7 +318,7 @@ void handle_serial_irq()
 			*TBA_WR_ADDR = (char) ch;
 		}
 		else {
-			*IMR_WR_ADDR &= ~ISR_CH_A_TX_READY;
+			// *IMR_WR_ADDR &= ~ISR_CH_A_TX_READY;
 		}
 	}
 	*/
@@ -329,9 +382,17 @@ static inline char _buf_is_empty(struct circular_buffer *cb)
 	return cb->in == cb->out;
 }
 
-static inline char _buf_next_in(struct circular_buffer *cb)
+static inline short _buf_next_in(struct circular_buffer *cb)
 {
 	return cb->in + 1 < MAX_BUFFER ? cb->in + 1 : 0;
+}
+
+static inline short _buf_free_space(struct circular_buffer *cb)
+{
+	if (cb->out > cb->in)
+		return cb->out - cb->in - 1;
+	else //(cb->out <= cb->in)
+		return MAX_BUFFER - cb->in + cb->out - 1;
 }
 
 static inline int _buf_get_char(struct circular_buffer *cb)
@@ -348,7 +409,7 @@ static inline int _buf_get_char(struct circular_buffer *cb)
 
 static inline int _buf_put_char(struct circular_buffer *cb, char ch)
 {
-	register char next;
+	register short next;
 
 	next = _buf_next_in(cb);
 	if (next == cb->out)
@@ -359,9 +420,9 @@ static inline int _buf_put_char(struct circular_buffer *cb, char ch)
 }
 
 
-static inline char _buf_get(struct circular_buffer *cb, char *data, char size)
+static inline short _buf_get(struct circular_buffer *cb, char *data, short size)
 {
-	char i;
+	short i;
 
 	for (i = 0; i < size; i++) {
 		if (cb->out == cb->in)
@@ -373,10 +434,10 @@ static inline char _buf_get(struct circular_buffer *cb, char *data, char size)
 	return i;
 }
 
-static inline char _buf_put(struct circular_buffer *cb, const char *data, char size)
+static inline short _buf_put(struct circular_buffer *cb, const char *data, short size)
 {
-	char i;
-	register char next;
+	short i;
+	register short next;
 
 	for (i = 0; i < size; i++) {
 		cb->buffer[cb->in] = data[i];

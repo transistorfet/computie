@@ -11,9 +11,9 @@
 #define	NUM_SEGMENTS	2
 
 typedef enum {
-	S_TEXT,
-	//S_DATA,
-	S_STACK
+	M_TEXT,
+	//M_DATA,
+	M_STACK
 } proc_seg_t;
 
 struct mem_seg {
@@ -52,6 +52,7 @@ struct process *new_proc();
 void free_proc(struct process *proc);
 void suspend_current_proc();
 void resume_proc(struct process *proc);
+void resume_all_procs();
 void schedule();
 struct process *create_kernel_task(int (*task_start)());
 extern void *create_context(void *user_stack, void *entry);

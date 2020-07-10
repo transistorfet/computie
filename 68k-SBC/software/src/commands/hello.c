@@ -10,7 +10,7 @@ int main()
 	const char *msg = "Hello !\n";
 
 	//while (1) {
-		puts("Hello, World!");
+		puts("Hello there, World!");
 		//write(0, msg, 14);
 		//putchar('#');
 		//SYSCALL1(SYS_PUTCHAR, '!');

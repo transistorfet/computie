@@ -31,15 +31,26 @@
 
 
 // MC68681 Default Configuration Values
-#define MR1A_MODE_A_REG_1_CONFIG	0b10010011	// RTS Enabled, 8 bits, No Parity
-#define MR2A_MODE_A_REG_2_CONFIG	0b00010111	// Normal mode, CTS Enabled, 1 stop bit
+#define MR1A_MODE_A_REG_1_CONFIG	0b10010011	// RxRTS Enabled, 8 bits, No Parity
+#define MR2A_MODE_A_REG_2_CONFIG	0b00000111	// Normal mode, CTS Disabled, 1 stop bit
 //#define CSRA_CLK_SELECT_REG_A_CONFIG	0b10111011	// 9600 bps @ 3.6864MHz (19200 @ 7.3728 MHz)
 //#define ACR_AUX_CONTROL_REG_CONFIG	0b11110000	// Set2, External Clock / 16, IRQs disabled
 #define CSRA_CLK_SELECT_REG_A_CONFIG	0b11001100	// 38400 bps @ 3.6864MHz
 #define ACR_AUX_CONTROL_REG_CONFIG	0b01111000	// Set1, External Clock / 16, IRQs disabled except IP3
 
 
-// Interrupt Status/Mask Bits
+// Status Register Bits (SRA/SRB)
+#define SR_RECEIVED_BREAK		0x80
+#define SR_FRAMING_ERROR		0x40
+#define SR_PARITY_ERROR			0x20
+#define SR_OVERRUN_ERROR		0x10
+#define SR_TX_EMPTY			0x08
+#define SR_TX_READY			0x04
+#define SR_RX_FULL			0x02
+#define SR_RX_READY			0x01
+
+
+// Interrupt Status/Mask Bits (ISR/IVR)
 #define ISR_INPUT_CHANGE		0x80
 #define ISR_CH_B_BREAK_CHANGE		0x40
 #define ISR_CH_B_RX_READY_FULL		0x20
@@ -49,17 +60,18 @@
 #define ISR_CH_A_RX_READY_FULL		0x02
 #define ISR_CH_A_TX_READY		0x01
 
+
 #define TTY_INT_VECTOR			7
 
 
+/*
 #define TTY_READ_BUFFER			32
 
 static char tty_read_in = 0;
 static char tty_read_out = 0;
 static char tty_read_buffer[TTY_READ_BUFFER];
+*/
 
-// TODO remove after debugging
-//char tick = 0;
 
 int init_tty()
 {
@@ -77,33 +89,34 @@ int init_tty()
 
 	// Enable interrupts
 	//*IVR_WR_ADDR = TTY_INT_VECTOR;
-	//*IMR_WR_ADDR = ISR_TIMER_CHANGE;
-	//*IMR_WR_ADDR = ISR_INPUT_CHANGE; // | ISR_TIMER_CHANGE;
+	//*IMR_WR_ADDR = ISR_CH_A_RX_READY_FULL;
 
-	// Enable rx interrupt
-	//*IVR_WR_ADDR = 0x07;
-	//*IMR_WR_ADDR = 0x02;
-
-	// Enable pin change interrupts (test)
-	//*IVR_WR_ADDR = 0x0f;
-	//*IMR_WR_ADDR = 0x80;
 
 	// Turn ON Test LED
 	*OPCR_WR_ADDR = 0x00;
 	*OUT_SET_ADDR = 0xF0;
 	*OUT_RESET_ADDR = 0xF0;
+
+	// Assert CTS
+	*OUT_SET_ADDR = 0x01;
 }
 
 int getchar(void)
 {
 	char in;
+	char status;
 
+	// Assert CTS
+	*OUT_SET_ADDR = 0x01;
 	while (1) {
 		//if (tty_read_out < tty_read_in)
 		//	return tty_read_buffer[tty_read_out++];
-		in = *SRA_RD_ADDR;
-		if (in & 0x01)
+		status = *SRA_RD_ADDR;
+		if (status & SR_RX_READY) {
+			// De-Assert CTS
+			*OUT_RESET_ADDR = 0x01;
 			return *RBA_RD_ADDR;
+		}
 
 		// Debugging - Set LEDs to the upper status bits of channel A
 		if (in & 0xF0) {
@@ -139,7 +152,7 @@ int getchar(void)
 
 int putchar(int ch)
 {
-	while (!(*SRA_RD_ADDR & 0x04)) { }
+	while (!(*SRA_RD_ADDR & SR_TX_READY)) { }
 	*TBA_WR_ADDR = (char) ch;
 	return ch;
 }
@@ -147,10 +160,26 @@ int putchar(int ch)
 __attribute__((interrupt)) void handle_serial_irq()
 {
 	/*
-	while (*SRA_RD_ADDR & 0x01) {
+	char status = *SRA_RD_ADDR;
+
+	if (tty_read_in == tty_read_out) {
+		tty_read_in = 0;
+		tty_read_out = 0;
+	}
+
+	// De-assert CTS if the transmitter is full
+	if (status & SR_RX_FULL)
+		*OUT_RESET_ADDR = 0x01;
+
+	while (*SRA_RD_ADDR & SR_RX_READY) {
 		tty_read_buffer[tty_read_in++] = *RBA_RD_ADDR;
 	}
 
+	if (!(status & SR_RX_FULL))
+		*OUT_SET_ADDR = 0x01;
+	*/
+
+	/*
 	char in = *SRA_RD_ADDR;
 	if (in & 0xF0) {
 		*OUT_SET_ADDR = in;

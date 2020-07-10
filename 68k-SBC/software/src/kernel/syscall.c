@@ -13,7 +13,7 @@
 #include "process.h"
 #include "interrupts.h"
 
-#define SYSCALL_MAX	10
+#define SYSCALL_MAX	20
 
 typedef int (*syscall_t)(int, int, int);
 
@@ -135,11 +135,11 @@ int do_fork()
 	// normally only happens in the schedule() function
 	current_proc->sp = current_proc_stack;
 
-	int stack_size = current_proc->segments[S_STACK].length;
+	int stack_size = current_proc->segments[M_STACK].length;
 	char *stack = malloc(stack_size);
-	char *stack_pointer = (stack + stack_size) - ((current_proc->segments[S_STACK].base + current_proc->segments[S_STACK].length) - current_proc->sp);
+	char *stack_pointer = (stack + stack_size) - ((current_proc->segments[M_STACK].base + current_proc->segments[M_STACK].length) - current_proc->sp);
 
-	memcpy_s(stack, current_proc->segments[S_STACK].base, current_proc->segments[S_STACK].length);
+	memcpy_s(stack, current_proc->segments[M_STACK].base, current_proc->segments[M_STACK].length);
 
 	printf("Parent Stack Pointer: %x\n", current_proc->sp);
 
@@ -147,8 +147,8 @@ int do_fork()
 	printf("Fork Stack Top: %x\n", stack + stack_size);
 	printf("Fork Stack Pointer: %x\n", stack_pointer);
 
-	proc->segments[S_STACK].base = stack;
-	proc->segments[S_STACK].length = stack_size;
+	proc->segments[M_STACK].base = stack;
+	proc->segments[M_STACK].length = stack_size;
 	proc->sp = stack_pointer;
 
 	// Apply return values to the context on the stack (%d0 is at the top)
@@ -194,17 +194,18 @@ int do_exec(const char *path)
 	error = do_read(fd, task_text, task_size);
 	do_close(fd);
 
+
 	if (error < 0) {
 		printf("Error reading file %s: %d\n", path, error);
 		return error;
 	}
 
 	// TODO overwriting this could be a memory leak.  How do I refcount segments?
-	current_proc->segments[S_TEXT].base = task_text;
-	current_proc->segments[S_TEXT].length = task_size;
+	current_proc->segments[M_TEXT].base = task_text;
+	current_proc->segments[M_TEXT].length = task_size;
 
 	// Reset the stack to start our new process
-	char *task_stack_pointer = current_proc->segments[S_TEXT].base + current_proc->segments[S_TEXT].length;
+	char *task_stack_pointer = current_proc->segments[M_TEXT].base + current_proc->segments[M_TEXT].length;
  	task_stack_pointer = create_context(task_stack_pointer, task_text);
 	current_proc->sp = task_stack_pointer;
 	current_proc_stack = task_stack_pointer;

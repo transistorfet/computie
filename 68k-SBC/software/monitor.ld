@@ -8,4 +8,5 @@ SECTIONS
   .rodata : { *(.rodata) }
   . = 0x1200;
   .data : { *(.data) }
+  .bss : { *(.bss) }
 }

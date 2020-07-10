@@ -174,13 +174,45 @@ void send_file(const char *name)
 		data = fetch_word();
 		//printf("%x ", data);
 		//mem[i] = data;
-		write(fd, &data, 2);
+		write(fd, (char *) &data, 2);
 	}
 
 	close(fd);
 
 	puts("Load complete");
 }
+
+#define DUMP_BUF_SIZE	0x20
+
+void dump_file(const char *name)
+{
+	int fd;
+	int result;
+	char buffer[DUMP_BUF_SIZE];
+
+	if ((fd = open(name, O_RDONLY)) < 0) {
+		printf("Error opening %s: %d\n", name, fd);
+		return;
+	}
+
+
+	while (1) {
+		result = read(fd, buffer, DUMP_BUF_SIZE);
+		if (result == 0)
+			break;
+
+		if (result < 0) {
+			printf("Error while reading: %d\n", result);
+			return;
+		}
+
+		dump((uint16_t *) &buffer, result >> 1);
+	}
+
+	close(fd);
+}
+
+
 
 void sh_fork()
 {
@@ -226,7 +258,6 @@ void ls(char *path)
 		if (error == 0)
 			break;
 
-		strlen(dir.name);
 		strcpy(&filename[start], dir.name);
 		error = stat(filename, &statbuf);
 		if (error < 0) {
@@ -249,8 +280,9 @@ void command_exec(char *path)
 		printf("The child's pid is %d\n", pid);
 	}
 	else {
-		puts("I AM THE CHILD!");
-		exec(path);
+		int error = exec(path);
+		// The exec() system call will only return if an error occurs
+		printf("Failed to execute %s: %d\n", path, error);
 		exit(-1);
 	}
 }
@@ -309,6 +341,13 @@ void serial_read_loop()
 				puts("You need file name");
 			else {
 				command_exec(args[1]);
+			}
+		}
+		else if (!strcmp(args[0], "more")) {
+			if (argc <= 1)
+				puts("You need file name");
+			else {
+				dump_file(args[1]);
 			}
 		}
 		else if (!strcmp(args[0], "fork")) {

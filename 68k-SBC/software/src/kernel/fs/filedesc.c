@@ -64,8 +64,10 @@ void release_fd_table(fd_table_t table)
 
 void dup_fd_table(fd_table_t dest, fd_table_t source)
 {
-	for (char i = 0; i < OPEN_MAX; i++)
-		dest[i] = dup_fileptr(source[i]);
+	for (char i = 0; i < OPEN_MAX; i++) {
+		if (source[i])
+			dest[i] = dup_fileptr(source[i]);
+	}
 }
 
 

@@ -85,6 +85,12 @@ kernel.bin: $(KERNEL_OBJS)
 	wc -c $^ | awk '{printf "%04X", $$1}' >> $@
 	hexdump -v -e '/1 "%02X"' $^ >> $@
 
+%.send: %.bin
+	echo "send $(notdir $(basename $@))" > $@
+	wc -c $^ | awk '{printf "%04X", $$1}' >> $@
+	hexdump -v -e '/1 "%02X"' $^ >> $@
+
+
 # TODO this was to test the optimization
 #optest: libc68k.a src/monitor/tty_68681.o  src/commands/tty.o src/commands/test.bin
 #	cat vectors.data src/commands/test.bin > test.bin

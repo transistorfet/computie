@@ -111,7 +111,7 @@ void resume_all_procs()
 {
 	struct process *cur = (struct process *) blocked_queue.tail;
 
-	for (; cur; cur = cur->node.prev)
+	for (; cur; cur = (struct process *) cur->node.prev)
 		resume_proc(cur);
 }
 
@@ -173,10 +173,10 @@ struct process *create_kernel_task(int (*task_start)())
 
  	stack_pointer = create_context(stack_pointer, task_start);
 
-	proc->segments[S_TEXT].base = NULL;
-	proc->segments[S_TEXT].length = 0x10000;
-	proc->segments[S_STACK].base = stack;
-	proc->segments[S_STACK].length = stack_size;
+	proc->segments[M_TEXT].base = NULL;
+	proc->segments[M_TEXT].length = 0x10000;
+	proc->segments[M_STACK].base = stack;
+	proc->segments[M_STACK].length = stack_size;
 	proc->sp = stack_pointer;
 
 	return proc;

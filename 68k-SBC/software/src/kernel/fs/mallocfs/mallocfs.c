@@ -36,7 +36,6 @@ struct vnode_ops mallocfs_vnode_ops = {
 
 struct vnode *mallocfs_root;
 //static struct mallocfs_dirent devices[MALLOCFS_DIRENT_MAX];
-struct vnode *tty_vnode;
 
 static struct mallocfs_dirent *_find_empty_dirent(struct vnode *vnode);
 static struct mallocfs_dirent *_alloc_dirent(struct vnode *vnode, const char *filename);
@@ -128,6 +127,22 @@ int mallocfs_lookup(struct vnode *vnode, const char *filename, struct vnode **re
 	}
 	return ENOENT;
 }
+
+/*
+int mallocfs_unlink(struct vnode *parent, struct vnode *vnode)
+{
+	if (vnode->mode & S_IFDIR) {
+		// TODO Check if empty
+		return -1;
+	}
+	else {
+		if (vnode->block)
+			free(vnode->block);
+		// TODO remove the vnode from the parent
+		free_vnode(vnode);
+	}
+}
+*/
 
 int mallocfs_open(struct vfile *file, int flags)
 {

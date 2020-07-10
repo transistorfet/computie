@@ -35,7 +35,7 @@ int vfs_mknod(const char *path, mode_t mode, device_t dev, struct vnode **result
 	int error;
 	struct vnode *vnode;
 
-	error = vfs_lookup(path, O_CREAT, &vnode);
+	error = vfs_lookup(path, VLOOKUP_PARENT, &vnode);
 	if (error)
 		return error;
 
@@ -73,7 +73,7 @@ int vfs_lookup(const char *path, int flags, struct vnode **result)
 		component[j] = '\0';
 
 		// If creating, then skip the last component lookup
-		if (flags & O_CREAT && path[i] == '\0')
+		if (flags & VLOOKUP_PARENT && path[i] == '\0')
 			continue;
 
 		error = cur->ops->lookup(cur, component, &cur);
@@ -87,14 +87,19 @@ int vfs_lookup(const char *path, int flags, struct vnode **result)
 int vfs_unlink(const char *path)
 {
 	int error;
-	struct vnode *vnode;
+	const char *filename;
+	struct vnode *vnode, *parent;
 
-	// TODO this might need to get the parent and pass it to unlink
-	error = vfs_lookup(path, 0, &vnode);
+	error = vfs_lookup(path, VLOOKUP_PARENT, &parent);
 	if (error)
 		return error;
 
-	error = vnode->ops->unlink(vnode);
+	filename = path_last_component(path);
+	error = parent->ops->lookup(parent, filename, &vnode);
+	if (error)
+		return error;
+
+	error = vnode->ops->unlink(parent, vnode);
 	if (error)
 		return error;
 	return 0;
@@ -108,7 +113,7 @@ int vfs_open(const char *path, int flags, struct vfile **file)
 	if (!file)
 		return EINVAL;
 
-	error = vfs_lookup(path, flags, &vnode);
+	error = vfs_lookup(path, (flags & O_CREAT) ? VLOOKUP_PARENT : VLOOKUP_NORMAL, &vnode);
 	if (error)
 		return error;
 

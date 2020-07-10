@@ -3,6 +3,7 @@
 #define UNISTD_H
 
 #include <stddef.h>
+#include <sys/types.h>
 
 struct vdir;
 struct stat;
@@ -17,5 +18,7 @@ size_t write(int fd, const char *buf, size_t nbytes);
 int readdir(int fd, struct vdir *dir);
 int stat(const char *path, struct stat *statbuf);
 int fstat(int fd, struct stat *statbuf);
+int unlink(const char *path);
+offset_t lseek(int fd, offset_t offset, int whence);
 
 #endif

@@ -30,7 +30,7 @@ struct vnode_ops {
 	int (*create)(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result);
 	int (*mknod)(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result);
 	int (*lookup)(struct vnode *vnode, const char *filename, struct vnode **result);
-	int (*unlink)(struct vnode *vnode);
+	int (*unlink)(struct vnode *parent, struct vnode *vnode);
 	//mkdir (or can it be done through create)
 	//rmdir (or can it be done through unlink)
 	//rename

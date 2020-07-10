@@ -27,8 +27,10 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_write,
 	do_open,
 	do_close,
+	test,	// WAIT
 	do_readdir,
 	do_exec,
+	do_unlink,
 	do_stat,
 	do_fstat,
 };
@@ -218,12 +220,17 @@ int do_exec(const char *path)
 	return 0;
 }
 
+int do_unlink(const char *path)
+{
+	return vfs_unlink(path);
+}
+
 int do_stat(const char *path, struct stat *statbuf)
 {
 	int error;
 	struct vnode *vnode;
 
-	if ((error = vfs_lookup(path, 0, &vnode)))
+	if ((error = vfs_lookup(path, VLOOKUP_NORMAL, &vnode)))
 		return error;
 
 	statbuf->st_dev = 0;
@@ -250,5 +257,13 @@ int do_fstat(int fd, struct stat *statbuf)
 	statbuf->st_size = file->vnode->size;
 
 	return 0;
+}
+
+int do_lseek(int fd, offset_t offset, int whence)
+{
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file)
+		return EBADF;
+	return vfs_seek(file, offset, whence);
 }
 

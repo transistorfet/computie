@@ -10,14 +10,15 @@
 #define SYS_WRITE	4
 #define SYS_OPEN	5
 #define SYS_CLOSE	6
-#define SYS_READDIR	7
-#define SYS_EXEC	8
-#define SYS_STAT	9
-#define SYS_FSTAT	10
 //#define SYS_WAIT	7
-//#define SYS_CREAT	8
+#define SYS_READDIR	8
+#define SYS_EXEC	9
 //#define SYS_LINK	9
-//#define SYS_UNLINK	10
+#define SYS_UNLINK	10
+#define SYS_STAT	11
+#define SYS_FSTAT	12
+#define SYS_LSEEK	13
+//#define SYS_CREAT	8
 //#define SYS_EXEC	11
 
 static inline int SYSCALL1(int n, int a1)

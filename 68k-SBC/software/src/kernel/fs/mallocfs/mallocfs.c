@@ -31,13 +31,16 @@ struct vnode_ops mallocfs_vnode_ops = {
 	mallocfs_create,
 	mallocfs_mknod,
 	mallocfs_lookup,
+	mallocfs_unlink,
 };
 
 
 struct vnode *mallocfs_root;
 //static struct mallocfs_dirent devices[MALLOCFS_DIRENT_MAX];
 
+static struct mallocfs_dirent *_find_dirent(struct vnode *dir, struct vnode *file);
 static struct mallocfs_dirent *_find_empty_dirent(struct vnode *vnode);
+static short _is_empty_dirent(struct vnode *vnode);
 static struct mallocfs_dirent *_alloc_dirent(struct vnode *vnode, const char *filename);
 static struct vnode *_new_vnode_with_block(mode_t mode);
 
@@ -119,7 +122,7 @@ int mallocfs_lookup(struct vnode *vnode, const char *filename, struct vnode **re
 		return ENOTDIR;
 
 	struct mallocfs_block *block = vnode->block;
-	for (char i = 0; i < MALLOCFS_DIRENTS; i++) {
+	for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
 		if (block->entries[i].vnode && !strcmp(filename, block->entries[i].name)) {
 			*result = block->entries[i].vnode;
 			return 0;
@@ -128,21 +131,23 @@ int mallocfs_lookup(struct vnode *vnode, const char *filename, struct vnode **re
 	return ENOENT;
 }
 
-/*
 int mallocfs_unlink(struct vnode *parent, struct vnode *vnode)
 {
-	if (vnode->mode & S_IFDIR) {
-		// TODO Check if empty
+	struct mallocfs_dirent *dir;
+
+	if (vnode->mode & S_IFDIR && !_is_empty_dirent(vnode))
+		// TODO you don't have an error code for dir not empty
 		return -1;
-	}
-	else {
-		if (vnode->block)
-			free(vnode->block);
-		// TODO remove the vnode from the parent
-		free_vnode(vnode);
-	}
+
+	dir = _find_dirent(parent, vnode);
+	if (!dir)
+		return ENOENT;
+
+	dir->vnode = NULL;
+	if (vnode->block)
+		free(vnode->block);
+	free_vnode(vnode);
 }
-*/
 
 int mallocfs_open(struct vfile *file, int flags)
 {
@@ -251,16 +256,37 @@ int mallocfs_readdir(struct vfile *file, struct vdir *dir)
 }
 
 
+static struct mallocfs_dirent *_find_dirent(struct vnode *dir, struct vnode *file)
+{
+	struct mallocfs_block *block = dir->block;
+
+	for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
+		if (block->entries[i].vnode == file)
+			return &block->entries[i];
+	}
+	return NULL;
+}
 
 static struct mallocfs_dirent *_find_empty_dirent(struct vnode *vnode)
 {
 	struct mallocfs_block *block = vnode->block;
 
-	for (char i = 0; i < MALLOCFS_DIRENTS; i++) {
+	for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
 		if (!block->entries[i].vnode)
 			return &block->entries[i];
 	}
 	return NULL;
+}
+
+static short _is_empty_dirent(struct vnode *vnode)
+{
+	struct mallocfs_block *block = vnode->block;
+
+	for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
+		if (block->entries[i].vnode)
+			return 0;
+	}
+	return 1;
 }
 
 static struct mallocfs_dirent *_alloc_dirent(struct vnode *vnode, const char *filename)
@@ -294,7 +320,7 @@ static struct vnode *_new_vnode_with_block(mode_t mode)
 
 	vnode->block = block;
 	if (mode & S_IFDIR) {
-		for (char i = 0; i < MALLOCFS_DIRENTS; i++)
+		for (short i = 0; i < MALLOCFS_DIRENTS; i++)
 			block->entries[i].vnode = NULL;
 	}
 

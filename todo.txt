@@ -1,20 +1,19 @@
 
+* there are still issues with the file sending through serial in the OS, flow control is likley not working correctly
+* add transmit buffer for writing to tty (at least for user processes), and add blocking of write syscalls (atm a slow tty write will lock up the syscall interface)
 
-* there is still an issue with (or a new issue with) writing to arduino memory, likely due to a NULL reference being derefenced as a struct, from the looks of the addresses
-  It happens when running 'exec hello' on default boot
+* get file deleting/unlinking working
+* add O_APPEND, O_TRUNCATE, lseek
+
 
 * syscalls to implement: wait, pipe, unlink, chdir, chmod, chown, lseek?, getuid/setuid, mount/umount, alarm, pause, time, kill
 
 
-* get file deleting/unlinking working
-* need a 'more' or hexdump type command for files
-* send file is not working with the load script.  It causes a lockup of some kind because the buffer isn't read fast enough.  I think it might be related to task
-  switching or a bug in the blocking logic
-* what does the read() syscall docs say about returning without reading everything?  Perhaps passing a big buffer into read will help the serial input speed
 * the resume checker isn't checking, but instead unblocking everything in the list to see if a second attempt fails
 * get pipes working
 * get exec/process arguments working
 * add brk/sbrk/stack guard protection
+* move the queue and circular buffer code to common include files somewhere (src/utils/? src/shared/?)
 
 * a page allocator is more needed, to replace the use of malloc for allocating the program space
 * a slab allocator would maybe help, but I don't think it's as important at the moment
@@ -22,15 +21,6 @@
 
 
 * there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
-
-* there are writes being made to the arduino's program space, which seem to be happening after multitasking is started, but I'm not sure what's causing it.
-  If it wasn't for the write protection in the arduino, it would trash the monitor program and require an arduino reset t work again
-
-* pasting text into the serial terminal is causing characters to be lost on the 68k end, and it's not clear what the cause is.  The overrun bit is set.
-  It could be miniterm doesn't properly handle RTS/CTS signals, or that they aren't configured correctly on the 68681 end.  I've got a workaround to
-  send bytes of a file slowly so it doesn't overrun, but even reading exclusively from the input as fast as possible when run from rom doesn't make the
-  problem disappear completely
-
 * can you make the kernel relocatable again?
 
 * rewrite the math functions to use fewer registers (this ain't a risc processor)

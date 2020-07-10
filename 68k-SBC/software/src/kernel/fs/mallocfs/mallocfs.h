@@ -35,7 +35,7 @@ extern struct vnode *mallocfs_root;
 int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result);
 int mallocfs_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, struct vnode **result);
 int mallocfs_lookup(struct vnode *vnode, const char *name, struct vnode **result);
-//int mallocfs_unlink(struct vnode *parent, struct vnode *vnode);
+int mallocfs_unlink(struct vnode *parent, struct vnode *vnode);
 
 int mallocfs_open(struct vfile *file, int flags);
 int mallocfs_close(struct vfile *file);

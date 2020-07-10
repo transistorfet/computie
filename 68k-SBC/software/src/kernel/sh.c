@@ -272,6 +272,16 @@ void ls(char *path)
 }
 
 
+void command_unlink(char *path)
+{
+	int error = unlink(path);
+	if (error < 0) {
+		printf("Error while unlinking %s: %d\n", path, error);
+	}
+}
+
+
+
 void command_exec(char *path)
 {
 	int pid = fork();
@@ -355,6 +365,13 @@ void serial_read_loop()
 		}
 		else if (!strcmp(args[0], "ls")) {
 			ls(argc > 1 ? args[1] : "/");
+		}
+		else if (!strcmp(args[0], "rm")) {
+			if (argc <= 1)
+				puts("You need file name");
+			else {
+				command_unlink(args[1]);
+			}
 		}
 		else if (!strcmp(args[0], "exit")) {
 			return;

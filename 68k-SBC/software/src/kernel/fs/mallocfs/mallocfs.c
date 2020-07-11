@@ -42,11 +42,14 @@ static struct mallocfs_dirent *_find_dirent(struct vnode *dir, struct vnode *fil
 static struct mallocfs_dirent *_find_empty_dirent(struct vnode *vnode);
 static short _is_empty_dirent(struct vnode *vnode);
 static struct mallocfs_dirent *_alloc_dirent(struct vnode *vnode, const char *filename);
-static struct vnode *_new_vnode_with_block(mode_t mode);
+static struct vnode *_new_vnode_with_block(mode_t mode, struct vnode *parent);
 
 int init_mallocfs()
 {
-	mallocfs_root = _new_vnode_with_block(S_IFDIR | 0755);
+	mallocfs_root = _new_vnode_with_block(S_IFDIR | 0755, NULL);
+	// Set the parent entry (..) to be the root vnode
+	// TODO This wouldn't be the case for a mounted filesystem
+	MALLOCFS_BLOCK(mallocfs_root->block)->entries[1].vnode = mallocfs_root;
 
 	int error;
 	struct vnode *vn;
@@ -79,7 +82,7 @@ int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, stru
 	if (!dir)
 		return ENOSPC;
 
-	newnode = _new_vnode_with_block(mode);
+	newnode = _new_vnode_with_block(mode, vnode);
 	if (!newnode)
 		return ENOMEM;
 	dir->vnode = newnode;
@@ -317,7 +320,7 @@ static struct mallocfs_dirent *_alloc_dirent(struct vnode *vnode, const char *fi
 	return dir;
 }
 
-static struct vnode *_new_vnode_with_block(mode_t mode)
+static struct vnode *_new_vnode_with_block(mode_t mode, struct vnode *parent)
 {
 	struct vnode *vnode;
 	struct mallocfs_block *block;
@@ -336,6 +339,12 @@ static struct vnode *_new_vnode_with_block(mode_t mode)
 	if (mode & S_IFDIR) {
 		for (short i = 0; i < MALLOCFS_DIRENTS; i++)
 			block->entries[i].vnode = NULL;
+
+		block->entries[0].vnode = vnode;
+		strcpy(block->entries[0].name, ".");
+
+		block->entries[1].vnode = parent;
+		strcpy(block->entries[1].name, "..");
 	}
 
 	return vnode;

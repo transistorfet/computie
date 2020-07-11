@@ -1,6 +1,6 @@
 
 * should you make a lib subdir, and put unistd at the top?
-* refactor waiting/blocking processes
+* change the blocking/waiting code to use either state rather than checking that the syscall is wait or waitpid
 
 * add . and .. somehow
 * add current working directory info.  Is that stored in the process?  Do you have to do string concat or can you pass 2 arguments to the vfs entry funcs

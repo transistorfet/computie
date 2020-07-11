@@ -34,11 +34,8 @@ struct process {
 	struct queue_node node;
 	int pid;
 	int parent;
-	//struct process *nextq;
-
-	uint16_t state;		// proc_state_t
+	uint16_t state;
 	int exitcode;
-	// syscall restart info
 
 	struct mem_seg segments[NUM_SEGMENTS];
 	void *sp;

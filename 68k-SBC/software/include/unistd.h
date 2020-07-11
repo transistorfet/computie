@@ -30,6 +30,6 @@ int stat(const char *path, struct stat *statbuf);
 int fstat(int fd, struct stat *statbuf);
 int unlink(const char *path);
 offset_t lseek(int fd, offset_t offset, int whence);
-//int pipe(int pipefd[2]);
+int pipe(int pipefd[2]);
 
 #endif

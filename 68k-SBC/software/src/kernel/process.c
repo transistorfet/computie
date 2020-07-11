@@ -5,9 +5,10 @@
 
 #include <kernel/filedesc.h>
 
+#include "api.h"
+#include "queue.h"
 #include "process.h"
 #include "interrupts.h"
-#include "queue.h"
 
 
 // Info for Current Running Process (accessed by syscall interface)
@@ -131,7 +132,7 @@ void suspend_current_proc()
 
 void resume_proc(struct process *proc)
 {
-	if (proc->state != PS_BLOCKED)
+	if (proc->state != PS_BLOCKED && proc->state != PS_WAITING)
 		return;
 	_queue_remove(&blocked_queue, &proc->node);
 	_queue_insert(&run_queue, &proc->node);

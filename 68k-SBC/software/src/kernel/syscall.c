@@ -36,6 +36,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_fstat,
 	do_lseek,
 	do_waitpid,
+	do_pipe,
 };
 
 extern void enter_syscall();
@@ -175,7 +176,7 @@ void do_exit(int exitcode)
 	exit_proc(current_proc, exitcode);
 
 	parent = get_proc(current_proc->parent);
-	if (parent->state == PS_BLOCKED && parent->blocked_call.syscall == SYS_WAIT)
+	if (parent->state == PS_BLOCKED && (parent->blocked_call.syscall == SYS_WAIT || parent->blocked_call.syscall == SYS_WAITPID))
 		resume_proc(parent);
 }
 
@@ -299,5 +300,11 @@ int do_lseek(int fd, offset_t offset, int whence)
 	if (!file)
 		return EBADF;
 	return vfs_seek(file, offset, whence);
+}
+
+int do_pipe(int pipefd[2])
+{
+	// TODO implement pipe
+	return -1;
 }
 

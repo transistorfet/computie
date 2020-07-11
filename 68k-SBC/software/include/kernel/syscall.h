@@ -19,6 +19,7 @@
 #define SYS_FSTAT	13
 #define SYS_LSEEK	14
 #define SYS_WAITPID	15
+#define SYS_PIPE	16
 //#define SYS_CREAT	8
 
 

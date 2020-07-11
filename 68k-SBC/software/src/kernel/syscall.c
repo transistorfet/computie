@@ -29,10 +29,13 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_close,
 	do_wait,
 	do_readdir,
-	do_exec,
+	test,		// 9 = link, not yet implemented
 	do_unlink,
+	do_exec,
 	do_stat,
 	do_fstat,
+	do_lseek,
+	do_waitpid,
 };
 
 extern void enter_syscall();
@@ -124,7 +127,7 @@ int do_readdir(int fd, struct vdir *dir)
 }
 
 
-int do_fork()
+pid_t do_fork()
 {
 	struct process *proc;
 
@@ -176,12 +179,20 @@ void do_exit(int exitcode)
 		resume_proc(parent);
 }
 
-int do_wait(int *status)
+pid_t do_wait(int *status)
 {
-	int pid;
+	return do_waitpid(-1, status, 0);
+}
+
+pid_t do_waitpid(pid_t pid, int *status, int options)
+{
 	struct process *proc;
 
-	proc = find_exited_child(current_proc->pid);
+	// Must be a valid pid, or -1 to wait for any process
+	if (pid <= 0 && pid != -1)
+		return EINVAL;
+
+	proc = find_exited_child(current_proc->pid, pid);
 	if (!proc) {
 		suspend_current_proc();
 	}

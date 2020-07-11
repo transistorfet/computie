@@ -108,10 +108,10 @@ void cleanup_proc(struct process *proc)
 	proc->pid = 0;
 }
 
-struct process *find_exited_child(int parent)
+struct process *find_exited_child(int parent, int child)
 {
 	for (short i = 0; i < PROCESS_MAX; i++) {
-		if (table[i].pid && table[i].parent == parent && table[i].state == PS_EXITED)
+		if (table[i].pid && table[i].state == PS_EXITED && table[i].parent == parent && (child == -1 || table[i].pid == child))
 			return &table[i];
 	}
 	return NULL;

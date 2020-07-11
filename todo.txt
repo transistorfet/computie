@@ -1,27 +1,27 @@
 
-
-* implement waiting/zombie processes/etc
-* add O_TRUNC
-* add file permissions checks, and uid checks
+* should you make a lib subdir, and put unistd at the top?
+* refactor waiting/blocking processes
+* add waitpid syscall
 * add current working directory info.  Is that stored in the process?  Do you have to do string concat or can you pass 2 arguments to the vfs entry funcs
 * the resume checker isn't checking, but instead unblocking everything in the list to see if a second attempt fails
 * get pipes working
 * get exec/process arguments working
 * a page allocator is more needed, to replace the use of malloc for allocating the program space
 
-
 * there are still issues with the file sending through serial in the OS, flow control is likley not working correctly
 * add transmit buffer for writing to tty (at least for user processes), and add blocking of write syscalls (atm a slow tty write will lock up the syscall interface)
 
-* syscalls to implement: pipe, chdir, chmod, chown, getuid/setuid, mount/umount, rename, alarm, pause, time, kill, signals
+
+
+* syscalls to implement: pipe, dup, chdir, kill, signals, chmod, chown, access, getuid/setuid, getpid, mount/umount, rename, alarm, pause, time
+* add O_TRUNC
+* add file permissions checks, and uid checks
+
 
 
 * add brk/sbrk/stack guard protection
 * move the queue and circular buffer code to common include files somewhere (src/utils/? src/shared/?)
-
 * a slab allocator would maybe help, but I don't think it's as important at the moment
-
-
 
 * there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
 * can you make the kernel relocatable again?

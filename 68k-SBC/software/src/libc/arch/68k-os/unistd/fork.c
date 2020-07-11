@@ -1,11 +1,10 @@
 
-#include <stddef.h>
+#include <unistd.h>
 #include <kernel/syscall.h>
 
 
-int fork()
+pid_t fork()
 {
 	return SYSCALL1(SYS_FORK, 0);
 }
-
 

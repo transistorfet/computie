@@ -52,12 +52,15 @@ struct process *new_proc();
 struct process *get_proc(int pid);
 void exit_proc(struct process *proc, int status);
 void cleanup_proc(struct process *proc);
-struct process *find_exited_child(int parent);
+struct process *find_exited_child(int parent, int child);
+
 void suspend_current_proc();
 void resume_proc(struct process *proc);
 void resume_all_procs();
+
 void schedule();
 struct process *create_kernel_task(int (*task_start)());
+
 extern void *create_context(void *user_stack, void *entry);
 
 #endif

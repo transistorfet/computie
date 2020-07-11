@@ -15,9 +15,12 @@
 struct vdir;
 struct stat;
 
-int fork();
-void exit(int exitcode);
+pid_t fork();
+void exit(int status);
 int exec(const char *path);
+pid_t wait(int *status);
+pid_t waitpid(pid_t pid, int *status, int options);
+
 int open(const char *path, int flags);
 int close(int fd);
 size_t read(int fd, char *buf, size_t nbytes);

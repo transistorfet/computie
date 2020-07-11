@@ -33,7 +33,7 @@ typedef enum {
 struct process {
 	struct queue_node node;
 	int pid;
-	// parent
+	int parent;
 	//struct process *nextq;
 
 	uint16_t state;		// proc_state_t
@@ -49,7 +49,10 @@ struct process {
 
 void init_proc();
 struct process *new_proc();
-void free_proc(struct process *proc);
+struct process *get_proc(int pid);
+void exit_proc(struct process *proc, int status);
+void cleanup_proc(struct process *proc);
+struct process *find_exited_child(int parent);
 void suspend_current_proc();
 void resume_proc(struct process *proc);
 void resume_all_procs();

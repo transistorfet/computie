@@ -220,9 +220,23 @@ offset_t mallocfs_seek(struct vfile *file, offset_t position, int whence)
 		return -1;
 
 	else {
-		// TODO this is ignoring whence
+		switch (whence) {
+		    case SEEK_SET:
+			break;
+		    case SEEK_CUR:
+			position = file->position + position;
+			break;
+		    case SEEK_END:
+			position = file->vnode->size + position;
+			break;
+		    default:
+			return EINVAL;
+		}
+
+		// TODO this is a hack for now so I don't have to deal with gaps in files
 		if (position > file->vnode->size)
 			position = file->vnode->size;
+
 		file->position = position;
 		return file->position;
 	}

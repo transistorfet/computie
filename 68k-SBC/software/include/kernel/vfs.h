@@ -7,6 +7,16 @@
 #include <sys/types.h>
 
 
+#ifndef SEEK_SET
+#define SEEK_SET	0	// Seek relative to the beginning of file
+#endif
+#ifndef SEEK_CUR
+#define SEEK_CUR	1	// Seek relative to the current position
+#endif
+#ifndef SEEK_END
+#define SEEK_END	2	// Seek relative to the end of file
+#endif
+
 #define VFS_SEP			'/'
 #define VFS_FILENAME_MAX	14
 

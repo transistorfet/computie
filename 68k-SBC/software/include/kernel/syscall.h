@@ -10,7 +10,7 @@
 #define SYS_WRITE	4
 #define SYS_OPEN	5
 #define SYS_CLOSE	6
-//#define SYS_WAIT	7
+#define SYS_WAIT	7
 #define SYS_READDIR	8
 #define SYS_EXEC	9
 //#define SYS_LINK	9

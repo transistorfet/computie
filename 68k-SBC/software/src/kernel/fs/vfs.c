@@ -128,11 +128,14 @@ int vfs_open(const char *path, int flags, struct vfile **file)
 		}
 	}
 
-
+	// TODO check permissions before opening
 
 	*file = new_fileptr(vnode);
 	if (!*file)
 		return EMFILE;
+
+	if (flags & O_APPEND)
+		(*file)->position = (*file)->vnode->size;
 
 	error = vnode->ops->fops->open(*file, flags);
 	if (error)

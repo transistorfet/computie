@@ -220,11 +220,15 @@ void sh_fork()
 	int pid = fork();
 
 	if (pid) {
+		int status;
+
 		printf("The child's pid is %d\n", pid);
+		wait(&status);
+		printf("The child exited with %d\n", status);
 	}
 	else {
 		puts("I AM THE CHILD!");
-		exit(0);
+		exit(1337);
 	}
 }
 

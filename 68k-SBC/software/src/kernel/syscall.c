@@ -27,7 +27,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_write,
 	do_open,
 	do_close,
-	test,	// WAIT
+	do_wait,
 	do_readdir,
 	do_exec,
 	do_unlink,
@@ -167,7 +167,30 @@ int do_fork()
 
 void do_exit(int exitcode)
 {
-	free_proc(current_proc);
+	struct process *parent;
+
+	exit_proc(current_proc, exitcode);
+
+	parent = get_proc(current_proc->parent);
+	if (parent->state == PS_BLOCKED && parent->blocked_call.syscall == SYS_WAIT)
+		resume_proc(parent);
+}
+
+int do_wait(int *status)
+{
+	int pid;
+	struct process *proc;
+
+	proc = find_exited_child(current_proc->pid);
+	if (!proc) {
+		suspend_current_proc();
+	}
+	else {
+		*status = proc->exitcode;
+		pid = proc->pid;
+		cleanup_proc(proc);
+		return pid;
+	}
 }
 
 int do_exec(const char *path)

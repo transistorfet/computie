@@ -36,7 +36,7 @@ void init_proc()
 	_queue_init(&run_queue);
 	_queue_init(&blocked_queue);
 
-	for (char i = 0; i < PROCESS_MAX; i++) {
+	for (short i = 0; i < PROCESS_MAX; i++) {
 		table[i].pid = 0;
 	}
 
@@ -46,9 +46,10 @@ void init_proc()
 
 struct process *new_proc()
 {
-	for (char i = 0; i < PROCESS_MAX; i++) {
+	for (short i = 0; i < PROCESS_MAX; i++) {
 		if (!table[i].pid) {
 			table[i].pid = next_pid++;
+			table[i].parent = current_proc ? current_proc->pid : 1;
 			table[i].state = PS_READY;
 			table[i].node.next = NULL;
 			table[i].node.prev = NULL;
@@ -72,18 +73,48 @@ struct process *new_proc()
 	return NULL;
 }
 
-void free_proc(struct process *proc)
+struct process *get_proc(int pid)
 {
-	proc->pid = 0;
-	proc->state = PS_EXITED;
-	release_fd_table(proc->fd_table);
+	for (short i = 0; i < PROCESS_MAX; i++) {
+		if (table[i].pid == pid)
+			return &table[i];
+	}
+	return NULL;
+}
 
+void exit_proc(struct process *proc, int status)
+{
+	proc->state = PS_EXITED;
+	proc->exitcode = status;
+
+	release_fd_table(proc->fd_table);
 	for (char j = 0; j < NUM_SEGMENTS; j++) {
 		if (proc->segments[j].base)
 			free(proc->segments[j].base);
 	}
 
 	_queue_remove(&run_queue, &proc->node);
+
+	// Reassign any child procs' parent to be this proc's parent
+	for (short i = 0; i < PROCESS_MAX; i++) {
+		if (table[i].pid && table[i].parent == proc->pid)
+			table[i].parent = proc->parent;
+	}
+}
+
+
+void cleanup_proc(struct process *proc)
+{
+	proc->pid = 0;
+}
+
+struct process *find_exited_child(int parent)
+{
+	for (short i = 0; i < PROCESS_MAX; i++) {
+		if (table[i].pid && table[i].parent == parent && table[i].state == PS_EXITED)
+			return &table[i];
+	}
+	return NULL;
 }
 
 

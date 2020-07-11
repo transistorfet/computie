@@ -9,6 +9,7 @@ void do_syscall();
 
 extern void do_exit(int exitcode);
 extern int do_fork();
+extern int do_wait(int *status);
 extern size_t do_read(int fd, char *buf, size_t nbytes);
 extern size_t do_write(int fd, const char *buf, size_t nbytes);
 extern int do_open(const char *path, int oflags);

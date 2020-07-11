@@ -5,6 +5,13 @@
 #include <stddef.h>
 #include <sys/types.h>
 
+// WHENCE argument to lseek
+#ifndef	STDIO_H			// These same definitions are in stdio.h for fseek
+#define SEEK_SET	0	// Seek relative to the beginning of file
+#define SEEK_CUR	1	// Seek relative to the current position
+#define SEEK_END	2	// Seek relative to the end of file
+#endif
+
 struct vdir;
 struct stat;
 
@@ -20,5 +27,6 @@ int stat(const char *path, struct stat *statbuf);
 int fstat(int fd, struct stat *statbuf);
 int unlink(const char *path);
 offset_t lseek(int fd, offset_t offset, int whence);
+//int pipe(int pipefd[2]);
 
 #endif

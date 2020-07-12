@@ -1,6 +1,8 @@
 
 #include <stdint.h>
 
+//#include "../kernel/circlebuf.h"
+
 // MC68681 Register Addresses
 #define MR1A_MR2A_ADDR	((volatile uint8_t *) 0x700001)
 #define SRA_RD_ADDR	((volatile uint8_t *) 0x700003)
@@ -28,6 +30,10 @@
 
 // MC68681 Command Numbers
 #define CMD_ENABLE_TX_RX		0x05
+#define CMD_ENABLE_RX			0x01
+#define CMD_DISABLE_RX			0x02
+#define CMD_ENABLE_TX			0x04
+#define CMD_DISABLE_TX			0x08
 
 
 // MC68681 Default Configuration Values
@@ -72,6 +78,8 @@ static char tty_read_out = 0;
 static char tty_read_buffer[TTY_READ_BUFFER];
 */
 
+//static struct circular_buffer *tx = (struct circular_buffer *) 0x1d0000;
+
 
 int init_tty()
 {
@@ -85,11 +93,13 @@ int init_tty()
 	// Configure timer
 	//*CTUR_WR_ADDR = 0xFF;
 	//*CTLR_WR_ADDR = 0xFF;
-	
+
+	//_buf_init(tx);
 
 	// Enable interrupts
-	//*IVR_WR_ADDR = TTY_INT_VECTOR;
+	*IVR_WR_ADDR = TTY_INT_VECTOR;
 	//*IMR_WR_ADDR = ISR_CH_A_RX_READY_FULL;
+	//*IMR_WR_ADDR = ISR_CH_A_TX_READY;
 
 
 	// Turn ON Test LED
@@ -156,9 +166,53 @@ int putchar(int ch)
 	*TBA_WR_ADDR = (char) ch;
 	return ch;
 }
+/*
+int putchar_buffered(int ch)
+{
+	while (_buf_is_full(tx)) {
+		asm volatile("");
+		//putchar_direct('@');
+	}
+
+	_buf_put_char(tx, ch);
+
+	//*((char *) 0x201d) = 0x00;
+
+	// Enable the channel A transmitter
+	*CRA_WR_ADDR = CMD_ENABLE_TX;
+
+	//putchar_direct('>');
+	return ch;
+}
+*/
+
 
 __attribute__((interrupt)) void handle_serial_irq()
 {
+
+	/*
+	char isr = *ISR_RD_ADDR;
+
+	if (isr & ISR_CH_A_TX_READY) {
+		//*OUT_SET_ADDR = 0x20;
+
+		int ch = _buf_get_char(tx);
+		if (ch != -1) {
+			*TBA_WR_ADDR = (char) ch;
+		}
+		else {
+			// *IMR_WR_ADDR &= ~ISR_CH_A_TX_READY;
+
+			//putchar_direct('/');
+			//*((char *) 0x201d) = 0x01;
+
+			//if (*SRA_RD_ADDR & SR_TX_EMPTY)
+			// Disable the channel A transmitter
+			*CRA_WR_ADDR = CMD_DISABLE_TX;
+		}
+	}
+	*/
+
 	/*
 	char status = *SRA_RD_ADDR;
 

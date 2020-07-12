@@ -7,6 +7,7 @@
 
 #include "../process.h"
 #include "../interrupts.h"
+#include "../circlebuf.h"
 
 
 // Driver Definition
@@ -54,6 +55,10 @@ struct driver tty_68681_driver = {
 
 // MC68681 Command Numbers
 #define CMD_ENABLE_TX_RX		0x05
+#define CMD_ENABLE_RX			0x01
+#define CMD_DISABLE_RX			0x02
+#define CMD_ENABLE_TX			0x04
+#define CMD_DISABLE_TX			0x08
 
 
 // MC68681 Default Configuration Values
@@ -90,14 +95,6 @@ struct driver tty_68681_driver = {
 #define TTY_INT_VECTOR			IV_USER_VECTORS
 
 
-#define MAX_BUFFER	128
-
-struct circular_buffer {
-	volatile short in;
-	volatile short out;
-	unsigned char buffer[MAX_BUFFER];
-};
-
 struct serial_channel {
 	struct circular_buffer rx;
 	struct circular_buffer tx;
@@ -111,17 +108,6 @@ extern void enter_irq();
 
 // TODO remove after debugging
 char tick = 0;
-
-
-static inline void _buf_init(struct circular_buffer *cb);
-static inline char _buf_is_full(struct circular_buffer *cb);
-static inline char _buf_is_empty(struct circular_buffer *cb);
-static inline short _buf_next_in(struct circular_buffer *cb);
-static inline short _buf_free_space(struct circular_buffer *cb);
-static inline int _buf_get_char(struct circular_buffer *cb);
-static inline int _buf_put_char(struct circular_buffer *cb, char ch);
-static inline short _buf_get(struct circular_buffer *cb, char *data, short size);
-static inline short _buf_put(struct circular_buffer *cb, const char *data, short size);
 
 
 int tty_68681_init()
@@ -145,7 +131,7 @@ int tty_68681_init()
 	// Enable interrupts
 	set_interrupt(TTY_INT_VECTOR, enter_irq);
 	*IVR_WR_ADDR = TTY_INT_VECTOR;
-	*IMR_WR_ADDR = ISR_TIMER_CHANGE | ISR_INPUT_CHANGE | ISR_CH_A_RX_READY_FULL;
+	*IMR_WR_ADDR = ISR_TIMER_CHANGE | ISR_INPUT_CHANGE | ISR_CH_A_RX_READY_FULL | ISR_CH_A_TX_READY;
 
 	// Flash LEDs briefly at boot
 	*OPCR_WR_ADDR = 0x00;
@@ -194,6 +180,7 @@ int getchar(void)
 	// Assert CTS
 	*OUT_SET_ADDR = 0x01;
 
+	//putchar_direct('#');
 	while (_buf_is_empty(&channel_a.rx)) {
 		asm volatile("");
 		//putchar('^');
@@ -201,27 +188,25 @@ int getchar(void)
 	return _buf_get_char(&channel_a.rx);
 }
 
-int putchar(int ch)
+int putchar_direct(int ch)
 {
 	while (!(*SRA_RD_ADDR & SR_TX_READY)) { }
 	*TBA_WR_ADDR = (char) ch;
 	return ch;
 }
 
-int putchar_indirect(int ch)
+int putchar(int ch)
 {
-	/*
-	while (!(*SRA_RD_ADDR & 0x04)) { }
-	*TBA_WR_ADDR = (char) ch;
-	return ch;
-	*/
-	char data = ch;
 	while (_buf_is_full(&channel_a.tx)) {
 		asm volatile("");
 		//putchar_direct('@');
 	}
-	_buf_put(&channel_a.tx, &data, 1);
-	*IMR_WR_ADDR |= ISR_CH_A_TX_READY;
+
+	_buf_put_char(&channel_a.tx, ch);
+
+	// Enable the channel A transmitter
+	*CRA_WR_ADDR = CMD_ENABLE_TX;
+
 	return ch;
 }
 
@@ -243,8 +228,10 @@ int tty_68681_read(devminor_t minor, char *buffer, size_t size)
 	for (; i > 0; i--, buffer++) {
 		if (_buf_is_empty(&channel_a.rx)) {
 			// Suspend the process only if we haven't read any data yet
-			if (size == i)
+			if (size == i) {
+				//putchar_direct('S');
 				suspend_current_proc();
+			}
 			return size - i;
 		}
 		*buffer = getchar();
@@ -257,10 +244,10 @@ int tty_68681_write(devminor_t minor, const char *buffer, size_t size)
 	int i = size;
 
 	// TODO with this method, each write's size must always be smaller than buffer size
-	//if (_buf_free_space(&channel_a.tx) < size) {
-	//	suspend_current_proc();
-	//	return 0;
-	//}
+	if (_buf_free_space(&channel_a.tx) < size) {
+		suspend_current_proc();
+		return 0;
+	}
 
 	for (; i > 0; i--, buffer++)
 		//putchar_indirect(*buffer);
@@ -279,6 +266,8 @@ void handle_serial_irq()
 {
 	register char isr = *ISR_RD_ADDR;
 	register char status = *SRA_RD_ADDR;
+
+	*OUT_SET_ADDR = 0x10;
 
 	if (status & SR_RX_FULL) {
 		// De-Assert CTS
@@ -299,7 +288,6 @@ void handle_serial_irq()
 				_buf_put_char(&channel_a.rx, ch);
 			}
 			else {
-				*((char *) 0x201d) = 0x01;
 				// De-Assert CTS
 				*OUT_RESET_ADDR = 0x01;
 				//printf("Lost: %d %d\n", channel_a.rx.in, channel_a.rx.out);
@@ -311,17 +299,21 @@ void handle_serial_irq()
 		resume_all_procs();
 	}
 
-	/*
+
 	if (isr & ISR_CH_A_TX_READY) {
-		char ch = _buf_get_char(&channel_a.tx);
+		//*OUT_SET_ADDR = 0x20;
+
+		int ch = _buf_get_char(&channel_a.tx);
 		if (ch != -1) {
 			*TBA_WR_ADDR = (char) ch;
 		}
 		else {
-			// *IMR_WR_ADDR &= ~ISR_CH_A_TX_READY;
+			if (status & SR_TX_EMPTY)
+			// Disable the channel A transmitter
+			*CRA_WR_ADDR = CMD_DISABLE_TX;
+			//*TBA_WR_ADDR = '*';
 		}
 	}
-	*/
 
 	if (isr & ISR_TIMER_CHANGE) {
 		// Clear the interrupt bit by reading the stop address
@@ -362,90 +354,8 @@ void handle_serial_irq()
 		//*((uint16_t *) (current_proc_stack - CONTEX_SIZE)) |= 0x8000;
 	}
 */
+
+	*OUT_RESET_ADDR = 0x10;
 }
 
-
-
-static inline void _buf_init(struct circular_buffer *cb)
-{
-	cb->in = 0;
-	cb->out = 0;
-}
-
-static inline char _buf_is_full(struct circular_buffer *cb)
-{
-	return _buf_next_in(cb) == cb->out;
-}
-
-static inline char _buf_is_empty(struct circular_buffer *cb)
-{
-	return cb->in == cb->out;
-}
-
-static inline short _buf_next_in(struct circular_buffer *cb)
-{
-	return cb->in + 1 < MAX_BUFFER ? cb->in + 1 : 0;
-}
-
-static inline short _buf_free_space(struct circular_buffer *cb)
-{
-	if (cb->out > cb->in)
-		return cb->out - cb->in - 1;
-	else //(cb->out <= cb->in)
-		return MAX_BUFFER - cb->in + cb->out - 1;
-}
-
-static inline int _buf_get_char(struct circular_buffer *cb)
-{
-	register char ch;
-
-	if (cb->out == cb->in)
-		return -1;
-	ch = cb->buffer[cb->out++];
-	if (cb->out >= MAX_BUFFER)
-		cb->out = 0;
-	return ch;
-}
-
-static inline int _buf_put_char(struct circular_buffer *cb, char ch)
-{
-	register short next;
-
-	next = _buf_next_in(cb);
-	if (next == cb->out)
-		return -1;
-	cb->buffer[cb->in] = ch;
-	cb->in = next;
-	return ch;
-}
-
-
-static inline short _buf_get(struct circular_buffer *cb, char *data, short size)
-{
-	short i;
-
-	for (i = 0; i < size; i++) {
-		if (cb->out == cb->in)
-			return i;
-		data[i] = cb->buffer[cb->out++];
-		if (cb->out >= MAX_BUFFER)
-			cb->out = 0;
-	}
-	return i;
-}
-
-static inline short _buf_put(struct circular_buffer *cb, const char *data, short size)
-{
-	short i;
-	register short next;
-
-	for (i = 0; i < size; i++) {
-		cb->buffer[cb->in] = data[i];
-		next = _buf_next_in(cb);
-		if (next == cb->out)
-			return i;
-		cb->in = next;
-	}
-	return i;
-}
 

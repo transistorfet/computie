@@ -239,7 +239,7 @@ uint16_t fetch_word()
 
 void load(void)
 {
-	uint16_t size;
+	uint32_t size;
 	uint16_t data;
 	uint16_t *mem = (uint16_t *) RAM_ADDR;
 
@@ -247,7 +247,7 @@ void load(void)
 	size >>= 1;
 	//printf("Expecting %x\n", size);
 
-	for (short i = 0; i < size; i++) {
+	for (int i = 0; i < size; i++) {
 		data = fetch_word();
 		//printf("%x ", data);
 		mem[i] = data;

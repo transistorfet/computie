@@ -147,6 +147,17 @@ int tty_68681_init()
 	*((char *) 0x201d) = 0x00;
 }
 
+void tty_68681_set_leds(uint8_t bits)
+{
+	*OUT_SET_ADDR = (bits << 4);
+}
+
+void tty_68681_reset_leds(uint8_t bits)
+{
+	*OUT_RESET_ADDR = (bits << 4);
+}
+
+
 int getchar(void)
 {
 	/*
@@ -197,10 +208,12 @@ int putchar_direct(int ch)
 
 int putchar(int ch)
 {
+	tty_68681_set_leds(0x2);
 	while (_buf_is_full(&channel_a.tx)) {
 		asm volatile("");
 		//putchar_direct('@');
 	}
+	tty_68681_reset_leds(0x2);
 
 	_buf_put_char(&channel_a.tx, ch);
 
@@ -245,6 +258,7 @@ int tty_68681_write(devminor_t minor, const char *buffer, size_t size)
 
 	// TODO with this method, each write's size must always be smaller than buffer size
 	if (_buf_free_space(&channel_a.tx) < size) {
+		//putchar_direct('S');
 		suspend_current_proc();
 		return 0;
 	}

@@ -24,7 +24,7 @@ def main():
             ch = f.read(1)
             if not ch:
                 break
-            time.sleep(0.001)
+            #time.sleep(0.001)
             #time.sleep(0.05)
             tty.write(bytes(ch, 'ascii'))
 

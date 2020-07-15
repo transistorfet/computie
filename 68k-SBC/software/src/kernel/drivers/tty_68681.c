@@ -1,10 +1,12 @@
 
+#include <stdio.h>
 #include <stdint.h>
 
 #include <sys/stat.h>
 #include <kernel/vfs.h>
 #include <kernel/driver.h>
 
+#include "../printk.h"
 #include "../process.h"
 #include "../interrupts.h"
 #include "../circlebuf.h"
@@ -186,7 +188,7 @@ int getchar(void)
 
 	//uint16_t status;
 	//asm("move.w	%%sr, %0\n" : "=g" (status));
-	//printf("Status: %x\n", status);
+	//printk("Status: %x\n", status);
 
 	// Assert CTS
 	*OUT_SET_ADDR = 0x01;
@@ -221,6 +223,30 @@ int putchar(int ch)
 	*CRA_WR_ADDR = CMD_ENABLE_TX;
 
 	return ch;
+}
+
+#define PRINTK_BUFFER	128
+int vprintk(const char *fmt, va_list args)
+{
+	int i;
+	char buffer[PRINTK_BUFFER];
+
+	vsnprintf(buffer, PRINTK_BUFFER, fmt, args);
+	for (i = 0; i < PRINTK_BUFFER && buffer[i]; i++)
+		putchar(buffer[i]);
+	return i;
+}
+
+int printk(const char *fmt, ...)
+{
+	int ret;
+	va_list args;
+
+	va_start(args, fmt);
+	ret = vprintf(fmt, args);
+	va_end(args);
+
+	return ret;
 }
 
 
@@ -304,7 +330,7 @@ void handle_serial_irq()
 			else {
 				// De-Assert CTS
 				*OUT_RESET_ADDR = 0x01;
-				//printf("Lost: %d %d\n", channel_a.rx.in, channel_a.rx.out);
+				//printk("Lost: %d %d\n", channel_a.rx.in, channel_a.rx.out);
 				break;
 			}
 		}
@@ -352,7 +378,7 @@ void handle_serial_irq()
 		// Reading from the IPCR register will clear the interrupt
 		uint8_t status = *IPCR_RD_ADDR;
 
-		printf("%x\n", status);
+		printk("%x\n", status);
 
 		if (*INPUT_RD_ADDR & 0x08) {
 			asm(

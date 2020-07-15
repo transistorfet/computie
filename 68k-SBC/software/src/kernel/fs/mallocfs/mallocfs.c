@@ -10,6 +10,7 @@
  
 #include "mallocfs.h"
 #include "../vnode.h"
+#include "../../printk.h"
 
 #include <stdlib.h>
 #define MFS_ALLOC_BLOCK()	((struct mallocfs_block *) malloc(MALLOCFS_BLOCK_SIZE))
@@ -56,15 +57,15 @@ int init_mallocfs()
 
 	error = mallocfs_create(mallocfs_root, "dir", S_IFDIR | 0755, &vn);
 	if (error)
-		printf("Error: %d\n", error);
+		printk("Error: %d\n", error);
 	else
-		printf("Created dir at %x\n", vn->block);
+		printk("Created dir at %x\n", vn->block);
 
 	error = mallocfs_create(vn, "test", 0644, &vn);
 	if (error)
-		printf("Error: %d\n", error);
+		printk("Error: %d\n", error);
 	else
-		printf("Created at %x\n", vn->block);
+		printk("Created at %x\n", vn->block);
 
 }
 

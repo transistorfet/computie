@@ -4,9 +4,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "printk.h"
 #include "interrupts.h"
 
 
+// TODO this isn't actually used by anything, since a reset will always return to the eeprom's memory (VBR=0)
 // All data on the stack must be word-aligned, so the stack pointer must be an even
 // number, even though there is no memory at this address.  The stack will grow
 // downward starting with the word at address 0x1FFFFE
@@ -49,7 +51,7 @@ __attribute__((noreturn)) void panic(const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	vprintf(fmt, args);
+	vprintk(fmt, args);
 	va_end(args);
 
 	asm("stop #0x2700\n");
@@ -91,15 +93,15 @@ __attribute__((interrupt)) void fatal_error()
 
 	GET_FRAME(frame);
 
-	printf("\n\nFatal Error at %x (status: %x, vector: %x). Halting...\n", frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
+	printk("\n\nFatal Error at %x (status: %x, vector: %x). Halting...\n", frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
 
 	char *sp;
 	asm volatile("move.l  %%sp, %0\n" : "=r" (sp));
 
 	// Dump stack
-	printf("Stack: %x\n", sp);
+	printk("Stack: %x\n", sp);
 	for (char i = 0; i < 16; i++) {
-		printf("%04x ", ((uint16_t *) frame)[i]);
+		printk("%04x ", ((uint16_t *) frame)[i]);
 		if ((i & 0x3) == 0x3)
 			putchar('\n');
 	}
@@ -107,7 +109,7 @@ __attribute__((interrupt)) void fatal_error()
 	// Dump code where the error occurred
 	puts("\nCode:");
 	for (char i = 0; i < 16; i++) {
-		printf("%04x ", frame->pc[i]);
+		printk("%04x ", frame->pc[i]);
 		if ((i & 0x3) == 0x3)
 			putchar('\n');
 	}
@@ -132,5 +134,5 @@ __attribute__((interrupt)) void handle_trace()
 
 	GET_FRAME(frame);
 
-	printf("Trace %x (%x)\n", frame->pc, *frame->pc);
+	printk("Trace %x (%x)\n", frame->pc, *frame->pc);
 }

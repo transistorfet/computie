@@ -12,6 +12,7 @@
 #include <kernel/vfs.h>
 
 #include "api.h"
+#include "printk.h"
 #include "process.h"
 #include "interrupts.h"
 
@@ -49,7 +50,7 @@ struct process *run_task()
 
 	struct process *proc = new_proc();
 	if (!proc) {
-		puts("Ran out of procs\n");
+		printk("Ran out of procs\n");
 		return NULL;
 	}
 
@@ -57,10 +58,10 @@ struct process *run_task()
 
 	int fd = do_open("tty", 0);
 	if (fd < 0) {
-		printf("Error opening file tty %d\n", error);
+		printk("Error opening file tty %d\n", error);
 		return NULL;
 	}
-	printf("FD: %d\n", fd);
+	printk("FD: %d\n", fd);
 
 	do_write(fd, "Hey\n", 4);
 
@@ -71,8 +72,8 @@ struct process *run_task()
 	int task_size = 0x1800;
 	char *task = malloc(task_size);
 	char *task_stack_p = task + task_size;
-	printf("Task Address: %x\n", task);
-	printf("Task Stack: %x\n", task_stack_p);
+	printk("Task Address: %x\n", task);
+	printk("Task Stack: %x\n", task_stack_p);
 
 	//memset_s(task, 0, 0xC00);		// With memset doing nothing, this value will not cause a fatal
 	//memset_s(task, 0, 0xD00);		// With memset doing nothing, this value will sometimes cause a fatal
@@ -97,7 +98,7 @@ struct process *run_task()
 	proc->segments[M_TEXT].length = task_size;
 	proc->sp = task_stack_p;
 
-	printf("After: %x\n", task_stack_p);
+	printk("After: %x\n", task_stack_p);
 
 	return proc;
 }
@@ -108,7 +109,7 @@ struct process *run_sh()
 
 	struct process *proc = new_proc();
 	if (!proc) {
-		puts("Ran out of procs\n");
+		printk("Ran out of procs\n");
 		return NULL;
 	}
 
@@ -116,17 +117,17 @@ struct process *run_sh()
 
 	int fd = do_open("tty", 0);
 	if (fd < 0) {
-		printf("Error opening file tty %d\n", error);
+		printk("Error opening file tty %d\n", error);
 		return NULL;
 	}
-	printf("FD: %d\n", fd);
+	printk("FD: %d\n", fd);
 
 
 	int stack_size = 0x800;
 	char *stack = malloc(stack_size);
 	char *stack_p = stack + stack_size;
-	printf("Sh Bottom: %x\n", stack);
-	printf("Sh Stack: %x\n", stack_p);
+	printk("Sh Bottom: %x\n", stack);
+	printk("Sh Stack: %x\n", stack_p);
 
 
  	stack_p = create_context(stack_p, sh_task);
@@ -137,7 +138,7 @@ struct process *run_sh()
 	proc->segments[M_STACK].length = stack_size;
 	proc->sp = stack_p;
 
-	printf("After: %x\n", stack_p);
+	printk("After: %x\n", stack_p);
 
 	//dump(task, task_size);
 
@@ -151,12 +152,12 @@ void file_test()
 	struct vfile *file;
 
 	if ((error = vfs_open("dir/test", 0, &file))) {
-		printf("Error at open %d\n", error);
+		printk("Error at open %d\n", error);
 		return;
 	}
 
 	if ((error = vfs_write(file, "This is a file test\n", 20)) <= 0) {
-		printf("Error when writing %d\n", error);
+		printk("Error when writing %d\n", error);
 		return;
 	}
 
@@ -166,10 +167,10 @@ void file_test()
 
 	error = vfs_read(file, buffer, 256);
 	if (error < 0) {
-		printf("Error when reading\n");
+		printk("Error when reading\n");
 		return;
 	}
-	printf("Read: %d\n", error);
+	printk("Read: %d\n", error);
 	buffer[error] = '\0';
 
 	puts(buffer);
@@ -178,12 +179,12 @@ void file_test()
 
 
 	if ((error = vfs_open("/hello", O_CREAT, &file))) {
-		printf("Error at open new file %d\n", error);
+		printk("Error at open new file %d\n", error);
 		return;
 	}
 
 	if ((error = vfs_write(file, hello_task, 256)) <= 0) {
-		printf("Error when writing %d\n", error);
+		printk("Error when writing %d\n", error);
 		return;
 	}
 
@@ -200,20 +201,20 @@ void dir_test()
 	struct vdir dir;
 
 	if ((error = vfs_open("/", 0, &file))) {
-		printf("Error at open %d\n", error);
+		printk("Error at open %d\n", error);
 		return;
 	}
 
 	while (1) {
 		error = vfs_readdir(file, &dir);
 		if (error < 0) {
-			printf("Error at readdir %d\n", error);
+			printk("Error at readdir %d\n", error);
 			return;
 		}
 		else if (error == 0)
 			break;
 		else {
-			printf("File: %d:%s\n", error, dir.name);
+			printk("File: %d:%s\n", error, dir.name);
 		}
 	}
 
@@ -250,7 +251,7 @@ int main()
 	//for (int i = 0; i < 0x2800; i++)
 	//	asm volatile("");
 
-	//printf("THINGS %x\n", current_proc);
+	//printk("THINGS %x\n", current_proc);
 
 	current_proc = task;
 	current_proc_stack = task->sp;

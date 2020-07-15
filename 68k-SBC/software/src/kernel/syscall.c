@@ -10,6 +10,7 @@
 #include <kernel/filedesc.h>
 
 #include "api.h"
+#include "printk.h"
 #include "process.h"
 #include "interrupts.h"
 
@@ -147,11 +148,11 @@ pid_t do_fork()
 
 	memcpy_s(stack, current_proc->segments[M_STACK].base, current_proc->segments[M_STACK].length);
 
-	printf("Parent Stack Pointer: %x\n", current_proc->sp);
+	printk("Parent Stack Pointer: %x\n", current_proc->sp);
 
-	printf("Fork Stack: %x\n", stack);
-	printf("Fork Stack Top: %x\n", stack + stack_size);
-	printf("Fork Stack Pointer: %x\n", stack_pointer);
+	printk("Fork Stack: %x\n", stack);
+	printk("Fork Stack Top: %x\n", stack + stack_size);
+	printk("Fork Stack Pointer: %x\n", stack_pointer);
 
 	proc->segments[M_STACK].base = stack;
 	proc->segments[M_STACK].length = stack_size;
@@ -164,7 +165,7 @@ pid_t do_fork()
 	//dump((uint16_t *) current_proc->sp, 0x100);
 	//dump((uint16_t *) proc->sp, 0x100);
 
-	printf("PID: %d\n", proc->pid);
+	printk("PID: %d\n", proc->pid);
 
 	return proc->pid;
 }
@@ -212,16 +213,16 @@ int do_exec(const char *path)
 	struct stat statbuf;
 
 	if ((error = do_stat(path, &statbuf))) {
-		printf("Error stating %s: %d\n", path, error);
+		printk("Error stating %s: %d\n", path, error);
 		return error;
 	}
 
 	if ((fd = do_open(path, O_RDONLY)) < 0) {
-		printf("Error opening %s: %d\n", path, fd);
+		printk("Error opening %s: %d\n", path, fd);
 		return fd;
 	}
 
-	printf("Size: %d\n", statbuf.st_size);
+	printk("Size: %d\n", statbuf.st_size);
 
 	// The extra data is for the bss segment
 	int task_size = statbuf.st_size + 0x100;
@@ -233,7 +234,7 @@ int do_exec(const char *path)
 
 
 	if (error < 0) {
-		printf("Error reading file %s: %d\n", path, error);
+		printk("Error reading file %s: %d\n", path, error);
 		return error;
 	}
 
@@ -247,8 +248,8 @@ int do_exec(const char *path)
 	current_proc->sp = task_stack_pointer;
 	current_proc_stack = task_stack_pointer;
 
-	printf("Exec Text: %x\n", task_text);
-	printf("Exec Stack Pointer: %x\n", task_stack_pointer);
+	printk("Exec Text: %x\n", task_text);
+	printk("Exec Stack Pointer: %x\n", task_stack_pointer);
 
 	//dump((uint16_t *) task_text, 400);
 
@@ -302,9 +303,11 @@ int do_lseek(int fd, offset_t offset, int whence)
 	return vfs_seek(file, offset, whence);
 }
 
+#define PIPE_READ_FD	0
+#define PIPE_WRITE_FD	1
+
 int do_pipe(int pipefd[2])
 {
-	// TODO implement pipe
 	return -1;
 }
 

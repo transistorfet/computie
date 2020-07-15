@@ -7,6 +7,7 @@
 
 #include "api.h"
 #include "queue.h"
+#include "printk.h"
 #include "process.h"
 #include "interrupts.h"
 
@@ -154,7 +155,7 @@ void print_run_queue()
 {
 	for (struct queue_node *cur = run_queue.head; cur; cur = cur->next) {
 		struct process *proc = (struct process *) cur;
-		printf("%d: sp = %x\n", proc->pid, proc->sp);
+		printk("%d: sp = %x\n", proc->pid, proc->sp);
 	}
 }
 
@@ -175,7 +176,7 @@ void schedule()
 		//return;
 	}
 
-	//printf("next sp: %x\n", next->sp);
+	//printk("next sp: %x\n", next->sp);
 
 	if (current_proc == next)
 		return;

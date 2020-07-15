@@ -1,22 +1,22 @@
 
-* should you make a lib subdir, and put unistd at the top?
 * change the blocking/waiting code to use either state rather than checking that the syscall is wait or waitpid
-
-* add current working directory info.  Is that stored in the process?  Do you have to do string concat or can you pass 2 arguments to the vfs entry funcs
 * the resume checker isn't checking, but instead unblocking everything in the list to see if a second attempt fails
+
 * get pipes working
 * get exec/process arguments working
 * a page allocator, to replace the use of malloc for allocating the program space
-- what is needed to implement a 'ps' command in userspace
+
+* what is needed to implement a 'ps' command in userspace
 
 * there are still issues with the file sending through serial in the OS, flow control is likley not working correctly
-* add transmit buffer for writing to tty (at least for user processes), and add blocking of write syscalls (atm a slow tty write will lock up the syscall interface)
+* should you make a lib subdir, and put unistd at the top?
 
 
 
 * syscalls to implement: pipe, dup, chdir, kill, signals, chmod, chown, access, getuid/setuid, getpid, mount/umount, rename, alarm, pause, time
 * add O_TRUNC
 * add file permissions checks, and uid checks
+* add current working directory info.  Is that stored in the process?  Do you have to do string concat or can you pass 2 arguments to the vfs entry funcs
 
 
 

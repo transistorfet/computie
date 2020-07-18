@@ -86,6 +86,7 @@ int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, stru
 	newnode = _new_vnode_with_block(mode, vnode);
 	if (!newnode)
 		return ENOMEM;
+
 	dir->vnode = newnode;
 
 	if (result)
@@ -178,6 +179,9 @@ int mallocfs_read(struct vfile *file, char *buf, size_t nbytes)
 		register struct vnode *vnode = file->vnode;
 		register char *block = vnode->block;
 
+		if (!block)
+			return EIO;
+
 		if (nbytes > vnode->size - file->position)
 			nbytes = vnode->size - file->position;
 		memcpy_s(buf, &block[file->position], nbytes);
@@ -197,6 +201,9 @@ int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
 	else {
 		register struct vnode *vnode = file->vnode;
 		register char *block = vnode->block;
+
+		if (!block)
+			return EIO;
 
 		if (nbytes > MALLOCFS_BLOCK_SIZE - file->position)
 			nbytes = MALLOCFS_BLOCK_SIZE - file->position;

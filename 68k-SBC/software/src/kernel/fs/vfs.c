@@ -133,6 +133,8 @@ int vfs_open(const char *path, int flags, struct vfile **file)
 	*file = new_fileptr(vnode);
 	if (!*file)
 		return EMFILE;
+	// TODO this probably should be somewhere else
+	vnode->refcount++;
 
 	if (flags & O_APPEND)
 		(*file)->position = (*file)->vnode->size;

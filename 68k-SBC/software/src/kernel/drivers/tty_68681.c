@@ -97,20 +97,24 @@ struct driver tty_68681_driver = {
 #define TTY_INT_VECTOR			IV_USER_VECTORS
 
 
+
+
 struct serial_channel {
 	struct circular_buffer rx;
 	struct circular_buffer tx;
 };
 
+struct vnode;
+
+static struct vnode *tty_vnode;
 static struct serial_channel channel_a;
 static struct serial_channel channel_b;
 
 
-extern void enter_irq();
-
 // TODO remove after debugging
 char tick = 0;
 
+extern void enter_irq();
 
 int tty_68681_init()
 {
@@ -144,7 +148,7 @@ int tty_68681_init()
 	*OUT_SET_ADDR = 0x01;
 
 	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
-	vfs_mknod("tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, 0, NULL);
+	vfs_mknod("tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, 0, &tty_vnode);
 
 	*((char *) 0x201d) = 0x00;
 }
@@ -210,12 +214,14 @@ int putchar_direct(int ch)
 
 int putchar(int ch)
 {
-	tty_68681_set_leds(0x2);
-	while (_buf_is_full(&channel_a.tx)) {
+	tty_68681_set_leds(0x02);
+	//while (_buf_is_full(&channel_a.tx)) {
+	// TODO this timelimit is because of an issue on boot where it will lock up before interrupts are enabled because the buffer is full
+	for (int i = 0; _buf_is_full(&channel_a.tx) && i < 10000; i++) {
 		asm volatile("");
 		//putchar_direct('@');
 	}
-	tty_68681_reset_leds(0x2);
+	tty_68681_reset_leds(0x02);
 
 	_buf_put_char(&channel_a.tx, ch);
 
@@ -223,6 +229,12 @@ int putchar(int ch)
 	*CRA_WR_ADDR = CMD_ENABLE_TX;
 
 	return ch;
+}
+
+int tty_puts_direct(const char *str)
+{
+	for (; *str != '\0'; str++)
+		putchar_direct(*str);
 }
 
 #define PRINTK_BUFFER	128
@@ -317,7 +329,7 @@ void handle_serial_irq()
 	// TODO this is for debugging
 	if (status & (SR_OVERRUN_ERROR | SR_PARITY_ERROR | SR_FRAMING_ERROR)) {
 		*OUT_SET_ADDR = 0x10;
-		puts("Game Over");
+		tty_puts_direct("Game Over");
 		asm("stop #0x2700\n");
 	}
 
@@ -335,8 +347,7 @@ void handle_serial_irq()
 			}
 		}
 
-		// TODO this is a hack
-		resume_all_procs();
+		resume_blocked_procs(SYS_READ, tty_vnode);
 	}
 
 

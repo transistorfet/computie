@@ -98,7 +98,6 @@ int do_close(int fd)
 
 	vfs_close(file);
 
-	free_fileptr(file);
 	free_fd(current_proc->fd_table, fd);
 	return 0;
 }
@@ -308,6 +307,29 @@ int do_lseek(int fd, offset_t offset, int whence)
 
 int do_pipe(int pipefd[2])
 {
-	return -1;
+	int error;
+	struct vfile *file[2];
+
+	if (!pipefd)
+		return EINVAL;
+
+	// Find two unused file descriptor slots in the current process's fd table (no need to free them until set_fd())
+	pipefd[PIPE_READ_FD] = find_unused_fd(current_proc->fd_table);
+	// TODO this is terrible and I shouldn't do this, but at least it works for the time being
+	set_fd(current_proc->fd_table, pipefd[PIPE_READ_FD], 1);
+	pipefd[PIPE_WRITE_FD] = find_unused_fd(current_proc->fd_table);
+	set_fd(current_proc->fd_table, pipefd[PIPE_READ_FD], NULL);
+
+	if (pipefd[PIPE_READ_FD] < 0 || pipefd[PIPE_WRITE_FD] < 0)
+		return EMFILE;
+
+	error = vfs_create_pipe(&file[PIPE_READ_FD], &file[PIPE_WRITE_FD]);
+	if (error)
+		return error;
+
+	set_fd(current_proc->fd_table, pipefd[PIPE_READ_FD], file[PIPE_READ_FD]);
+	set_fd(current_proc->fd_table, pipefd[PIPE_WRITE_FD], file[PIPE_WRITE_FD]);
+
+	return 0;
 }
 

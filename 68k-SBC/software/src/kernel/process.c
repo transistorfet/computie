@@ -140,6 +140,22 @@ void resume_proc(struct process *proc)
 	proc->state = PS_RESUMING;
 }
 
+void resume_blocked_procs(int syscall_num, struct vnode *vnode)
+{
+	struct process *cur = (struct process *) blocked_queue.tail;
+
+	for (; cur; cur = (struct process *) cur->node.prev) {
+		if (cur->blocked_call.syscall == syscall_num) {
+			int fd = cur->blocked_call.arg1;
+			if (cur->fd_table[fd]->vnode == vnode) {
+				resume_proc(cur);
+			}
+		}
+	}
+}
+
+
+
 void resume_all_procs()
 {
 	struct process *cur = (struct process *) blocked_queue.tail;

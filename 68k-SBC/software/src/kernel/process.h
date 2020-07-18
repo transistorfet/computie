@@ -53,6 +53,7 @@ struct process *find_exited_child(int parent, int child);
 
 void suspend_current_proc();
 void resume_proc(struct process *proc);
+void resume_blocked_procs(int syscall_num, struct vnode *vnode);
 void resume_all_procs();
 
 void schedule();

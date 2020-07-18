@@ -2,6 +2,8 @@
 #include <stddef.h>
 #include <kernel/vfs.h>
 
+#include "../printk.h"
+
 #define MAX_VNODES	20
 
 static struct vnode vnode_table[MAX_VNODES];
@@ -18,7 +20,7 @@ void init_vnode()
 struct vnode *new_vnode(device_t dev, mode_t mode, struct vnode_ops *ops)
 {
 	for (char i = 0; i < MAX_VNODES; i++) {
-		if (vnode_table[i].refcount == 0) {
+		if (vnode_table[i].refcount <= 0) {
 			vnode_table[i].ops = ops;
 			vnode_table[i].refcount = 1;
 			vnode_table[i].mode = mode;
@@ -42,10 +44,11 @@ struct vnode *get_vnode(device_t dev)
 	return NULL;
 }
 
-int free_vnode(struct vnode *vnode)
+void free_vnode(struct vnode *vnode)
 {
 	vnode->refcount--;
-	return 0;
+	if (vnode->refcount < 0)
+		printk("Error: double free of vnode, %x\n", vnode);
 }
 
 

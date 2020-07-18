@@ -12,6 +12,9 @@
 #define SEEK_END	2	// Seek relative to the end of file
 #endif
 
+#define PIPE_READ_FD	0
+#define PIPE_WRITE_FD	1
+
 struct vdir;
 struct stat;
 

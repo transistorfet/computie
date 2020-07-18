@@ -5,6 +5,8 @@
 #include <kernel/vfs.h>
 #include <kernel/filedesc.h>
 
+#include "vnode.h"
+#include "../printk.h"
 
 #define FILE_TABLE_MAX		16
 
@@ -41,8 +43,14 @@ struct vfile *dup_fileptr(struct vfile *file)
 
 void free_fileptr(struct vfile *file)
 {
-	if (--file->refcount <= 0)
+	--file->refcount;
+	if (file->refcount < 0) {
+		printk("Error: double free of file pointer, %x\n", file);
+	}
+	else if (file->refcount <= 0) {
+		free_vnode(file->vnode);
 		file->vnode = NULL;
+	}
 }
 
 
@@ -83,9 +91,7 @@ int find_unused_fd(fd_table_t table)
 
 void free_fd(fd_table_t table, int fd)
 {
-	table[fd]->refcount -= 1;
-	if (table[fd]->refcount <= 0)
-		free_fileptr(table[fd]);
+	free_fileptr(table[fd]);
 	table[fd] = NULL;
 }
 

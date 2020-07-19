@@ -1,9 +1,7 @@
 
-* add blocking/waiting to pipes
 * should the pipe implementation be separate like it is?  Should it fully fill in the ops struct?  Should the vnodeops and fileops be separated?
 
 * change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
-* the resume checker isn't checking, but instead unblocking everything in the list to see if a second attempt fails
 * can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
   (ie. store the last allocated fd, but it has to be in the process struct)
 

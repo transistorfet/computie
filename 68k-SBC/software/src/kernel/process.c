@@ -201,7 +201,9 @@ void schedule()
 	current_proc = next;
 	current_proc_stack = next->sp;
 
+
 	if (current_proc->state == PS_RESUMING) {
+		//printk("Restarting %d with call %d\n", current_proc->pid, current_proc->blocked_call.syscall);
 		current_proc->state = PS_READY;
 		current_syscall = &current_proc->blocked_call;
 		do_syscall();

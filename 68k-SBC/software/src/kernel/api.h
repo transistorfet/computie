@@ -20,7 +20,7 @@ extern size_t do_write(int fd, const char *buf, size_t nbytes);
 extern int do_open(const char *path, int oflags);
 extern int do_close(int fd);
 extern int do_readdir(int fd, struct vdir *dir);
-extern int do_exec(const char *path);
+extern int do_exec(const char *path, char *const argv[], char *const envp[]);
 extern int do_unlink(const char *path);
 extern int do_stat(const char *path, struct stat *statbuf);
 extern int do_fstat(int fd, struct stat *statbuf);

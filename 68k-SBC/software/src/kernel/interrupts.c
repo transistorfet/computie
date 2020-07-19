@@ -93,6 +93,7 @@ __attribute__((interrupt)) void fatal_error()
 
 	GET_FRAME(frame);
 
+	tty_68681_tx_safe_mode();
 	printk("\n\nFatal Error at %x (status: %x, vector: %x). Halting...\n", frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
 
 	char *sp;

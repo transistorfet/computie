@@ -20,7 +20,7 @@ struct stat;
 
 pid_t fork();
 void exit(int status);
-int exec(const char *path);
+int exec(const char *path, char *const argv[], char *const envp[]);
 pid_t wait(int *status);
 pid_t waitpid(pid_t pid, int *status, int options);
 

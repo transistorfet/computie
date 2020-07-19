@@ -34,6 +34,8 @@
 #define CMD_DISABLE_RX			0x02
 #define CMD_ENABLE_TX			0x04
 #define CMD_DISABLE_TX			0x08
+#define CMD_RESET_RX			0x20
+#define CMD_RESET_TX			0x30
 
 
 // MC68681 Default Configuration Values
@@ -88,6 +90,8 @@ int init_tty()
 	*CSRA_WR_ADDR = CSRA_CLK_SELECT_REG_A_CONFIG;
 	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
 
+	*CRA_WR_ADDR = CMD_RESET_RX;
+	*CRA_WR_ADDR = CMD_RESET_TX;
 	*CRA_WR_ADDR = CMD_ENABLE_TX_RX;
 
 	// Configure timer
@@ -95,6 +99,9 @@ int init_tty()
 	//*CTLR_WR_ADDR = 0xFF;
 
 	//_buf_init(tx);
+
+	// Disable interrupts
+	*IMR_WR_ADDR = 0x00;
 
 	// Enable interrupts
 	*IVR_WR_ADDR = TTY_INT_VECTOR;

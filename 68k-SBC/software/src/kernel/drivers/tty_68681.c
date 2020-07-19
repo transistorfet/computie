@@ -153,6 +153,12 @@ int tty_68681_init()
 	*((char *) 0x201d) = 0x00;
 }
 
+void tty_68681_tx_safe_mode()
+{
+	DISABLE_INTS();
+	*CRA_WR_ADDR = CMD_ENABLE_TX_RX;
+}
+
 void tty_68681_set_leds(uint8_t bits)
 {
 	*OUT_SET_ADDR = (bits << 4);
@@ -205,12 +211,15 @@ int getchar(void)
 	return _buf_get_char(&channel_a.rx);
 }
 
+
 int putchar_direct(int ch)
 {
 	while (!(*SRA_RD_ADDR & SR_TX_READY)) { }
 	*TBA_WR_ADDR = (char) ch;
 	return ch;
 }
+
+//int putchar(int ch) { return putchar_direct(ch); }
 
 int putchar(int ch)
 {
@@ -245,7 +254,7 @@ int vprintk(const char *fmt, va_list args)
 
 	vsnprintf(buffer, PRINTK_BUFFER, fmt, args);
 	for (i = 0; i < PRINTK_BUFFER && buffer[i]; i++)
-		putchar(buffer[i]);
+		putchar_direct(buffer[i]);
 	return i;
 }
 

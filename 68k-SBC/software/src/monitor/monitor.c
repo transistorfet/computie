@@ -6,6 +6,7 @@
 
 
 extern void init_tty();
+char *led = (char *) 0x201c;
 
 
 void delay(short count) {
@@ -258,6 +259,7 @@ void load(void)
 
 void boot(void)
 {
+	*led = 0x0;
 	void (*entry)() = (void (*)()) RAM_ADDR;
 	((void (*)()) entry)();
 }
@@ -326,7 +328,6 @@ void serial_read_loop()
 	}
 }
 
-char *led = (char *) 0x201c;
 
 #define ARDUINO_TRACE_ON()	asm volatile("movea.l	#0x2019, %%a0\n" "move.b	#1, (%%a0)" : : : "%a0");
 #define ARDUINO_TRACE_OFF()	asm volatile("movea.l	#0x2019, %%a0\n" "move.b	#0, (%%a0)" : : : "%a0");
@@ -334,6 +335,8 @@ char *led = (char *) 0x201c;
 int main()
 {
 	//init_heap((void *) 0x101000, 0x1000);
+
+	*led = 0x1;
 
 	init_tty();
 

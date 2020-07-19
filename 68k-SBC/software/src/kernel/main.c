@@ -242,7 +242,7 @@ int main()
 		drivers[i]->init();
 	}
 
-	//file_test();
+	file_test();
 	//dir_test();
 
 	struct process *task = run_task();

@@ -18,8 +18,13 @@ void delay(short count) {
 
 int readline(char *buffer, short max)
 {
+	uint32_t *sp;
+
+	asm("move.l	%%sp, %0\n" : "=r" (sp));
+	printk("bf %x: %x\n", sp + 9, *(sp + 9));
 	for (short i = 0; i < max; i++) {
 		//buffer[i] = getchar();
+
 		int ret = read(0, &buffer[i], 1);
 		putchar(buffer[i]);
 		if (ret != 1) {
@@ -30,6 +35,10 @@ int readline(char *buffer, short max)
 		}
 		else if (buffer[i] == '\n') {
 			buffer[i] = '\0';
+
+		asm("move.l	%%sp, %0\n" : "=r" (sp));
+		printk("%x: %x\n", sp + 9, *(sp + 9));
+
 			return i;
 		}
 	}
@@ -288,15 +297,22 @@ void command_unlink(char *path)
 
 void command_exec(char *path)
 {
-	int pid = fork();
+	int pid, status;
+	char *argv[2] = { NULL };
+	char *envp[2] = { NULL };
 
+ 	pid = fork();
 	if (pid) {
 		printf("The child's pid is %d\n", pid);
+		// TODO this is the correct way, but I've commented it out because it caught a bug where fork was called before assigning the values to argv, and by that time
+		//	the parent has exited this function and is blocking on a read.  Would switching which proc gets run first after a fork have an affect on this?
+		//wait(&status);
+		//printf("The child exited with %d\n", status);
 	}
 	else {
-		int error = exec(path);
+		status = exec(path, argv, envp);
 		// The exec() system call will only return if an error occurs
-		printf("Failed to execute %s: %d\n", path, error);
+		printf("Failed to execute %s: %d\n", path, status);
 		exit(-1);
 	}
 }
@@ -435,6 +451,7 @@ int sh_task()
 
 	serial_read_loop();
 
+	puts("Exiting to monitor");
 	return 0;
 }
 

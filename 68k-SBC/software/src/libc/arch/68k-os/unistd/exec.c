@@ -3,8 +3,8 @@
 #include <kernel/syscall.h>
 
 
-int exec(const char *path)
+int exec(const char *path, char *const argv[], char *const envp[])
 {
-	return SYSCALL2(SYS_EXEC, path, 0);
+	return SYSCALL3(SYS_EXEC, (int) path, (void *) argv, (void *) envp);
 }
 

@@ -58,6 +58,7 @@ extern struct syscall_record *current_syscall;
 //
 void do_syscall()
 {
+	tty_68681_set_leds(0x04);
 	int ret;
 	ret = ((syscall_t) syscall_table[current_syscall->syscall])(current_syscall->arg1, current_syscall->arg2, current_syscall->arg3);
 	if (current_proc->state == PS_READY) {
@@ -68,6 +69,7 @@ void do_syscall()
 		// If the process has been suspended, we wont return as normal but instead schedule another process
 		schedule();
 	}
+	tty_68681_reset_leds(0x04);
 }
 
 
@@ -205,7 +207,7 @@ pid_t do_waitpid(pid_t pid, int *status, int options)
 	}
 }
 
-int do_exec(const char *path)
+int do_exec(const char *path, char *const argv[], char *const envp[])
 {
 	int fd;
 	int error;
@@ -243,6 +245,25 @@ int do_exec(const char *path)
 
 	// Reset the stack to start our new process
 	char *task_stack_pointer = current_proc->segments[M_TEXT].base + current_proc->segments[M_TEXT].length;
+
+	// Setup new stack image
+	/*
+	char **stored_argv, **stored_envp;
+
+	task_stack_pointer -= sizeof(uint32_t);
+	*((uint32_t *) task_stack_pointer) = 0;
+	stored_envp = task_stack_pointer;
+
+	task_stack_pointer -= sizeof(uint32_t);
+	*((uint32_t *) task_stack_pointer) = 0;
+	stored_argv = task_stack_pointer;
+
+	task_stack_pointer -= sizeof(uint32_t);
+	*((uint32_t *) task_stack_pointer) = stored_envp;
+	task_stack_pointer -= sizeof(uint32_t);
+	*((uint32_t *) task_stack_pointer) = stored_argv;
+	*/
+
  	task_stack_pointer = create_context(task_stack_pointer, task_text);
 	current_proc->sp = task_stack_pointer;
 	current_proc_stack = task_stack_pointer;

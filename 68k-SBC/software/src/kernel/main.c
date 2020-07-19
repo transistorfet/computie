@@ -36,7 +36,7 @@ extern struct process *current_proc;
 extern void *current_proc_stack;
 
 
-#define TASK_SIZE	600
+#define TASK_SIZE	800
 const char hello_task[TASK_SIZE] = {
 #include "../test.txt"
 };
@@ -123,7 +123,7 @@ struct process *run_sh()
 	printk("FD: %d\n", fd);
 
 
-	int stack_size = 0x800;
+	int stack_size = 0x2000;
 	char *stack = malloc(stack_size);
 	char *stack_p = stack + stack_size;
 	printk("Sh Bottom: %x\n", stack);

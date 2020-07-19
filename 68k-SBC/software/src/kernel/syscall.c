@@ -149,11 +149,10 @@ pid_t do_fork()
 
 	memcpy_s(stack, current_proc->segments[M_STACK].base, current_proc->segments[M_STACK].length);
 
-	printk("Parent Stack Pointer: %x\n", current_proc->sp);
-
-	printk("Fork Stack: %x\n", stack);
-	printk("Fork Stack Top: %x\n", stack + stack_size);
-	printk("Fork Stack Pointer: %x\n", stack_pointer);
+	//printk("Parent Stack Pointer: %x\n", current_proc->sp);
+	//printk("Fork Stack: %x\n", stack);
+	//printk("Fork Stack Top: %x\n", stack + stack_size);
+	//printk("Fork Stack Pointer: %x\n", stack_pointer);
 
 	proc->segments[M_STACK].base = stack;
 	proc->segments[M_STACK].length = stack_size;
@@ -207,6 +206,58 @@ pid_t do_waitpid(pid_t pid, int *status, int options)
 	}
 }
 
+// TODO moves these functions somewhere else
+int copy_string_array(char **stack, int *count, char *const arr[])
+{
+	int len = 0;
+	*count = 0;
+
+	for (int i = 0; arr[i] != NULL; i++) {
+		// String, line terminator, and a pointer 
+		len += sizeof(char *) + strlen(arr[i]) + 1;
+		*count += 1;
+	}
+	len += sizeof(char *);
+
+	// Align to the nearest word
+	if (len & 0x01)
+		len += 1;
+
+	char **dest = (char **) (*stack - len);
+	char *buffer = *stack + (sizeof(char *) * (*count) + 1);
+	*stack = (char *) dest;
+
+	int i = 0, j = 0;
+	for (; j < *count; j++) {
+		dest[j] = &buffer[i];
+		strcpy(dest[j], arr[j]);
+		i += strlen(arr[j]);
+	}
+	dest[j] = NULL;
+
+	return 0;
+}
+
+char *copy_exec_args(char *stack, char *const argv[], char *const envp[])
+{
+	int argc, envc;
+	char **stack_argv, **stack_envp;
+
+	copy_string_array(&stack, &envc, envp);
+	stack_envp = (char **) stack;
+	copy_string_array(&stack, &argc, argv);
+	stack_argv = (char **) stack;
+
+	stack -= sizeof(char **);
+	*((char ***) stack) = stack_envp;
+	stack -= sizeof(char **);
+	*((char ***) stack) = stack_argv;
+	stack -= sizeof(int);
+	*((int *) stack) = 1;
+
+	return stack;
+}
+
 int do_exec(const char *path, char *const argv[], char *const envp[])
 {
 	int fd;
@@ -226,8 +277,7 @@ int do_exec(const char *path, char *const argv[], char *const envp[])
 	printk("Size: %d\n", statbuf.st_size);
 
 	// The extra data is for the bss segment
-	int task_size = statbuf.st_size + 0x100;
-	//int task_size = 0x1000;
+	int task_size = statbuf.st_size + 0x200;
 	char *task_text = malloc(task_size);
 
 	error = do_read(fd, task_text, task_size);
@@ -239,7 +289,7 @@ int do_exec(const char *path, char *const argv[], char *const envp[])
 		return error;
 	}
 
-	// TODO overwriting this could be a memory leak.  How do I refcount segments?
+	// TODO overwriting this could be a memory leak if it's not already NULL.  How do I refcount segments?
 	current_proc->segments[M_TEXT].base = task_text;
 	current_proc->segments[M_TEXT].length = task_size;
 
@@ -247,23 +297,7 @@ int do_exec(const char *path, char *const argv[], char *const envp[])
 	char *task_stack_pointer = current_proc->segments[M_TEXT].base + current_proc->segments[M_TEXT].length;
 
 	// Setup new stack image
-	/*
-	char **stored_argv, **stored_envp;
-
-	task_stack_pointer -= sizeof(uint32_t);
-	*((uint32_t *) task_stack_pointer) = 0;
-	stored_envp = task_stack_pointer;
-
-	task_stack_pointer -= sizeof(uint32_t);
-	*((uint32_t *) task_stack_pointer) = 0;
-	stored_argv = task_stack_pointer;
-
-	task_stack_pointer -= sizeof(uint32_t);
-	*((uint32_t *) task_stack_pointer) = stored_envp;
-	task_stack_pointer -= sizeof(uint32_t);
-	*((uint32_t *) task_stack_pointer) = stored_argv;
-	*/
-
+ 	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp);
  	task_stack_pointer = create_context(task_stack_pointer, task_text);
 	current_proc->sp = task_stack_pointer;
 	current_proc_stack = task_stack_pointer;

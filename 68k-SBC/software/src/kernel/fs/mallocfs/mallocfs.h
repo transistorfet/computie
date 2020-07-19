@@ -5,7 +5,7 @@
 #include <kernel/vfs.h>
 
 #define MALLOCFS_MAX_FILENAME	14
-#define MALLOCFS_BLOCK_SIZE	512
+#define MALLOCFS_BLOCK_SIZE	2048
 #define MALLOCFS_DIRENTS	(MALLOCFS_BLOCK_SIZE / sizeof(struct mallocfs_dirent))
 
 #define MALLOCFS_BLOCK(block)	((struct mallocfs_block *) (block))

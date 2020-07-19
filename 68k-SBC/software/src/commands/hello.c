@@ -5,9 +5,11 @@
 #include <kernel/syscall.h>
 
 
-int main()
+int main(int argc, char **argv)
 {
-	const char *msg = "Hello !\n";
+	const char *msg = "Hello!\n";
+
+	printf("%d %s\n", argc, argv[0]);
 
 	//while (1) {
 		puts("Hello there, World!");

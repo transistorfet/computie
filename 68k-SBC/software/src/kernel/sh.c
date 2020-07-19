@@ -20,8 +20,6 @@ int readline(char *buffer, short max)
 {
 	uint32_t *sp;
 
-	asm("move.l	%%sp, %0\n" : "=r" (sp));
-	printk("bf %x: %x\n", sp + 9, *(sp + 9));
 	for (short i = 0; i < max; i++) {
 		//buffer[i] = getchar();
 
@@ -35,10 +33,6 @@ int readline(char *buffer, short max)
 		}
 		else if (buffer[i] == '\n') {
 			buffer[i] = '\0';
-
-		asm("move.l	%%sp, %0\n" : "=r" (sp));
-		printk("%x: %x\n", sp + 9, *(sp + 9));
-
 			return i;
 		}
 	}
@@ -298,7 +292,7 @@ void command_unlink(char *path)
 void command_exec(char *path)
 {
 	int pid, status;
-	char *argv[2] = { NULL };
+	char *argv[2] = { "an arg", NULL };
 	char *envp[2] = { NULL };
 
  	pid = fork();

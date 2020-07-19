@@ -9,7 +9,8 @@ baud = 38400
 
 def main():
     parser = argparse.ArgumentParser(prog='load', description='Load a program over serial into Computie68k')
-    parser.add_argument("filename")
+    parser.add_argument('filename')
+    parser.add_argument('-l', '--limit', action='store_true', help='Limit the speed of transmission')
     args = parser.parse_args()
 
     try:
@@ -24,7 +25,8 @@ def main():
             ch = f.read(1)
             if not ch:
                 break
-            #time.sleep(0.001)
+            if args.limit:
+                time.sleep(0.001)
             #time.sleep(0.05)
             tty.write(bytes(ch, 'ascii'))
 

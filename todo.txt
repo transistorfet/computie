@@ -1,4 +1,5 @@
 
+* after sending the hello program and exec'ing it, it returns 1 when it should return 0
 * should the pipe implementation be separate like it is?  Should it fully fill in the ops struct?  Should the vnodeops and fileops be separated?
 
 * change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
@@ -8,6 +9,7 @@
 
 * get exec/process arguments working
 * a page allocator, to replace the use of malloc for allocating the program space
+* make mallocfs able to use blocks like minix would
 
 * what is needed to implement a 'ps' command in userspace
 

@@ -5,20 +5,22 @@
 * change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 * can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
   (ie. store the last allocated fd, but it has to be in the process struct)
-
-
-* get exec/process arguments working
-* a page allocator, to replace the use of malloc for allocating the program space
-* make mallocfs able to use blocks like minix would
-
 * what is needed to implement a 'ps' command in userspace
+
+
+* figure out how you'll do vnode/fs-specific-data allocation, which might affect the interface a bit
+* make mallocfs able to use blocks like minix would
+* a page allocator, to replace the use of malloc for allocating the program space
+* once you have mallocfs able to allocate multiple blocks with a block table stored in the vnode/in allocated blocks, and you have a block allocator algorithm for page
+  allocation, you should be able to implement a minixfs minimally using a mocked interface to a block cache and block driver
+* make a block driver interface
+* make a block cache/buf cache (read the unix design book for more info)
+
 
 * there are still issues with the file sending through serial in the OS, flow control is likley not working correctly
 * should you make a lib subdir, and put unistd at the top?
 
-
-
-* syscalls to implement: pipe, dup, chdir, kill, signals, chmod, chown, access, getuid/setuid, getpid, mount/umount, rename, alarm, pause, time
+* syscalls to implement: kill, signals, getpid, mount/umount, rename, dup, chdir, chmod, chown, access, getuid/setuid, alarm, pause, time
 * add O_TRUNC
 * add file permissions checks, and uid checks
 * add current working directory info.  Is that stored in the process?  Do you have to do string concat or can you pass 2 arguments to the vfs entry funcs

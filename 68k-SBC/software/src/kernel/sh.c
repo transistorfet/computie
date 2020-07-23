@@ -346,6 +346,53 @@ void sh_pipe()
 	return;
 }
 
+void sh_forkpipe()
+{
+	int pid;
+	int error;
+	int pipes[2];
+	char buffer[50];
+
+	error = pipe(pipes);
+	if (error) {
+		printf("Pipe failed with error %d\n", error);
+		return;
+	}
+
+ 	pid = fork();
+	if (pid) {
+		close(pipes[PIPE_WRITE_FD]);
+
+		error = read(pipes[PIPE_READ_FD], buffer, 50);
+		if (error < 0) {
+			printf("Failed to read to pipe: %d\n", error);
+			return;
+		}
+		printf("Read %d bytes\n", error);
+		buffer[error] = '\0';
+
+		printf("> %s\n", buffer);
+
+		close(pipes[PIPE_READ_FD]);
+
+	} else {
+		close(pipes[PIPE_READ_FD]);
+
+		error = write(pipes[PIPE_WRITE_FD], "Hey there, this is a pipe|\n", 27);
+		if (error < 0) {
+			printf("Failed to write to pipe: %d\n", error);
+			return;
+		}
+		printf("Wrote %d bytes\n", error);
+
+		close(pipes[PIPE_WRITE_FD]);
+		exit(0);
+	}
+
+	return;
+}
+
+
 
 
 // In process.c
@@ -424,6 +471,9 @@ void serial_read_loop()
 		}
 		else if (!strcmp(args[0], "pipetest")) {
 			sh_pipe();
+		}
+		else if (!strcmp(args[0], "forkpipe")) {
+			sh_forkpipe();
 		}
 		else if (!strcmp(args[0], "exit")) {
 			return;

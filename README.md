@@ -1,13 +1,13 @@
 
-The 68k Single Board Computer
-=============================
+The 68k Single Board Computer - Rev 0
+=====================================
 
-A simple single board computer using a Motorola 68000 CPU, which can connect to a host computer via USB/TTL-Serial.
+A simple single board computer using a Motorola 68010 CPU, which can connect to a host computer via USB/TTL-Serial.
 It has a bus for connecting a supervisor arduino or expansion devices, but it can operate standalone using the onboard
 UARTs.  It has 64kB of onboard EEPROM, 1MB of onboard SRAM, and a 68681 Dual UART chip with GPIO.  Some of the GPIO
 pins are wired to 4 general purpose LEDs and 2 general purpose buttons.
 
-[68k Board Schematics](https://github.com/transistorfet/computie/raw/master/68k-SBC/68kBoard/68kBoard.pdf)
+[68k Board Schematics](https://github.com/transistorfet/computie/raw/master/hardware/68k-SBC/68kBoard/68kBoard.pdf)
 
 
 The serial ports require external TTL-to-something conversion and are designed to be used with an FTDI USB-to-Serial
@@ -26,14 +26,14 @@ least 2 more chips.  The interrupt acknowledge circuitry can be provided externa
 Breadboard Version
 ------------------
 
-![alt text](https://github.com/transistorfet/computie/raw/master/68k-SBC/images/Breadboard-serial.jpg "68k-SBC Breadboard")
+![alt text](https://github.com/transistorfet/computie/raw/master/images/Breadboard-serial.jpg "68k-SBC Breadboard")
 
 Revision 0
 ----------
 
-![alt text](https://github.com/transistorfet/computie/raw/master/68k-SBC/images/PCB-rev0-front.jpg "68k-SBC PCB Front")
-![alt text](https://github.com/transistorfet/computie/raw/master/68k-SBC/images/SBC-rev0.jpg "68k-SBC")
-![alt text](https://github.com/transistorfet/computie/raw/master/68k-SBC/images/PCB-rev0-patch.jpg "68k-SBC patch for design mistake")
+![alt text](https://github.com/transistorfet/computie/raw/master/images/PCB-rev0-front.jpg "68k-SBC PCB Front")
+![alt text](https://github.com/transistorfet/computie/raw/master/images/SBC-rev0.jpg "68k-SBC")
+![alt text](https://github.com/transistorfet/computie/raw/master/images/PCB-rev0-patch.jpg "68k-SBC patch for design mistake")
 
 I made a mistake and left out the logic for LDS/UDS in the chip select for the high and low memory chips.  When writing a
 single byte to memory, it would also attempt to write to both the high and low chips, instead of only one.  Thanks to a poster

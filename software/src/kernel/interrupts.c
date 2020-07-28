@@ -38,7 +38,7 @@ void init_interrupts()
 	set_interrupt(IV_TRACE, enter_handle_trace);
 
 	// Load the VBR register with the address of our vector table
-	asm("movec	%0, %%vbr\n" : : "r" (vector_table));
+	asm volatile("movec	%0, %%vbr\n" : : "r" (vector_table));
 }
 
 void set_interrupt(char iv_num, interrupt_handler_t handler)
@@ -116,7 +116,7 @@ __attribute__((interrupt)) void fatal_error()
 	}
 
 	// Jump to the monitor to allow debugging
-	asm(
+	asm volatile(
 	"move.l	#0, %a0\n"
 	"movec	%a0, %vbr\n"
 	//"move.l	(%a0)+, %sp\n"		// TODO it's safer to reset the stack pointer for the monitor, but if we keep the old one, it's easier to debug fatals
@@ -124,7 +124,7 @@ __attribute__((interrupt)) void fatal_error()
 	"jmp	(%a0)\n"
 	);
 
-	asm("stop #0x2700\n");
+	asm volatile("stop #0x2700\n");
 }
 
 INTERRUPT_ENTRY(handle_trace);

@@ -99,7 +99,7 @@ void info(void)
 #define RAM_SIZE	1024
 
 #define ROM_ADDR	0x200000
-#define ROM_SIZE	0x1400
+#define ROM_SIZE	0x1200
 
 
 #define TEST_BUF_SIZE 	32
@@ -201,10 +201,23 @@ void writerom(void)
 
 	uint16_t *arduino = (uint16_t *) 0x000000;
 	uint16_t *rom = (uint16_t *) ROM_ADDR;
-	for (int i = 0; i < ROM_SIZE; i++) {
-		rom[i] = (uint16_t) arduino[i];
-		for (char j = 0; j < 100; j++) {}
-		printf("%x ", rom[i]);
+	for (int i = 0; i < ROM_SIZE; i += 64) {
+		printf("\n%d\n", i);
+		int j;
+		for (j = 0; j < 63; j++)
+			rom[i + j] = (uint16_t) arduino[i + j];
+
+		// Poll until the page has been written
+		while (rom[i + j - 1] != (uint16_t) arduino[i + j - 1]) {
+			// Delay between checks so as not to overload the chip
+			//for (char k = 0; k < 100; k++) { asm volatile(""); }
+			printf("%x != %x\n", rom[i + j - 1], (uint16_t) arduino[i + j - 1]);
+		}
+
+		for (j = 0; j < 63; j++)
+			printf("%04x ", rom[i + j]);
+
+		putchar('\n');
 	}
 
 	puts("\nWrite complete");
@@ -219,7 +232,7 @@ void verifyrom(void)
 	uint16_t *rom = (uint16_t *) ROM_ADDR;
 	for (int i = 0; i < ROM_SIZE; i++) {
 		if (rom[i] != arduino[i]) {
-			printf("F @ %x\n", i);
+			printf("@%x expected %x but found %x\n", i, arduino[i], rom[i]);
 		}
 	}
 
@@ -336,11 +349,11 @@ int main()
 {
 	//init_heap((void *) 0x101000, 0x1000);
 
-	*led = 0x1;
+	//*led = 0x1;
 
 	init_tty();
 
-	ARDUINO_TRACE_OFF();
+	//ARDUINO_TRACE_OFF();
 
 	//delay(10000);
 

@@ -235,6 +235,24 @@ void sh_fork()
 	}
 }
 
+const char *file_permissions = "-rwxrwxrwx";
+
+void format_file_mode(mode_t mode, char *buffer)
+{
+	mode_t curbit = 0400;
+
+	strcpy(buffer, file_permissions);
+
+	if (mode & S_IFDIR)
+		buffer[0] = 'd';
+
+	for (char i = 1; i <= 10; i++) {
+		if (!(mode & curbit))
+			buffer[i] = '-';
+		curbit >>= 1;
+	}
+}
+
 void ls(char *path)
 {
 	int fd;
@@ -243,6 +261,7 @@ void ls(char *path)
 	struct vfile *file;
 	struct stat statbuf;
 	char filename[100];
+	char filemode[10];
 
 	if ((fd = open(path, 0)) < 0) {
 		printf("Error opening %s: %d\n", path, fd);
@@ -272,7 +291,8 @@ void ls(char *path)
 			return;
 		}
 
-		printf("%s: %s  (%d)\n", (statbuf.st_mode & S_IFDIR) ? "Dir" : "File", dir.name, statbuf.st_size);
+		format_file_mode(statbuf.st_mode, filemode);
+		printf("%s %6d %s\n", filemode, statbuf.st_size, dir.name);
 	}
 
 	close(fd);

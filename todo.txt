@@ -39,6 +39,13 @@
 
 68k Single Board Computer:
 
+	* the serial doesn't work properly with power supplied by USB or power supply.  It will do the thing where it sends 0x00 for everything, even though
+	  it seems like it's printing the welcome message.  I can't find a workaround the same as I have when it's powered by the arduino
+	* for some reason it's no longer booting the monitor from EEPROM.  It loads the first 4 words and then immediately halts.  Trying to snoop the data bus
+	  locked up my computer for some reason.  It's as if the data values it's reading are for an odd address, and it's getting an address error immediately,
+	  even though the arduino is reporting that 0x20 was read
+	* the ftdi boards don't seem to have Vcc connected, but the usb power jumper works with the integrated cable
+
 	* in seems like AS in the interrupt ack is not necessary.  It can acknowledge the interrupt fine without it
 	* a counter is not strictly needed for memory
 	* add interrupt logic to schematic and pcb

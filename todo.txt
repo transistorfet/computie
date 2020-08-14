@@ -1,74 +1,68 @@
 
-* after sending the hello program and exec'ing it, it returns 1 when it should return 0
-* should the pipe implementation be separate like it is?  Should it fully fill in the ops struct?  Should the vnodeops and fileops be separated?
+Software/OS:
 
-* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
-* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
-  (ie. store the last allocated fd, but it has to be in the process struct)
-* what is needed to implement a 'ps' command in userspace
+	* move as much inline assembly, from headers especially, into a redirectable asm directory
 
+	* after sending the hello program and exec'ing it, it returns 1 when it should return 0
+	* should the pipe implementation be separate like it is?  Should it fully fill in the ops struct?  Should the vnodeops and fileops be separated?
 
-* figure out how you'll do vnode/fs-specific-data allocation, which might affect the interface a bit
-* make mallocfs able to use blocks like minix would
-* a page allocator, to replace the use of malloc for allocating the program space
-* once you have mallocfs able to allocate multiple blocks with a block table stored in the vnode/in allocated blocks, and you have a block allocator algorithm for page
-  allocation, you should be able to implement a minixfs minimally using a mocked interface to a block cache and block driver
-* make a block driver interface
-* make a block cache/buf cache (read the unix design book for more info)
+	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
+	* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
+	  (ie. store the last allocated fd, but it has to be in the process struct)
+	* what is needed to implement a 'ps' command in userspace
 
 
-* there are still issues with the file sending through serial in the OS, flow control is likley not working correctly
-* should you make a lib subdir, and put unistd at the top?
+	* figure out how you'll do vnode/fs-specific-data allocation, which might affect the interface a bit
+	* make mallocfs able to use blocks like minix would
+	* a page allocator, to replace the use of malloc for allocating the program space
+	* once you have mallocfs able to allocate multiple blocks with a block table stored in the vnode/in allocated blocks, and you have a block allocator algorithm for page
+	  allocation, you should be able to implement a minixfs minimally using a mocked interface to a block cache and block driver
+	* make a block driver interface
+	* make a block cache/buf cache (read the unix design book for more info)
 
-* syscalls to implement: kill, signals, getpid, mount/umount, rename, dup, chdir, chmod, chown, access, getuid/setuid, alarm, pause, time
-* add O_TRUNC
-* add file permissions checks, and uid checks
-* add current working directory info.  Is that stored in the process?  Do you have to do string concat or can you pass 2 arguments to the vfs entry funcs
+
+	* there are still issues with the file sending through serial in the OS, flow control is likley not working correctly
+	* should you make a lib subdir, and put unistd at the top?
+
+	* syscalls to implement: kill, signals, getpid, mount/umount, rename, dup, chdir, chmod, chown, access, getuid/setuid, alarm, pause, time
+	* add O_TRUNC
+	* add file permissions checks, and uid checks
+	* add current working directory info.  Is that stored in the process?  Do you have to do string concat or can you pass 2 arguments to the vfs entry funcs
 
 
 
-* add brk/sbrk/stack guard protection
-* move the queue and circular buffer code to common include files somewhere (src/utils/? src/shared/?)
-* a slab allocator would maybe help, but I don't think it's as important at the moment
+	* add brk/sbrk/stack guard protection
+	* move the queue and circular buffer code to common include files somewhere (src/utils/? src/shared/?)
+	* a slab allocator would maybe help, but I don't think it's as important at the moment
 
-* there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
-* can you make the kernel relocatable again?
-* rewrite the math functions to use fewer registers (this ain't a risc processor)
-* you need some tests, but ideally it would use a simple emulator.  Maybe easy68k or something could be used
+	* there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
+	* can you make the kernel relocatable again?
+	* rewrite the math functions to use fewer registers (this ain't a risc processor)
+	* you need some tests, but ideally it would use a simple emulator.  Maybe easy68k or something could be used
+
+	* can you have an debugger in the monitor software?  There are trap and breakpoint instructions in the processor for debugging, so if you define an interrupt handler
+	  for those, you could have it enter a debugger, that possibly allows single stepping?  I'm not sure how to implement that
 
 
 68k Single Board Computer:
 
-	* the serial doesn't work properly with power supplied by USB or power supply.  It will do the thing where it sends 0x00 for everything, even though
-	  it seems like it's printing the welcome message.  I can't find a workaround the same as I have when it's powered by the arduino
-	* for some reason it's no longer booting the monitor from EEPROM.  It loads the first 4 words and then immediately halts.  Trying to snoop the data bus
-	  locked up my computer for some reason.  It's as if the data values it's reading are for an odd address, and it's getting an address error immediately,
-	  even though the arduino is reporting that 0x20 was read
-	* the ftdi boards don't seem to have Vcc connected, but the usb power jumper works with the integrated cable
+	* fix the heatsink
+	* maybe extra power pins?
+	* need labels next to all pins
 
-	* in seems like AS in the interrupt ack is not necessary.  It can acknowledge the interrupt fine without it
-	* a counter is not strictly needed for memory
-	* add interrupt logic to schematic and pcb
-	* you need a proper reset circuit that slowly turns it on through a cap?
 
-	* if you have interrupts, and you connect at least one button to one of the IP change interrupts, then you could use the button for breaking into a debugger?
-	* how can you modify the design to be better for debugging, possibly without an arduino.  Can you have step debugging through a hardware button, so that the bus
-	  can be inspected?
-	* can you have an debugger in the monitor software?  There are trap and breakpoint instructions in the processor for debugging, so if you define an interrupt handler
-	  for those, you could have it enter a debugger, that possibly allows single stepping?  I'm not sure how to implement that
+	* the serial issue turns out to be a problem with the crystal for the serial chip.  It is outputting an inconsistent signal around 100kHz when powered through
+	  USB or power supply.  When powered by the arduino, you have to unplug and replug the serial usb cable to make it work, which seems to reset the oscillator.
+	  Connecting a 22pF capacitor across the crystal jumpstarts it, but the output is a lot lower on the scope with it connected.  The datasheet says to use 15 and 5pF
+	  which is pretty low, and I don't have caps that small.  I have to play with it more, but this seems to be a cap issue more than anything
 
-	* do I need optoisolators for the ftdi?  There is a blip where the arduino resets when the serial converter is connected
 
 	* can you add a video/lcd expansion via the expansion connector?  Maybe you could get ends to directly connect it?  Would it be via parallel interface?
 	  would you need a PIT 68230 to interface?  How complex are the interfaces of those graphic ones?
-	* can you connect an esp01 as a wifi device?  I suppose you could connect it to the other serial port, even though it would be slow.  Is there another
-	  way to get ethernet or wifi?
+	* can you connect an esp01 as a wifi device?  I suppose you could connect it to the other serial port, even though it would be slow
 
 68k Arduino Shield:
-	* need labels next to all pins
-	* there's no way to reset the arduino with the shield on
-	* there should be pins on the shield for anything not wired to the arduino directly, so that it can be plugged into despite ribbon cables being used
-	* there should be a way on the arduino shield to enable, disable, or change the arduino's memory space
+	* maybe extra power pins?
 
 
 

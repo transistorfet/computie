@@ -7,6 +7,7 @@
 #include <kernel/syscall.h>
 
 #include "vnode.h"
+#include "nop.h"
 #include "../process.h"
 
 #define PIPE_BUFFER_MAX		512
@@ -21,21 +22,22 @@ int pipe_read(struct vfile *file, char *buf, size_t nbytes);
 int pipe_write(struct vfile *file, const char *buf, size_t nbytes);
 
 struct vfile_ops pipe_vfile_ops = {
-	NULL,
+	nop_open,
 	pipe_close,
 	pipe_read,
 	pipe_write,
-	NULL,
-	NULL,
-	NULL,
+	nop_ioctl,
+	nop_seek,
+	nop_readdir,
 };
 
 struct vnode_ops pipe_vnode_ops = {
 	&pipe_vfile_ops,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	nop_create,
+	nop_mknod,
+	nop_lookup,
+	nop_unlink,
+	nop_release,
 };
 
 

@@ -33,6 +33,7 @@ struct vnode *new_vnode(device_t dev, mode_t mode, struct vnode_ops *ops)
 	return NULL;
 }
 
+/*
 struct vnode *get_vnode(device_t dev)
 {
 	for (char i = 0; i < MAX_VNODES; i++) {
@@ -43,12 +44,15 @@ struct vnode *get_vnode(device_t dev)
 	}
 	return NULL;
 }
+*/
 
 void free_vnode(struct vnode *vnode)
 {
 	vnode->refcount--;
 	if (vnode->refcount < 0)
 		printk("Error: double free of vnode, %x\n", vnode);
+	else if (vnode->refcount == 0)
+		vnode->ops->release(vnode);
 }
 
 

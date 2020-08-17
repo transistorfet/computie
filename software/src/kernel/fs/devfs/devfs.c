@@ -25,6 +25,7 @@ struct vnode_ops devfs_vnode_ops = {
 	NULL,
 	devfs_mknod,
 	devfs_lookup,
+	devfs_release,
 };
 
 
@@ -87,6 +88,11 @@ int devfs_lookup(struct vnode *vnode, const char *filename, struct vnode **resul
 		}
 	}
 	return ENOENT;
+}
+
+int devfs_release(struct vnode *vnode)
+{
+
 }
 
 int devfs_open(struct vfile *file, int flags)

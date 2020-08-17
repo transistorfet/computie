@@ -2,6 +2,8 @@
 #ifndef _SRC_KERNEL_QUEUE_H
 #define _SRC_KERNEL_QUEUE_H
 
+#include <stddef.h>
+
 struct queue {
 	struct queue_node *head;
 	struct queue_node *tail;

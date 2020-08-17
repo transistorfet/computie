@@ -6,6 +6,7 @@ typedef long time_t;
 
 typedef int pid_t;
 typedef short device_t;
+typedef int block_t;
 
 typedef unsigned short mode_t;
 typedef unsigned long offset_t;

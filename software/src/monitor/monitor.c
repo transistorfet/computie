@@ -201,6 +201,23 @@ void writerom(void)
 
 	uint16_t *arduino = (uint16_t *) 0x000000;
 	uint16_t *rom = (uint16_t *) ROM_ADDR;
+	for (int i = 0; i < ROM_SIZE; i++) {
+		rom[i] = (uint16_t) arduino[i];
+		for (char j = 0; j < 100; j++) { asm volatile(""); }
+		printf("%x ", rom[i]);
+	}
+
+	puts("\nWrite complete");
+}
+
+void writerom2(void)
+{
+	uint16_t data;
+	uint16_t errors = 0;
+
+
+	uint16_t *arduino = (uint16_t *) 0x000000;
+	uint16_t *rom = (uint16_t *) ROM_ADDR;
 	for (int i = 0; i < ROM_SIZE; i += 64) {
 		printf("\n%d\n", i);
 		int j;
@@ -272,7 +289,7 @@ void load(void)
 
 void boot(void)
 {
-	*led = 0x0;
+	//*led = 0x0;
 	void (*entry)() = (void (*)()) RAM_ADDR;
 	((void (*)()) entry)();
 }

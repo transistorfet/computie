@@ -32,6 +32,7 @@ KERNEL_OBJS = \
 	src/kernel/driver.o \
 	src/kernel/fs/vfs.o \
 	src/kernel/fs/vnode.o \
+	src/kernel/fs/nopfs.o \
 	src/kernel/fs/filedesc.o \
 	src/kernel/fs/pipe.o \
 	src/kernel/fs/mallocfs/mallocfs.o \

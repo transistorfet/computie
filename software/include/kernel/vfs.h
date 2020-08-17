@@ -45,6 +45,7 @@ struct vnode_ops {
 	//rmdir (or can it be done through unlink)
 	//rename
 	//link
+	int (*release)(struct vnode *vnode);
 };
 
 // TODO should you just integrate this with the vnode ops
@@ -92,8 +93,8 @@ struct vdir {
 	char name[VFS_FILENAME_MAX];
 };
 
-#define VLOOKUP_NORMAL	0000
-#define VLOOKUP_PARENT	0001
+#define VLOOKUP_NORMAL		0000
+#define VLOOKUP_PARENT_OF	0001
 
 
 int vfs_mount(struct mount *mp);
@@ -114,6 +115,7 @@ int vfs_readdir(struct vfile *file, struct vdir *dir);
 
 
 const char *path_last_component(const char *path);
+
 
 #endif
 

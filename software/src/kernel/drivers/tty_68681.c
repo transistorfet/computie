@@ -65,6 +65,8 @@ struct driver tty_68681_driver = {
 #define CMD_DISABLE_RX			0x02
 #define CMD_ENABLE_TX			0x04
 #define CMD_DISABLE_TX			0x08
+#define CMD_START_BREAK			0x60
+#define CMD_STOP_BREAK			0x70
 
 
 // MC68681 Default Configuration Values
@@ -123,6 +125,8 @@ extern void enter_irq();
 int tty_68681_init()
 {
 	*CRA_WR_ADDR = CMD_RESET_MR;
+	asm volatile("nop\n");
+	*CRA_WR_ADDR = CMD_RESET_TX;
 
 	// Configure channel A serial port
 	*MR1A_MR2A_ADDR = MR1A_MODE_A_REG_1_CONFIG;

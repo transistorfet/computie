@@ -35,7 +35,7 @@ int vfs_mknod(const char *path, mode_t mode, device_t dev, struct vnode **result
 	int error;
 	struct vnode *vnode;
 
-	error = vfs_lookup(path, VLOOKUP_PARENT, &vnode);
+	error = vfs_lookup(path, VLOOKUP_PARENT_OF, &vnode);
 	if (error)
 		return error;
 
@@ -73,7 +73,7 @@ int vfs_lookup(const char *path, int flags, struct vnode **result)
 		component[j] = '\0';
 
 		// If creating, then skip the last component lookup
-		if (flags & VLOOKUP_PARENT && path[i] == '\0')
+		if (flags & VLOOKUP_PARENT_OF && path[i] == '\0')
 			continue;
 
 		error = cur->ops->lookup(cur, component, &cur);
@@ -90,7 +90,7 @@ int vfs_unlink(const char *path)
 	const char *filename;
 	struct vnode *vnode, *parent;
 
-	error = vfs_lookup(path, VLOOKUP_PARENT, &parent);
+	error = vfs_lookup(path, VLOOKUP_PARENT_OF, &parent);
 	if (error)
 		return error;
 
@@ -105,6 +105,16 @@ int vfs_unlink(const char *path)
 	return 0;
 }
 
+int vfs_release(struct vnode *vnode)
+{
+	vnode->refcount--;
+	if (vnode->refcount < 0)
+		printk("Error: double free of vnode, %x\n", vnode);
+	else if (vnode->refcount == 0)
+		return vnode->ops->release(vnode);
+	return 0;
+}
+
 int vfs_open(const char *path, int flags, struct vfile **file)
 {
 	int error;
@@ -113,7 +123,7 @@ int vfs_open(const char *path, int flags, struct vfile **file)
 	if (!file)
 		return EINVAL;
 
-	error = vfs_lookup(path, (flags & O_CREAT) ? VLOOKUP_PARENT : VLOOKUP_NORMAL, &vnode);
+	error = vfs_lookup(path, (flags & O_CREAT) ? VLOOKUP_PARENT_OF : VLOOKUP_NORMAL, &vnode);
 	if (error)
 		return error;
 

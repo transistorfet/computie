@@ -29,20 +29,24 @@
 
 
 // MC68681 Command Numbers
+#define CMD_RESET_MR			0x10
+#define CMD_RESET_RX			0x20
+#define CMD_RESET_TX			0x30
+#define CMD_RESET_ERROR			0x40
 #define CMD_ENABLE_TX_RX		0x05
 #define CMD_ENABLE_RX			0x01
 #define CMD_DISABLE_RX			0x02
 #define CMD_ENABLE_TX			0x04
 #define CMD_DISABLE_TX			0x08
-#define CMD_RESET_RX			0x20
-#define CMD_RESET_TX			0x30
+#define CMD_START_BREAK			0x60
+#define CMD_STOP_BREAK			0x70
 
 
 // MC68681 Default Configuration Values
 #define MR1A_MODE_A_REG_1_CONFIG	0b10010011	// RxRTS Enabled, 8 bits, No Parity
 #define MR2A_MODE_A_REG_2_CONFIG	0b00000111	// Normal mode, CTS Disabled, 1 stop bit
 //#define CSRA_CLK_SELECT_REG_A_CONFIG	0b10111011	// 9600 bps @ 3.6864MHz (19200 @ 7.3728 MHz)
-//#define ACR_AUX_CONTROL_REG_CONFIG	0b11110000	// Set2, External Clock / 16, IRQs disabled
+//#define ACR_AUX_CONTROL_REG_CONFIG	0b11111000	// Set2, External Clock / 16, IRQs disabled
 #define CSRA_CLK_SELECT_REG_A_CONFIG	0b11001100	// 38400 bps @ 3.6864MHz
 #define ACR_AUX_CONTROL_REG_CONFIG	0b01111000	// Set1, External Clock / 16, IRQs disabled except IP3
 
@@ -85,14 +89,21 @@ static char tty_read_buffer[TTY_READ_BUFFER];
 
 int init_tty()
 {
+	*CRA_WR_ADDR = CMD_RESET_MR;
+
 	*MR1A_MR2A_ADDR = MR1A_MODE_A_REG_1_CONFIG;
 	*MR1A_MR2A_ADDR = MR2A_MODE_A_REG_2_CONFIG;
 	*CSRA_WR_ADDR = CSRA_CLK_SELECT_REG_A_CONFIG;
 	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
 
+	*CRA_WR_ADDR = CMD_RESET_ERROR;
+	asm volatile("nop\n");
 	*CRA_WR_ADDR = CMD_RESET_RX;
+	asm volatile("nop\n");
 	*CRA_WR_ADDR = CMD_RESET_TX;
+	asm volatile("nop\n");
 	*CRA_WR_ADDR = CMD_ENABLE_TX_RX;
+
 
 	// Configure timer
 	//*CTUR_WR_ADDR = 0xFF;

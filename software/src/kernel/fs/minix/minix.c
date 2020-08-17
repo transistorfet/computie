@@ -1,29 +1,35 @@
  
 #include "minix.h"
+
+#include "../blockcache.h"
+
+
+
+
+
+
+
+
+
+
+
+static void _minix_read_superblock(struct mount *mount)
+{
+	struct minix_superblock *super;
+
+	// TODO load super
+	super = get_block(mount->root->device, 1);
+
+	//_adjust_superblock(super);
+
+}
+
+
+/*
 #include "../../byteorder.h"
 
 static inline void _adjust_superblock(struct minix_superblock *super);
 static inline void _adjust_inode(struct minix_inode *inode);
-
-
-
-
-
-
-
-
-
-static void _minix_read_superblock()
-{
-	struct minix_superblock super;
-
-	// TODO load super
-
-
-	_adjust_superblock(&super);
-
-}
-
 
 static inline void _adjust_superblock(struct minix_superblock *super)
 {
@@ -41,3 +47,5 @@ static inline void _adjust_inode(struct minix_inode *inode)
 	for (char i = 0; i < MINIX_INODE_ZONES; i++)
 		BYTEORDER_SWAP_SHORT(inode->zones[i]);
 }
+
+*/

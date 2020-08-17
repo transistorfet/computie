@@ -33,6 +33,7 @@ struct vnode_ops mallocfs_vnode_ops = {
 	mallocfs_mknod,
 	mallocfs_lookup,
 	mallocfs_unlink,
+	mallocfs_release,
 };
 
 
@@ -52,6 +53,7 @@ int init_mallocfs()
 	// TODO This wouldn't be the case for a mounted filesystem
 	MALLOCFS_BLOCK(mallocfs_root->block)->entries[1].vnode = mallocfs_root;
 
+	/*
 	int error;
 	struct vnode *vn;
 
@@ -66,7 +68,7 @@ int init_mallocfs()
 		printk("Error: %d\n", error);
 	else
 		printk("Created at %x\n", vn->block);
-
+	*/
 }
 
 int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result)
@@ -153,6 +155,12 @@ int mallocfs_unlink(struct vnode *parent, struct vnode *vnode)
 		free(vnode->block);
 	free_vnode(vnode);
 }
+
+int mallocfs_release(struct vnode *vnode)
+{
+
+}
+
 
 int mallocfs_open(struct vfile *file, int flags)
 {

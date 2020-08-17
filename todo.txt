@@ -1,6 +1,8 @@
 
 Software/OS:
 
+	* add release() function to release a vnode/inode.  Should it go in the vnode or the mount ops?
+
 	* move as much inline assembly, from headers especially, into a redirectable asm directory
 
 	* after sending the hello program and exec'ing it, it returns 1 when it should return 0
@@ -9,7 +11,7 @@ Software/OS:
 	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 	* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
 	  (ie. store the last allocated fd, but it has to be in the process struct)
-	* what is needed to implement a 'ps' command in userspace
+	* what is needed to implement a 'ps' command in userspace? pstat()
 
 
 	* figure out how you'll do vnode/fs-specific-data allocation, which might affect the interface a bit

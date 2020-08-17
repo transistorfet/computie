@@ -151,6 +151,7 @@ void file_test()
 	int error;
 	struct vfile *file;
 
+	/*
 	if ((error = vfs_open("dir/test", 0, &file))) {
 		printk("Error at open %d\n", error);
 		return;
@@ -176,6 +177,7 @@ void file_test()
 	puts(buffer);
 
 	vfs_close(file);
+	*/
 
 
 	if ((error = vfs_open("/hello", O_CREAT, &file))) {

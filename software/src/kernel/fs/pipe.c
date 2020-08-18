@@ -6,20 +6,15 @@
 #include <kernel/filedesc.h>
 #include <kernel/syscall.h>
 
-#include "vnode.h"
 #include "nop.h"
 #include "../process.h"
 
 #define PIPE_BUFFER_MAX		512
 
-struct pipe_data {
-	char buffer[PIPE_BUFFER_MAX];
-};
-
-
 int pipe_close(struct vfile *file);
 int pipe_read(struct vfile *file, char *buf, size_t nbytes);
 int pipe_write(struct vfile *file, const char *buf, size_t nbytes);
+int pipe_release(struct vnode *vnode);
 
 struct vfile_ops pipe_vfile_ops = {
 	nop_open,
@@ -37,35 +32,43 @@ struct vnode_ops pipe_vnode_ops = {
 	nop_mknod,
 	nop_lookup,
 	nop_unlink,
-	nop_release,
+	pipe_release,
 };
 
+
+struct pipe_data {
+	char buffer[PIPE_BUFFER_MAX];
+};
+
+struct pipe_vnode {
+	struct vnode vn;
+	struct pipe_data data;
+};
 
 
 int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile)
 {
 	struct vnode *vnode;
 
-	// TODO I don't like this way of allocating vnodes
-	vnode = new_vnode(0, 0, &pipe_vnode_ops);
+	vnode = malloc(sizeof(struct pipe_vnode));
 	if (!vnode)
-		return EMFILE;
+		return ENOMEM;
+	// TODO replace uid and gid with valid values based on current proc?
+	vfs_init_vnode(vnode, &pipe_vnode_ops, 0600, 0, 0, 0, 0);
+
 	// We will be creating two references to this vnode, so increament the refcount
 	vnode->refcount++;
-	vnode->block = malloc(sizeof(struct pipe_data));
-	if (!vnode->block)
-		return ENOMEM;
 
 	// TODO can I allocate these before I create the vnode/inode?
 	// Allocate two file pointers
 	*rfile = new_fileptr(vnode);
 	if (!*rfile) {
-		free_vnode(vnode);
+		free(vnode);
 		return ENFILE;
 	}
 	*wfile = new_fileptr(vnode);
 	if (!*wfile) {
-		free_vnode(vnode);
+		free(vnode);
 		free_fileptr(*rfile);
 		return ENFILE;
 	}
@@ -79,17 +82,23 @@ int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile)
 	return 0;
 }
 
+int pipe_release(struct vnode *vnode)
+{
+	free(vnode);
+}
+
 int pipe_close(struct vfile *file)
 {
-	// TODO decrement listeners
+	// TODO decrement listeners (what listeners was I talking about?)
+	return 0;
 }
 
 int pipe_read(struct vfile *file, char *buf, size_t nbytes)
 {
 	register struct vnode *vnode = file->vnode;
-	register char *block = vnode->block;
+	register char *buffer = ((struct pipe_data *) &vnode->data)->buffer;
 
-	if (!block)
+	if (!buffer)
 		return EIO;
 
 	// TODO Do you also need to add a check for a broken pipe here too?
@@ -101,7 +110,7 @@ int pipe_read(struct vfile *file, char *buf, size_t nbytes)
 
 	if (nbytes > vnode->size - file->position)
 		nbytes = vnode->size - file->position;
-	memcpy_s(buf, &block[file->position], nbytes);
+	memcpy_s(buf, &buffer[file->position], nbytes);
 	file->position += nbytes;
 
 	if (file->position == vnode->size) {
@@ -118,9 +127,9 @@ int pipe_read(struct vfile *file, char *buf, size_t nbytes)
 int pipe_write(struct vfile *file, const char *buf, size_t nbytes)
 {
 	register struct vnode *vnode = file->vnode;
-	register char *block = vnode->block;
+	register char *buffer = ((struct pipe_data *) &vnode->data)->buffer;
 
-	if (!block)
+	if (!buffer)
 		return EIO;
 
 	// TODO you need to detect a broken pipe and raise SIGPIPE
@@ -132,7 +141,7 @@ int pipe_write(struct vfile *file, const char *buf, size_t nbytes)
 		return 0;
 		//nbytes = PIPE_BUFFER_MAX - file->position;
 	}
-	memcpy_s(&block[file->position], buf, nbytes);
+	memcpy_s(&buffer[file->position], buf, nbytes);
 	file->position += nbytes;
 
 	if (file->position > vnode->size)

@@ -5,7 +5,6 @@
 #include <kernel/vfs.h>
 #include <kernel/filedesc.h>
 
-#include "vnode.h"
 #include "../printk.h"
 
 #define FILE_TABLE_MAX		16
@@ -48,7 +47,7 @@ void free_fileptr(struct vfile *file)
 		printk("Error: double free of file pointer, %x\n", file);
 	}
 	else if (file->refcount <= 0) {
-		free_vnode(file->vnode);
+		vfs_release_vnode(file->vnode);
 		file->vnode = NULL;
 	}
 }

@@ -76,9 +76,7 @@ struct vnode {
 	offset_t size;
 	time_t mtime;
 
-	// TODO this will be removed and allocated by the specific fs
-	device_t device;
-	void *block;
+	union {} data;
 };
 
 struct vfile {
@@ -113,9 +111,21 @@ int vfs_ioctl(struct vfile *file, unsigned int request, void *argp);
 offset_t vfs_seek(struct vfile *file, offset_t position, int whence);
 int vfs_readdir(struct vfile *file, struct vdir *dir);
 
+int vfs_release_vnode(struct vnode *vnode);
 
 const char *path_last_component(const char *path);
 
+
+static inline void vfs_init_vnode(struct vnode *vnode, struct vnode_ops *ops, mode_t mode, uid_t uid, gid_t gid, offset_t size, time_t mtime)
+{
+	vnode->ops = ops;
+	vnode->refcount = 1;
+	vnode->mode = mode;
+	vnode->uid = uid;
+	vnode->gid = gid;
+	vnode->size = size;
+	vnode->mtime = mtime;
+}
 
 #endif
 

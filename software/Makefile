@@ -31,7 +31,6 @@ KERNEL_OBJS = \
 	src/kernel/process.o \
 	src/kernel/driver.o \
 	src/kernel/fs/vfs.o \
-	src/kernel/fs/vnode.o \
 	src/kernel/fs/nopfs.o \
 	src/kernel/fs/filedesc.o \
 	src/kernel/fs/pipe.o \

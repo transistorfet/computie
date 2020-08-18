@@ -8,8 +8,8 @@
 #define MALLOCFS_BLOCK_SIZE	2048
 #define MALLOCFS_DIRENTS	(MALLOCFS_BLOCK_SIZE / sizeof(struct mallocfs_dirent))
 
-#define MALLOCFS_VNODE(vnode)	((struct mallocfs_vnode_data *) (vnode))
 #define MALLOCFS_BLOCK(block)	((struct mallocfs_block *) (block))
+#define MALLOCFS_DATA(vnode)	(((struct mallocfs_vnode *) (vnode))->data)
 
 struct mallocfs_dirent {
 	struct vnode *vnode;
@@ -23,18 +23,14 @@ struct mallocfs_block {
 	};
 };
 
-// TODO this will be needed when we allocate vnodes ourself but for ease we will put the dev and fsdata pointers into vnode
-/*
-struct mallocfs_node {
-	struct vnode vnode;
-	device_t dev;
-	struct mallocfs_block *block;
-};
-*/
-
-struct mallocfs_vnode_data {
+struct mallocfs_data {
 	device_t device;
 	struct mallocfs_block *block;
+};
+
+struct mallocfs_vnode {
+	struct vnode vn;
+	struct mallocfs_data data;
 };
 
 extern struct vnode *mallocfs_root;

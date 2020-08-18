@@ -9,13 +9,11 @@
 #include <kernel/driver.h>
  
 #include "mallocfs.h"
-#include "../vnode.h"
 #include "../../printk.h"
 
 #include <stdlib.h>
 #define MFS_ALLOC_BLOCK()	((struct mallocfs_block *) malloc(MALLOCFS_BLOCK_SIZE))
 #define MFS_FREE_BLOCK(ptr)	free(ptr)
-
 
 struct vfile_ops mallocfs_vfile_ops = {
 	mallocfs_open,
@@ -36,22 +34,31 @@ struct vnode_ops mallocfs_vnode_ops = {
 	mallocfs_release,
 };
 
+#define MAX_VNODES	20
 
+
+
+static struct vnode vnode_table[MAX_VNODES];
+// TODO this will be stored in the mount
 struct vnode *mallocfs_root;
-//static struct mallocfs_dirent devices[MALLOCFS_DIRENT_MAX];
 
 static struct mallocfs_dirent *_find_dirent(struct vnode *dir, struct vnode *file);
 static struct mallocfs_dirent *_find_empty_dirent(struct vnode *vnode);
 static short _is_empty_dirent(struct vnode *vnode);
 static struct mallocfs_dirent *_alloc_dirent(struct vnode *vnode, const char *filename);
 static struct vnode *_new_vnode_with_block(mode_t mode, struct vnode *parent);
+static struct vnode *_new_vnode(device_t dev, mode_t mode, struct vnode_ops *ops);
 
 int init_mallocfs()
 {
+	for (char i = 0; i < MAX_VNODES; i++) {
+		vnode_table[i].refcount = 0;
+	}
+
 	mallocfs_root = _new_vnode_with_block(S_IFDIR | 0755, NULL);
 	// Set the parent entry (..) to be the root vnode
 	// TODO This wouldn't be the case for a mounted filesystem
-	MALLOCFS_BLOCK(mallocfs_root->block)->entries[1].vnode = mallocfs_root;
+	MALLOCFS_DATA(mallocfs_root).block->entries[1].vnode = mallocfs_root;
 
 	/*
 	int error;
@@ -109,7 +116,7 @@ int mallocfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, devic
 	if (!dir)
 		return ENOSPC;
 
-	newnode = new_vnode(dev, mode, &mallocfs_vnode_ops);
+	newnode = _new_vnode(dev, mode, &mallocfs_vnode_ops);
 	if (!newnode)
 		return EMFILE;
 	dir->vnode = newnode;
@@ -128,7 +135,7 @@ int mallocfs_lookup(struct vnode *vnode, const char *filename, struct vnode **re
 	if (!(vnode->mode & S_IFDIR))
 		return ENOTDIR;
 
-	struct mallocfs_block *block = vnode->block;
+	struct mallocfs_block *block = MALLOCFS_DATA(vnode).block;
 	for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
 		if (block->entries[i].vnode && !strcmp(filename, block->entries[i].name)) {
 			*result = block->entries[i].vnode;
@@ -151,14 +158,13 @@ int mallocfs_unlink(struct vnode *parent, struct vnode *vnode)
 		return ENOENT;
 
 	dir->vnode = NULL;
-	if (vnode->block)
-		free(vnode->block);
-	free_vnode(vnode);
+	vfs_release_vnode(vnode);
 }
 
 int mallocfs_release(struct vnode *vnode)
 {
-
+	if (MALLOCFS_DATA(vnode).block)
+		free(MALLOCFS_DATA(vnode).block);
 }
 
 
@@ -170,7 +176,7 @@ int mallocfs_open(struct vfile *file, int flags)
 int mallocfs_close(struct vfile *file)
 {
 	if (file->vnode->mode & S_IFCHR)
-		return dev_close(file->vnode->device);
+		return dev_close(MALLOCFS_DATA(file->vnode).device);
 
 	return 0;
 }
@@ -181,11 +187,11 @@ int mallocfs_read(struct vfile *file, char *buf, size_t nbytes)
 		return EISDIR;
 
 	if (file->vnode->mode & S_IFCHR)
-		return dev_read(file->vnode->device, buf, nbytes);
+		return dev_read(MALLOCFS_DATA(file->vnode).device, buf, nbytes);
 
 	else {
 		register struct vnode *vnode = file->vnode;
-		register char *block = vnode->block;
+		register char *block = MALLOCFS_DATA(vnode).block;
 
 		if (!block)
 			return EIO;
@@ -204,11 +210,11 @@ int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
 		return EISDIR;
 
 	if (file->vnode->mode & S_IFCHR)
-		return dev_write(file->vnode->device, buf, nbytes);
+		return dev_write(MALLOCFS_DATA(file->vnode).device, buf, nbytes);
 
 	else {
 		register struct vnode *vnode = file->vnode;
-		register char *block = vnode->block;
+		register char *block = MALLOCFS_DATA(vnode).block;
 
 		if (!block)
 			return EIO;
@@ -228,7 +234,7 @@ int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
 int mallocfs_ioctl(struct vfile *file, unsigned int request, void *argp)
 {
 	if (file->vnode->mode & S_IFCHR)
-		return dev_ioctl(file->vnode->device, request, argp);
+		return dev_ioctl(MALLOCFS_DATA(file->vnode).device, request, argp);
 
 	return -1;
 }
@@ -265,7 +271,7 @@ int mallocfs_readdir(struct vfile *file, struct vdir *dir)
 {
 	int max;
 	struct mallocfs_dirent *mdir;
-	struct mallocfs_block *block = file->vnode->block;
+	struct mallocfs_block *block = MALLOCFS_DATA(file->vnode).block;
 
 	if (!(file->vnode->mode & S_IFDIR))
 		return ENOTDIR;
@@ -291,7 +297,7 @@ int mallocfs_readdir(struct vfile *file, struct vdir *dir)
 
 static struct mallocfs_dirent *_find_dirent(struct vnode *dir, struct vnode *file)
 {
-	struct mallocfs_block *block = dir->block;
+	struct mallocfs_block *block = MALLOCFS_DATA(dir).block;
 
 	for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
 		if (block->entries[i].vnode == file)
@@ -302,7 +308,7 @@ static struct mallocfs_dirent *_find_dirent(struct vnode *dir, struct vnode *fil
 
 static struct mallocfs_dirent *_find_empty_dirent(struct vnode *vnode)
 {
-	struct mallocfs_block *block = vnode->block;
+	struct mallocfs_block *block = MALLOCFS_DATA(vnode).block;
 
 	for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
 		if (!block->entries[i].vnode)
@@ -313,7 +319,7 @@ static struct mallocfs_dirent *_find_empty_dirent(struct vnode *vnode)
 
 static short _is_empty_dirent(struct vnode *vnode)
 {
-	struct mallocfs_block *block = vnode->block;
+	struct mallocfs_block *block = MALLOCFS_DATA(vnode).block;
 
 	for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
 		if (block->entries[i].vnode)
@@ -345,13 +351,13 @@ static struct vnode *_new_vnode_with_block(mode_t mode, struct vnode *parent)
 	if (!block)
 		return NULL;
 
-	vnode = new_vnode(0, mode, &mallocfs_vnode_ops);
+	vnode = _new_vnode(0, mode, &mallocfs_vnode_ops);
 	if (!vnode) {
 		MFS_FREE_BLOCK(block);
 		return NULL;
 	}
 
-	vnode->block = block;
+	MALLOCFS_DATA(vnode).block = block;
 	if (mode & S_IFDIR) {
 		for (short i = 0; i < MALLOCFS_DIRENTS; i++)
 			block->entries[i].vnode = NULL;
@@ -364,6 +370,22 @@ static struct vnode *_new_vnode_with_block(mode_t mode, struct vnode *parent)
 	}
 
 	return vnode;
+}
+
+
+// TODO this function should take a path, but I have no path mapping yet, so take a device_t
+//struct inode *new_inode(char *path, mode_t mode)
+static struct vnode *_new_vnode(device_t dev, mode_t mode, struct vnode_ops *ops)
+{
+	for (char i = 0; i < MAX_VNODES; i++) {
+		if (vnode_table[i].refcount <= 0) {
+			vfs_init_vnode(&vnode_table[i], ops, mode, 0, 0, 0, 0);
+			MALLOCFS_DATA(&vnode_table[i]).device = dev;
+			MALLOCFS_DATA(&vnode_table[i]).block = NULL;
+			return &vnode_table[i];
+		}
+	}
+	return NULL;
 }
 
 

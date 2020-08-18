@@ -5,7 +5,9 @@
 #include <kernel/vfs.h>
 #include <kernel/filedesc.h>
 
-// TODO this will be removed
+#include "../printk.h"
+
+// TODO this will be removed when you add fs mounting
 #include "mallocfs/mallocfs.h"
 
 #define VFS_MOUNT_MAX		2
@@ -105,16 +107,6 @@ int vfs_unlink(const char *path)
 	return 0;
 }
 
-int vfs_release(struct vnode *vnode)
-{
-	vnode->refcount--;
-	if (vnode->refcount < 0)
-		printk("Error: double free of vnode, %x\n", vnode);
-	else if (vnode->refcount == 0)
-		return vnode->ops->release(vnode);
-	return 0;
-}
-
 int vfs_open(const char *path, int flags, struct vfile **file)
 {
 	int error;
@@ -184,6 +176,18 @@ int vfs_readdir(struct vfile *file, struct vdir *dir)
 {
 	return file->vnode->ops->fops->readdir(file, dir);
 }
+
+
+int vfs_release_vnode(struct vnode *vnode)
+{
+	vnode->refcount--;
+	if (vnode->refcount < 0)
+		printk("Error: double free of vnode, %x\n", vnode);
+	else if (vnode->refcount == 0)
+		return vnode->ops->release(vnode);
+	return 0;
+}
+
 
 
 const char *path_last_component(const char *path)

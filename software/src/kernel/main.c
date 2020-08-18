@@ -235,7 +235,6 @@ int main()
 	init_syscall();
 	init_proc();
 
-	init_vnode();
 	init_fileptr_table();
 	init_mallocfs();
 

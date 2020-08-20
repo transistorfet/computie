@@ -3,9 +3,9 @@
 
 #include <errno.h>
 #include <kernel/vfs.h>
+#include <kernel/printk.h>
 #include <kernel/filedesc.h>
 
-#include "../printk.h"
 
 // TODO this will be removed when you add fs mounting
 #include "mallocfs/mallocfs.h"

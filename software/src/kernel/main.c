@@ -9,10 +9,10 @@
 #include <kernel/filedesc.h>
 #include <kernel/syscall.h>
 #include <kernel/driver.h>
+#include <kernel/printk.h>
 #include <kernel/vfs.h>
 
 #include "api.h"
-#include "printk.h"
 #include "process.h"
 #include "interrupts.h"
 

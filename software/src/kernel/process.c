@@ -3,11 +3,11 @@
 
 #include <stdlib.h>
 
+#include <kernel/printk.h>
 #include <kernel/filedesc.h>
 
 #include "api.h"
 #include "queue.h"
-#include "printk.h"
 #include "process.h"
 #include "interrupts.h"
 

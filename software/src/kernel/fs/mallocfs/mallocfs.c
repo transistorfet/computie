@@ -6,12 +6,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <kernel/vfs.h>
+#include <kernel/printk.h>
 #include <kernel/driver.h>
  
 #include "mallocfs.h"
 #include "alloc.h"
 #include "zones.h"
-#include "../../printk.h"
 
 
 

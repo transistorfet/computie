@@ -4,9 +4,9 @@
 
 #include <sys/stat.h>
 #include <kernel/vfs.h>
+#include <kernel/printk.h>
 #include <kernel/driver.h>
 
-#include "../printk.h"
 #include "../process.h"
 #include "../interrupts.h"
 #include "../circlebuf.h"

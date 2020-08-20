@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "printk.h"
+#include <kernel/printk.h>
+
 #include "interrupts.h"
 
 

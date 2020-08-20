@@ -3,9 +3,8 @@
 
 #include <errno.h>
 #include <kernel/vfs.h>
+#include <kernel/printk.h>
 #include <kernel/filedesc.h>
-
-#include "../printk.h"
 
 #define FILE_TABLE_MAX		16
 

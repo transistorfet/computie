@@ -6,11 +6,11 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <kernel/vfs.h>
+#include <kernel/printk.h>
 #include <kernel/driver.h>
 #include <kernel/filedesc.h>
 
 #include "api.h"
-#include "printk.h"
 #include "process.h"
 #include "interrupts.h"
 

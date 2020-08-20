@@ -8,8 +8,6 @@
 #include <kernel/driver.h>
  
 #include "devfs.h"
-#include "../vnode.h"
-#include "../../slab.h"
 
 struct vfile_ops devfs_vfile_ops = {
 	devfs_open,
@@ -28,16 +26,19 @@ struct vnode_ops devfs_vnode_ops = {
 	devfs_release,
 };
 
+#define MAX_VNODES	6
 
-struct vnode *devfs_root;
+struct devfs_vnode *devfs_root;
+static struct vnode vnode_table[MAX_VNODES];
 static struct devfs_dirent devices[DEVFS_DIRENT_MAX];
 
 
 static inline struct devfs_dirent *_new_dirent();
+static struct vnode *_new_vnode(device_t dev, mode_t mode, struct vnode_ops *ops);
 
 int init_devfs()
 {
-	devfs_root = new_vnode(0, 0755, &devfs_vnode_ops);
+	devfs_root = _new_vnode(0, 0755, &devfs_vnode_ops);
 
 	for (char i = 0; i < DEVFS_DIRENT_MAX; i++)
 		devices[i].vnode = NULL;
@@ -58,7 +59,7 @@ int devfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t
 	if (!dir)
 		return ENOSPC;
 
-	newnode = new_vnode(dev, mode, &devfs_vnode_ops);
+	newnode = _new_vnode(dev, mode, &devfs_vnode_ops);
 	if (!newnode)
 		return EMFILE;
 
@@ -102,22 +103,22 @@ int devfs_open(struct vfile *file, int flags)
 
 int devfs_close(struct vfile *file)
 {
-	return dev_close(file->vnode->device);
+	return dev_close(DEVFS_DATA(file->vnode).device);
 }
 
 int devfs_read(struct vfile *file, char *buf, size_t nbytes)
 {
-	return dev_read(file->vnode->device, buf, nbytes);
+	return dev_read(DEVFS_DATA(file->vnode).device, buf, nbytes);
 }
 
 int devfs_write(struct vfile *file, const char *buf, size_t nbytes)
 {
-	return dev_write(file->vnode->device, buf, nbytes);
+	return dev_write(DEVFS_DATA(file->vnode).device, buf, nbytes);
 }
 
 int devfs_ioctl(struct vfile *file, unsigned int request, void *argp)
 {
-	return dev_ioctl(file->vnode->device, request, argp);
+	return dev_ioctl(DEVFS_DATA(file->vnode).device, request, argp);
 }
 
 offset_t devfs_seek(struct vfile *file, offset_t position, int whence)
@@ -134,3 +135,17 @@ static inline struct devfs_dirent *_new_dirent()
 	}
 	return NULL;
 }
+
+static struct vnode *_new_vnode(device_t dev, mode_t mode, struct vnode_ops *ops)
+{
+	for (char i = 0; i < MAX_VNODES; i++) {
+		if (vnode_table[i].refcount <= 0) {
+			vfs_init_vnode(&vnode_table[i], ops, mode, 0, 0, 0, 0);
+			DEVFS_DATA(&vnode_table[i]).device = dev;
+			return &vnode_table[i];
+		}
+	}
+	return NULL;
+}
+
+

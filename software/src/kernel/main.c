@@ -146,84 +146,6 @@ struct process *run_sh()
 }
 
 
-void file_test()
-{
-	int error;
-	struct vfile *file;
-
-	/*
-	if ((error = vfs_open("dir/test", 0, &file))) {
-		printk("Error at open %d\n", error);
-		return;
-	}
-
-	if ((error = vfs_write(file, "This is a file test\n", 20)) <= 0) {
-		printk("Error when writing %d\n", error);
-		return;
-	}
-
-	vfs_seek(file, 0, 0);
-
-	char buffer[256];
-
-	error = vfs_read(file, buffer, 256);
-	if (error < 0) {
-		printk("Error when reading\n");
-		return;
-	}
-	printk("Read: %d\n", error);
-	buffer[error] = '\0';
-
-	puts(buffer);
-
-	vfs_close(file);
-	*/
-
-
-	if ((error = vfs_open("/hello", O_CREAT, &file))) {
-		printk("Error at open new file %d\n", error);
-		return;
-	}
-
-	if ((error = vfs_write(file, hello_task, 256)) <= 0) {
-		printk("Error when writing %d\n", error);
-		return;
-	}
-
-	vfs_close(file);
-
-	puts("done");
-
-}
-
-void dir_test()
-{
-	int error;
-	struct vfile *file;
-	struct vdir dir;
-
-	if ((error = vfs_open("/", 0, &file))) {
-		printk("Error at open %d\n", error);
-		return;
-	}
-
-	while (1) {
-		error = vfs_readdir(file, &dir);
-		if (error < 0) {
-			printk("Error at readdir %d\n", error);
-			return;
-		}
-		else if (error == 0)
-			break;
-		else {
-			printk("File: %d:%s\n", error, dir.name);
-		}
-	}
-
-
-}
-
-
 int main()
 {
 	DISABLE_INTS();
@@ -242,9 +164,6 @@ int main()
 	for (char i = 0; drivers[i]; i++) {
 		drivers[i]->init();
 	}
-
-	file_test();
-	//dir_test();
 
 	struct process *task = run_task();
 	run_sh();

@@ -8,6 +8,8 @@
 #define DEVFS_MAX_FILENAME	14
 #define DEVFS_DIRENT_MAX	8
 
+#define DEVFS_DATA(vnode)	(((struct devfs_vnode *) (vnode))->data)
+
 struct devfs_dirent {
 	struct vnode *vnode;
 	char name[DEVFS_MAX_FILENAME];
@@ -19,10 +21,13 @@ struct devfs_block {
 	}
 };
 
-struct devfs_node {
-	struct vnode vnode;
-	device_t dev;
-	struct devfs_block *block;
+struct devfs_data {
+	device_t device;
+};
+
+struct devfs_vnode {
+	struct vnode vn;
+	struct devfs_data data;
 };
 
 extern struct vnode *devfs_root;

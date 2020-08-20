@@ -2,7 +2,7 @@
 #include <errno.h>
 #include <kernel/vfs.h>
 
-#include "nopfs.h"
+#include "nop.h"
 
 
 int nop_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result)

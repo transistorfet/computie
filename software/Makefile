@@ -31,10 +31,11 @@ KERNEL_OBJS = \
 	src/kernel/process.o \
 	src/kernel/driver.o \
 	src/kernel/fs/vfs.o \
-	src/kernel/fs/nopfs.o \
+	src/kernel/fs/nop.o \
 	src/kernel/fs/filedesc.o \
 	src/kernel/fs/pipe.o \
 	src/kernel/fs/mallocfs/mallocfs.o \
+	src/kernel/fs/mallocfs/alloc.o \
 	src/kernel/drivers/tty_68681.o \
 	src/kernel/sh.o \
 	libc-68k-os.a

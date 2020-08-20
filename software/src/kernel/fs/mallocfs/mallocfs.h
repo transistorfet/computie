@@ -4,12 +4,23 @@
 
 #include <kernel/vfs.h>
 
-#define MALLOCFS_MAX_FILENAME	14
-#define MALLOCFS_BLOCK_SIZE	2048
-#define MALLOCFS_DIRENTS	(MALLOCFS_BLOCK_SIZE / sizeof(struct mallocfs_dirent))
+#define MALLOCFS_BLOCK_SIZE		1024
+#define MALLOCFS_LOG_BLOCK_SIZE		__builtin_ctz(MALLOCFS_BLOCK_SIZE)
 
-#define MALLOCFS_BLOCK(block)	((struct mallocfs_block *) (block))
-#define MALLOCFS_DATA(vnode)	(((struct mallocfs_vnode *) (vnode))->data)
+#define MALLOCFS_TIER1_ZONES		6
+#define MALLOCFS_TIER2_ZONES		2
+#define MALLOCFS_TOTAL_ZONES		MALLOCFS_TIER1_ZONES + MALLOCFS_TIER2_ZONES
+#define MALLOCFS_MAX_FILENAME		12
+
+#define MALLOCFS_DIRENTS		(MALLOCFS_BLOCK_SIZE / sizeof(struct mallocfs_dirent))
+#define MALLOCFS_LOG_DIRENTS		__builtin_ctz(MALLOCFS_DIRENTS)
+#define MALLOCFS_BLOCK_ZONES		(MALLOCFS_BLOCK_SIZE / sizeof(struct mallocfs_block *))
+#define MALLOCFS_LOG_BLOCK_ZONES	__builtin_ctz(MALLOCFS_BLOCK_ZONES)
+
+#define MALLOCFS_BLOCK(block)		((struct mallocfs_block *) (block))
+#define MALLOCFS_DATA(vnode)		(((struct mallocfs_vnode *) (vnode))->data)
+
+typedef unsigned int mallocfs_zone_t;
 
 struct mallocfs_dirent {
 	struct vnode *vnode;
@@ -19,13 +30,17 @@ struct mallocfs_dirent {
 struct mallocfs_block {
 	union {
 		struct mallocfs_dirent entries[MALLOCFS_DIRENTS];
+		struct mallocfs_block *zones[MALLOCFS_BLOCK_ZONES];
 		char *data[MALLOCFS_BLOCK_SIZE];
 	};
 };
 
 struct mallocfs_data {
 	device_t device;
+	union {
 	struct mallocfs_block *block;
+	struct mallocfs_block *zones[MALLOCFS_TOTAL_ZONES];
+	};
 };
 
 struct mallocfs_vnode {

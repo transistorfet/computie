@@ -320,8 +320,8 @@ void command_exec(char *path)
 		printf("The child's pid is %d\n", pid);
 		// TODO this is the correct way, but I've commented it out because it caught a bug where fork was called before assigning the values to argv, and by that time
 		//	the parent has exited this function and is blocking on a read.  Would switching which proc gets run first after a fork have an affect on this?
-		//wait(&status);
-		//printf("The child exited with %d\n", status);
+		wait(&status);
+		printf("The child exited with %d\n", status);
 	}
 	else {
 		status = exec(path, argv, envp);
@@ -506,8 +506,125 @@ void serial_read_loop()
 
 
 
+void file_test()
+{
+	int error;
+	struct vfile *file;
+
+	/*
+	error = vfs_create(mallocfs_root, "dir", S_IFDIR | 0755, &vn);
+	if (error)
+		printk("Error: %d\n", error);
+	else
+		printk("Created dir at %x\n", vn->block);
+
+	error = mallocfs_create(vn, "test", 0644, &vn);
+	if (error)
+		printk("Error: %d\n", error);
+	else
+		printk("Created at %x\n", vn->block);
+	*/
+
+	if ((error = vfs_open("test", O_CREAT, &file))) {
+		printk("Error at open %d\n", error);
+		return;
+	}
+
+	if ((error = vfs_write(file, "This is a file test\n", 20)) <= 0) {
+		printk("Error when writing %d\n", error);
+		return;
+	}
+
+	vfs_seek(file, 0, 0);
+
+	char buffer[256];
+
+	error = vfs_read(file, buffer, 256);
+	if (error < 0) {
+		printk("Error when reading\n");
+		return;
+	}
+	printk("Read: %d\n", error);
+	buffer[error] = '\0';
+
+	puts(buffer);
+
+	vfs_close(file);
+
+
+	extern const char hello_task[800];
+	if ((error = vfs_open("/hello", O_CREAT, &file))) {
+		printk("Error at open new file %d\n", error);
+		return;
+	}
+
+	if ((error = vfs_write(file, hello_task, 256)) <= 0) {
+		printk("Error when writing %d\n", error);
+		return;
+	}
+
+	vfs_close(file);
+
+	puts("done");
+
+	if ((error = vfs_open("/size", O_CREAT, &file))) {
+		printk("Error at open new file %d\n", error);
+		return;
+	}
+
+	char data[2];
+	for (short i = 0; i < 1000; i++) {
+		for (short j = 0; j < 10; j++) {
+			data[0] = '0' + j;
+			//printk("%d\n", data[0]);
+			if ((error = vfs_write(file, data, 1)) <= 0) {
+				printk("Error when writing %d\n", error);
+				return;
+			}
+		}
+	}
+
+	vfs_close(file);
+
+}
+
+void dir_test()
+{
+	int error;
+	struct vfile *file;
+	struct vdir dir;
+
+	if ((error = vfs_open("/", 0, &file))) {
+		printk("Error at open %d\n", error);
+		return;
+	}
+
+	while (1) {
+		error = vfs_readdir(file, &dir);
+		if (error < 0) {
+			printk("Error at readdir %d\n", error);
+			return;
+		}
+		else if (error == 0)
+			break;
+		else {
+			printk("File: %d:%s\n", error, dir.name);
+		}
+	}
+
+
+}
+
+
+
+
+
 int sh_task()
 {
+	file_test();
+	dir_test();
+
+
 	// Allocate memory for loading a processess
 	program_mem = malloc(0x1000);
 

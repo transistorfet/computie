@@ -1,16 +1,15 @@
 
 Software/OS:
 
-	* add release() function to release a vnode/inode.  Should it go in the vnode or the mount ops?
+	* add a vfs_create function, as well as a syscall for it
+	* add mounting of filesystems, and root node stuff, so you can remove the special case in vfs.c
 
 	* implement generic cache and use it in blockcache and minixfs
-	* add mounting of filesystems, and root node stuff, so you can remove the special case in vfs.c
 
 
 	* move as much inline assembly, from headers especially, into a redirectable asm directory
 
 	* after sending the hello program and exec'ing it, it returns 1 when it should return 0
-	* should the pipe implementation be separate like it is?  Should it fully fill in the ops struct?  Should the vnodeops and fileops be separated?
 
 	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 	* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
@@ -18,16 +17,12 @@ Software/OS:
 	* what is needed to implement a 'ps' command in userspace? pstat()
 
 
-	* figure out how you'll do vnode/fs-specific-data allocation, which might affect the interface a bit
-	* make mallocfs able to use blocks like minix would
 	* a page allocator, to replace the use of malloc for allocating the program space
 	* once you have mallocfs able to allocate multiple blocks with a block table stored in the vnode/in allocated blocks, and you have a block allocator algorithm for page
 	  allocation, you should be able to implement a minixfs minimally using a mocked interface to a block cache and block driver
 	* make a block driver interface
 	* make a block cache/buf cache (read the unix design book for more info)
 
-
-	* there are still issues with the file sending through serial in the OS, flow control is likley not working correctly
 	* should you make a lib subdir, and put unistd at the top?
 
 	* syscalls to implement: kill, signals, getpid, mount/umount, rename, dup, chdir, chmod, chown, access, getuid/setuid, alarm, pause, time

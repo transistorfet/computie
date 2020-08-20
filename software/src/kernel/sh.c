@@ -511,19 +511,18 @@ void file_test()
 	int error;
 	struct vfile *file;
 
-	/*
-	error = vfs_create(mallocfs_root, "dir", S_IFDIR | 0755, &vn);
-	if (error)
+	error = vfs_create("/dir", S_IFDIR | 0755, NULL);
+	if (error) {
 		printk("Error: %d\n", error);
-	else
-		printk("Created dir at %x\n", vn->block);
+		return;
+	}
 
-	error = mallocfs_create(vn, "test", 0644, &vn);
-	if (error)
+	error = creat("/dir/test", 0644);
+	if (error) {
 		printk("Error: %d\n", error);
-	else
-		printk("Created at %x\n", vn->block);
-	*/
+		return;
+	}
+
 
 	if ((error = vfs_open("test", O_CREAT, &file))) {
 		printk("Error at open %d\n", error);
@@ -573,7 +572,7 @@ void file_test()
 	}
 
 	char data[2];
-	for (short i = 0; i < 1000; i++) {
+	for (short i = 0; i < 100; i++) {
 		for (short j = 0; j < 10; j++) {
 			data[0] = '0' + j;
 			//printk("%d\n", data[0]);

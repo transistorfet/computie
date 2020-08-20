@@ -11,7 +11,7 @@
 #define SYS_OPEN	5
 #define SYS_CLOSE	6
 #define SYS_WAIT	7
-#define SYS_READDIR	8
+#define SYS_CREAT	8
 //#define SYS_LINK	9
 #define SYS_UNLINK	10
 #define SYS_EXEC	11
@@ -20,7 +20,7 @@
 #define SYS_LSEEK	14
 #define SYS_WAITPID	15
 #define SYS_PIPE	16
-//#define SYS_CREAT	8
+#define SYS_READDIR	17
 
 
 static inline int SYSCALL1(int n, int a1)

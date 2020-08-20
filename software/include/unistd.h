@@ -24,6 +24,7 @@ int exec(const char *path, char *const argv[], char *const envp[]);
 pid_t wait(int *status);
 pid_t waitpid(pid_t pid, int *status, int options);
 
+int creat(const char *path, mode_t mode);
 int open(const char *path, int flags);
 int close(int fd);
 size_t read(int fd, char *buf, size_t nbytes);

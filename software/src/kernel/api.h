@@ -17,6 +17,7 @@ extern pid_t do_waitpid(pid_t pid, int *status, int options);
 // Files & Directories
 extern size_t do_read(int fd, char *buf, size_t nbytes);
 extern size_t do_write(int fd, const char *buf, size_t nbytes);
+extern int do_creat(const char *path, mode_t mode);
 extern int do_open(const char *path, int oflags);
 extern int do_close(int fd);
 extern int do_readdir(int fd, struct vdir *dir);

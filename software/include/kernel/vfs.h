@@ -99,6 +99,7 @@ int vfs_mount(struct mount *mp);
 int vfs_umount(struct mount *mp);
 int vfs_sync(struct mount *mp);
 
+int vfs_create(const char *path, mode_t mode, struct vnode **result);
 int vfs_mknod(const char *path, mode_t mode, device_t dev, struct vnode **result);
 int vfs_lookup(const char *path, int flags, struct vnode **result);
 int vfs_unlink(const char *path);

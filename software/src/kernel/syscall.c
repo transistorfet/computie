@@ -29,7 +29,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_open,
 	do_close,
 	do_wait,
-	do_readdir,
+	do_creat,
 	test,		// 9 = link, not yet implemented
 	do_unlink,
 	do_exec,
@@ -38,6 +38,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_lseek,
 	do_waitpid,
 	do_pipe,
+	do_readdir,
 };
 
 extern void enter_syscall();
@@ -72,6 +73,11 @@ void do_syscall()
 	tty_68681_reset_leds(0x04);
 }
 
+
+int do_creat(const char *path, mode_t mode)
+{
+	return vfs_create(path, mode, NULL);
+}
 
 int do_open(const char *path, int oflags)
 {

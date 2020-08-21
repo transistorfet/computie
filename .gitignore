@@ -14,10 +14,14 @@ session.vim
 *.rel
 *.sym
 *.load
+*.send
 
 # EDA Output Files
 *.gbr
 *.drl
 *gbrjob
 *-bak
+*.bak
+*.bck
+fp-info-cache
 

@@ -1,40 +1,36 @@
 
 Software/OS:
 
-	* add a vfs_create function, as well as a syscall for it
+	* implement signals
+
 	* add mounting of filesystems, and root node stuff, so you can remove the special case in vfs.c
-
+	* implement bitmap allocator for use with minix (zones/inodes)   (a page allocator kind of needs to allocate adjacent pages, at least atm without a mm)
 	* implement generic cache and use it in blockcache and minixfs
+	* what is needed to implement a 'ps' command in userspace? pstat()
+	* make a block cache/buf cache (read the unix design book for more info)
+	* make a block driver interface, or should you use a char driver like freebsd does
+	* make a set of standardized commands, and command line parsing in sh.c
+	* add commands: cat, ps, mv, kill, cp, mkdir, rmdir, pwd, cd
 
 
+	* should you make a lib subdir, and put unistd at the top?
 	* move as much inline assembly, from headers especially, into a redirectable asm directory
-
-	* after sending the hello program and exec'ing it, it returns 1 when it should return 0
-
+	* move the queue and circular buffer code to common include files somewhere (src/utils/? src/shared/?)
 	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 	* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
 	  (ie. store the last allocated fd, but it has to be in the process struct)
-	* what is needed to implement a 'ps' command in userspace? pstat()
 
-
-	* a page allocator, to replace the use of malloc for allocating the program space
-	* once you have mallocfs able to allocate multiple blocks with a block table stored in the vnode/in allocated blocks, and you have a block allocator algorithm for page
-	  allocation, you should be able to implement a minixfs minimally using a mocked interface to a block cache and block driver
-	* make a block driver interface
-	* make a block cache/buf cache (read the unix design book for more info)
-
-	* should you make a lib subdir, and put unistd at the top?
 
 	* syscalls to implement: kill, signals, getpid, mount/umount, rename, dup, chdir, chmod, chown, access, getuid/setuid, alarm, pause, time
-	* add O_TRUNC
 	* add file permissions checks, and uid checks
 	* add current working directory info.  Is that stored in the process?  Do you have to do string concat or can you pass 2 arguments to the vfs entry funcs
+	* sort out process groups, and which process gets input
 
 
 
 	* add brk/sbrk/stack guard protection
-	* move the queue and circular buffer code to common include files somewhere (src/utils/? src/shared/?)
 	* a slab allocator would maybe help, but I don't think it's as important at the moment
+	* a page allocator, to replace the use of malloc for allocating the program space??
 
 	* there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
 	* can you make the kernel relocatable again?

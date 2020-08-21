@@ -20,13 +20,14 @@ void init_fileptr_table()
 	}
 }
 
-struct vfile *new_fileptr(struct vnode *vnode)
+struct vfile *new_fileptr(struct vnode *vnode, int flags)
 {
 	for (char i = 0; i < FILE_TABLE_MAX; i++) {
 		if (!file_table[i].vnode) {
 			file_table[i].vnode = vnode;
 			file_table[i].position = 0;
 			file_table[i].refcount = 1;
+			file_table[i].flags = flags;
 			return &file_table[i];
 		}
 	}

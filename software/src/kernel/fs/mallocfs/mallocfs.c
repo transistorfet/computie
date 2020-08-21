@@ -31,6 +31,7 @@ struct vnode_ops mallocfs_vnode_ops = {
 	mallocfs_mknod,
 	mallocfs_lookup,
 	mallocfs_unlink,
+	mallocfs_truncate,
 	mallocfs_release,
 };
 
@@ -155,19 +156,21 @@ int mallocfs_unlink(struct vnode *parent, struct vnode *vnode)
 		return ENOENT;
 
 	dir->vnode = NULL;
+	// TODO should this be moved into vfs.c
 	vfs_release_vnode(vnode);
+}
+
+int mallocfs_truncate(struct vnode *vnode)
+{
+	zone_free_all(vnode);
+	vnode->size = 0;
+	return 0;
 }
 
 int mallocfs_release(struct vnode *vnode)
 {
-	struct zone_iter iter;
-	struct mallocfs_block *zone;
-
-	zone_iter_start(&iter);
-	while ((zone = zone_iter_next(&iter, MALLOCFS_DATA(vnode).zones))) {
-		if (zone)
-			free(zone);
-	}
+	zone_free_all(vnode);
+	return 0;
 }
 
 

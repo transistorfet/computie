@@ -25,6 +25,11 @@ int nop_unlink(struct vnode *parent, struct vnode *vnode)
 	return EPERM;
 }
 
+int nop_truncate(struct vnode *vnode)
+{
+	return 0;
+}
+
 int nop_release(struct vnode *vnode)
 {
 	return 0;

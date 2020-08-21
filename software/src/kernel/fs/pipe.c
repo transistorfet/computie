@@ -32,6 +32,7 @@ struct vnode_ops pipe_vnode_ops = {
 	nop_mknod,
 	nop_lookup,
 	nop_unlink,
+	nop_truncate,
 	pipe_release,
 };
 
@@ -61,12 +62,12 @@ int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile)
 
 	// TODO can I allocate these before I create the vnode/inode?
 	// Allocate two file pointers
-	*rfile = new_fileptr(vnode);
+	*rfile = new_fileptr(vnode, 0);
 	if (!*rfile) {
 		free(vnode);
 		return ENFILE;
 	}
-	*wfile = new_fileptr(vnode);
+	*wfile = new_fileptr(vnode, 0);
 	if (!*wfile) {
 		free(vnode);
 		free_fileptr(*rfile);

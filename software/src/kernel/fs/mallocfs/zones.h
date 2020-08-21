@@ -76,5 +76,21 @@ static struct mallocfs_block *zone_lookup(struct vnode *vnode, mallocfs_zone_t z
 	return *zone;
 }
 
+static struct mallocfs_block *zone_free_all(struct vnode *vnode)
+{
+	struct zone_iter iter;
+	struct mallocfs_block *zone;
+
+	zone_iter_start(&iter);
+	while ((zone = zone_iter_next(&iter, MALLOCFS_DATA(vnode).zones))) {
+		if (zone)
+			MFS_FREE_BLOCK(zone);
+	}
+
+	for (char i = MALLOCFS_TIER1_ZONES; i < MALLOCFS_TOTAL_ZONES; i++) {
+		if (MALLOCFS_DATA(vnode).zones[i])
+			MFS_FREE_BLOCK(MALLOCFS_DATA(vnode).zones[i]);
+	}
+}
 
 #endif

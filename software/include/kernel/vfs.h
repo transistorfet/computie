@@ -30,6 +30,7 @@ struct vdir;
 struct mount_ops {
 	int (*mount)(struct mount *mp);				// Mount the filesystem using the pre-allocated struct mount
 	int (*umount)(struct mount *mp);			// Unmount the filesystem
+	int (*root)(struct mount *mp, struct vnode **result);	// Get the root vnode
 	int (*sync)(struct mount *mp);				// Sync data to disk
 };
 
@@ -41,11 +42,12 @@ struct vnode_ops {
 	int (*mknod)(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result);
 	int (*lookup)(struct vnode *vnode, const char *filename, struct vnode **result);
 	int (*unlink)(struct vnode *parent, struct vnode *vnode);
+	//rename
 	//mkdir (or can it be done through create)
 	//rmdir (or can it be done through unlink)
-	//rename
 	//link
-	int (*release)(struct vnode *vnode);
+	int (*truncate)(struct vnode *vnode);			// Truncate the file data (size should be 0 after)
+	int (*release)(struct vnode *vnode);			// Release the vnode
 };
 
 // TODO should you just integrate this with the vnode ops
@@ -82,7 +84,7 @@ struct vnode {
 struct vfile {
 	struct vnode *vnode;
 	int refcount;
-	//int flags;
+	int flags;
 	offset_t position;
 };
 

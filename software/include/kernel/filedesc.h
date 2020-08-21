@@ -9,7 +9,7 @@
 typedef struct vfile *fd_table_t[OPEN_MAX];
 
 void init_fileptr_table();
-struct vfile *new_fileptr(struct vnode *vnode);
+struct vfile *new_fileptr(struct vnode *vnode, int flags);
 struct vfile *dup_fileptr(struct vfile *file);
 void free_fileptr(struct vfile *file);
 

@@ -6,6 +6,7 @@ int nop_create(struct vnode *vnode, const char *filename, mode_t mode, struct vn
 int nop_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, struct vnode **result);
 int nop_lookup(struct vnode *vnode, const char *name, struct vnode **result);
 int nop_unlink(struct vnode *parent, struct vnode *vnode);
+int nop_truncate(struct vnode *vnode);
 int nop_release(struct vnode *vnode);
 
 int nop_open(struct vfile *file, int flags);

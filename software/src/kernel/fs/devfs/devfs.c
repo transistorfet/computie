@@ -8,6 +8,7 @@
 #include <kernel/driver.h>
  
 #include "devfs.h"
+#include "../nop.h"
 
 struct vfile_ops devfs_vfile_ops = {
 	devfs_open,
@@ -23,6 +24,7 @@ struct vnode_ops devfs_vnode_ops = {
 	NULL,
 	devfs_mknod,
 	devfs_lookup,
+	nop_truncate,
 	devfs_release,
 };
 

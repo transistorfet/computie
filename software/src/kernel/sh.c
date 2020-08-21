@@ -29,7 +29,13 @@ int readline(char *buffer, short max)
 			printf("Input error: %d\n", ret);
 		}
 		else if (buffer[i] == 0x08) {
-			i -= 2;
+			putchar(' ');
+			if (i >= 2) {
+				i -= 2;
+				putchar(0x08);
+			}
+			else
+				i = 0;
 		}
 		else if (buffer[i] == '\n') {
 			buffer[i] = '\0';

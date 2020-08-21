@@ -35,6 +35,7 @@ int vfs_sync(struct mount *mp);
 int vfs_create(const char *path, mode_t mode, struct vnode **result)
 {
 	int error;
+	struct vnode *tmp;
 	struct vnode *vnode;
 
 	error = vfs_lookup(path, VLOOKUP_PARENT_OF, &vnode);
@@ -42,12 +43,19 @@ int vfs_create(const char *path, mode_t mode, struct vnode **result)
 		return error;
 
 	const char *filename = path_last_component(path);
+	error = vnode->ops->lookup(vnode, filename, &tmp);
+	if (error == 0)
+		return EEXIST;
+	else if (error != ENOENT)
+		return error;
+
 	return vnode->ops->create(vnode, filename, mode, result);
 }
 
 int vfs_mknod(const char *path, mode_t mode, device_t dev, struct vnode **result)
 {
 	int error;
+	struct vnode *tmp;
 	struct vnode *vnode;
 
 	error = vfs_lookup(path, VLOOKUP_PARENT_OF, &vnode);
@@ -55,6 +63,12 @@ int vfs_mknod(const char *path, mode_t mode, device_t dev, struct vnode **result
 		return error;
 
 	const char *filename = path_last_component(path);
+	error = vnode->ops->lookup(vnode, filename, &tmp);
+	if (error == 0)
+		return EEXIST;
+	else if (error != ENOENT)
+		return error;
+
 	return vnode->ops->mknod(vnode, filename, mode, dev, result);
 }
 
@@ -145,11 +159,14 @@ int vfs_open(const char *path, int flags, struct vfile **file)
 
 	// TODO check permissions before opening
 
-	*file = new_fileptr(vnode);
+	*file = new_fileptr(vnode, flags);
 	if (!*file)
 		return EMFILE;
 	// TODO this probably should be somewhere else
 	vnode->refcount++;
+
+	if (flags & O_TRUNC)
+		vnode->ops->truncate(vnode);
 
 	if (flags & O_APPEND)
 		(*file)->position = (*file)->vnode->size;
@@ -162,6 +179,7 @@ int vfs_open(const char *path, int flags, struct vfile **file)
 
 int vfs_close(struct vfile *file)
 {
+	file->vnode->refcount--;
 	return file->vnode->ops->fops->close(file);
 }
 

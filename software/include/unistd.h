@@ -5,6 +5,10 @@
 #include <stddef.h>
 #include <sys/types.h>
 
+#define	STDIN_FILENO	0	// Standard input
+#define	STDOUT_FILENO	1	// Standard output
+#define	STDERR_FILENO	2	// Standard error
+
 // WHENCE argument to lseek
 #ifndef	STDIO_H			// These same definitions are in stdio.h for fseek
 #define SEEK_SET	0	// Seek relative to the beginning of file

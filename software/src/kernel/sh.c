@@ -12,6 +12,13 @@
 #include <kernel/syscall.h>
 
 
+#define RAM_ADDR	0x100000
+#define RAM_SIZE	1024
+
+#define ROM_ADDR	0x200000
+#define ROM_SIZE	0x1400
+
+
 void delay(short count) {
 	while (--count > 0) { }
 }
@@ -75,23 +82,30 @@ char hexchar(uint8_t byte)
 		return byte + 0x37;
 }
 
-void dump(const uint16_t *addr, short len)
+void dump_line(const uint16_t *addr, short len)
 {
 	char buffer[6];
 
 	buffer[4] = ' ';
 	buffer[5] = '\0';
+
+	for (short i = 0; i < 8 && len > 0; i++, len--) {
+		buffer[0] = hexchar((addr[i] >> 12) & 0xF);
+		buffer[1] = hexchar((addr[i] >> 8) & 0xF);
+		buffer[2] = hexchar((addr[i] >> 4) & 0xF);
+		buffer[3] = hexchar(addr[i] & 0x0F);
+		putsn(buffer);
+	}
+	putchar('\n');
+}
+
+void dump(const uint16_t *addr, short len)
+{
 	while (len > 0) {
-		printf("%x: ", addr);
-		for (short i = 0; i < 8 && len > 0; i++, len--) {
-			buffer[0] = hexchar((addr[i] >> 12) & 0xF);
-			buffer[1] = hexchar((addr[i] >> 8) & 0xF);
-			buffer[2] = hexchar((addr[i] >> 4) & 0xF);
-			buffer[3] = hexchar(addr[i] & 0x0F);
-			putsn(buffer);
-		}
-		putchar('\n');
+		printf("%06x: ", addr);
+		dump_line(addr, len > 8 ? 8 : len);
 		addr += 8;
+		len -= 8;
 	}
 	putchar('\n');
 }
@@ -126,12 +140,6 @@ void info()
 	return;
 }
 
-#define RAM_ADDR	0x100000
-#define RAM_SIZE	1024
-
-#define ROM_ADDR	0x200000
-#define ROM_SIZE	0x1400
-
 void writerom()
 {
 	uint16_t data;
@@ -148,82 +156,9 @@ void writerom()
 	printf("\nWrite complete");
 }
 
-uint16_t *program_mem = NULL;
-
-uint16_t fetch_word()
-{
-	char buffer[4];
-
-	for (char i = 0; i < 4; i++) {
-		buffer[i] = getchar();
-		buffer[i] = buffer[i] <= '9' ? buffer[i] - 0x30 : buffer[i] - 0x37;
-	}
-
-	return (buffer[0] << 12) | (buffer[1] << 8) | (buffer[2] << 4) | buffer[3];
-}
-
-void send_file(const char *name)
-{
-	int fd;
-	uint16_t size;
-	uint16_t data;
-
-	printf("Loading file %s\n", name);
-
-	if ((fd = open(name, O_CREAT | O_WRONLY)) < 0) {
-		printf("Error opening %s: %d\n", name, fd);
-		return;
-	}
-
-	size = fetch_word();
-	size >>= 1;
-	//printf("Expecting %x\n", size);
-
-	for (short i = 0; i < size; i++) {
-		data = fetch_word();
-		//printf("%x ", data);
-		//mem[i] = data;
-		write(fd, (char *) &data, 2);
-	}
-
-	close(fd);
-
-	puts("Load complete");
-}
-
-#define DUMP_BUF_SIZE	0x20
-
-void dump_file(const char *name)
-{
-	int fd;
-	int result;
-	char buffer[DUMP_BUF_SIZE];
-
-	if ((fd = open(name, O_RDONLY)) < 0) {
-		printf("Error opening %s: %d\n", name, fd);
-		return;
-	}
 
 
-	while (1) {
-		result = read(fd, buffer, DUMP_BUF_SIZE);
-		if (result == 0)
-			break;
-
-		if (result < 0) {
-			printf("Error while reading: %d\n", result);
-			return;
-		}
-
-		dump((uint16_t *) &buffer, result >> 1);
-	}
-
-	close(fd);
-}
-
-
-
-void sh_fork()
+void test_fork()
 {
 	//int pid = SYSCALL1(SYS_FORK, 0);
 	int pid = fork();
@@ -240,104 +175,7 @@ void sh_fork()
 		exit(1337);
 	}
 }
-
-const char *file_permissions = "-rwxrwxrwx";
-
-void format_file_mode(mode_t mode, char *buffer)
-{
-	mode_t curbit = 0400;
-
-	strcpy(buffer, file_permissions);
-
-	if (mode & S_IFDIR)
-		buffer[0] = 'd';
-
-	for (char i = 1; i <= 10; i++) {
-		if (!(mode & curbit))
-			buffer[i] = '-';
-		curbit >>= 1;
-	}
-}
-
-void ls(char *path)
-{
-	int fd;
-	int error;
-	struct vdir dir;
-	struct vfile *file;
-	struct stat statbuf;
-	char filename[100];
-	char filemode[10];
-
-	if ((fd = open(path, 0)) < 0) {
-		printf("Error opening %s: %d\n", path, fd);
-		return;
-	}
-
-	int start = strlen(path) - 1;
-	strcpy(filename, path);
-	if (filename[start] != '/')
-		filename[++start] = '/';
-	start++;
-
-	while (1) {
-		error = readdir(fd, &dir);
-		if (error < 0) {
-			printf("Error at readdir %d\n", error);
-			return;
-		}
-
-		if (error == 0)
-			break;
-
-		strcpy(&filename[start], dir.name);
-		error = stat(filename, &statbuf);
-		if (error < 0) {
-			printf("Error at stat %s (%d)\n", filename, error);
-			return;
-		}
-
-		format_file_mode(statbuf.st_mode, filemode);
-		printf("%s %6d %s\n", filemode, statbuf.st_size, dir.name);
-	}
-
-	close(fd);
-}
-
-
-void command_unlink(char *path)
-{
-	int error = unlink(path);
-	if (error < 0) {
-		printf("Error while unlinking %s: %d\n", path, error);
-	}
-}
-
-
-
-void command_exec(char *path)
-{
-	int pid, status;
-	char *argv[2] = { "an arg", NULL };
-	char *envp[2] = { NULL };
-
- 	pid = fork();
-	if (pid) {
-		printf("The child's pid is %d\n", pid);
-		// TODO this is the correct way, but I've commented it out because it caught a bug where fork was called before assigning the values to argv, and by that time
-		//	the parent has exited this function and is blocking on a read.  Would switching which proc gets run first after a fork have an affect on this?
-		wait(&status);
-		printf("The child exited with %d\n", status);
-	}
-	else {
-		status = exec(path, argv, envp);
-		// The exec() system call will only return if an error occurs
-		printf("Failed to execute %s: %d\n", path, status);
-		exit(-1);
-	}
-}
-
-void sh_pipe()
+void test_pipe()
 {
 	int error;
 	int pipes[2];
@@ -372,7 +210,7 @@ void sh_pipe()
 	return;
 }
 
-void sh_forkpipe()
+void test_forkpipe()
 {
 	int pid;
 	int error;
@@ -421,8 +259,296 @@ void sh_forkpipe()
 
 
 
+
+uint16_t *program_mem = NULL;
+
+uint16_t fetch_word()
+{
+	char buffer[4];
+
+	for (char i = 0; i < 4; i++) {
+		buffer[i] = getchar();
+		buffer[i] = buffer[i] <= '9' ? buffer[i] - 0x30 : buffer[i] - 0x37;
+	}
+
+	return (buffer[0] << 12) | (buffer[1] << 8) | (buffer[2] << 4) | buffer[3];
+}
+
+
+int command_send(int argc, char **argv)
+{
+	int fd;
+	uint16_t size;
+	uint16_t data;
+
+	if (argc <= 1) {
+		puts("You need file name");
+		return -1;
+	}
+
+	printf("Loading file %s\n", argv[1]);
+
+	if ((fd = open(argv[1], O_CREAT | O_WRONLY)) < 0) {
+		printf("Error opening %s: %d\n", argv[1], fd);
+		return fd;
+	}
+
+	size = fetch_word();
+	size >>= 1;
+	//printf("Expecting %x\n", size);
+
+	for (short i = 0; i < size; i++) {
+		data = fetch_word();
+		//printf("%x ", data);
+		//mem[i] = data;
+		write(fd, (char *) &data, 2);
+	}
+
+	close(fd);
+
+	puts("Load complete");
+
+	return 0;
+}
+
+int command_echo(int argc, char **argv)
+{
+	printf("%s\n", argv[1]);
+	return 0;
+}
+
+
+#define DUMP_BUF_SIZE	0x10
+
+int command_hex(int argc, char **argv)
+{
+	int fd;
+	int result;
+	int pos = 0;
+	char buffer[DUMP_BUF_SIZE];
+
+	if (argc <= 1) {
+		puts("You need file name");
+		return -1;
+	}
+
+	if ((fd = open(argv[1], O_RDONLY)) < 0) {
+		printf("Error opening %s: %d\n", argv[1], fd);
+		return fd;
+	}
+
+
+	while (1) {
+		result = read(fd, buffer, DUMP_BUF_SIZE);
+		if (result == 0)
+			break;
+
+		if (result < 0) {
+			printf("Error while reading: %d\n", result);
+			return result;
+		}
+
+		printf("%04x: ", pos);
+		pos += result;
+		dump_line(buffer, result >> 1);
+
+	}
+
+	putchar('\n');
+
+	close(fd);
+
+	return 0;
+}
+
+int command_cat(int argc, char **argv)
+{
+	int fd;
+	int result;
+	char buffer[DUMP_BUF_SIZE];
+
+	if (argc <= 1) {
+		puts("You need file name");
+		return -1;
+	}
+
+	if ((fd = open(argv[1], O_RDONLY)) < 0) {
+		printf("Error opening %s: %d\n", argv[1], fd);
+		return fd;
+	}
+
+	while (1) {
+		result = read(fd, buffer, DUMP_BUF_SIZE);
+		if (result == 0)
+			break;
+
+		if (result < 0) {
+			printf("Error while reading: %d\n", result);
+			return result;
+		}
+
+		write(STDOUT_FILENO, buffer, result);
+	}
+
+	putchar('\n');
+
+	close(fd);
+
+	return 0;
+}
+
+const char *file_permissions = "-rwxrwxrwx";
+
+void format_file_mode(mode_t mode, char *buffer)
+{
+	mode_t curbit = 0400;
+
+	strcpy(buffer, file_permissions);
+
+	if (mode & S_IFDIR)
+		buffer[0] = 'd';
+
+	for (char i = 1; i <= 10; i++) {
+		if (!(mode & curbit))
+			buffer[i] = '-';
+		curbit >>= 1;
+	}
+}
+
+int command_ls(int argc, char **argv)
+{
+	int fd;
+	int error;
+	struct vdir dir;
+	struct vfile *file;
+	struct stat statbuf;
+	char filename[100];
+	char filemode[10];
+
+	char *path = argc > 1 ? argv[1] : "/";
+
+	if ((fd = open(path, 0)) < 0) {
+		printf("Error opening %s: %d\n", path, fd);
+		return fd;
+	}
+
+	int start = strlen(path) - 1;
+	strcpy(filename, path);
+	if (filename[start] != '/')
+		filename[++start] = '/';
+	start++;
+
+	while (1) {
+		error = readdir(fd, &dir);
+		if (error < 0) {
+			printf("Error at readdir %d\n", error);
+			return error;
+		}
+
+		if (error == 0)
+			break;
+
+		if (dir.name[0] != '.') {
+			strcpy(&filename[start], dir.name);
+			error = stat(filename, &statbuf);
+			if (error < 0) {
+				printf("Error at stat %s (%d)\n", filename, error);
+				return error;
+			}
+
+			format_file_mode(statbuf.st_mode, filemode);
+			printf("%s %6d %s\n", filemode, statbuf.st_size, dir.name);
+		}
+	}
+
+	close(fd);
+
+	return 0;
+}
+
+
+int command_rm(int argc, char **argv)
+{
+	if (argc <= 1) {
+		puts("You need file name");
+		return -1;
+	}
+
+	int error = unlink(argv[1]);
+	if (error < 0) {
+		printf("Error while unlinking %s: %d\n", argv[1], error);
+	}
+
+	return 0;
+}
+
+
+
+int command_exec(int argc, char **argv)
+{
+	int pid, status;
+	char *argv2[2] = { "an arg", NULL };
+	char *envp[2] = { NULL };
+
+	if (argc <= 1) {
+		puts("You need file name");
+		return -1;
+	}
+
+ 	pid = fork();
+	if (pid) {
+		printf("The child's pid is %d\n", pid);
+		// TODO this is the correct way, but I've commented it out because it caught a bug where fork was called before assigning the values to argv, and by that time
+		//	the parent has exited this function and is blocking on a read.  Would switching which proc gets run first after a fork have an affect on this?
+		wait(&status);
+		printf("The child exited with %d\n", status);
+	}
+	else {
+		status = exec(argv[1], argv2, envp);
+		// The exec() system call will only return if an error occurs
+		printf("Failed to execute %s: %d\n", argv[1], status);
+		exit(-1);
+	}
+
+	return 0;
+}
+
+
+
+
+
 // In process.c
 extern void print_run_queue();
+
+struct command {
+	char *name;
+	int (*main)(int argc, char **argv);
+};
+
+struct command command_list[] = {
+	{ "send", 	command_send },
+	{ "echo", 	command_echo },
+	{ "hex", 	command_hex },
+	{ "cat", 	command_cat },
+	{ "ls", 	command_ls },
+	{ "rm", 	command_rm },
+	{ "exec", 	command_exec },
+	{ NULL },
+};
+
+void run_command(int argc, char **argv)
+{
+	for (short i = 0; command_list[i].name; i++) {
+		if (!strcmp(argv[0], command_list[i].name)) {
+			command_list[i].main(argc, argv);
+			return;
+		}
+	}
+
+	if (*argv[0]) {
+		puts("Command not found");
+	}
+}
 
 
 #define BUF_SIZE	100
@@ -442,17 +568,12 @@ void serial_read_loop()
 		if (!strcmp(args[0], "test")) {
 			puts("this is only a test");
 		}
+		else if (!strcmp(args[0], "exit")) {
+			// TODO this doesn't always work
+			return;
+		}
 		else if (!strcmp(args[0], "info")) {
 			info();
-		}
-		else if (!strcmp(args[0], "send")) {
-			if (argc <= 1)
-				puts("You need file name");
-			else
-				send_file(args[1]);
-		}
-		else if (!strcmp(args[0], "queue")) {
-			print_run_queue();
 		}
 		else if (!strcmp(args[0], "writerom")) {
 			writerom();
@@ -468,44 +589,23 @@ void serial_read_loop()
 				dump((const uint16_t *) strtol(args[1], NULL, 16), length);
 			}
 		}
-		else if (!strcmp(args[0], "exec")) {
-			if (argc <= 1)
-				puts("You need file name");
-			else {
-				command_exec(args[1]);
-			}
+		else if (!strcmp(args[0], "queue")) {
+			print_run_queue();
 		}
-		else if (!strcmp(args[0], "more")) {
-			if (argc <= 1)
-				puts("You need file name");
-			else {
-				dump_file(args[1]);
-			}
-		}
-		else if (!strcmp(args[0], "fork")) {
-			sh_fork();
-		}
-		else if (!strcmp(args[0], "ls")) {
-			ls(argc > 1 ? args[1] : "/");
-		}
-		else if (!strcmp(args[0], "rm")) {
-			if (argc <= 1)
-				puts("You need file name");
-			else {
-				command_unlink(args[1]);
-			}
-		}
+
+		// Tests
 		else if (!strcmp(args[0], "pipetest")) {
-			sh_pipe();
+			test_pipe();
 		}
 		else if (!strcmp(args[0], "forkpipe")) {
-			sh_forkpipe();
+			test_forkpipe();
 		}
-		else if (!strcmp(args[0], "exit")) {
-			return;
+		else if (!strcmp(args[0], "forktest")) {
+			test_fork();
 		}
-		else if (*args[0]) {
-			puts("Command not found");
+
+		else {
+			run_command(argc, args);
 		}
 	}
 }

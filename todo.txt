@@ -9,11 +9,12 @@ Software/OS:
 	* what is needed to implement a 'ps' command in userspace? pstat()
 	* make a block cache/buf cache (read the unix design book for more info)
 	* make a block driver interface, or should you use a char driver like freebsd does
-	* make a set of standardized commands, and command line parsing in sh.c
-	* add commands: cat, ps, mv, kill, cp, mkdir, rmdir, pwd, cd
+	* add commands: ps, mv, kill, cp, mkdir, rmdir, pwd, cd
+	* sort out process groups, and which process gets input
 
 
 	* should you make a lib subdir, and put unistd at the top?
+	* move the math functions in libc to arch/68k
 	* move as much inline assembly, from headers especially, into a redirectable asm directory
 	* move the queue and circular buffer code to common include files somewhere (src/utils/? src/shared/?)
 	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
@@ -21,10 +22,9 @@ Software/OS:
 	  (ie. store the last allocated fd, but it has to be in the process struct)
 
 
-	* syscalls to implement: kill, signals, getpid, mount/umount, rename, dup, chdir, chmod, chown, access, getuid/setuid, alarm, pause, time
+	* syscalls to implement: getpid, kill, signals, alarm, pause, mount/umount, rename, dup, chdir, chmod, chown, access, getuid/setuid, time
 	* add file permissions checks, and uid checks
 	* add current working directory info.  Is that stored in the process?  Do you have to do string concat or can you pass 2 arguments to the vfs entry funcs
-	* sort out process groups, and which process gets input
 
 
 
@@ -34,7 +34,7 @@ Software/OS:
 
 	* there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
 	* can you make the kernel relocatable again?
-	* rewrite the math functions to use fewer registers (this ain't a risc processor)
+	* rewrite the math functions to use fewer registers
 	* you need some tests, but ideally it would use a simple emulator.  Maybe easy68k or something could be used
 
 	* can you have an debugger in the monitor software?  There are trap and breakpoint instructions in the processor for debugging, so if you define an interrupt handler
@@ -43,11 +43,7 @@ Software/OS:
 
 68k Single Board Computer:
 
-	* fix the heatsink
 	* maybe extra power pins?
-	* need labels next to all pins
-
-
 	* the serial issue turns out to be a problem with the crystal for the serial chip.  It is outputting an inconsistent signal around 100kHz when powered through
 	  USB or power supply.  When powered by the arduino, you have to unplug and replug the serial usb cable to make it work, which seems to reset the oscillator.
 	  Connecting a 22pF capacitor across the crystal jumpstarts it, but the output is a lot lower on the scope with it connected.  The datasheet says to use 15 and 5pF

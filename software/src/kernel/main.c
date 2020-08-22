@@ -115,7 +115,24 @@ struct process *run_sh()
 
 	current_proc = proc;
 
+	// Open stdin
 	int fd = do_open("tty", 0);
+	if (fd < 0) {
+		printk("Error opening file tty %d\n", error);
+		return NULL;
+	}
+	printk("FD: %d\n", fd);
+
+	// Open stdout
+	fd = do_open("tty", 0);
+	if (fd < 0) {
+		printk("Error opening file tty %d\n", error);
+		return NULL;
+	}
+	printk("FD: %d\n", fd);
+
+	// Open stderr
+	fd = do_open("tty", 0);
 	if (fd < 0) {
 		printk("Error opening file tty %d\n", error);
 		return NULL;

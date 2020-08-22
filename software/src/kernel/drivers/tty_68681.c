@@ -9,7 +9,7 @@
 
 #include "../process.h"
 #include "../interrupts.h"
-#include "../circlebuf.h"
+#include "../misc/circlebuf.h"
 
 
 // Driver Definition

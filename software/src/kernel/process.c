@@ -7,9 +7,9 @@
 #include <kernel/filedesc.h>
 
 #include "api.h"
-#include "queue.h"
 #include "process.h"
 #include "interrupts.h"
+#include "misc/queue.h"
 
 
 // Info for Current Running Process (accessed by syscall interface)

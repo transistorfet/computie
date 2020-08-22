@@ -6,7 +6,7 @@
 #include <kernel/filedesc.h>
 #include <kernel/syscall.h>
 
-#include "queue.h"
+#include "misc/queue.h"
 
 #define	NUM_SEGMENTS	2
 

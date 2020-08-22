@@ -1,6 +1,6 @@
 
-#ifndef _SRC_KERNEL_QUEUE_H
-#define _SRC_KERNEL_QUEUE_H
+#ifndef _SRC_KERNEL_MISC_QUEUE_H
+#define _SRC_KERNEL_MISC_QUEUE_H
 
 #include <stddef.h>
 

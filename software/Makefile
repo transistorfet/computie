@@ -38,6 +38,7 @@ KERNEL_OBJS = \
 	src/kernel/fs/mallocfs/mallocfs.o \
 	src/kernel/fs/mallocfs/alloc.o \
 	src/kernel/fs/minix/minix.o \
+	src/kernel/fs/minix/bitmaps.o \
 	src/kernel/drivers/tty_68681.o \
 	src/kernel/sh.o \
 	libc-68k-os.a

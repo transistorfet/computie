@@ -20,9 +20,8 @@
 extern void sh_task();
 
 
-extern void init_syscall();
-extern void init_vnode();
 extern void init_mallocfs();
+extern void init_minix();
 
 extern struct driver tty_68681_driver;
 extern struct vnode_ops mallocfs_vnode_ops;
@@ -174,13 +173,15 @@ int main()
 	init_syscall();
 	init_proc();
 
-	init_fileptr_table();
+	init_vfs();
 	init_mallocfs();
 
 	// Initialize drivers
 	for (char i = 0; drivers[i]; i++) {
 		drivers[i]->init();
 	}
+
+	//init_minix();
 
 	struct process *task = run_task();
 	run_sh();

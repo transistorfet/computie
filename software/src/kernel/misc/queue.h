@@ -21,6 +21,12 @@ static inline void _queue_init(struct queue *queue)
 	queue->tail = NULL;
 }
 
+static inline void _queue_node_init(struct queue_node *node)
+{
+	node->next = NULL;
+	node->prev = NULL;
+}
+
 static inline void _queue_insert(struct queue *queue, struct queue_node *node)
 {
 	if (queue->head)

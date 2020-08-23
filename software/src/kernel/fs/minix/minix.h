@@ -4,8 +4,16 @@
 
 #include <stdint.h>
 
+#define MINIX_ZONE_SIZE		1024
+
+#define MINIX_BOOT_ZONE		0
+#define MINIX_SUPER_ZONE	1
+#define MINIX_BITMAP_ZONES	2
+
 #define MINIX_INODE_ZONES	9
 #define MINIX_MAX_FILENAME	14
+
+typedef uint16_t minix_zone_t;
 
 struct minix_superblock {
 	uint16_t num_inodes;

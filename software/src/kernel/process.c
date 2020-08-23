@@ -53,8 +53,7 @@ struct process *new_proc()
 			table[i].pid = next_pid++;
 			table[i].parent = current_proc ? current_proc->pid : 1;
 			table[i].state = PS_READY;
-			table[i].node.next = NULL;
-			table[i].node.prev = NULL;
+			_queue_node_init(&table[i].node);
 
 			init_fd_table(table[i].fd_table);
 

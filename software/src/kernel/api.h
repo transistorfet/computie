@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-extern void init_syscall();
+void init_syscall();
 void do_syscall();
 
 // Processes

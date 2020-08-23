@@ -6,6 +6,7 @@
 #include <kernel/printk.h>
 #include <kernel/filedesc.h>
 
+#include "bufcache.h"
 
 // TODO this will be removed when you add fs mounting
 #include "mallocfs/mallocfs.h"
@@ -23,6 +24,9 @@ int init_vfs()
 		// TODO this isn't a proper way of determining use
 		mountpoints[i].ops = NULL;
 	}
+
+	init_bufcache();
+	init_fileptr_table();
 }
 
 

@@ -350,7 +350,7 @@ int command_hex(int argc, char **argv)
 
 		printf("%04x: ", pos);
 		pos += result;
-		dump_line(buffer, result >> 1);
+		dump_line((uint16_t *) buffer, result >> 1);
 
 	}
 
@@ -611,6 +611,7 @@ void serial_read_loop()
 }
 
 
+#include <kernel/printk.h>
 
 void file_test()
 {
@@ -729,6 +730,7 @@ int sh_task()
 	file_test();
 	dir_test();
 
+	init_minix();
 
 	// Allocate memory for loading a processess
 	program_mem = malloc(0x1000);

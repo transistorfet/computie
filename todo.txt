@@ -1,6 +1,8 @@
 
 Software/OS:
 
+	* do you need to add variable sizes into bufcache?
+
 	* implement signals
 
 	* add mounting of filesystems, and root node stuff, so you can remove the special case in vfs.c

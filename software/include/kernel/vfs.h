@@ -96,6 +96,7 @@ struct vdir {
 #define VLOOKUP_NORMAL		0000
 #define VLOOKUP_PARENT_OF	0001
 
+int init_vfs();
 
 int vfs_mount(struct mount *mp);
 int vfs_umount(struct mount *mp);

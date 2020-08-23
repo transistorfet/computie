@@ -22,7 +22,7 @@ struct buf {
 void init_bufcache();
 void sync_bufcache();
 struct buf *get_block(device_t dev, block_t num);
-int release_block(struct buf *buf);
+int release_block(struct buf *buf, short dirty);
 void mark_block_dirty(struct buf *buf);
 
 #endif

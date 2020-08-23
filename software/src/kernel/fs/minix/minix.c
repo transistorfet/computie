@@ -22,8 +22,8 @@ int init_minix()
 	super = (struct minix_superblock *) super_buf->block;
 
 	// TODO we assume this is not a disk yet, so manually initialize it
-	super->num_inodes = 40;
-	super->num_zones = 64;
+	super->num_inodes = 0x40;
+	super->num_zones = 0x64;
 	super->imap_blocks = 1;
 	super->zmap_blocks = 1;
 	super->first_zone = 6;
@@ -34,19 +34,16 @@ int init_minix()
 
 	mark_block_dirty(super_buf);
 
-
-	// Zero the bitmap zones to start
-	for (short i = MINIX_BITMAP_ZONES; i < MINIX_BITMAP_ZONES + super->imap_blocks + super->zmap_blocks; i++) {
-		struct buf *buf = get_block(dev, i);
-		char *block = buf->block;
-		memset_s(block, '\0', MINIX_ZONE_SIZE);
-		mark_block_dirty(buf);
-	}
+	// Initialize bitmap zones
+	bitmap_init(dev, MINIX_BITMAP_ZONES, super->imap_blocks, super->num_inodes, 1);
+	bitmap_init(dev, MINIX_BITMAP_ZONES + super->imap_blocks, super->zmap_blocks, super->num_zones, super->first_zone);
 
 
 	int zone;
-	for (int i = 0; i < 20; i++)
-		zone = bit_alloc(dev, MINIX_BITMAP_ZONES, super->imap_blocks, 0);
+	for (int i = 0; i < 102; i++) {
+		zone = bit_alloc(dev, MINIX_BITMAP_ZONES + super->imap_blocks, super->zmap_blocks, 0);
+		printk("Alloced %d\n", zone);
+	}
 
 	bit_free(dev, MINIX_BITMAP_ZONES, 19);
 	bit_free(dev, MINIX_BITMAP_ZONES, 52);

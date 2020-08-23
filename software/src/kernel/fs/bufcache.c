@@ -55,6 +55,8 @@ struct buf *get_block(device_t dev, block_t num)
 
 	for (cur = (struct buf *) cache.head; cur; cur = (struct buf *) cur->node.next) {
 		if (cur->flags & BCF_ALLOCATED && cur->dev == dev && cur->num == num) {
+			cur->refcount++;
+
 			// Move to the front of the cache list
 			_queue_remove(&cache, &cur->node);
 			_queue_insert(&cache, &cur->node);
@@ -65,12 +67,19 @@ struct buf *get_block(device_t dev, block_t num)
 	return _load_block(dev, num);
 }
 
-int release_block(struct buf *buf)
+int release_block(struct buf *buf, short dirty)
 {
-	if (--buf->refcount == 0)
-		_write_entry(buf);
-	else if (buf->refcount < 0)
+	if (dirty)
+		mark_block_dirty(buf);
+
+	if (--buf->refcount == 0) {
+		// TODO we actually maybe don't want to write until this entry is recycled, or else any bit changes will require an immediate writeback
+		//_write_entry(buf);
+	}
+	else if (buf->refcount < 0) {
+		buf->refcount = 0;
 		printk("Error: possible double free for block %d:%d\n", buf->dev, buf->num);
+	}
 }
 
 void mark_block_dirty(struct buf *buf)

@@ -6,10 +6,8 @@ Software/OS:
 	* implement signals
 
 	* add mounting of filesystems, and root node stuff, so you can remove the special case in vfs.c
-	* implement bitmap allocator for use with minix (zones/inodes)   (a page allocator kind of needs to allocate adjacent pages, at least atm without a mm)
 	* implement generic cache and use it in blockcache and minixfs
 	* what is needed to implement a 'ps' command in userspace? pstat()
-	* make a block cache/buf cache (read the unix design book for more info)
 	* make a block driver interface, or should you use a char driver like freebsd does
 	* add commands: ps, mv, kill, cp, mkdir, rmdir, pwd, cd
 	* sort out process groups, and which process gets input

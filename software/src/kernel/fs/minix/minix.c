@@ -8,7 +8,7 @@
 #include "../bufcache.h"
 
 
-struct minix_superblock *super;
+struct minix_v1_superblock *super;
 
 
 int init_minix()

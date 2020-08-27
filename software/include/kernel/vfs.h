@@ -71,6 +71,7 @@ struct mount {
 struct vnode {
 	struct vnode_ops *ops;
 	uint16_t refcount;
+	struct mount *mounted;		// TODO what do you think about this? not sure
 
 	mode_t mode;
 	uid_t uid;

@@ -52,7 +52,7 @@ Revision 2
 ----------
 
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev2/SBC.jpg "68k-SBC Rev. 2")
-![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev2/ArduinoShield.jpg "Supervisor Arduino Shield")
+![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev2/ArduinoShield.jpg "Supervisor Arduino Shield" =300x)
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev2/SBC-running.jpg "68k-SBC Running")
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev2/PCBs.jpg "68k-SBC PCBs")
 

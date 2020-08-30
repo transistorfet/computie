@@ -1,5 +1,5 @@
 
-Software/OS:
+Operating System:
 
 	* do you need to add variable sizes into bufcache?
 
@@ -26,16 +26,20 @@ Software/OS:
 	* add file permissions checks, and uid checks
 	* add current working directory info.  Is that stored in the process?  Do you have to do string concat or can you pass 2 arguments to the vfs entry funcs
 
-
-
 	* add brk/sbrk/stack guard protection
 	* a slab allocator would maybe help, but I don't think it's as important at the moment
 	* a page allocator, to replace the use of malloc for allocating the program space??
 
-	* there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
 	* can you make the kernel relocatable again?
 	* rewrite the math functions to use fewer registers
 	* you need some tests, but ideally it would use a simple emulator.  Maybe easy68k or something could be used
+
+
+Monitor:
+	* add a help command to print out what commands are available
+	* maybe refactor it to use a list of function pointers and names for the command list, like how you've done in sh.c
+
+	* there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
 
 	* can you have an debugger in the monitor software?  There are trap and breakpoint instructions in the processor for debugging, so if you define an interrupt handler
 	  for those, you could have it enter a debugger, that possibly allows single stepping?  I'm not sure how to implement that

@@ -1,0 +1,13 @@
+
+Revision 2 Errata and Notes
+===========================
+
+- it would have been handy if there were some power pins to hook the oscilloscope to
+
+- there is some kind of issue with booting, where it requests addresses, 0, 4, 0, and 4, rather than 0, 2, 4, 6.  After
+  investigating, it appears to be an issue with the arduino only.  Once the flash memory was programmed and booted, it
+  worked perfectly.  As for the arduino, it appears to be an issue with dtack (which I recall being the reason I previously
+  saw these symptoms, but it was a different cause).  It seemed to be the inserted NOPs between the dtack assertion and
+  unassertion were causing it to be too slow, but removing them, while resulting in a proper initial startup, still doesn't
+  boot correctly.  For the moment, I suspect it's the increased speed from 10MHz to 12MHz of the CPU which is making it too
+  fast for the arduino. 

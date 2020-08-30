@@ -1,11 +1,17 @@
 
 #define SERIAL_SPEED	115200
 
-#define MEM_HADDR	0x00
-#define MEM_SIZE	8192
+#define MEM_ADDR	0x100000
+#define MEM_SIZE	512
+
+#define FLASH_ADDR	0x000000
 
 //#define MEM_HADDR	0x08
 //#define MEM_SIZE	2048
+
+#define M68_XADDR_PORT	PORTF
+#define M68_XADDR_PIN	PINF
+#define M68_XADDR_DDR	DDRF
 
 #define M68_HADDR_PORT	PORTC
 #define M68_HADDR_PIN	PINC
@@ -41,10 +47,16 @@
 #define M68_IS_LDS()	(!(PINB & 0x02))
 #define M68_IS_WRITE()	(!(PINB & 0x01))
 #define M68_IS_READ()	(PINB & 0x01)
+
 //#define M68_ASSERT_DTACK()	(PORTD = 0x80)
 //#define M68_UNASSERT_DTACK()	(PORTD = 0x00)
+#define M68_INIT_DTACK()	{ digitalWrite(M68_DTACK, 0); pinMode(M68_DTACK, INPUT); }
 #define M68_ASSERT_DTACK()	(DDRD |= 0x80)
 #define M68_UNASSERT_DTACK()	(DDRD &= ~(0x80))
+
+#define M68_INIT_RESET()	{ digitalWrite(M68_RESET, 0); pinMode(M68_RESET, INPUT); }
+#define M68_ASSERT_RESET()	(pinMode(M68_RESET, OUTPUT))
+#define M68_UNASSERT_RESET()	(pinMode(M68_RESET, INPUT))
 
 byte bus_request = 0;
 
@@ -108,9 +120,11 @@ void set_bus_master()
 	digitalWrite(M68_RW, 1);
 
 	// Address Bus
-	M68_HADDR_PORT = 0x00;	// A8 - A15 (for bit banged)
+	M68_XADDR_PORT = 0x00;	// A17 - A23
+	M68_XADDR_DDR = 0x7F;
+	M68_HADDR_PORT = 0x00;	// A9 - A16
 	M68_HADDR_DDR = 0xFF;
-	M68_LADDR_PORT = 0x00;	// A0 - A7 (for bit banged)
+	M68_LADDR_PORT = 0x00;	// A1 - A8
 	M68_LADDR_DDR = 0xFF;
 
 	// Data Bus
@@ -133,16 +147,19 @@ void set_bus_slave()
 
 	//PORTD &= 0x7F;
 	//DDRD |= 0x80;
-	digitalWrite(M68_DTACK, 0);
-	M68_UNASSERT_DTACK();
+	//digitalWrite(M68_DTACK, 0);
+	//M68_UNASSERT_DTACK();
+	M68_INIT_DTACK();
 
 	//pinMode(M68_RESET, OUTPUT);
 	//digitalWrite(M68_RESET, 1);
 
 	// Address Bus
-	M68_HADDR_PORT = 0x00;	// A8 - A15 (for bit banged)
+	M68_XADDR_PORT = 0x00;	// A17 - A23
+	M68_XADDR_DDR = 0x00;
+	M68_HADDR_PORT = 0x00;	// A9 - A16
 	M68_HADDR_DDR = 0x00;
-	M68_LADDR_PORT = 0x00;	// A0 - A7 (for bit banged)
+	M68_LADDR_PORT = 0x00;	// A1 - A8
 	M68_LADDR_DDR = 0x00;
 
 	// Data Bus
@@ -270,9 +287,9 @@ byte send_mem[] = {
 };
 
 #define ROM_SIZE	0x1200
-#define MEM_SIZE	0x1800
-word mem_size = MEM_SIZE;
-byte mem[MEM_SIZE] = {
+#define ROM_MEM_SIZE	0x1800
+word mem_size = ROM_MEM_SIZE;
+byte mem[ROM_MEM_SIZE] = {
 
 // Nop + Halt
 //0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x08, 0x4e, 0x71, 0x4e, 0x72, 0x00, 0x00,
@@ -301,7 +318,7 @@ byte mem[MEM_SIZE] = {
 
 };
 
-#define READ_BUS_DEBUG	0
+#define READ_BUS_DEBUG	1
 #define WRITE_BUS_DEBUG	1
 #define WRITE_PROTECT	1
 #define IO_SPACE_HADDR	(0x20 >> 1)	// address 0x2000
@@ -309,21 +326,27 @@ byte mem[MEM_SIZE] = {
 char trace = 0;
 
 ISR (PCINT0_vect) {
-	bus_request = 1;
+	// TODO this has been disabled
+	//bus_request = 1;
 }
 
 void check_bus_cycle()
 {
-	if (bus_request) {
+	if (!bus_request)
+		return;
+
 	//noInterrupts();
 	PCICR = 0x00;
+	PCIFR = 0x00;
+	bus_request = 0;
 
-	if (M68_IS_AS() && M68_HADDR_PIN < 0x20) {
+	register long addr = (((M68_XADDR_PIN & 0x7F) << 16) | (M68_HADDR_PIN << 8) | M68_LADDR_PIN) << 1;
+	if (M68_IS_AS() && (M68_XADDR_PIN & 0x80) && addr < 0x4000) {
+
 		// Read Operation
 		if (M68_IS_READ()) {
-			register word addr = ((M68_HADDR_PIN << 8) | M68_LADDR_PIN) << 1;
-			M68_LDATA_DDR = 0xFF;
 			M68_HDATA_DDR = 0xFF;
+			M68_LDATA_DDR = 0xFF;
 
 			//#if READ_BUS_DEBUG
 			if (READ_BUS_DEBUG || (trace && addr >= ROM_SIZE)) {
@@ -373,22 +396,14 @@ void check_bus_cycle()
 
 			noInterrupts();
 			M68_ASSERT_DTACK();
-			INLINE_NOP;
-			INLINE_NOP;
+			//INLINE_NOP;
 			M68_UNASSERT_DTACK();
-			//digitalWrite(M68_DTACK, 0);
-			//while (M68_IS_AS()) { }
-			//digitalWrite(M68_DTACK, 1);
-			//M68_LDATA_PORT = 0x00;
 			M68_LDATA_DDR = 0x00;
-			//M68_HDATA_PORT = 0x00;
 			M68_HDATA_DDR = 0x00;
 			interrupts();
 		}
 		// Write Operation
 		else if (M68_IS_WRITE()) {
-			register word addr = ((M68_HADDR_PIN << 8) | M68_LADDR_PIN) << 1;
-
 			//#if WRITE_BUS_DEBUG
 			if (WRITE_BUS_DEBUG || (trace && addr >= ROM_SIZE)) {
 				Serial.write('W');
@@ -432,8 +447,7 @@ void check_bus_cycle()
 
 			noInterrupts();
 			M68_ASSERT_DTACK();
-			INLINE_NOP;
-			INLINE_NOP;
+			//INLINE_NOP;
 			M68_UNASSERT_DTACK();
 			//digitalWrite(M68_DTACK, 0);
 			//while (M68_IS_AS()) { }
@@ -442,11 +456,8 @@ void check_bus_cycle()
 		}
 	}
 
-	bus_request = 0;
-	PCIFR = 0x00;
 	PCICR = 0x01;
 	//interrupts();
-	}
 }
 
 void snoop_bus_cycle()
@@ -504,37 +515,61 @@ void snoop_bus_cycle()
 }
 
 
-/*
-inline void write_data(word addr, byte data)
+inline void write_data(long addr, word data)
 {
-	M68_LDATA_PORT = data;
-	M68_HADDR_PORT = (addr >> 8);
-	M68_LADDR_PORT = (0x00FF & addr);
-	digitalWrite(M68_WR, 0);
-	digitalWrite(M68_MREQ, 0);
+	M68_HDATA_DDR = 0xFF;
+	M68_LDATA_DDR = 0xFF;
+
+	M68_HDATA_PORT = (byte) (data >> 8);
+	M68_LDATA_PORT = (byte) data;
+
+	M68_XADDR_PORT = (byte) (addr >> 17);
+	M68_HADDR_PORT = (byte) (addr >> 9);
+	M68_LADDR_PORT = (byte) (addr >> 1);
+
+	digitalWrite(M68_RW, 0);
+	digitalWrite(M68_LDS, 0);
+	digitalWrite(M68_UDS, 0);
+	digitalWrite(M68_AS, 0);
 	delayMicroseconds(1);
-	digitalWrite(M68_WR, 1);
-	digitalWrite(M68_MREQ, 1);
-	delayMicroseconds(1);
+	digitalWrite(M68_AS, 1);
+	digitalWrite(M68_LDS, 1);
+	digitalWrite(M68_UDS, 1);
+	digitalWrite(M68_RW, 1);
+	INLINE_NOP;
+
+	M68_HDATA_DDR = 0x00;
+	M68_LDATA_DDR = 0x00;
 }
 
-inline byte read_data(word addr)
+inline word read_data(long addr)
 {
-	byte value = 0;
+	byte hvalue = 0;
+	byte lvalue = 0;
 
-	M68_HADDR_PORT = (addr >> 8);
-	M68_LADDR_PORT = 0x00FF & addr;
-	digitalWrite(M68_RD, 0);
-	digitalWrite(M68_MREQ, 0);
-	delayMicroseconds(1);
-	value = M68_LDATA_PIN;
-	digitalWrite(M68_RD, 1);
-	digitalWrite(M68_MREQ, 1);
-	delayMicroseconds(1);
+	M68_HDATA_DDR = 0x00;
+	M68_LDATA_DDR = 0x00;
 
-	return value;
+	M68_XADDR_PORT = (byte) (addr >> 17);
+	M68_HADDR_PORT = (byte) (addr >> 9);
+	M68_LADDR_PORT = (byte) (addr >> 1);
+
+	digitalWrite(M68_RW, 1);
+	digitalWrite(M68_LDS, 0);
+	digitalWrite(M68_UDS, 0);
+	digitalWrite(M68_AS, 0);
+	delayMicroseconds(1);
+	hvalue = M68_HDATA_PIN;
+	lvalue = M68_LDATA_PIN;
+	digitalWrite(M68_AS, 1);
+	digitalWrite(M68_LDS, 1);
+	digitalWrite(M68_UDS, 1);
+	INLINE_NOP;
+
+	return (hvalue << 8) | lvalue;
 }
-*/
+
+
 
 void run_read_test()
 {
@@ -550,20 +585,33 @@ void run_read_test()
 	M68_LDATA_PORT = 0x00;
 	M68_LDATA_DDR = 0x00;
 
-	M68_HADDR_PORT = 0xFF;
+	M68_XADDR_PORT = 0x80;
+	M68_HADDR_PORT = 0;
 	M68_LADDR_PORT = 0;
 	digitalWrite(M68_RW, 1);
-	for (word i = 0; i < MEM_SIZE / 2; i++) {
-		M68_HADDR_PORT = (i >> 8) + MEM_HADDR;
-		M68_LADDR_PORT = 0x00FF & i;
+	for (long i = 0; i < MEM_SIZE / 2; i++) {
+		long addr = MEM_ADDR + (i << 1);
+
+		M68_XADDR_PORT = (byte) (addr >> 17);
+		M68_HADDR_PORT = (byte) (addr >> 9);
+		M68_LADDR_PORT = (byte) (addr >> 1);
+
 		digitalWrite(M68_AS, 0);
+		digitalWrite(M68_LDS, 0);
+		digitalWrite(M68_UDS, 0);
+
 		delayMicroseconds(1);
 		INLINE_NOP;
 		hvalue = M68_HDATA_PIN;
 		lvalue = M68_LDATA_PIN;
+
 		digitalWrite(M68_AS, 1);
+		digitalWrite(M68_LDS, 1);
+		digitalWrite(M68_UDS, 1);
+
 		delayMicroseconds(1);
-		M68_HADDR_PORT = 0xFF;
+		M68_XADDR_PORT = 0x80;
+		M68_HADDR_PORT = 0;
 		M68_LADDR_PORT = 0;
 
 		if (hvalue != (i & 0x00FF))
@@ -575,8 +623,11 @@ void run_read_test()
 		if (lvalue < 10) Serial.print("0");
 		Serial.print(lvalue, HEX);
 		Serial.print(" ");
-		if (i % 32 == 31)
+		if (i % 32 == 31) {
 			Serial.print("\n");
+			Serial.print(addr, HEX);
+			Serial.print(" ");
+		}
 	}
 
 	Serial.print("\n");
@@ -598,16 +649,24 @@ void run_write_test()
 	M68_LDATA_PORT = 0x00;
 	M68_LDATA_DDR = 0xFF;
 
-	M68_HADDR_PORT = 0xFF;
+	M68_XADDR_PORT = 0x80;
+	M68_HADDR_PORT = 0;
 	M68_LADDR_PORT = 0;
-	for (word i = 0; i < MEM_SIZE / 2; i++) {
+	for (long i = 0; i < MEM_SIZE / 2; i++) {
+		long addr = MEM_ADDR + (i << 1);
+
 		//write_data(i, (unsigned char) i);
+		M68_XADDR_PORT = (byte) (addr >> 17);
+		M68_HADDR_PORT = (byte) (addr >> 9);
+		M68_LADDR_PORT = (byte) (addr >> 1);
+
 		M68_HDATA_PORT = (i & 0x00FF);
 		M68_LDATA_PORT = (i & 0x00FF);
-		M68_HADDR_PORT = (i >> 8) + MEM_HADDR;
-		M68_LADDR_PORT = 0x00FF & i;
+
 		digitalWrite(M68_RW, 0);
 		digitalWrite(M68_AS, 0);
+		digitalWrite(M68_LDS, 0);
+		digitalWrite(M68_UDS, 0);
 		delayMicroseconds(1);
 		//INLINE_NOP;
 		//INLINE_NOP;
@@ -615,7 +674,10 @@ void run_write_test()
 		//INLINE_NOP;
 		digitalWrite(M68_RW, 1);
 		digitalWrite(M68_AS, 1);
-		M68_HADDR_PORT = 0xFF;
+		digitalWrite(M68_LDS, 1);
+		digitalWrite(M68_UDS, 1);
+		M68_XADDR_PORT = 0x80;
+		M68_HADDR_PORT = 0;
 		M68_LADDR_PORT = 0;
 		delayMicroseconds(1);
 		//INLINE_NOP;
@@ -630,47 +692,56 @@ void run_write_test()
 	Serial.print("Complete\n");
 }
 
+void program_flash_data(long addr, word data)
+{
+	write_data(0x555 << 1, 0xAAAA);
+	write_data(0x2AA << 1, 0x5555);
+	write_data(0x555 << 1, 0xA0A0);
+	write_data(addr, data);
+}
+
 void run_send_mem()
 {
-	word addr = (MEM_HADDR << 8);
+	word i;
+	long addr;
 
 	set_bus_master();
 
-	M68_HDATA_PORT = 0x00;
-	M68_HDATA_DDR = 0xFF;
-	M68_LDATA_PORT = 0x00;
-	M68_LDATA_DDR = 0xFF;
-	delayMicroseconds(1);
-	for (word i = 0; i < mem_size; i += 2, addr += 1) {
-		//write_data(addr++, mem[i]);
-		M68_HDATA_PORT = mem[i];
-		M68_LDATA_PORT = mem[i + 1];
-		M68_HADDR_PORT = addr >> 8;
-		M68_LADDR_PORT = addr & 0xFF;
-		digitalWrite(M68_RW, 0);
-		digitalWrite(M68_AS, 0);
-		delayMicroseconds(1);
-		//INLINE_NOP;
-		//INLINE_NOP;
-		//INLINE_NOP;
-		//INLINE_NOP;
-		digitalWrite(M68_RW, 1);
-		digitalWrite(M68_AS, 1);
-		M68_HADDR_PORT = 0xFF;
-		M68_LADDR_PORT = 0;
-		delayMicroseconds(1);
-		//INLINE_NOP;
-		//INLINE_NOP;
-		//INLINE_NOP;
-		//INLINE_NOP;
-		if ((addr % 64) == 63) {
-			delayMicroseconds(10000);
+	for (addr = FLASH_ADDR; addr < FLASH_ADDR + mem_size; addr += 2) {
+		word data = read_data(addr);
+		if (data != 0xFFFF) {
+			Serial.print("Flash not erased at ");
+			Serial.print(addr, HEX);
+			Serial.print(" (");
+			Serial.print(data, HEX);
+			Serial.print(")\n");
+			return;
 		}
+	}
+
+	for (i = 0, addr = FLASH_ADDR; i < mem_size; i += 2, addr += 2) {
+		word data = (mem[i] << 8) | mem[i + 1];
+		program_flash_data(addr, data);
+		Serial.print(data, HEX);
+		Serial.print("\n");
 	}
 
 	Serial.print("Sending complete\n");
 }
 
+
+
+void run_flash_test()
+{
+	word value;
+
+	write_data(0x555 << 1, 0xAAAA);
+	write_data(0x2AA << 1, 0x5555);
+	write_data(0x555 << 1, 0x9090);
+	value = read_data(0x01 << 1);
+	Serial.print(value, HEX);
+	Serial.print("\n");
+}
 
 
 
@@ -750,9 +821,11 @@ void cpu_stop()
 
 void cpu_reset()
 {
-	digitalWrite(M68_RESET, 0);
+	//digitalWrite(M68_RESET, 0);
+	M68_ASSERT_RESET();
 	delay(10);
-	digitalWrite(M68_RESET, 1);
+	//digitalWrite(M68_RESET, 1);
+	M68_UNASSERT_RESET();
 }
 
 
@@ -766,6 +839,9 @@ void do_command(String line)
 	}
 	else if (line.equals("send")) {
 		run_send_mem();
+	}
+	else if (line.equals("testflash")) {
+		run_flash_test();
 	}
 	/*
 	else if (line.equals("send")) {
@@ -798,8 +874,7 @@ void setup()
 {
 	Serial.begin(SERIAL_SPEED);
 
-	pinMode(M68_RESET, OUTPUT);
-	digitalWrite(M68_RESET, 1);
+	M68_INIT_RESET();
 
 	pinMode(M68_BR, OUTPUT);
 	pinMode(M68_BGACK, OUTPUT);

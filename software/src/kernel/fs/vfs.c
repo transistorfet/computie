@@ -136,7 +136,6 @@ int vfs_open(const char *path, int flags, mode_t mode, struct vfile **file)
 	if (flags & O_CREAT) {
 		const char *filename = path_last_component(path);
 
-		printk("Create %x\n", mode);
 		// Lookup the last path component, or create a new file if an error occurs during lookup
 		if (vnode->ops->lookup(vnode, filename, &vnode)) {
 			error = vnode->ops->create(vnode, filename, mode, &vnode);

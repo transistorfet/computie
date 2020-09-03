@@ -466,6 +466,20 @@ int command_ls(int argc, char **argv)
 	return 0;
 }
 
+int command_mkdir(int argc, char **argv)
+{
+	if (argc <= 1) {
+		puts("You need file name");
+		return -1;
+	}
+
+	int error = mkdir(argv[1], 0755);
+	if (error < 0) {
+		printf("Error while making directory %s: %d\n", argv[1], error);
+	}
+
+	return 0;
+}
 
 int command_rm(int argc, char **argv)
 {
@@ -530,6 +544,7 @@ struct command command_list[] = {
 	{ "cat", 	command_cat },
 	{ "ls", 	command_ls },
 	{ "rm", 	command_rm },
+	{ "mkdir", 	command_mkdir },
 	{ "exec", 	command_exec },
 	{ NULL },
 };

@@ -28,16 +28,20 @@ int exec(const char *path, char *const argv[], char *const envp[]);
 pid_t wait(int *status);
 pid_t waitpid(pid_t pid, int *status, int options);
 
+int mkdir(const char *path, mode_t mode);
+
 int creat(const char *path, mode_t mode);
 int open(const char *path, int flags, mode_t mode);
 int close(int fd);
 size_t read(int fd, char *buf, size_t nbytes);
 size_t write(int fd, const char *buf, size_t nbytes);
 int readdir(int fd, struct vdir *dir);
+
 int stat(const char *path, struct stat *statbuf);
 int fstat(int fd, struct stat *statbuf);
 int unlink(const char *path);
 offset_t lseek(int fd, offset_t offset, int whence);
+
 int pipe(int pipefd[2]);
 
 #endif

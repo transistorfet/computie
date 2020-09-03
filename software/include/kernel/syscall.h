@@ -21,6 +21,7 @@
 #define SYS_WAITPID	15
 #define SYS_PIPE	16
 #define SYS_READDIR	17
+#define SYS_MKDIR	18
 
 
 static inline int SYSCALL1(int n, int a1)

@@ -63,6 +63,9 @@ int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, stru
 	if (!(vnode->mode & S_IFDIR))
 		return ENOTDIR;
 
+	if (strlen(filename) > MALLOCFS_MAX_FILENAME)
+		return ENAMETOOLONG;
+
 	// The dirent wont be 'in use' until we set the vnode reference
 	dir = _alloc_dirent(vnode, filename);
 	if (!dir)
@@ -86,6 +89,9 @@ int mallocfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, devic
 
 	if (!(vnode->mode & S_IFDIR))
 		return ENOTDIR;
+
+	if (strlen(filename) > MALLOCFS_MAX_FILENAME)
+		return ENAMETOOLONG;
 
 	// The dirent wont be 'in use' until we set the vnode reference
 	dir = _alloc_dirent(vnode, filename);
@@ -114,6 +120,9 @@ int mallocfs_lookup(struct vnode *vnode, const char *filename, struct vnode **re
 	if (!(vnode->mode & S_IFDIR))
 		return ENOTDIR;
 
+	if (strlen(filename) > MALLOCFS_MAX_FILENAME)
+		return ENAMETOOLONG;
+
 	zone_iter_start(&iter);
 	while ((zone = zone_iter_next(&iter, MALLOCFS_DATA(vnode).zones))) {
 		for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
@@ -131,8 +140,7 @@ int mallocfs_unlink(struct vnode *parent, struct vnode *vnode)
 	struct mallocfs_dirent *dir;
 
 	if (vnode->mode & S_IFDIR && !_is_empty_dirent(vnode))
-		// TODO you don't have an error code for dir not empty
-		return -1;
+		return ENOTEMPTY;
 
 	dir = _find_dirent(parent, vnode);
 	if (!dir)
@@ -389,7 +397,7 @@ static short _is_empty_dirent(struct vnode *vnode)
 	zone_iter_start(&iter);
 	while ((zone = zone_iter_next(&iter, MALLOCFS_DATA(vnode).zones))) {
 		for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
-			if (zone->entries[i].vnode)
+			if (zone->entries[i].vnode && strcmp(zone->entries[i].name, ".") && strcmp(zone->entries[i].name, ".."))
 				return 0;
 		}
 	}

@@ -14,7 +14,7 @@
 #include "filedesc.h"
 #include "interrupts.h"
 
-#define SYSCALL_MAX	20
+#define SYSCALL_MAX	25
 
 typedef int (*syscall_t)(int, int, int);
 
@@ -39,6 +39,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_waitpid,
 	do_pipe,
 	do_readdir,
+	do_mkdir,
 };
 
 extern void enter_syscall();
@@ -76,6 +77,18 @@ void do_syscall()
 int do_unlink(const char *path)
 {
 	return vfs_unlink(path);
+}
+
+int do_mkdir(const char *path, mode_t mode)
+{
+	int error;
+	struct vfile *file;
+
+	error = vfs_open(path, O_CREAT, S_IFDIR | mode, &file);
+	if (error < 0)
+		return error;
+	vfs_close(file);
+	return 0;
 }
 
 int do_creat(const char *path, mode_t mode)

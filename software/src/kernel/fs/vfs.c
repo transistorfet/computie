@@ -36,26 +36,6 @@ struct vnode *vfs_root(struct mount *mp);
 int vfs_sync(struct mount *mp);
 
 
-int vfs_create(const char *path, mode_t mode, struct vnode **result)
-{
-	int error;
-	struct vnode *tmp;
-	struct vnode *vnode;
-
-	error = vfs_lookup(path, VLOOKUP_PARENT_OF, &vnode);
-	if (error)
-		return error;
-
-	const char *filename = path_last_component(path);
-	error = vnode->ops->lookup(vnode, filename, &tmp);
-	if (error == 0)
-		return EEXIST;
-	else if (error != ENOENT)
-		return error;
-
-	return vnode->ops->create(vnode, filename, mode, result);
-}
-
 int vfs_mknod(const char *path, mode_t mode, device_t dev, struct vnode **result)
 {
 	int error;

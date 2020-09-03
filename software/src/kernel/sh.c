@@ -617,17 +617,19 @@ void file_test()
 	int error;
 	struct vfile *file;
 
-	error = vfs_create("/dir", S_IFDIR | 0755, NULL);
+	error = vfs_open("/dir", O_CREAT, S_IFDIR | 0755, &file);
 	if (error) {
 		printk("Error: %d\n", error);
 		return;
 	}
+	vfs_close(file);
 
-	error = vfs_create("/dir/test", 0644);
+	error = vfs_open("/dir/test", O_CREAT, 0644, &file);
 	if (error) {
 		printk("Error: %d\n", error);
 		return;
 	}
+	vfs_close(file);
 
 /*
 	fd = creat("/dir", S_IFDIR | 0755);

@@ -617,19 +617,19 @@ void file_test()
 	int error;
 	struct vfile *file;
 
-	error = vfs_open("/dir", O_CREAT, S_IFDIR | 0755, &file);
-	if (error) {
+	error = open("/dir", O_CREAT | O_WRONLY | O_TRUNC, S_IFDIR | 0755);
+	if (error < 0) {
 		printk("Error: %d\n", error);
 		return;
 	}
-	vfs_close(file);
+	close(error);
 
-	error = vfs_open("/dir/test", O_CREAT, 0644, &file);
-	if (error) {
-		printk("Error: %d\n", error);
-		return;
-	}
-	vfs_close(file);
+	//error = vfs_open("/dir/test", O_CREAT, 0644, &file);
+	//if (error) {
+	//	printk("Error: %d\n", error);
+	//	return;
+	//}
+	//vfs_close(file);
 
 /*
 	fd = creat("/dir", S_IFDIR | 0755);
@@ -734,7 +734,7 @@ void dir_test()
 		}
 	}
 
-
+	vfs_close(file);
 }
 
 

@@ -36,7 +36,6 @@ struct mallocfs_block {
 };
 
 struct mallocfs_data {
-	short links;
 	device_t device;
 	union {
 		struct mallocfs_block *block;

@@ -1,8 +1,8 @@
 
 Operating System:
 
-	* there is an issue with refcounts and reuse for vnodes.  There is an asymmetry with freeing vnodes through the file table vs through the api interface
-	* creat() should probably return a file pointer
+	* there is still one instance with the mallocfs root node, where refcount is 2 instead of just 1
+	* add a file pointer duplicate ala vfs_duplicate (to replace directly calling dup_fileptr)
 
 	* add mounting of filesystems, and root node stuff, so you can remove the special case in vfs.c
 	* implement minix filesystem

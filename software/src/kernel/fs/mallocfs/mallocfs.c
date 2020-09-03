@@ -52,23 +52,6 @@ int init_mallocfs()
 	// Set the parent entry (..) to be the root vnode
 	// TODO This wouldn't be the case for a mounted filesystem
 	MALLOCFS_DATA(mallocfs_root).zones[0]->entries[1].vnode = mallocfs_root;
-
-	/*
-	int error;
-	struct vnode *vn;
-
-	error = mallocfs_create(mallocfs_root, "dir", S_IFDIR | 0755, &vn);
-	if (error)
-		printk("Error: %d\n", error);
-	else
-		printk("Created dir at %x\n", vn->block);
-
-	error = mallocfs_create(vn, "test", 0644, &vn);
-	if (error)
-		printk("Error: %d\n", error);
-	else
-		printk("Created at %x\n", vn->block);
-	*/
 }
 
 int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result)
@@ -162,6 +145,8 @@ int mallocfs_unlink(struct vnode *parent, struct vnode *vnode)
 
 int mallocfs_truncate(struct vnode *vnode)
 {
+	if (vnode->mode & S_IFDIR)
+		return EISDIR;
 	zone_free_all(vnode);
 	vnode->size = 0;
 	return 0;
@@ -169,6 +154,7 @@ int mallocfs_truncate(struct vnode *vnode)
 
 int mallocfs_release(struct vnode *vnode)
 {
+	// NOTE the refcount decrement that triggered this call should be enough to free the vnode itself
 	zone_free_all(vnode);
 	return 0;
 }
@@ -341,7 +327,7 @@ int mallocfs_readdir(struct vfile *file, struct vdir *dir)
 		znum++;
 	}
 
-	file->position += 1;
+	file->position = ((znum << MALLOCFS_LOG_DIRENTS) | zpos) + 1;
 
 	max = MALLOCFS_MAX_FILENAME < VFS_FILENAME_MAX ? MALLOCFS_MAX_FILENAME : VFS_FILENAME_MAX;
 

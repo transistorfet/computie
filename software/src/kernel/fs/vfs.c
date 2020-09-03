@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include <errno.h>
+#include <sys/stat.h>
 #include <kernel/vfs.h>
 #include <kernel/printk.h>
 
@@ -130,6 +131,8 @@ int vfs_open(const char *path, int flags, mode_t mode, struct vfile **file)
 	if (error)
 		return error;
 
+	// TODO check permissions before opening
+
 	if (flags & O_CREAT) {
 		const char *filename = path_last_component(path);
 
@@ -141,18 +144,16 @@ int vfs_open(const char *path, int flags, mode_t mode, struct vfile **file)
 				return error;
 		}
 	}
-
-	printk("Open: %d\n", vnode->refcount);
-	// TODO this probably should be somewhere else
-	vnode->refcount++;
-
-	// TODO check permissions before opening
+	else {
+		// TODO this probably should be somewhere else
+		vnode->refcount++;
+	}
 
 	*file = new_fileptr(vnode, flags);
 	if (!*file)
 		return EMFILE;
 
-	if (flags & O_TRUNC)
+	if (flags & O_TRUNC && !(vnode->mode & S_IFDIR))
 		vnode->ops->truncate(vnode);
 
 	if (flags & O_APPEND)
@@ -166,20 +167,11 @@ int vfs_open(const char *path, int flags, mode_t mode, struct vfile **file)
 
 int vfs_close(struct vfile *file)
 {
-/*
 	int error;
 
-	struct vnode *vnode = file->vnode;
-
 	error = file->vnode->ops->fops->close(file);
-	//free_fileptr(file);
-
-	printk("Closing: %d\n", vnode->refcount);
-
+	free_fileptr(file);
 	return error;
-*/
-	file->vnode->refcount--;
-	return file->vnode->ops->fops->close(file);
 }
 
 int vfs_read(struct vfile *file, char *buffer, size_t size)

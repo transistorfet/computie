@@ -110,8 +110,8 @@ int do_close(int fd)
 
 	vfs_close(file);
 
-	//unset_fd(current_proc->fd_table, fd);
-	free_fd(current_proc->fd_table, fd);
+	unset_fd(current_proc->fd_table, fd);
+	//free_fd(current_proc->fd_table, fd);
 	return 0;
 }
 

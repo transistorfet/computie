@@ -5,6 +5,6 @@
 
 int unlink(const char *path)
 {
-	return SYSCALL2(SYS_UNLINK, path, 0);
+	return SYSCALL2(SYS_UNLINK, (int) path, 0);
 }
 

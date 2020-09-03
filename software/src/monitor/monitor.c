@@ -76,6 +76,19 @@ void dump(const uint16_t *addr, short len)
 	putchar('\n');
 }
 
+void command_dump(int argc, char **args)
+{
+	if (argc <= 1)
+		puts("You need an address");
+	else {
+		short length = 0x40;
+
+		if (argc >= 3)
+			length = strtol(args[2], NULL, 16);
+		dump((const uint16_t *) strtol(args[1], NULL, 16), length);
+	}
+}
+
 void info(void)
 {
 	uint32_t sp;
@@ -294,6 +307,14 @@ void boot(void)
 	((void (*)()) entry)();
 }
 
+
+/*
+struct command {
+	char *name;
+	int (*func)(int, char **);
+};
+*/
+
 #define BUF_SIZE	100
 #define ARG_SIZE	10
 
@@ -345,15 +366,7 @@ void serial_read_loop()
 			writerom();
 		}
 		else if (!strcmp(args[0], "dump")) {
-			if (argc <= 1)
-				puts("You need an address");
-			else {
-				short length = 0x40;
-
-				if (argc >= 3)
-					length = strtol(args[2], NULL, 16);
-				dump((const uint16_t *) strtol(args[1], NULL, 16), length);
-			}
+			command_dump(argc, args);
 		}
 	}
 }

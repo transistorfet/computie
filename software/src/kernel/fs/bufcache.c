@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <kernel/driver.h>
+#include <kernel/printk.h>
 
 #include "bufcache.h"
 #include "../interrupts.h"

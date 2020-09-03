@@ -1,22 +1,28 @@
 
 Operating System:
 
-	* do you need to add variable sizes into bufcache?
-
-	* implement signals
+	* there is an issue with refcounts and reuse for vnodes.  There is an asymmetry with freeing vnodes through the file table vs through the api interface
+	* creat() should probably return a file pointer
 
 	* add mounting of filesystems, and root node stuff, so you can remove the special case in vfs.c
-	* implement generic cache and use it in blockcache and minixfs
+	* implement minix filesystem
+
+	* implement signals
+	* add commands: ps, kill
 	* what is needed to implement a 'ps' command in userspace? pstat()
-	* make a block driver interface, or should you use a char driver like freebsd does
-	* add commands: ps, mv, kill, cp, mkdir, rmdir, pwd, cd
 	* sort out process groups, and which process gets input
+
+	* implement generic cache and use it in blockcache and minixfs
+	* add commands: mv, cp, mkdir, rmdir, pwd, cd
+
+
+	* do you need to add variable sized buffers/blocks into bufcache? (yes)
+	* make a block driver interface, or should you use a char driver like freebsd does
 
 
 	* should you make a lib subdir, and put unistd at the top?
 	* move the math functions in libc to arch/68k
 	* move as much inline assembly, from headers especially, into a redirectable asm directory
-	* move the queue and circular buffer code to common include files somewhere (src/utils/? src/shared/?)
 	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 	* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
 	  (ie. store the last allocated fd, but it has to be in the process struct)

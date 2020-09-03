@@ -5,6 +5,6 @@
 
 int fstat(int fd, struct stat *statbuf)
 {
-	return SYSCALL2(SYS_FSTAT, (const char *) fd, (int) statbuf);
+	return SYSCALL2(SYS_FSTAT, (int) fd, (int) statbuf);
 }
 

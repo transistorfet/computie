@@ -41,7 +41,7 @@ static inline int SYSCALL1(int n, int a1)
 	return ret;
 }
 
-static inline int SYSCALL2(int n, const char *a1, int a2)
+static inline int SYSCALL2(int n, int a1, int a2)
 {
 	register int ret;
 
@@ -62,7 +62,7 @@ static inline int SYSCALL2(int n, const char *a1, int a2)
 
 
 
-static inline int SYSCALL3(int n, int a1, void *a2, void *a3)
+static inline int SYSCALL3(int n, int a1, int a2, int a3)
 {
 	register int ret;
 

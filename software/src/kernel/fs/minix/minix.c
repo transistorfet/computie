@@ -19,7 +19,7 @@ int init_minix()
 	super_buf = get_block(dev, MINIX_SUPER_ZONE);
 	if (!super_buf)
 		return -1;
-	super = (struct minix_superblock *) super_buf->block;
+	super = (struct minix_v1_superblock *) super_buf->block;
 
 	// TODO we assume this is not a disk yet, so manually initialize it
 	super->num_inodes = 0x40;
@@ -39,6 +39,7 @@ int init_minix()
 	bitmap_init(dev, MINIX_BITMAP_ZONES + super->imap_blocks, super->zmap_blocks, super->num_zones, super->first_zone);
 
 
+	/*
 	int zone;
 	for (int i = 0; i < 102; i++) {
 		zone = bit_alloc(dev, MINIX_BITMAP_ZONES + super->imap_blocks, super->zmap_blocks, 0);
@@ -47,6 +48,9 @@ int init_minix()
 
 	bit_free(dev, MINIX_BITMAP_ZONES, 19);
 	bit_free(dev, MINIX_BITMAP_ZONES, 52);
+	*/
+
+
 
 	sync_bufcache();
 

@@ -1,4 +1,6 @@
 
+#include <string.h>
+
 #include "minix.h"
 #include "bitmaps.h"
 
@@ -44,10 +46,6 @@ int bitmap_init(device_t dev, minix_zone_t bitmap_start, int bitmap_size, int nu
 	for (; i < (reserve >> 3); i++)
 		block[i] = 0xFF;
 	block[i] = bit_mask(reserve & 0x7);
-
-	for (short k = 0; k < 0x20; k++)
-		printk("%x ", block[k]);
-	printk("\n");
 
 	release_block(buf, BCF_DIRTY);
 	return 0;

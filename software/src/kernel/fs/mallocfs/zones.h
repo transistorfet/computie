@@ -7,22 +7,21 @@
 
 #define MFS_CREATE_ZONE		1
 
+
 struct zone_iter {
 	char t1_zone;
 	short t2_zone;
-	short t3_zone;
 };
 
 static inline void zone_iter_start(struct zone_iter *iter)
 {
 	iter->t1_zone = 0;
 	iter->t2_zone = 0;
-	iter->t3_zone = 0;
 }
 
 static struct mallocfs_block *zone_iter_next(struct zone_iter *iter, struct mallocfs_block **zones)
 {
-	struct mallocfs_block *zone; 
+	struct mallocfs_block *zone;
 
 	if (iter->t1_zone < MALLOCFS_TIER1_ZONES)
 		zone = zones[iter->t1_zone];
@@ -45,23 +44,6 @@ static struct mallocfs_block *zone_iter_next(struct zone_iter *iter, struct mall
 
 	return zone;
 }
-
-/*
-static inline int zone_get_tiers(short tier1_zone)
-{
-	if (tier1_zone < MALLOCFS_TIER1_ZONES)
-		return 1;
-	else
-		return tier1_zone - MALLOCFS_TIER1_ZONES + 1;
-}
-
-static inline int zone_calculate(mallocfs_zone_t znum, struct zone_iter *iter)
-{
-
-	iter->tier[0] = MALLOCFS_TIER1_ZONES + (znum >> MALLOCFS_LOG_BLOCK_ZONES);
-	iter->tier[1] = znum & (MALLOCFS_BLOCK_ZONES - 1);
-}
-*/
 
 static struct mallocfs_block *zone_lookup(struct vnode *vnode, mallocfs_zone_t znum, char create)
 {

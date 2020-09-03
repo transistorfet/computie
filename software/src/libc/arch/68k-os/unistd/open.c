@@ -3,8 +3,8 @@
 #include <kernel/syscall.h>
 
 
-int open(const char *path, int flags)
+int open(const char *path, int flags, mode_t mode)
 {
-	return SYSCALL2(SYS_OPEN, path, flags);
+	return SYSCALL3(SYS_OPEN, (int) path, (int) flags, (int) mode);
 }
 

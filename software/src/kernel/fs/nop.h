@@ -2,6 +2,8 @@
 #ifndef _SRC_KERNEL_FS_NOPFS_H
 #define _SRC_KERNEL_FS_NOPFS_H
 
+#include <kernel/vfs.h>
+
 int nop_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result);
 int nop_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, struct vnode **result);
 int nop_lookup(struct vnode *vnode, const char *name, struct vnode **result);

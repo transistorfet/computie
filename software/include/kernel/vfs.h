@@ -70,14 +70,15 @@ struct mount {
 
 struct vnode {
 	struct vnode_ops *ops;
-	uint16_t refcount;
-	struct mount *mounted;		// TODO what do you think about this? not sure
+	short refcount;
 
 	mode_t mode;
 	uid_t uid;
 	gid_t gid;
 	offset_t size;
 	time_t mtime;
+
+	struct mount *mounted;		// TODO what do you think about this? not sure
 
 	union {} data;
 };
@@ -103,11 +104,10 @@ int vfs_mount(struct mount *mp);
 int vfs_umount(struct mount *mp);
 int vfs_sync(struct mount *mp);
 
-int vfs_create(const char *path, mode_t mode, struct vnode **result);
 int vfs_mknod(const char *path, mode_t mode, device_t dev, struct vnode **result);
 int vfs_lookup(const char *path, int flags, struct vnode **result);
 int vfs_unlink(const char *path);
-int vfs_open(const char *path, int flags, struct vfile **file);
+int vfs_open(const char *path, int flags, mode_t mode, struct vfile **file);
 
 int vfs_close(struct vfile *file);
 int vfs_read(struct vfile *file, char *buffer, size_t size);

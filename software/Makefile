@@ -28,12 +28,13 @@ KERNEL_OBJS = \
 	src/kernel/interrupts.o \
 	src/kernel/syscall_entry.o \
 	src/kernel/syscall.o \
+	src/kernel/filedesc.o \
 	src/kernel/process.o \
 	src/kernel/driver.o \
 	src/kernel/fs/vfs.o \
 	src/kernel/fs/nop.o \
 	src/kernel/fs/pipe.o \
-	src/kernel/fs/filedesc.o \
+	src/kernel/fs/fileptr.o \
 	src/kernel/fs/bufcache.o \
 	src/kernel/fs/mallocfs/mallocfs.o \
 	src/kernel/fs/mallocfs/alloc.o \
@@ -42,6 +43,10 @@ KERNEL_OBJS = \
 	src/kernel/drivers/tty_68681.o \
 	src/kernel/sh.o \
 	libc-68k-os.a
+
+COMMANDS = \
+	src/commands/hello.send	\
+	src/commands/test.send
 
 LIBC_BASE_OBJS = $(filter-out src/libc/arch/*, \
 	$(patsubst %.c,%.o, $(wildcard src/libc/**/*.c)) \
@@ -67,6 +72,8 @@ libc-68k-os.a: $(LIBC_BASE_OBJS) $(LIBC_ARCH_OBJS)
 
 
 all: monitor.bin kernel.bin kernel.load
+
+commands: $(COMMANDS)
 
 
 welcome:

@@ -25,6 +25,7 @@ struct vnode *new_mallocfs_vnode(device_t dev, mode_t mode)
 			// TODO add in proper uid/gid, mtime, etc arguments
 			vfs_init_vnode((struct vnode *) &vnode_table[i], &mallocfs_vnode_ops, mode, 0, 0, 0, 0);
 
+			MALLOCFS_DATA(&vnode_table[i]).links = 1;
 			MALLOCFS_DATA(&vnode_table[i]).device = dev;
 			for (char j = 0; j < MALLOCFS_TOTAL_ZONES; j++)
 				MALLOCFS_DATA(&vnode_table[i]).zones[j] = NULL;

@@ -4,10 +4,10 @@
 #include <stdlib.h>
 
 #include <kernel/printk.h>
-#include <kernel/filedesc.h>
 
 #include "api.h"
 #include "process.h"
+#include "filedesc.h"
 #include "interrupts.h"
 #include "misc/queue.h"
 
@@ -61,8 +61,8 @@ struct process *new_proc()
 
 			// Clear memory records
 			for (char j = 0; j < NUM_SEGMENTS; j++) {
-				table[i].segments[j].base = NULL;
-				table[i].segments[j].length = 0;
+				table[i].map.segments[j].base = NULL;
+				table[i].map.segments[j].length = 0;
 			}
 			table[i].sp = NULL;
 
@@ -90,8 +90,8 @@ void exit_proc(struct process *proc, int status)
 
 	release_fd_table(proc->fd_table);
 	for (char j = 0; j < NUM_SEGMENTS; j++) {
-		if (proc->segments[j].base)
-			free(proc->segments[j].base);
+		if (proc->map.segments[j].base)
+			free(proc->map.segments[j].base);
 	}
 
 	_queue_remove(&run_queue, &proc->node);
@@ -180,7 +180,7 @@ void schedule()
 
 	//putchar('!');
 
-	if (!current_proc || !current_proc->node.next)
+	if (!current_proc || !PROC_IS_RUNNABLE(current_proc) || !current_proc->node.next)
 		next = (struct process *) run_queue.head;
 	else
 		next = (struct process *) current_proc->node.next;
@@ -200,6 +200,7 @@ void schedule()
 	current_proc = next;
 	current_proc_stack = next->sp;
 
+	//printk("RUN: %d\n", current_proc->pid);
 
 	if (current_proc->state == PS_RESUMING) {
 		//printk("Restarting %d with call %d\n", current_proc->pid, current_proc->blocked_call.syscall);
@@ -223,10 +224,10 @@ struct process *create_kernel_task(int (*task_start)())
 
  	stack_pointer = create_context(stack_pointer, task_start);
 
-	proc->segments[M_TEXT].base = NULL;
-	proc->segments[M_TEXT].length = 0x10000;
-	proc->segments[M_STACK].base = stack;
-	proc->segments[M_STACK].length = stack_size;
+	proc->map.segments[M_TEXT].base = NULL;
+	proc->map.segments[M_TEXT].length = 0x10000;
+	proc->map.segments[M_STACK].base = stack;
+	proc->map.segments[M_STACK].length = stack_size;
 	proc->sp = stack_pointer;
 
 	return proc;

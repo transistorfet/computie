@@ -7,9 +7,9 @@
 #define MALLOCFS_BLOCK_SIZE		1024
 #define MALLOCFS_LOG_BLOCK_SIZE		__builtin_ctz(MALLOCFS_BLOCK_SIZE)
 
-#define MALLOCFS_TIER1_ZONES		6
-#define MALLOCFS_TIER2_ZONES		2
-#define MALLOCFS_TOTAL_ZONES		MALLOCFS_TIER1_ZONES + MALLOCFS_TIER2_ZONES
+#define MALLOCFS_TIER1_ZONES		7
+#define MALLOCFS_INDIRECT_TIERS		3
+#define MALLOCFS_TOTAL_ZONES		MALLOCFS_TIER1_ZONES + MALLOCFS_INDIRECT_TIERS
 #define MALLOCFS_MAX_FILENAME		12
 
 #define MALLOCFS_DIRENTS		(MALLOCFS_BLOCK_SIZE / sizeof(struct mallocfs_dirent))
@@ -36,10 +36,11 @@ struct mallocfs_block {
 };
 
 struct mallocfs_data {
+	short links;
 	device_t device;
 	union {
-	struct mallocfs_block *block;
-	struct mallocfs_block *zones[MALLOCFS_TOTAL_ZONES];
+		struct mallocfs_block *block;
+		struct mallocfs_block *zones[MALLOCFS_TOTAL_ZONES];
 	};
 };
 

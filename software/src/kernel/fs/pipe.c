@@ -3,10 +3,10 @@
 #include <string.h>
 
 #include <errno.h>
-#include <kernel/filedesc.h>
 #include <kernel/syscall.h>
 
 #include "nop.h"
+#include "fileptr.h"
 #include "../process.h"
 
 #define PIPE_BUFFER_MAX		512

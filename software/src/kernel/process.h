@@ -3,12 +3,12 @@
 #define _SRC_KERNEL_PROCESS_H
 
 #include <stddef.h>
-#include <kernel/filedesc.h>
 #include <kernel/syscall.h>
 
+#include "filedesc.h"
 #include "misc/queue.h"
 
-#define	NUM_SEGMENTS	2
+#define	NUM_SEGMENTS			2
 
 typedef enum {
 	M_TEXT,
@@ -20,6 +20,12 @@ struct mem_seg {
 	void *base;
 	size_t length;
 };
+
+struct mem_map {
+	struct mem_seg segments[NUM_SEGMENTS];
+};
+
+#define PROC_IS_RUNNABLE(proc)		((proc)->state == PS_READY || (proc)->state == PS_RESUMING)
 
 typedef enum {
 	PS_READY,
@@ -37,7 +43,7 @@ struct process {
 	uint16_t state;
 	int exitcode;
 
-	struct mem_seg segments[NUM_SEGMENTS];
+	struct mem_map map;
 	void *sp;
 
 	struct syscall_record blocked_call;

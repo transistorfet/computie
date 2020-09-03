@@ -6,7 +6,6 @@
 
 #include <sys/stat.h>
 
-#include <kernel/filedesc.h>
 #include <kernel/syscall.h>
 #include <kernel/driver.h>
 #include <kernel/printk.h>
@@ -55,7 +54,7 @@ struct process *run_task()
 
 	current_proc = proc;
 
-	int fd = do_open("tty", 0);
+	int fd = do_open("tty", 0, 0);
 	if (fd < 0) {
 		printk("Error opening file tty %d\n", error);
 		return NULL;
@@ -93,8 +92,8 @@ struct process *run_task()
 
 	//dump(task_stack_p, 0x40);
 
-	proc->segments[M_TEXT].base = task;
-	proc->segments[M_TEXT].length = task_size;
+	proc->map.segments[M_TEXT].base = task;
+	proc->map.segments[M_TEXT].length = task_size;
 	proc->sp = task_stack_p;
 
 	printk("After: %x\n", task_stack_p);
@@ -115,7 +114,7 @@ struct process *run_sh()
 	current_proc = proc;
 
 	// Open stdin
-	int fd = do_open("tty", 0);
+	int fd = do_open("tty", 0, 0);
 	if (fd < 0) {
 		printk("Error opening file tty %d\n", error);
 		return NULL;
@@ -123,7 +122,7 @@ struct process *run_sh()
 	printk("FD: %d\n", fd);
 
 	// Open stdout
-	fd = do_open("tty", 0);
+	fd = do_open("tty", 0, 0);
 	if (fd < 0) {
 		printk("Error opening file tty %d\n", error);
 		return NULL;
@@ -131,7 +130,7 @@ struct process *run_sh()
 	printk("FD: %d\n", fd);
 
 	// Open stderr
-	fd = do_open("tty", 0);
+	fd = do_open("tty", 0, 0);
 	if (fd < 0) {
 		printk("Error opening file tty %d\n", error);
 		return NULL;
@@ -148,10 +147,10 @@ struct process *run_sh()
 
  	stack_p = create_context(stack_p, sh_task);
 
-	proc->segments[M_TEXT].base = NULL;
-	proc->segments[M_TEXT].length = 0x10000;
-	proc->segments[M_STACK].base = stack;
-	proc->segments[M_STACK].length = stack_size;
+	proc->map.segments[M_TEXT].base = NULL;
+	proc->map.segments[M_TEXT].length = 0x10000;
+	proc->map.segments[M_STACK].base = stack;
+	proc->map.segments[M_STACK].length = stack_size;
 	proc->sp = stack_p;
 
 	printk("After: %x\n", stack_p);

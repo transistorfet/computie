@@ -288,7 +288,7 @@ int command_send(int argc, char **argv)
 
 	printf("Loading file %s\n", argv[1]);
 
-	if ((fd = open(argv[1], O_CREAT | O_WRONLY)) < 0) {
+	if ((fd = open(argv[1], O_CREAT | O_WRONLY, 0755)) < 0) {
 		printf("Error opening %s: %d\n", argv[1], fd);
 		return fd;
 	}
@@ -332,7 +332,7 @@ int command_hex(int argc, char **argv)
 		return -1;
 	}
 
-	if ((fd = open(argv[1], O_RDONLY)) < 0) {
+	if ((fd = open(argv[1], O_RDONLY, 0)) < 0) {
 		printf("Error opening %s: %d\n", argv[1], fd);
 		return fd;
 	}
@@ -372,7 +372,7 @@ int command_cat(int argc, char **argv)
 		return -1;
 	}
 
-	if ((fd = open(argv[1], O_RDONLY)) < 0) {
+	if ((fd = open(argv[1], O_RDONLY, 0)) < 0) {
 		printf("Error opening %s: %d\n", argv[1], fd);
 		return fd;
 	}
@@ -427,7 +427,7 @@ int command_ls(int argc, char **argv)
 
 	char *path = argc > 1 ? argv[1] : "/";
 
-	if ((fd = open(path, 0)) < 0) {
+	if ((fd = open(path, 0, 0)) < 0) {
 		printf("Error opening %s: %d\n", path, fd);
 		return fd;
 	}
@@ -498,9 +498,7 @@ int command_exec(int argc, char **argv)
  	pid = fork();
 	if (pid) {
 		printf("The child's pid is %d\n", pid);
-		// TODO this is the correct way, but I've commented it out because it caught a bug where fork was called before assigning the values to argv, and by that time
-		//	the parent has exited this function and is blocking on a read.  Would switching which proc gets run first after a fork have an affect on this?
-		wait(&status);
+		waitpid(pid, &status, 0);
 		printf("The child exited with %d\n", status);
 	}
 	else {
@@ -615,6 +613,7 @@ void serial_read_loop()
 
 void file_test()
 {
+	int fd;
 	int error;
 	struct vfile *file;
 
@@ -624,14 +623,29 @@ void file_test()
 		return;
 	}
 
-	error = creat("/dir/test", 0644);
+	error = vfs_create("/dir/test", 0644);
 	if (error) {
 		printk("Error: %d\n", error);
 		return;
 	}
 
+/*
+	fd = creat("/dir", S_IFDIR | 0755);
+	if (fd < 0) {
+		printk("Error: %d\n", fd);
+		return;
+	}
+	close(fd);
 
-	if ((error = vfs_open("test", O_CREAT, &file))) {
+	fd = creat("/dir/test", 0644);
+	if (fd < 0) {
+		printk("Error: %d\n", fd);
+		return;
+	}
+	close(fd);
+*/
+
+	if ((error = vfs_open("test", O_CREAT, 0755, &file))) {
 		printk("Error at open %d\n", error);
 		return;
 	}
@@ -659,7 +673,7 @@ void file_test()
 
 
 	extern const char hello_task[800];
-	if ((error = vfs_open("/hello", O_CREAT, &file))) {
+	if ((error = vfs_open("/hello", O_CREAT, 0755, &file))) {
 		printk("Error at open new file %d\n", error);
 		return;
 	}
@@ -673,7 +687,7 @@ void file_test()
 
 	puts("done");
 
-	if ((error = vfs_open("/size", O_CREAT, &file))) {
+	if ((error = vfs_open("/size", O_CREAT, 0644, &file))) {
 		printk("Error at open new file %d\n", error);
 		return;
 	}
@@ -700,7 +714,7 @@ void dir_test()
 	struct vfile *file;
 	struct vdir dir;
 
-	if ((error = vfs_open("/", 0, &file))) {
+	if ((error = vfs_open("/", 0, 0, &file))) {
 		printk("Error at open %d\n", error);
 		return;
 	}

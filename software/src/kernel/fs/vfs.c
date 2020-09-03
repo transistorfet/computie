@@ -4,8 +4,8 @@
 #include <errno.h>
 #include <kernel/vfs.h>
 #include <kernel/printk.h>
-#include <kernel/filedesc.h>
 
+#include "fileptr.h"
 #include "bufcache.h"
 
 // TODO this will be removed when you add fs mounting
@@ -138,7 +138,7 @@ int vfs_unlink(const char *path)
 	return 0;
 }
 
-int vfs_open(const char *path, int flags, struct vfile **file)
+int vfs_open(const char *path, int flags, mode_t mode, struct vfile **file)
 {
 	int error;
 	struct vnode *vnode;
@@ -153,21 +153,24 @@ int vfs_open(const char *path, int flags, struct vfile **file)
 	if (flags & O_CREAT) {
 		const char *filename = path_last_component(path);
 
+		printk("Create %x\n", mode);
 		// Lookup the last path component, or create a new file if an error occurs during lookup
 		if (vnode->ops->lookup(vnode, filename, &vnode)) {
-			error = vnode->ops->create(vnode, filename, 0755, &vnode);
+			error = vnode->ops->create(vnode, filename, mode, &vnode);
 			if (error)
 				return error;
 		}
 	}
+
+	printk("Open: %d\n", vnode->refcount);
+	// TODO this probably should be somewhere else
+	vnode->refcount++;
 
 	// TODO check permissions before opening
 
 	*file = new_fileptr(vnode, flags);
 	if (!*file)
 		return EMFILE;
-	// TODO this probably should be somewhere else
-	vnode->refcount++;
 
 	if (flags & O_TRUNC)
 		vnode->ops->truncate(vnode);
@@ -183,6 +186,18 @@ int vfs_open(const char *path, int flags, struct vfile **file)
 
 int vfs_close(struct vfile *file)
 {
+/*
+	int error;
+
+	struct vnode *vnode = file->vnode;
+
+	error = file->vnode->ops->fops->close(file);
+	//free_fileptr(file);
+
+	printk("Closing: %d\n", vnode->refcount);
+
+	return error;
+*/
 	file->vnode->refcount--;
 	return file->vnode->ops->fops->close(file);
 }

@@ -8,10 +8,10 @@
 #include <kernel/vfs.h>
 #include <kernel/printk.h>
 #include <kernel/driver.h>
-#include <kernel/filedesc.h>
 
 #include "api.h"
 #include "process.h"
+#include "filedesc.h"
 #include "interrupts.h"
 
 #define SYSCALL_MAX	20
@@ -80,10 +80,10 @@ int do_unlink(const char *path)
 
 int do_creat(const char *path, mode_t mode)
 {
-	return vfs_create(path, mode, NULL);
+	return do_open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
 }
 
-int do_open(const char *path, int oflags)
+int do_open(const char *path, int oflags, mode_t mode)
 {
 	int fd;
 	int error;
@@ -93,7 +93,7 @@ int do_open(const char *path, int oflags)
 	if (fd < 0)
 		return fd;
 
-	error = vfs_open(path, oflags, &file);
+	error = vfs_open(path, oflags, mode, &file);
 	if (error)
 		return error;
 
@@ -110,6 +110,7 @@ int do_close(int fd)
 
 	vfs_close(file);
 
+	//unset_fd(current_proc->fd_table, fd);
 	free_fd(current_proc->fd_table, fd);
 	return 0;
 }
@@ -226,19 +227,19 @@ pid_t do_fork()
 	// normally only happens in the schedule() function
 	current_proc->sp = current_proc_stack;
 
-	int stack_size = current_proc->segments[M_STACK].length;
+	int stack_size = current_proc->map.segments[M_STACK].length;
 	char *stack = malloc(stack_size);
-	char *stack_pointer = (stack + stack_size) - ((current_proc->segments[M_STACK].base + current_proc->segments[M_STACK].length) - current_proc->sp);
+	char *stack_pointer = (stack + stack_size) - ((current_proc->map.segments[M_STACK].base + current_proc->map.segments[M_STACK].length) - current_proc->sp);
 
-	memcpy_s(stack, current_proc->segments[M_STACK].base, current_proc->segments[M_STACK].length);
+	memcpy_s(stack, current_proc->map.segments[M_STACK].base, current_proc->map.segments[M_STACK].length);
 
 	//printk("Parent Stack Pointer: %x\n", current_proc->sp);
 	//printk("Fork Stack: %x\n", stack);
 	//printk("Fork Stack Top: %x\n", stack + stack_size);
 	//printk("Fork Stack Pointer: %x\n", stack_pointer);
 
-	proc->segments[M_STACK].base = stack;
-	proc->segments[M_STACK].length = stack_size;
+	proc->map.segments[M_STACK].base = stack;
+	proc->map.segments[M_STACK].length = stack_size;
 	proc->sp = stack_pointer;
 
 	// Apply return values to the context on the stack (%d0 is at the top)
@@ -279,9 +280,11 @@ pid_t do_waitpid(pid_t pid, int *status, int options)
 
 	proc = find_exited_child(current_proc->pid, pid);
 	if (!proc) {
+		printk("Suspending\n");
 		suspend_current_proc();
 	}
 	else {
+		printk("Found %d has exited %x\n", proc->pid, proc->state);
 		*status = proc->exitcode;
 		pid = proc->pid;
 		cleanup_proc(proc);
@@ -341,51 +344,56 @@ char *copy_exec_args(char *stack, char *const argv[], char *const envp[])
 	return stack;
 }
 
-int do_exec(const char *path, char *const argv[], char *const envp[])
+int load_flat_binary(const char *path, struct mem_map *map)
 {
-	int fd;
 	int error;
-	struct stat statbuf;
+	struct vfile *file;
 
-	if ((error = do_stat(path, &statbuf))) {
-		printk("Error stating %s: %d\n", path, error);
+	if ((error = vfs_open(path, O_RDONLY, 0, &file)) < 0) {
+		printk("Error opening %s: %d\n", path, error);
 		return error;
 	}
 
-	if ((fd = do_open(path, O_RDONLY)) < 0) {
-		printk("Error opening %s: %d\n", path, fd);
-		return fd;
-	}
+	printk("Size: %d\n", file->vnode->size);
 
-	printk("Size: %d\n", statbuf.st_size);
-
-	// The extra data is for the bss segment
-	int task_size = statbuf.st_size + 0x200;
+	// The extra data is for the bss segment, which we don't know the proper size of
+	int task_size = file->vnode->size + 0x200;
 	char *task_text = malloc(task_size);
 
-	error = do_read(fd, task_text, task_size);
-	do_close(fd);
-
+	error = vfs_read(file, task_text, task_size);
+	vfs_close(file);
 
 	if (error < 0) {
 		printk("Error reading file %s: %d\n", path, error);
 		return error;
 	}
 
+
 	// TODO overwriting this could be a memory leak if it's not already NULL.  How do I refcount segments?
-	current_proc->segments[M_TEXT].base = task_text;
-	current_proc->segments[M_TEXT].length = task_size;
+	map->segments[M_TEXT].base = task_text;
+	map->segments[M_TEXT].length = task_size;
+
+	return 0;
+}
+
+int do_exec(const char *path, char *const argv[], char *const envp[])
+{
+	int error;
+
+	error = load_flat_binary(path, &current_proc->map);
+	if (error)
+		return error;
 
 	// Reset the stack to start our new process
-	char *task_stack_pointer = current_proc->segments[M_TEXT].base + current_proc->segments[M_TEXT].length;
+	char *task_stack_pointer = current_proc->map.segments[M_TEXT].base + current_proc->map.segments[M_TEXT].length;
 
 	// Setup new stack image
  	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp);
- 	task_stack_pointer = create_context(task_stack_pointer, task_text);
+ 	task_stack_pointer = create_context(task_stack_pointer, current_proc->map.segments[M_TEXT].base);
 	current_proc->sp = task_stack_pointer;
 	current_proc_stack = task_stack_pointer;
 
-	printk("Exec Text: %x\n", task_text);
+	printk("Exec Text: %x\n", current_proc->map.segments[M_TEXT].base);
 	printk("Exec Stack Pointer: %x\n", task_stack_pointer);
 
 	//dump((uint16_t *) task_text, 400);

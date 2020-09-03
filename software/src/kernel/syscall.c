@@ -73,6 +73,10 @@ void do_syscall()
 	tty_68681_reset_leds(0x04);
 }
 
+int do_unlink(const char *path)
+{
+	return vfs_unlink(path);
+}
 
 int do_creat(const char *path, mode_t mode)
 {
@@ -127,12 +131,85 @@ size_t do_write(int fd, const char *buf, size_t nbytes)
 	return vfs_write(file, buf, nbytes);
 }
 
+int do_lseek(int fd, offset_t offset, int whence)
+{
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file)
+		return EBADF;
+	return vfs_seek(file, offset, whence);
+}
+
 int do_readdir(int fd, struct vdir *dir)
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file)
 		return EBADF;
 	return vfs_readdir(file, dir);
+}
+
+int do_stat(const char *path, struct stat *statbuf)
+{
+	int error;
+	struct vnode *vnode;
+
+	if ((error = vfs_lookup(path, VLOOKUP_NORMAL, &vnode)))
+		return error;
+
+	statbuf->st_dev = 0;
+	statbuf->st_mode = vnode->mode;
+	statbuf->st_uid = vnode->uid;
+	statbuf->st_gid = vnode->gid;
+	statbuf->st_size = vnode->size;
+
+	return 0;
+}
+
+int do_fstat(int fd, struct stat *statbuf)
+{
+	struct vfile *file;
+
+	file = get_fd(current_proc->fd_table, fd);
+	if (!file)
+		return EBADF;
+
+	statbuf->st_dev = 0;
+	statbuf->st_mode = file->vnode->mode;
+	statbuf->st_uid = file->vnode->uid;
+	statbuf->st_gid = file->vnode->gid;
+	statbuf->st_size = file->vnode->size;
+
+	return 0;
+}
+
+#define PIPE_READ_FD	0
+#define PIPE_WRITE_FD	1
+
+int do_pipe(int pipefd[2])
+{
+	int error;
+	struct vfile *file[2];
+
+	if (!pipefd)
+		return EINVAL;
+
+	// Find two unused file descriptor slots in the current process's fd table (no need to free them until set_fd())
+	pipefd[PIPE_READ_FD] = find_unused_fd(current_proc->fd_table);
+	// TODO this is terrible and I shouldn't do this, but at least it works for the time being
+	set_fd(current_proc->fd_table, pipefd[PIPE_READ_FD], 1);
+	pipefd[PIPE_WRITE_FD] = find_unused_fd(current_proc->fd_table);
+	set_fd(current_proc->fd_table, pipefd[PIPE_READ_FD], NULL);
+
+	if (pipefd[PIPE_READ_FD] < 0 || pipefd[PIPE_WRITE_FD] < 0)
+		return EMFILE;
+
+	error = vfs_create_pipe(&file[PIPE_READ_FD], &file[PIPE_WRITE_FD]);
+	if (error)
+		return error;
+
+	set_fd(current_proc->fd_table, pipefd[PIPE_READ_FD], file[PIPE_READ_FD]);
+	set_fd(current_proc->fd_table, pipefd[PIPE_WRITE_FD], file[PIPE_WRITE_FD]);
+
+	return 0;
 }
 
 
@@ -312,84 +389,6 @@ int do_exec(const char *path, char *const argv[], char *const envp[])
 	printk("Exec Stack Pointer: %x\n", task_stack_pointer);
 
 	//dump((uint16_t *) task_text, 400);
-
-	return 0;
-}
-
-int do_unlink(const char *path)
-{
-	return vfs_unlink(path);
-}
-
-int do_stat(const char *path, struct stat *statbuf)
-{
-	int error;
-	struct vnode *vnode;
-
-	if ((error = vfs_lookup(path, VLOOKUP_NORMAL, &vnode)))
-		return error;
-
-	statbuf->st_dev = 0;
-	statbuf->st_mode = vnode->mode;
-	statbuf->st_uid = vnode->uid;
-	statbuf->st_gid = vnode->gid;
-	statbuf->st_size = vnode->size;
-
-	return 0;
-}
-
-int do_fstat(int fd, struct stat *statbuf)
-{
-	struct vfile *file;
-
-	file = get_fd(current_proc->fd_table, fd);
-	if (!file)
-		return EBADF;
-
-	statbuf->st_dev = 0;
-	statbuf->st_mode = file->vnode->mode;
-	statbuf->st_uid = file->vnode->uid;
-	statbuf->st_gid = file->vnode->gid;
-	statbuf->st_size = file->vnode->size;
-
-	return 0;
-}
-
-int do_lseek(int fd, offset_t offset, int whence)
-{
-	struct vfile *file = get_fd(current_proc->fd_table, fd);
-	if (!file)
-		return EBADF;
-	return vfs_seek(file, offset, whence);
-}
-
-#define PIPE_READ_FD	0
-#define PIPE_WRITE_FD	1
-
-int do_pipe(int pipefd[2])
-{
-	int error;
-	struct vfile *file[2];
-
-	if (!pipefd)
-		return EINVAL;
-
-	// Find two unused file descriptor slots in the current process's fd table (no need to free them until set_fd())
-	pipefd[PIPE_READ_FD] = find_unused_fd(current_proc->fd_table);
-	// TODO this is terrible and I shouldn't do this, but at least it works for the time being
-	set_fd(current_proc->fd_table, pipefd[PIPE_READ_FD], 1);
-	pipefd[PIPE_WRITE_FD] = find_unused_fd(current_proc->fd_table);
-	set_fd(current_proc->fd_table, pipefd[PIPE_READ_FD], NULL);
-
-	if (pipefd[PIPE_READ_FD] < 0 || pipefd[PIPE_WRITE_FD] < 0)
-		return EMFILE;
-
-	error = vfs_create_pipe(&file[PIPE_READ_FD], &file[PIPE_WRITE_FD]);
-	if (error)
-		return error;
-
-	set_fd(current_proc->fd_table, pipefd[PIPE_READ_FD], file[PIPE_READ_FD]);
-	set_fd(current_proc->fd_table, pipefd[PIPE_WRITE_FD], file[PIPE_WRITE_FD]);
 
 	return 0;
 }

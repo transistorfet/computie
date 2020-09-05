@@ -22,6 +22,10 @@
 #define SYS_PIPE	16
 #define SYS_READDIR	17
 #define SYS_MKDIR	18
+#define SYS_CHDIR	19
+//#define SYS_CHMOD	20
+//#define SYS_CHOWN	21
+//#define SYS_ACCESS	22
 
 
 static inline int SYSCALL1(int n, int a1)

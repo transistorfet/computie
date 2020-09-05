@@ -52,6 +52,7 @@ struct process {
 
 	//struct process_fs_data {
 	uid_t uid;
+	struct vnode *cwd;
 	//};
 	fd_table_t fd_table;
 };

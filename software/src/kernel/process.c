@@ -57,6 +57,7 @@ struct process *new_proc(uid_t uid)
 			table[i].state = PS_READY;
 
 			table[i].uid = uid;
+			table[i].cwd = NULL;
 
 			init_fd_table(table[i].fd_table);
 

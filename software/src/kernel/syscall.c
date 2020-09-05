@@ -15,7 +15,7 @@
 #include "filedesc.h"
 #include "interrupts.h"
 
-#define SYSCALL_MAX	25
+#define SYSCALL_MAX	32
 
 typedef int (*syscall_t)(int, int, int);
 
@@ -41,6 +41,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_pipe,
 	do_readdir,
 	do_mkdir,
+	do_chdir,
 };
 
 extern void enter_syscall();
@@ -77,7 +78,7 @@ void do_syscall()
 
 int do_unlink(const char *path)
 {
-	return vfs_unlink(path, current_proc->uid);
+	return vfs_unlink(current_proc->cwd, path, current_proc->uid);
 }
 
 int do_mkdir(const char *path, mode_t mode)
@@ -85,7 +86,7 @@ int do_mkdir(const char *path, mode_t mode)
 	int error;
 	struct vfile *file;
 
-	error = vfs_open(path, O_CREAT, S_IFDIR | mode, current_proc->uid, &file);
+	error = vfs_open(current_proc->cwd, path, O_CREAT, S_IFDIR | mode, current_proc->uid, &file);
 	if (error < 0)
 		return error;
 	vfs_close(file);
@@ -107,7 +108,7 @@ int do_open(const char *path, int oflags, mode_t mode)
 	if (fd < 0)
 		return fd;
 
-	error = vfs_open(path, oflags, mode, current_proc->uid, &file);
+	error = vfs_open(current_proc->cwd, path, oflags, mode, current_proc->uid, &file);
 	if (error)
 		return error;
 
@@ -162,12 +163,27 @@ int do_readdir(int fd, struct vdir *dir)
 	return vfs_readdir(file, dir);
 }
 
+int do_chdir(const char *path)
+{
+	int error;
+	struct vnode *vnode;
+
+	if ((error = vfs_lookup(current_proc->cwd, path, VLOOKUP_NORMAL, current_proc->uid, &vnode)))
+		return error;
+
+	if (!(vnode->mode & S_IFDIR))
+		return ENOTDIR;
+
+	current_proc->cwd = vfs_make_vnode_ref(vnode);
+	return 0;
+}
+
 int do_stat(const char *path, struct stat *statbuf)
 {
 	int error;
 	struct vnode *vnode;
 
-	if ((error = vfs_lookup(path, VLOOKUP_NORMAL, current_proc->uid, &vnode)))
+	if ((error = vfs_lookup(current_proc->cwd, path, VLOOKUP_NORMAL, current_proc->uid, &vnode)))
 		return error;
 
 	statbuf->st_dev = 0;
@@ -361,7 +377,7 @@ int load_flat_binary(const char *path, struct mem_map *map)
 	int error;
 	struct vfile *file;
 
-	if ((error = vfs_open(path, O_RDONLY, 0, current_proc->uid, &file)) < 0) {
+	if ((error = vfs_open(current_proc->cwd, path, O_RDONLY, 0, current_proc->uid, &file)) < 0) {
 		printk("Error opening %s: %d\n", path, error);
 		return error;
 	}

@@ -158,7 +158,7 @@ int tty_68681_init()
 	*OUT_SET_ADDR = 0x01;
 
 	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
-	vfs_mknod("tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, 0, SU_UID, &tty_vnode);
+	vfs_mknod(NULL, "tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, 0, SU_UID, &tty_vnode);
 
 	*((char *) 0x201d) = 0x00;
 }

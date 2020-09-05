@@ -39,13 +39,13 @@ struct vnode *vfs_root(struct mount *mp);
 int vfs_sync(struct mount *mp);
 
 
-int vfs_mknod(const char *path, mode_t mode, device_t dev, uid_t uid, struct vnode **result)
+int vfs_mknod(struct vnode *cwd, const char *path, mode_t mode, device_t dev, uid_t uid, struct vnode **result)
 {
 	int error;
 	struct vnode *tmp;
 	struct vnode *vnode;
 
-	error = vfs_lookup(path, VLOOKUP_PARENT_OF, uid, &vnode);
+	error = vfs_lookup(cwd, path, VLOOKUP_PARENT_OF, uid, &vnode);
 	if (error)
 		return error;
 
@@ -62,7 +62,7 @@ int vfs_mknod(const char *path, mode_t mode, device_t dev, uid_t uid, struct vno
 	return vnode->ops->mknod(vnode, filename, mode, dev, result);
 }
 
-int vfs_lookup(const char *path, int flags, uid_t uid, struct vnode **result)
+int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct vnode **result)
 {
 	// TODO this is temporary because we don't have mounts yet
 	extern struct vnode *mallocfs_root;
@@ -75,10 +75,12 @@ int vfs_lookup(const char *path, int flags, uid_t uid, struct vnode **result)
 	if (!result)
 		return EINVAL;
 
-	cur = mallocfs_root;
+	cur = cwd ? cwd : mallocfs_root;
 	// We are always starting from the root node, so ignore a leading slash
-	if (path[0] == VFS_SEP)
+	if (path[0] == VFS_SEP) {
+		cur = mallocfs_root;
 		i += 1;
+	}
 
 	while (1) {
 		if (path[i] == '\0') {
@@ -108,13 +110,13 @@ int vfs_lookup(const char *path, int flags, uid_t uid, struct vnode **result)
 	return ENOENT;
 }
 
-int vfs_unlink(const char *path, uid_t uid)
+int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid)
 {
 	int error;
 	const char *filename;
 	struct vnode *vnode, *parent;
 
-	error = vfs_lookup(path, VLOOKUP_PARENT_OF, uid, &parent);
+	error = vfs_lookup(cwd, path, VLOOKUP_PARENT_OF, uid, &parent);
 	if (error)
 		return error;
 
@@ -137,7 +139,7 @@ int vfs_unlink(const char *path, uid_t uid)
 	return 0;
 }
 
-int vfs_open(const char *path, int flags, mode_t mode, uid_t uid, struct vfile **file)
+int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t uid, struct vfile **file)
 {
 	int error;
 	struct vnode *vnode;
@@ -146,7 +148,7 @@ int vfs_open(const char *path, int flags, mode_t mode, uid_t uid, struct vfile *
 	if (!file)
 		return EINVAL;
 
-	error = vfs_lookup(path, (flags & O_CREAT) ? VLOOKUP_PARENT_OF : VLOOKUP_NORMAL, uid, &vnode);
+	error = vfs_lookup(cwd, path, (flags & O_CREAT) ? VLOOKUP_PARENT_OF : VLOOKUP_NORMAL, uid, &vnode);
 	if (error)
 		return error;
 
@@ -165,8 +167,7 @@ int vfs_open(const char *path, int flags, mode_t mode, uid_t uid, struct vfile *
 		}
 	}
 	else {
-		// TODO this probably should be somewhere else
-		vnode->refcount++;
+		vfs_make_vnode_ref(vnode);
 	}
 
 	// Verify the permissions before proceeding

@@ -425,7 +425,7 @@ int command_ls(int argc, char **argv)
 	char filename[100];
 	char filemode[10];
 
-	char *path = argc > 1 ? argv[1] : "/";
+	char *path = argc > 1 ? argv[1] : ".";
 
 	if ((fd = open(path, 0, 0)) < 0) {
 		printf("Error opening %s: %d\n", path, fd);
@@ -496,6 +496,22 @@ int command_rm(int argc, char **argv)
 	return 0;
 }
 
+int command_chdir(int argc, char **argv)
+{
+	if (argc <= 1) {
+		puts("You need file name");
+		return -1;
+	}
+
+	int error = chdir(argv[1]);
+	if (error < 0) {
+		printf("Error while changing dir %s: %d\n", argv[1], error);
+	}
+
+	return 0;
+}
+
+
 
 
 int command_exec(int argc, char **argv)
@@ -543,8 +559,9 @@ struct command command_list[] = {
 	{ "hex", 	command_hex },
 	{ "cat", 	command_cat },
 	{ "ls", 	command_ls },
-	{ "rm", 	command_rm },
 	{ "mkdir", 	command_mkdir },
+	{ "rm", 	command_rm },
+	{ "cd", 	command_chdir },
 	{ "exec", 	command_exec },
 	{ NULL },
 };
@@ -632,14 +649,14 @@ void file_test()
 	int error;
 	struct vfile *file;
 
-	error = vfs_open("/dir", O_CREAT, S_IFDIR | 0755, SU_UID, &file);
+	error = vfs_open(NULL, "/dir", O_CREAT, S_IFDIR | 0755, SU_UID, &file);
 	if (error) {
 		printk("Error: %d\n", error);
 		return;
 	}
 	vfs_close(file);
 
-	error = vfs_open("/dir/test", O_CREAT, 0644, SU_UID, &file);
+	error = vfs_open(NULL, "/dir/test", O_CREAT, 0644, SU_UID, &file);
 	if (error) {
 		printk("Error: %d\n", error);
 		return;
@@ -662,7 +679,7 @@ void file_test()
 	close(fd);
 */
 
-	if ((error = vfs_open("test", O_CREAT, 0755, SU_UID, &file))) {
+	if ((error = vfs_open(NULL, "test", O_CREAT, 0755, SU_UID, &file))) {
 		printk("Error at open %d\n", error);
 		return;
 	}
@@ -690,7 +707,7 @@ void file_test()
 
 
 	extern const char hello_task[800];
-	if ((error = vfs_open("/hello", O_CREAT, 0755, SU_UID, &file))) {
+	if ((error = vfs_open(NULL, "/hello", O_CREAT, 0755, SU_UID, &file))) {
 		printk("Error at open new file %d\n", error);
 		return;
 	}
@@ -704,7 +721,7 @@ void file_test()
 
 	puts("done");
 
-	if ((error = vfs_open("/size", O_CREAT, 0644, SU_UID, &file))) {
+	if ((error = vfs_open(NULL, "/size", O_CREAT, 0644, SU_UID, &file))) {
 		printk("Error at open new file %d\n", error);
 		return;
 	}
@@ -731,7 +748,7 @@ void dir_test()
 	struct vfile *file;
 	struct vdir dir;
 
-	if ((error = vfs_open("/", 0, 0, SU_UID, &file))) {
+	if ((error = vfs_open(NULL, "/", 0, 0, SU_UID, &file))) {
 		printk("Error at open %d\n", error);
 		return;
 	}

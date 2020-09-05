@@ -104,10 +104,10 @@ int vfs_mount(struct mount *mp);
 int vfs_umount(struct mount *mp);
 int vfs_sync(struct mount *mp);
 
-int vfs_mknod(const char *path, mode_t mode, device_t dev, uid_t uid, struct vnode **result);
-int vfs_lookup(const char *path, int flags, uid_t uid, struct vnode **result);
-int vfs_unlink(const char *path, uid_t uid);
-int vfs_open(const char *path, int flags, mode_t mode, uid_t uid, struct vfile **file);
+int vfs_mknod(struct vnode *cwd, const char *path, mode_t mode, device_t dev, uid_t uid, struct vnode **result);
+int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct vnode **result);
+int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid);
+int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t uid, struct vfile **file);
 
 int vfs_close(struct vfile *file);
 int vfs_read(struct vfile *file, char *buffer, size_t size);
@@ -130,6 +130,12 @@ static inline void vfs_init_vnode(struct vnode *vnode, struct vnode_ops *ops, mo
 	vnode->gid = gid;
 	vnode->size = size;
 	vnode->mtime = mtime;
+}
+
+static inline struct vnode *vfs_make_vnode_ref(struct vnode *vnode)
+{
+	vnode->refcount++;
+	return vnode;
 }
 
 #endif

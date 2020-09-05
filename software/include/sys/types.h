@@ -2,6 +2,7 @@
 #ifndef _TYPES_H
 #define _TYPES_H
 
+
 typedef long time_t;
 
 typedef int pid_t;
@@ -14,6 +15,7 @@ typedef unsigned int block_t;
 typedef unsigned short uid_t;
 typedef unsigned short gid_t;
 
+#define SU_UID		(uid_t) 0
 
 #define O_ACCMODE	00003
 #define O_RDONLY	00000

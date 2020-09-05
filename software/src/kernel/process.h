@@ -36,26 +36,32 @@ typedef enum {
 } proc_state_t;
 
 
+struct vnode;
+
 struct process {
 	struct queue_node node;
-	int pid;
-	int parent;
+	pid_t pid;
+	pid_t parent;
 	uint16_t state;
-	int exitcode;
 
 	struct mem_map map;
 	void *sp;
 
+	int exitcode;
 	struct syscall_record blocked_call;
+
+	//struct process_fs_data {
+	uid_t uid;
+	//};
 	fd_table_t fd_table;
 };
 
 void init_proc();
-struct process *new_proc();
-struct process *get_proc(int pid);
+struct process *new_proc(uid_t uid);
+struct process *get_proc(pid_t pid);
 void exit_proc(struct process *proc, int status);
 void cleanup_proc(struct process *proc);
-struct process *find_exited_child(int parent, int child);
+struct process *find_exited_child(pid_t parent, pid_t child);
 
 void suspend_current_proc();
 void resume_proc(struct process *proc);

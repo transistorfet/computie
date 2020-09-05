@@ -46,7 +46,7 @@ struct process *run_task()
 {
 	int error = 0;
 
-	struct process *proc = new_proc();
+	struct process *proc = new_proc(SU_UID);
 	if (!proc) {
 		printk("Ran out of procs\n");
 		return NULL;
@@ -105,7 +105,7 @@ struct process *run_sh()
 {
 	int error = 0;
 
-	struct process *proc = new_proc();
+	struct process *proc = new_proc(SU_UID);
 	if (!proc) {
 		printk("Ran out of procs\n");
 		return NULL;

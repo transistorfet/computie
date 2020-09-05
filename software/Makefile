@@ -28,6 +28,7 @@ KERNEL_OBJS = \
 	src/kernel/interrupts.o \
 	src/kernel/syscall_entry.o \
 	src/kernel/syscall.o \
+	src/kernel/access.o \
 	src/kernel/filedesc.o \
 	src/kernel/process.o \
 	src/kernel/driver.o \

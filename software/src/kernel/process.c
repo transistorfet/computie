@@ -6,6 +6,7 @@
 #include <kernel/printk.h>
 
 #include "api.h"
+#include "access.h"
 #include "process.h"
 #include "filedesc.h"
 #include "interrupts.h"
@@ -22,7 +23,7 @@ struct syscall_record *current_syscall;
 
 // Process Table and Queues
 #define PROCESS_MAX	6
-static int next_pid;
+static pid_t next_pid;
 static struct queue run_queue;
 static struct queue blocked_queue;
 static struct process table[PROCESS_MAX];
@@ -46,18 +47,18 @@ void init_proc()
 	_queue_remove(&run_queue, &idle_proc->node);
 }
 
-struct process *new_proc()
+struct process *new_proc(uid_t uid)
 {
 	for (short i = 0; i < PROCESS_MAX; i++) {
 		if (!table[i].pid) {
+			_queue_node_init(&table[i].node);
 			table[i].pid = next_pid++;
 			table[i].parent = current_proc ? current_proc->pid : 1;
 			table[i].state = PS_READY;
-			_queue_node_init(&table[i].node);
+
+			table[i].uid = uid;
 
 			init_fd_table(table[i].fd_table);
-
-			// TODO use the inode to load an executable into memory?
 
 			// Clear memory records
 			for (char j = 0; j < NUM_SEGMENTS; j++) {
@@ -74,7 +75,7 @@ struct process *new_proc()
 	return NULL;
 }
 
-struct process *get_proc(int pid)
+struct process *get_proc(pid_t pid)
 {
 	for (short i = 0; i < PROCESS_MAX; i++) {
 		if (table[i].pid == pid)
@@ -109,7 +110,7 @@ void cleanup_proc(struct process *proc)
 	proc->pid = 0;
 }
 
-struct process *find_exited_child(int parent, int child)
+struct process *find_exited_child(pid_t parent, pid_t child)
 {
 	for (short i = 0; i < PROCESS_MAX; i++) {
 		if (table[i].pid && table[i].state == PS_EXITED && table[i].parent == parent && (child == -1 || table[i].pid == child))
@@ -214,7 +215,7 @@ struct process *create_kernel_task(int (*task_start)())
 {
 	int error = 0;
 
-	struct process *proc = new_proc();
+	struct process *proc = new_proc(SU_UID);
 	if (!proc)
 		panic("Ran out of procs\n");
 

@@ -9,6 +9,8 @@
 #include "fileptr.h"
 #include "bufcache.h"
 
+#include "../access.h"
+
 // TODO this will be removed when you add fs mounting
 #include "mallocfs/mallocfs.h"
 
@@ -37,15 +39,18 @@ struct vnode *vfs_root(struct mount *mp);
 int vfs_sync(struct mount *mp);
 
 
-int vfs_mknod(const char *path, mode_t mode, device_t dev, struct vnode **result)
+int vfs_mknod(const char *path, mode_t mode, device_t dev, uid_t uid, struct vnode **result)
 {
 	int error;
 	struct vnode *tmp;
 	struct vnode *vnode;
 
-	error = vfs_lookup(path, VLOOKUP_PARENT_OF, &vnode);
+	error = vfs_lookup(path, VLOOKUP_PARENT_OF, uid, &vnode);
 	if (error)
 		return error;
+
+	if (!verify_mode_access(uid, S_WRITE, vnode->uid, vnode->gid, vnode->mode))
+		return EPERM;
 
 	const char *filename = path_last_component(path);
 	error = vnode->ops->lookup(vnode, filename, &tmp);
@@ -57,19 +62,20 @@ int vfs_mknod(const char *path, mode_t mode, device_t dev, struct vnode **result
 	return vnode->ops->mknod(vnode, filename, mode, dev, result);
 }
 
-int vfs_lookup(const char *path, int flags, struct vnode **result)
+int vfs_lookup(const char *path, int flags, uid_t uid, struct vnode **result)
 {
 	// TODO this is temporary because we don't have mounts yet
 	extern struct vnode *mallocfs_root;
 
 	int error;
 	int i = 0, j;
+	struct vnode *cur;
 	char component[VFS_FILENAME_MAX];
-	struct vnode *cur = mallocfs_root;
 
 	if (!result)
 		return EINVAL;
 
+	cur = mallocfs_root;
 	// We are always starting from the root node, so ignore a leading slash
 	if (path[0] == VFS_SEP)
 		i += 1;
@@ -79,6 +85,10 @@ int vfs_lookup(const char *path, int flags, struct vnode **result)
 			*result = cur;
 			return 0;
 		}
+
+		// TODO this seems to be wrong according to how linux behaves...
+		if (!verify_mode_access(uid, S_READ, cur->uid, cur->gid, cur->mode))
+			return EPERM;
 
 		for (j = 0; path[i] && path[i] != VFS_SEP; i++, j++)
 			component[j] = path[i];
@@ -98,20 +108,28 @@ int vfs_lookup(const char *path, int flags, struct vnode **result)
 	return ENOENT;
 }
 
-int vfs_unlink(const char *path)
+int vfs_unlink(const char *path, uid_t uid)
 {
 	int error;
 	const char *filename;
 	struct vnode *vnode, *parent;
 
-	error = vfs_lookup(path, VLOOKUP_PARENT_OF, &parent);
+	error = vfs_lookup(path, VLOOKUP_PARENT_OF, uid, &parent);
 	if (error)
 		return error;
+
+	// Verify that parent directory is writable
+	if (!verify_mode_access(uid, S_WRITE, parent->uid, parent->gid, parent->mode))
+		return EACCES;
 
 	filename = path_last_component(path);
 	error = parent->ops->lookup(parent, filename, &vnode);
 	if (error)
 		return error;
+
+	// Verify that the file we're trying to delete is writable
+	if (!verify_mode_access(uid, S_WRITE, vnode->uid, vnode->gid, vnode->mode))
+		return EPERM;
 
 	error = vnode->ops->unlink(parent, vnode);
 	if (error)
@@ -119,22 +137,25 @@ int vfs_unlink(const char *path)
 	return 0;
 }
 
-int vfs_open(const char *path, int flags, mode_t mode, struct vfile **file)
+int vfs_open(const char *path, int flags, mode_t mode, uid_t uid, struct vfile **file)
 {
 	int error;
 	struct vnode *vnode;
+	mode_t required_mode = 0;
 
 	if (!file)
 		return EINVAL;
 
-	error = vfs_lookup(path, (flags & O_CREAT) ? VLOOKUP_PARENT_OF : VLOOKUP_NORMAL, &vnode);
+	error = vfs_lookup(path, (flags & O_CREAT) ? VLOOKUP_PARENT_OF : VLOOKUP_NORMAL, uid, &vnode);
 	if (error)
 		return error;
 
-	// TODO check permissions before opening
-
 	if (flags & O_CREAT) {
 		const char *filename = path_last_component(path);
+
+		// Verify that parent directory is writable
+		if (!verify_mode_access(uid, S_WRITE, vnode->uid, vnode->gid, vnode->mode))
+			return EPERM;
 
 		// Lookup the last path component, or create a new file if an error occurs during lookup
 		if (vnode->ops->lookup(vnode, filename, &vnode)) {
@@ -146,6 +167,16 @@ int vfs_open(const char *path, int flags, mode_t mode, struct vfile **file)
 	else {
 		// TODO this probably should be somewhere else
 		vnode->refcount++;
+	}
+
+	// Verify the permissions before proceeding
+	if ((flags & O_ACCMODE) != O_WRONLY)
+		required_mode |= S_READ;
+	if ((flags & O_ACCMODE) != O_RDONLY)
+		required_mode |= S_WRITE;
+	if (!verify_mode_access(uid, required_mode, vnode->uid, vnode->gid, vnode->mode)) {
+		vfs_release_vnode(vnode);
+		return EPERM;
 	}
 
 	*file = new_fileptr(vnode, flags);

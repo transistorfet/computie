@@ -10,6 +10,7 @@
 #include <kernel/driver.h>
 
 #include "api.h"
+#include "access.h"
 #include "process.h"
 #include "filedesc.h"
 #include "interrupts.h"
@@ -76,7 +77,7 @@ void do_syscall()
 
 int do_unlink(const char *path)
 {
-	return vfs_unlink(path);
+	return vfs_unlink(path, current_proc->uid);
 }
 
 int do_mkdir(const char *path, mode_t mode)
@@ -84,7 +85,7 @@ int do_mkdir(const char *path, mode_t mode)
 	int error;
 	struct vfile *file;
 
-	error = vfs_open(path, O_CREAT, S_IFDIR | mode, &file);
+	error = vfs_open(path, O_CREAT, S_IFDIR | mode, current_proc->uid, &file);
 	if (error < 0)
 		return error;
 	vfs_close(file);
@@ -106,7 +107,7 @@ int do_open(const char *path, int oflags, mode_t mode)
 	if (fd < 0)
 		return fd;
 
-	error = vfs_open(path, oflags, mode, &file);
+	error = vfs_open(path, oflags, mode, current_proc->uid, &file);
 	if (error)
 		return error;
 
@@ -166,7 +167,7 @@ int do_stat(const char *path, struct stat *statbuf)
 	int error;
 	struct vnode *vnode;
 
-	if ((error = vfs_lookup(path, VLOOKUP_NORMAL, &vnode)))
+	if ((error = vfs_lookup(path, VLOOKUP_NORMAL, current_proc->uid, &vnode)))
 		return error;
 
 	statbuf->st_dev = 0;
@@ -231,7 +232,7 @@ pid_t do_fork()
 {
 	struct process *proc;
 
-	proc = new_proc();
+	proc = new_proc(current_proc->uid);
 	if (!proc)
 		panic("Ran out of procs\n");
 	dup_fd_table(proc->fd_table, current_proc->fd_table);
@@ -293,11 +294,9 @@ pid_t do_waitpid(pid_t pid, int *status, int options)
 
 	proc = find_exited_child(current_proc->pid, pid);
 	if (!proc) {
-		printk("Suspending\n");
 		suspend_current_proc();
 	}
 	else {
-		printk("Found %d has exited %x\n", proc->pid, proc->state);
 		*status = proc->exitcode;
 		pid = proc->pid;
 		cleanup_proc(proc);
@@ -362,12 +361,15 @@ int load_flat_binary(const char *path, struct mem_map *map)
 	int error;
 	struct vfile *file;
 
-	if ((error = vfs_open(path, O_RDONLY, 0, &file)) < 0) {
+	if ((error = vfs_open(path, O_RDONLY, 0, current_proc->uid, &file)) < 0) {
 		printk("Error opening %s: %d\n", path, error);
 		return error;
 	}
 
-	printk("Size: %d\n", file->vnode->size);
+	if (!(file->vnode->mode & (S_IFDIR | S_IFCHR | S_IFIFO)) && !verify_mode_access(current_proc->uid, S_EXECUTE, file->vnode->uid, file->vnode->gid, file->vnode->mode)) {
+		vfs_close(file);
+		return EPERM;
+	}
 
 	// The extra data is for the bss segment, which we don't know the proper size of
 	int task_size = file->vnode->size + 0x200;
@@ -405,11 +407,6 @@ int do_exec(const char *path, char *const argv[], char *const envp[])
  	task_stack_pointer = create_context(task_stack_pointer, current_proc->map.segments[M_TEXT].base);
 	current_proc->sp = task_stack_pointer;
 	current_proc_stack = task_stack_pointer;
-
-	printk("Exec Text: %x\n", current_proc->map.segments[M_TEXT].base);
-	printk("Exec Stack Pointer: %x\n", task_stack_pointer);
-
-	//dump((uint16_t *) task_text, 400);
 
 	return 0;
 }

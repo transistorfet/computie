@@ -632,19 +632,19 @@ void file_test()
 	int error;
 	struct vfile *file;
 
-	error = open("/dir", O_CREAT | O_WRONLY | O_TRUNC, S_IFDIR | 0755);
-	if (error < 0) {
+	error = vfs_open("/dir", O_CREAT, S_IFDIR | 0755, SU_UID, &file);
+	if (error) {
 		printk("Error: %d\n", error);
 		return;
 	}
-	close(error);
+	vfs_close(file);
 
-	//error = vfs_open("/dir/test", O_CREAT, 0644, &file);
-	//if (error) {
-	//	printk("Error: %d\n", error);
-	//	return;
-	//}
-	//vfs_close(file);
+	error = vfs_open("/dir/test", O_CREAT, 0644, SU_UID, &file);
+	if (error) {
+		printk("Error: %d\n", error);
+		return;
+	}
+	vfs_close(file);
 
 /*
 	fd = creat("/dir", S_IFDIR | 0755);
@@ -662,7 +662,7 @@ void file_test()
 	close(fd);
 */
 
-	if ((error = vfs_open("test", O_CREAT, 0755, &file))) {
+	if ((error = vfs_open("test", O_CREAT, 0755, SU_UID, &file))) {
 		printk("Error at open %d\n", error);
 		return;
 	}
@@ -690,7 +690,7 @@ void file_test()
 
 
 	extern const char hello_task[800];
-	if ((error = vfs_open("/hello", O_CREAT, 0755, &file))) {
+	if ((error = vfs_open("/hello", O_CREAT, 0755, SU_UID, &file))) {
 		printk("Error at open new file %d\n", error);
 		return;
 	}
@@ -704,7 +704,7 @@ void file_test()
 
 	puts("done");
 
-	if ((error = vfs_open("/size", O_CREAT, 0644, &file))) {
+	if ((error = vfs_open("/size", O_CREAT, 0644, SU_UID, &file))) {
 		printk("Error at open new file %d\n", error);
 		return;
 	}
@@ -731,7 +731,7 @@ void dir_test()
 	struct vfile *file;
 	struct vdir dir;
 
-	if ((error = vfs_open("/", 0, 0, &file))) {
+	if ((error = vfs_open("/", 0, 0, SU_UID, &file))) {
 		printk("Error at open %d\n", error);
 		return;
 	}

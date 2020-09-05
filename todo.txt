@@ -1,21 +1,31 @@
 
 Operating System:
 
-	* there is still one instance with the mallocfs root node, where refcount is 2 instead of just 1
+	* should you pass in the current working dir, or pass it in some other way?
+	* need to add some way to update a node's attributes (notify_update() or setattr()?)
+	* add file permissions checks, and uid checks
+	* add syscalls: mount/umount, dup, chdir, chmod, chown, access, (rmdir?)
+	* implement file renaming
+	* should the access stuff be entirely in the file system module?
+	* add commands: mv, cp, rmdir, pwd, cd
+
 	* add a file pointer duplicate ala vfs_duplicate (to replace directly calling dup_fileptr)
+	* move binary file format and arg copying to another file, but where? proc/ mm/ kernel/???
+	* there is still one issue with the mallocfs root node, where refcount is 2 instead of just 1
 
 	* add mounting of filesystems, and root node stuff, so you can remove the special case in vfs.c
 	* implement minix filesystem
 
 	* implement signals
 	* add commands: ps, kill
+	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 	* what is needed to implement a 'ps' command in userspace? pstat()
 	* sort out process groups, and which process gets input
-
-	* implement generic cache and use it in blockcache and minixfs
-	* add commands: mv, cp, mkdir, rmdir, pwd, cd
+	* syscalls to implement: getpid, kill, signals, alarm, pause, getuid/setuid, time
 
 
+
+	* refactor bufcache into a generic cache data structure which can be used for bufcache as well as vnode cache in minixfs
 	* do you need to add variable sized buffers/blocks into bufcache? (yes)
 	* make a block driver interface, or should you use a char driver like freebsd does
 
@@ -23,19 +33,12 @@ Operating System:
 	* should you make a lib subdir, and put unistd at the top?
 	* move the math functions in libc to arch/68k
 	* move as much inline assembly, from headers especially, into a redirectable asm directory
-	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 	* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
 	  (ie. store the last allocated fd, but it has to be in the process struct)
-
-
-	* syscalls to implement: getpid, kill, signals, alarm, pause, mount/umount, rename, dup, chdir, chmod, chown, access, getuid/setuid, time
-	* add file permissions checks, and uid checks
-	* add current working directory info.  Is that stored in the process?  Do you have to do string concat or can you pass 2 arguments to the vfs entry funcs
 
 	* add brk/sbrk/stack guard protection
 	* a slab allocator would maybe help, but I don't think it's as important at the moment
 	* a page allocator, to replace the use of malloc for allocating the program space??
-
 	* can you make the kernel relocatable again?
 	* rewrite the math functions to use fewer registers
 	* you need some tests, but ideally it would use a simple emulator.  Maybe easy68k or something could be used

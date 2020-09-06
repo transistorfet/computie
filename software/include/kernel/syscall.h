@@ -26,6 +26,7 @@
 #define SYS_CHMOD	20
 #define SYS_CHOWN	21
 #define SYS_ACCESS	22
+#define SYS_RENAME	23
 
 
 static inline int SYSCALL1(int n, int a1)

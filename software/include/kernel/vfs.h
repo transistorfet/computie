@@ -41,11 +41,11 @@ struct vnode_ops {
 	int (*create)(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result);
 	int (*mknod)(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result);
 	int (*lookup)(struct vnode *vnode, const char *filename, struct vnode **result);
+	//link
 	int (*unlink)(struct vnode *parent, struct vnode *vnode);
-	//rename
+	int (*rename)(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname);
 	//mkdir (or can it be done through create)
 	//rmdir (or can it be done through unlink)
-	//link
 	int (*truncate)(struct vnode *vnode);			// Truncate the file data (size should be 0 after)
 	int (*release)(struct vnode *vnode);			// Release the vnode
 };
@@ -108,6 +108,7 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 int vfs_access(struct vnode *cwd, const char *path, int mode, uid_t uid);
 int vfs_mknod(struct vnode *cwd, const char *path, mode_t mode, device_t dev, uid_t uid, struct vnode **result);
 int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid);
+int vfs_rename(struct vnode *cwd, const char *oldpath, const char *newpath, uid_t uid);
 int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t uid, struct vfile **file);
 
 int vfs_close(struct vfile *file);

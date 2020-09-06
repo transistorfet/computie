@@ -45,6 +45,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	test,
 	test,
 	do_access,
+	do_rename,
 };
 
 extern void enter_syscall();
@@ -82,6 +83,11 @@ void do_syscall()
 int do_unlink(const char *path)
 {
 	return vfs_unlink(current_proc->cwd, path, current_proc->uid);
+}
+
+int do_rename(const char *oldpath, const char *newpath)
+{
+	return vfs_rename(current_proc->cwd, oldpath, newpath, current_proc->uid);
 }
 
 int do_mkdir(const char *path, mode_t mode)

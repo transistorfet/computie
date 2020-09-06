@@ -25,6 +25,11 @@ int nop_unlink(struct vnode *parent, struct vnode *vnode)
 	return EPERM;
 }
 
+int nop_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname)
+{
+	return EPERM;
+}
+
 int nop_truncate(struct vnode *vnode)
 {
 	return 0;

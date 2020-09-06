@@ -31,6 +31,7 @@ struct vnode_ops mallocfs_vnode_ops = {
 	mallocfs_mknod,
 	mallocfs_lookup,
 	mallocfs_unlink,
+	mallocfs_rename,
 	mallocfs_truncate,
 	mallocfs_release,
 };
@@ -42,6 +43,7 @@ struct vnode *mallocfs_root;
 static struct mallocfs_dirent *_alloc_dirent(struct vnode *vnode, const char *filename);
 static struct mallocfs_dirent *_find_empty_dirent(struct vnode *dir);
 static struct mallocfs_dirent *_find_dirent(struct vnode *dir, struct vnode *file);
+static struct mallocfs_dirent *_find_dirent_by_name(struct vnode *dir, const char *filename);
 static short _is_empty_dirent(struct vnode *vnode);
 
 int init_mallocfs()
@@ -149,6 +151,30 @@ int mallocfs_unlink(struct vnode *parent, struct vnode *vnode)
 	dir->vnode = NULL;
 	// TODO should this be moved into vfs.c
 	vfs_release_vnode(vnode);
+}
+
+int mallocfs_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname)
+{
+	struct mallocfs_dirent *olddir, *newdir;
+
+	newdir = _find_dirent_by_name(newparent, newname);
+	if (newdir) {
+		// TODO delete existing file instead of error??
+		return EEXIST;
+	}
+	else {
+		newdir = _alloc_dirent(newparent, newname);
+		if (!newdir)
+			return ENOSPC;
+	}
+
+	olddir = _find_dirent_by_name(oldparent, oldname);
+	if (!olddir)
+		return ENOENT;
+
+	newdir->vnode = vnode;
+	olddir->vnode = NULL;
+	return 0;
 }
 
 int mallocfs_truncate(struct vnode *vnode)
@@ -383,6 +409,21 @@ static struct mallocfs_dirent *_find_dirent(struct vnode *dir, struct vnode *fil
 	while((zone = zone_iter_next(&iter, MALLOCFS_DATA(dir).zones))) {
 		for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
 			if (zone->entries[i].vnode == file)
+				return &zone->entries[i];
+		}
+	}
+	return NULL;
+}
+
+static struct mallocfs_dirent *_find_dirent_by_name(struct vnode *dir, const char *filename)
+{
+	struct zone_iter iter;
+	struct mallocfs_block *zone;
+
+	zone_iter_start(&iter);
+	while ((zone = zone_iter_next(&iter, MALLOCFS_DATA(dir).zones))) {
+		for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
+			if (zone->entries[i].vnode && !strcmp(filename, zone->entries[i].name))
 				return &zone->entries[i];
 		}
 	}

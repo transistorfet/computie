@@ -153,6 +153,58 @@ int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid)
 	return 0;
 }
 
+static inline int _rename_find_parent(struct vnode *cwd, const char *path, uid_t uid, struct vnode **result)
+{
+	int error;
+	struct vnode *vnode;
+
+	// Look up old parent
+	error = vfs_lookup(cwd, path, VLOOKUP_PARENT_OF, uid, &vnode);
+	if (error)
+		return error;
+
+	// Verify that the parent directory of the old location is writable and searchable
+	if (!verify_mode_access(uid, W_OK | X_OK, vnode->uid, vnode->gid, vnode->mode))
+		return EACCES;
+
+	if (!(vnode->mode & S_IFDIR))
+		return ENOTDIR;
+
+	*result = vnode;
+	return 0;
+}
+
+int vfs_rename(struct vnode *cwd, const char *oldpath, const char *newpath, uid_t uid)
+{
+	int error;
+	const char *oldname, *newname;
+	struct vnode *vnode, *oldparent, *newparent;
+
+	oldname = path_last_component(oldpath);
+	if (*oldname == '\0' || !strcmp(oldname, ".") || !strcmp(oldname, ".."))
+		return EINVAL;
+
+	newname = path_last_component(newpath);
+	if (*newname == '\0' || !strcmp(newname, ".") || !strcmp(newname, ".."))
+		return EINVAL;
+
+	error = _rename_find_parent(cwd, oldpath, uid, &oldparent);
+	if (error)
+		return error;
+
+	error = _rename_find_parent(cwd, newpath, uid, &newparent);
+	if (error)
+		return error;
+
+	// TODO verify that both locations are on the same device
+
+	error = oldparent->ops->lookup(oldparent, oldname, &vnode);
+	if (error)
+		return error;
+
+	return vnode->ops->rename(vnode, oldparent, oldname, newparent, newname);
+}
+
 int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t uid, struct vfile **file)
 {
 	int error;

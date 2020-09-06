@@ -2,8 +2,7 @@
 Operating System:
 
 	* need to add some way to update a node's attributes (notify_update() or setattr()?)
-	* add syscalls: mount/umount, dup, chmod, chown, access, (rmdir?)
-	* implement file renaming
+	* add syscalls: mount/umount, dup, chmod, chown, (rmdir?)
 	* should the access stuff be entirely in the file system module?
 	* add commands: mv, cp, rmdir, pwd
 
@@ -20,6 +19,8 @@ Operating System:
 	* what is needed to implement a 'ps' command in userspace? pstat()
 	* sort out process groups, and which process gets input
 	* syscalls to implement: getpid, kill, signals, alarm, pause, getuid/setuid, time
+
+	* there is a bug where cat'ing the 'size' file causes output to hang, even though the scheduler is still running
 
 
 

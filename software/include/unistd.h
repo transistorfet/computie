@@ -29,6 +29,7 @@ pid_t wait(int *status);
 pid_t waitpid(pid_t pid, int *status, int options);
 
 int mkdir(const char *path, mode_t mode);
+int rename(const char *oldpath, const char *newpath);
 
 int creat(const char *path, mode_t mode);
 int open(const char *path, int flags, mode_t mode);

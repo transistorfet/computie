@@ -42,6 +42,9 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_readdir,
 	do_mkdir,
 	do_chdir,
+	test,
+	test,
+	do_access,
 };
 
 extern void enter_syscall();
@@ -176,6 +179,11 @@ int do_chdir(const char *path)
 
 	current_proc->cwd = vfs_make_vnode_ref(vnode);
 	return 0;
+}
+
+int do_access(const char *path, int mode)
+{
+	return vfs_access(current_proc->cwd, path, mode, current_proc->uid);
 }
 
 int do_stat(const char *path, struct stat *statbuf)
@@ -382,7 +390,7 @@ int load_flat_binary(const char *path, struct mem_map *map)
 		return error;
 	}
 
-	if (!(file->vnode->mode & (S_IFDIR | S_IFCHR | S_IFIFO)) && !verify_mode_access(current_proc->uid, S_EXECUTE, file->vnode->uid, file->vnode->gid, file->vnode->mode)) {
+	if (!(file->vnode->mode & (S_IFDIR | S_IFCHR | S_IFIFO)) && !verify_mode_access(current_proc->uid, X_OK, file->vnode->uid, file->vnode->gid, file->vnode->mode)) {
 		vfs_close(file);
 		return EPERM;
 	}

@@ -37,6 +37,7 @@ size_t read(int fd, char *buf, size_t nbytes);
 size_t write(int fd, const char *buf, size_t nbytes);
 int readdir(int fd, struct vdir *dir);
 
+int access(const char *path, int mode);
 int chdir(const char *path);
 int stat(const char *path, struct stat *statbuf);
 int fstat(int fd, struct stat *statbuf);

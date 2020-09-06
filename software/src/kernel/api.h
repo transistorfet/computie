@@ -25,6 +25,7 @@ extern int do_readdir(int fd, struct vdir *dir);
 extern int do_unlink(const char *path);
 extern int do_mkdir(const char *path, mode_t mode);
 extern int do_chdir(const char *path);
+extern int do_access(const char *path, int mode);
 extern int do_stat(const char *path, struct stat *statbuf);
 extern int do_fstat(int fd, struct stat *statbuf);
 extern int do_lseek(int fd, offset_t offset, int whence);

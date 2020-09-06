@@ -39,29 +39,6 @@ struct vnode *vfs_root(struct mount *mp);
 int vfs_sync(struct mount *mp);
 
 
-int vfs_mknod(struct vnode *cwd, const char *path, mode_t mode, device_t dev, uid_t uid, struct vnode **result)
-{
-	int error;
-	struct vnode *tmp;
-	struct vnode *vnode;
-
-	error = vfs_lookup(cwd, path, VLOOKUP_PARENT_OF, uid, &vnode);
-	if (error)
-		return error;
-
-	if (!verify_mode_access(uid, S_WRITE, vnode->uid, vnode->gid, vnode->mode))
-		return EPERM;
-
-	const char *filename = path_last_component(path);
-	error = vnode->ops->lookup(vnode, filename, &tmp);
-	if (error == 0)
-		return EEXIST;
-	else if (error != ENOENT)
-		return error;
-
-	return vnode->ops->mknod(vnode, filename, mode, dev, result);
-}
-
 int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct vnode **result)
 {
 	// TODO this is temporary because we don't have mounts yet
@@ -89,7 +66,7 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 		}
 
 		// TODO this seems to be wrong according to how linux behaves...
-		if (!verify_mode_access(uid, S_READ, cur->uid, cur->gid, cur->mode))
+		if (!verify_mode_access(uid, R_OK, cur->uid, cur->gid, cur->mode))
 			return EPERM;
 
 		for (j = 0; path[i] && path[i] != VFS_SEP; i++, j++)
@@ -110,6 +87,43 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 	return ENOENT;
 }
 
+int vfs_access(struct vnode *cwd, const char *path, int mode, uid_t uid)
+{
+	int error;
+	struct vnode *vnode;
+
+	error = vfs_lookup(cwd, path, VLOOKUP_NORMAL, uid, &vnode);
+	if (error)
+		return error;
+
+	if (mode && !verify_mode_access(uid, mode, vnode->uid, vnode->gid, vnode->mode))
+		return EPERM;
+	return 0;
+}
+
+int vfs_mknod(struct vnode *cwd, const char *path, mode_t mode, device_t dev, uid_t uid, struct vnode **result)
+{
+	int error;
+	struct vnode *tmp;
+	struct vnode *vnode;
+
+	error = vfs_lookup(cwd, path, VLOOKUP_PARENT_OF, uid, &vnode);
+	if (error)
+		return error;
+
+	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
+		return EPERM;
+
+	const char *filename = path_last_component(path);
+	error = vnode->ops->lookup(vnode, filename, &tmp);
+	if (error == 0)
+		return EEXIST;
+	else if (error != ENOENT)
+		return error;
+
+	return vnode->ops->mknod(vnode, filename, mode, dev, result);
+}
+
 int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid)
 {
 	int error;
@@ -121,7 +135,7 @@ int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid)
 		return error;
 
 	// Verify that parent directory is writable
-	if (!verify_mode_access(uid, S_WRITE, parent->uid, parent->gid, parent->mode))
+	if (!verify_mode_access(uid, W_OK, parent->uid, parent->gid, parent->mode))
 		return EACCES;
 
 	filename = path_last_component(path);
@@ -130,7 +144,7 @@ int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid)
 		return error;
 
 	// Verify that the file we're trying to delete is writable
-	if (!verify_mode_access(uid, S_WRITE, vnode->uid, vnode->gid, vnode->mode))
+	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
 		return EPERM;
 
 	error = vnode->ops->unlink(parent, vnode);
@@ -156,7 +170,7 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 		const char *filename = path_last_component(path);
 
 		// Verify that parent directory is writable
-		if (!verify_mode_access(uid, S_WRITE, vnode->uid, vnode->gid, vnode->mode))
+		if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
 			return EPERM;
 
 		// Lookup the last path component, or create a new file if an error occurs during lookup
@@ -172,9 +186,9 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 
 	// Verify the permissions before proceeding
 	if ((flags & O_ACCMODE) != O_WRONLY)
-		required_mode |= S_READ;
+		required_mode |= R_OK;
 	if ((flags & O_ACCMODE) != O_RDONLY)
-		required_mode |= S_WRITE;
+		required_mode |= W_OK;
 	if (!verify_mode_access(uid, required_mode, vnode->uid, vnode->gid, vnode->mode)) {
 		vfs_release_vnode(vnode);
 		return EPERM;

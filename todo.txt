@@ -1,13 +1,11 @@
 
 Operating System:
 
-	* should you pass in the current working dir, or pass it in some other way?
 	* need to add some way to update a node's attributes (notify_update() or setattr()?)
-	* add file permissions checks, and uid checks
-	* add syscalls: mount/umount, dup, chdir, chmod, chown, access, (rmdir?)
+	* add syscalls: mount/umount, dup, chmod, chown, access, (rmdir?)
 	* implement file renaming
 	* should the access stuff be entirely in the file system module?
-	* add commands: mv, cp, rmdir, pwd, cd
+	* add commands: mv, cp, rmdir, pwd
 
 	* add a file pointer duplicate ala vfs_duplicate (to replace directly calling dup_fileptr)
 	* move binary file format and arg copying to another file, but where? proc/ mm/ kernel/???
@@ -28,6 +26,7 @@ Operating System:
 	* refactor bufcache into a generic cache data structure which can be used for bufcache as well as vnode cache in minixfs
 	* do you need to add variable sized buffers/blocks into bufcache? (yes)
 	* make a block driver interface, or should you use a char driver like freebsd does
+	* re-evaluate file permissions checks to make sure they're correct according to posix
 
 
 	* should you make a lib subdir, and put unistd at the top?

@@ -663,6 +663,11 @@ void file_test()
 	}
 	vfs_close(file);
 
+	if (access("/dir/test", R_OK) == 0)
+		printk("Readable\n");
+	else
+		printk("Not readable\n");
+
 /*
 	fd = creat("/dir", S_IFDIR | 0755);
 	if (fd < 0) {

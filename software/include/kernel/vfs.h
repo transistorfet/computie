@@ -47,6 +47,7 @@ struct vnode_ops {
 	//mkdir (or can it be done through create)
 	//rmdir (or can it be done through unlink)
 	int (*truncate)(struct vnode *vnode);			// Truncate the file data (size should be 0 after)
+	int (*update)(struct vnode *vnode);
 	int (*release)(struct vnode *vnode);			// Release the vnode
 };
 
@@ -106,6 +107,8 @@ int vfs_sync(struct mount *mp);
 
 int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct vnode **result);
 int vfs_access(struct vnode *cwd, const char *path, int mode, uid_t uid);
+int vfs_chmod(struct vnode *cwd, const char *path, int mode, uid_t uid);
+int vfs_chown(struct vnode *cwd, const char *path, uid_t owner, gid_t group, uid_t uid);
 int vfs_mknod(struct vnode *cwd, const char *path, mode_t mode, device_t dev, uid_t uid, struct vnode **result);
 int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid);
 int vfs_rename(struct vnode *cwd, const char *oldpath, const char *newpath, uid_t uid);
@@ -118,7 +121,6 @@ int vfs_ioctl(struct vfile *file, unsigned int request, void *argp);
 offset_t vfs_seek(struct vfile *file, offset_t position, int whence);
 int vfs_readdir(struct vfile *file, struct vdir *dir);
 
-int vfs_release_vnode(struct vnode *vnode);
 
 const char *path_last_component(const char *path);
 
@@ -139,6 +141,8 @@ static inline struct vnode *vfs_make_vnode_ref(struct vnode *vnode)
 	vnode->refcount++;
 	return vnode;
 }
+
+int vfs_release_vnode(struct vnode *vnode);
 
 #endif
 

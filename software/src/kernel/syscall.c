@@ -42,8 +42,8 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_readdir,
 	do_mkdir,
 	do_chdir,
-	test,
-	test,
+	do_chmod,
+	do_chown,
 	do_access,
 	do_rename,
 };
@@ -190,6 +190,16 @@ int do_chdir(const char *path)
 int do_access(const char *path, int mode)
 {
 	return vfs_access(current_proc->cwd, path, mode, current_proc->uid);
+}
+
+int do_chmod(const char *path, int mode)
+{
+	return vfs_chmod(current_proc->cwd, path, mode, current_proc->uid);
+}
+
+int do_chown(const char *path, uid_t owner, gid_t group)
+{
+	return vfs_chown(current_proc->cwd, path, owner, group, current_proc->uid);
 }
 
 int do_stat(const char *path, struct stat *statbuf)

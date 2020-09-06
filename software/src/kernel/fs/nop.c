@@ -35,6 +35,11 @@ int nop_truncate(struct vnode *vnode)
 	return 0;
 }
 
+int nop_update(struct vnode *vnode)
+{
+	return 0;
+}
+
 int nop_release(struct vnode *vnode)
 {
 	return 0;

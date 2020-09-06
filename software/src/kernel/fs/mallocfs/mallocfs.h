@@ -56,6 +56,7 @@ int mallocfs_lookup(struct vnode *vnode, const char *name, struct vnode **result
 int mallocfs_unlink(struct vnode *parent, struct vnode *vnode);
 int mallocfs_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname);
 int mallocfs_truncate(struct vnode *vnode);
+int mallocfs_update(struct vnode *vnode);
 int mallocfs_release(struct vnode *vnode);
 
 int mallocfs_open(struct vfile *file, int flags);

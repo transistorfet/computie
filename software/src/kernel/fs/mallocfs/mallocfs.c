@@ -33,6 +33,7 @@ struct vnode_ops mallocfs_vnode_ops = {
 	mallocfs_unlink,
 	mallocfs_rename,
 	mallocfs_truncate,
+	mallocfs_update,
 	mallocfs_release,
 };
 
@@ -183,6 +184,11 @@ int mallocfs_truncate(struct vnode *vnode)
 		return EISDIR;
 	zone_free_all(vnode);
 	vnode->size = 0;
+	return 0;
+}
+
+int mallocfs_update(struct vnode *vnode)
+{
 	return 0;
 }
 

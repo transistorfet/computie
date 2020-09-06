@@ -753,6 +753,10 @@ void file_test()
 		return;
 	}
 
+	//if (chown("hello", 2, 0)) {
+	//	printk("Error changing owner: %d\n", error);
+	//}
+
 }
 
 void dir_test()

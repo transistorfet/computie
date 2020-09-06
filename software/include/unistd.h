@@ -40,6 +40,8 @@ int readdir(int fd, struct vdir *dir);
 
 int access(const char *path, int mode);
 int chdir(const char *path);
+int chown(const char *path, uid_t owner, gid_t group);
+int chmod(const char *path, mode_t mode);
 int stat(const char *path, struct stat *statbuf);
 int fstat(int fd, struct stat *statbuf);
 int unlink(const char *path);

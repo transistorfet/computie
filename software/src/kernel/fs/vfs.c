@@ -101,6 +101,39 @@ int vfs_access(struct vnode *cwd, const char *path, int mode, uid_t uid)
 	return 0;
 }
 
+
+int vfs_chmod(struct vnode *cwd, const char *path, int mode, uid_t uid)
+{
+	int error;
+	struct vnode *vnode;
+
+	error = vfs_lookup(cwd, path, VLOOKUP_NORMAL, uid, &vnode);
+	if (error)
+		return error;
+
+	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
+		return EPERM;
+
+	vnode->mode = mode & 07777;
+	return vnode->ops->update(vnode);
+}
+
+int vfs_chown(struct vnode *cwd, const char *path, uid_t owner, gid_t group, uid_t uid)
+{
+	int error;
+	struct vnode *vnode;
+
+	error = vfs_lookup(cwd, path, VLOOKUP_NORMAL, uid, &vnode);
+	if (error)
+		return error;
+
+	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
+		return EPERM;
+	vnode->uid = owner;
+	vnode->gid = group;
+	return vnode->ops->update(vnode);
+}
+
 int vfs_mknod(struct vnode *cwd, const char *path, mode_t mode, device_t dev, uid_t uid, struct vnode **result)
 {
 	int error;

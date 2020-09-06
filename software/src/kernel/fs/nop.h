@@ -10,6 +10,7 @@ int nop_lookup(struct vnode *vnode, const char *name, struct vnode **result);
 int nop_unlink(struct vnode *parent, struct vnode *vnode);
 int nop_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname);
 int nop_truncate(struct vnode *vnode);
+int nop_update(struct vnode *vnode);
 int nop_release(struct vnode *vnode);
 
 int nop_open(struct vfile *file, int flags);

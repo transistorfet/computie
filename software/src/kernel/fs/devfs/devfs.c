@@ -27,6 +27,7 @@ struct vnode_ops devfs_vnode_ops = {
 	nop_unlink,
 	nop_rename,
 	nop_truncate,
+	nop_update,
 	devfs_release,
 };
 

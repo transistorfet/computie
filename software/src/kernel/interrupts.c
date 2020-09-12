@@ -19,6 +19,7 @@
 
 extern void _start();
 extern void exception_entry();
+extern void tty_68681_tx_safe_mode();
 
 void fatal_error();
 void handle_trap_1();
@@ -105,15 +106,15 @@ __attribute__((interrupt)) void fatal_error()
 	for (char i = 0; i < 16; i++) {
 		printk("%04x ", ((uint16_t *) frame)[i]);
 		if ((i & 0x3) == 0x3)
-			putchar('\n');
+			printk("\n");
 	}
 
 	// Dump code where the error occurred
-	puts("\nCode:");
+	printk("\nCode:");
 	for (char i = 0; i < 16; i++) {
 		printk("%04x ", frame->pc[i]);
 		if ((i & 0x3) == 0x3)
-			putchar('\n');
+			printk("\n");
 	}
 
 	// Jump to the monitor to allow debugging

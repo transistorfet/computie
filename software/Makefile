@@ -43,6 +43,7 @@ KERNEL_OBJS = \
 	src/kernel/fs/minix/bitmaps.o \
 	src/kernel/drivers/tty_68681.o \
 	src/kernel/sh.o \
+	src/kernel/tests.o \
 	libc-68k-os.a
 
 COMMANDS = \

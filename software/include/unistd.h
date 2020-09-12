@@ -48,5 +48,6 @@ int unlink(const char *path);
 offset_t lseek(int fd, offset_t offset, int whence);
 
 int pipe(int pipefd[2]);
+int dup2(int oldfd, int newfd);
 
 #endif

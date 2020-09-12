@@ -2,8 +2,7 @@
 Operating System:
 
 	* add mounting of filesystems, and root node stuff, so you can remove the special case in vfs.c
-	* need to add some way to update a node's attributes (notify_update() or setattr()?)
-	* add syscalls: mount/umount, dup, chmod, chown, (rmdir?)
+	* add syscalls: mount/umount, dup, (rmdir?)
 	* add commands: mv, cp, rmdir, pwd
 
 	* add a file pointer duplicate ala vfs_duplicate (to replace directly calling dup_fileptr)

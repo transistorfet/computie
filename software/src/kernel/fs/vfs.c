@@ -329,6 +329,10 @@ int vfs_readdir(struct vfile *file, struct vdir *dir)
 	return file->vnode->ops->fops->readdir(file, dir);
 }
 
+struct vfile *vfs_duplicate_fileptr(struct vfile *file)
+{
+	return dup_fileptr(file);
+}
 
 int vfs_release_vnode(struct vnode *vnode)
 {

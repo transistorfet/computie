@@ -19,7 +19,10 @@
 
 typedef int (*syscall_t)(int, int, int);
 
-void test() { puts("It's a test!\n"); }
+void test() { printk("It's a test!\n"); }
+
+// TODO remove this after testing
+int do_execbuiltin(void *addr, char *const argv[], char *const envp[]);
 
 void *syscall_table[SYSCALL_MAX] = {
 	test,
@@ -46,6 +49,9 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_chown,
 	do_access,
 	do_rename,
+	do_dup2,
+
+	do_execbuiltin,
 };
 
 extern void enter_syscall();
@@ -60,6 +66,9 @@ extern struct process *current_proc;
 extern void *current_proc_stack;
 extern struct syscall_record *current_syscall;
 
+
+void tty_68681_set_leds(uint8_t bits);
+void tty_68681_reset_leds(uint8_t bits);
 
 //
 // Perform a system call and pass the return value to the calling process
@@ -267,6 +276,26 @@ int do_pipe(int pipefd[2])
 	return 0;
 }
 
+int do_dup2(int oldfd, int newfd)
+{
+	struct vfile *fileptr, *exfileptr;
+
+	fileptr = get_fd(current_proc->fd_table, oldfd);
+
+	if (!fileptr)
+		return EBADF;
+
+	if (newfd >= OPEN_MAX)
+		return EBADF;
+
+	exfileptr = get_fd(current_proc->fd_table, newfd);
+	if (exfileptr)
+		vfs_close(exfileptr);
+
+	dup_fd(current_proc->fd_table, newfd, fileptr);
+	return 0;
+}
+
 
 pid_t do_fork()
 {
@@ -369,7 +398,7 @@ int copy_string_array(char **stack, int *count, char *const arr[])
 	for (; j < *count; j++) {
 		dest[j] = &buffer[i];
 		strcpy(dest[j], arr[j]);
-		i += strlen(arr[j]);
+		i += strlen(arr[j]) + 1;
 	}
 	dest[j] = NULL;
 
@@ -391,7 +420,7 @@ char *copy_exec_args(char *stack, char *const argv[], char *const envp[])
 	stack -= sizeof(char **);
 	*((char ***) stack) = stack_argv;
 	stack -= sizeof(int);
-	*((int *) stack) = 1;
+	*((int *) stack) = argc;
 
 	return stack;
 }
@@ -445,6 +474,25 @@ int do_exec(const char *path, char *const argv[], char *const envp[])
 	// Setup new stack image
  	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp);
  	task_stack_pointer = create_context(task_stack_pointer, current_proc->map.segments[M_TEXT].base);
+	current_proc->sp = task_stack_pointer;
+	current_proc_stack = task_stack_pointer;
+
+	return 0;
+}
+
+int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
+{
+	current_proc->map.segments[M_TEXT].base = NULL;
+	current_proc->map.segments[M_TEXT].length = 0;
+	current_proc->map.segments[M_STACK].base = malloc(0x400);
+	current_proc->map.segments[M_STACK].length = 0x400;
+
+	// Reset the stack to start our new process
+	char *task_stack_pointer = current_proc->map.segments[M_STACK].base + current_proc->map.segments[M_STACK].length;
+
+	// Setup new stack image
+ 	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp);
+ 	task_stack_pointer = create_context(task_stack_pointer, addr);
 	current_proc->sp = task_stack_pointer;
 	current_proc_stack = task_stack_pointer;
 

@@ -27,6 +27,10 @@
 #define SYS_CHOWN	21
 #define SYS_ACCESS	22
 #define SYS_RENAME	23
+#define SYS_DUP2	24
+
+// TODO remove this after testing
+#define SYS_EXECBUILTIN	25
 
 
 static inline int SYSCALL1(int n, int a1)

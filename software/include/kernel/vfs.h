@@ -120,7 +120,9 @@ int vfs_write(struct vfile *file, const char *buffer, size_t size);
 int vfs_ioctl(struct vfile *file, unsigned int request, void *argp);
 offset_t vfs_seek(struct vfile *file, offset_t position, int whence);
 int vfs_readdir(struct vfile *file, struct vdir *dir);
+struct vfile *vfs_duplicate_fileptr(struct vfile *file);
 
+int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile);
 
 const char *path_last_component(const char *path);
 

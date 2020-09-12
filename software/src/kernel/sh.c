@@ -23,57 +23,6 @@ void delay(short count) {
 	while (--count > 0) { }
 }
 
-int readline(char *buffer, short max)
-{
-	uint32_t *sp;
-
-	for (short i = 0; i < max; i++) {
-		//buffer[i] = getchar();
-
-		int ret = read(0, &buffer[i], 1);
-		putchar(buffer[i]);
-		if (ret != 1) {
-			printf("Input error: %d\n", ret);
-		}
-		else if (buffer[i] == 0x08) {
-			putchar(' ');
-			if (i >= 2) {
-				i -= 2;
-				putchar(0x08);
-			}
-			else
-				i = 0;
-		}
-		else if (buffer[i] == '\n') {
-			buffer[i] = '\0';
-			return i;
-		}
-	}
-	return 0;
-}
-
-int parseline(char *input, char **vargs)
-{
-	short j = 0;
-
-	while (*input == ' ')
-		input++;
-
-	vargs[j++] = input;
-	for (; *input != '\0' && *input != '\n' && *input != '\r'; input++) {
-		if (*input == ' ') {
-			*input = '\0';
-			input++;
-			while (*input == ' ')
-				input++;
-			vargs[j++] = input;
-		}
-	}
-	*input = '\0';
-
-	return j;
-}
-
 char hexchar(uint8_t byte)
 {
 	if (byte < 10)
@@ -140,127 +89,29 @@ void info()
 	return;
 }
 
-void writerom()
+
+/************
+ * Commands *
+ ************/
+
+int command_test(int argc, char **argv)
 {
-	uint16_t data;
-	uint16_t errors = 0;
-
-	uint16_t *arduino = (uint16_t *) 0x000000;
-	uint16_t *rom = (uint16_t *) ROM_ADDR;
-	for (int i = 0; i < ROM_SIZE; i++) {
-		rom[i] = (uint16_t) arduino[i];
-		for (char j = 0; j < 100; j++) {}
-		printf("%x ", rom[i]);
-	}
-
-	printf("\nWrite complete");
+	puts("this is only a test");
 }
 
-
-
-void test_fork()
+int command_dump(int argc, char **argv)
 {
-	//int pid = SYSCALL1(SYS_FORK, 0);
-	int pid = fork();
-
-	if (pid) {
-		int status;
-
-		printf("The child's pid is %d\n", pid);
-		wait(&status);
-		printf("The child exited with %d\n", status);
-	}
+	if (argc <= 1)
+		puts("You need an address");
 	else {
-		puts("I AM THE CHILD!");
-		exit(1337);
+		short length = 0x40;
+
+		if (argc >= 3)
+			length = strtol(argv[2], NULL, 16);
+		dump((const uint16_t *) strtol(argv[1], NULL, 16), length);
 	}
 }
-void test_pipe()
-{
-	int error;
-	int pipes[2];
-	char buffer[50];
 
-	error = pipe(pipes);
-	if (error) {
-		printf("Pipe failed with error %d\n", error);
-		return;
-	}
-
-	error = write(pipes[PIPE_WRITE_FD], "Hey there, this is a pipe|\n", 27);
-	if (error < 0) {
-		printf("Failed to write to pipe: %d\n", error);
-		return;
-	}
-	printf("Wrote %d bytes\n", error);
-
-	error = read(pipes[PIPE_READ_FD], buffer, 50);
-	if (error < 0) {
-		printf("Failed to read to pipe: %d\n", error);
-		return;
-	}
-	printf("Read %d bytes\n", error);
-	buffer[error] = '\0';
-
-	printf("> %s\n", buffer);
-
-	close(pipes[PIPE_READ_FD]);
-	close(pipes[PIPE_WRITE_FD]);
-
-	return;
-}
-
-void test_forkpipe()
-{
-	int pid;
-	int error;
-	int pipes[2];
-	char buffer[50];
-
-	error = pipe(pipes);
-	if (error) {
-		printf("Pipe failed with error %d\n", error);
-		return;
-	}
-
- 	pid = fork();
-	if (pid) {
-		close(pipes[PIPE_WRITE_FD]);
-
-		error = read(pipes[PIPE_READ_FD], buffer, 50);
-		if (error < 0) {
-			printf("Failed to read to pipe: %d\n", error);
-			return;
-		}
-		printf("Read %d bytes\n", error);
-		buffer[error] = '\0';
-
-		printf("> %s\n", buffer);
-
-		close(pipes[PIPE_READ_FD]);
-
-	} else {
-		close(pipes[PIPE_READ_FD]);
-
-		error = write(pipes[PIPE_WRITE_FD], "Hey there, this is a pipe|\n", 27);
-		if (error < 0) {
-			printf("Failed to write to pipe: %d\n", error);
-			return;
-		}
-		printf("Wrote %d bytes\n", error);
-
-		close(pipes[PIPE_WRITE_FD]);
-		exit(0);
-	}
-
-	return;
-}
-
-
-
-
-
-uint16_t *program_mem = NULL;
 
 uint16_t fetch_word()
 {
@@ -544,16 +395,135 @@ int command_exec(int argc, char **argv)
 
 
 
+/*****************************
+ * Command Input And Parsing *
+ *****************************/
 
-// In process.c
-extern void print_run_queue();
+
+int readline(char *buffer, short max)
+{
+	short i = 0;
+
+	while (i < max) {
+		//buffer[i] = getchar();
+		int ret = read(0, &buffer[i], 1);
+		if (ret != 1) {
+			printf("Input error: %d\n", ret);
+			return 0;
+		}
+
+		switch (buffer[i]) {
+			case 0x08: {
+				if (i >= 1) {
+					putchar(0x08);
+					putchar(' ');
+					putchar(0x08);
+					i--;
+				}
+				break;
+			}
+			case '\n': {
+				putchar(buffer[i]);
+				buffer[i] = '\0';
+				return i;
+			}
+			default: {
+				putchar(buffer[i++]);
+				break;
+			}
+		}
+	}
+	return 0;
+}
+
+int parseline(char *input, char **vargs)
+{
+	short j = 0;
+
+	while (*input == ' ')
+		input++;
+
+	vargs[j++] = input;
+	for (; *input != '\0' && *input != '\n' && *input != '\r'; input++) {
+		if (*input == ' ') {
+			*input = '\0';
+			input++;
+			while (*input == ' ')
+				input++;
+			vargs[j++] = input;
+		}
+	}
+	*input = '\0';
+	vargs[j] = NULL;
+
+	return j;
+}
+
+struct pipe_command {
+	char *cmd;
+	char *stdin_file;
+	char *stdout_file;
+};
+
+char *parse_word(char **input)
+{
+	char *start;
+
+	for (; **input != '\0' && (**input == ' ' || **input == '\t'); (*input)++) { }
+
+	start = *input;
+
+	for (; **input != '\0' && **input != ' ' && **input != '\t'; (*input)++) { }
+	**input = '\0';
+	*input++;
+
+	return start;
+}
+
+int parse_command_line(char *input, struct pipe_command *commands)
+{
+	short j = 0;
+
+	commands[j].cmd = input;
+
+	for (; *input != '\0' && *input != '\n' && *input != '\r'; input++) {
+		if (*input == '|') {
+			*input = '\0';
+			j += 1;
+			commands[j].cmd = input + 1;
+		}
+		else if (*input == '>') {
+			*input++ = '\0';
+			if (commands[j].stdout_file) {
+				printf("parse error: stdout is redirected more than once\n");
+				return -1;
+			}
+			commands[j].stdout_file = parse_word(&input);
+		}
+		else if (*input == '<') {
+			*input++ = '\0';
+			if (commands[j].stdin_file) {
+				printf("parse error: stdin is redirected more than once\n");
+				return -1;
+			}
+			commands[j].stdin_file = parse_word(&input);
+		}
+	}
+
+	return 0;
+}
+
+
+typedef int (*main_t)(int argc, char **argv);
 
 struct command {
 	char *name;
-	int (*main)(int argc, char **argv);
+	main_t main;
 };
 
 struct command command_list[] = {
+	{ "test", 	command_test },
+	{ "dump", 	command_dump },
 	{ "send", 	command_send },
 	{ "echo", 	command_echo },
 	{ "hex", 	command_hex },
@@ -566,245 +536,124 @@ struct command command_list[] = {
 	{ NULL },
 };
 
-void run_command(int argc, char **argv)
+main_t find_command(char *name)
 {
 	for (short i = 0; command_list[i].name; i++) {
-		if (!strcmp(argv[0], command_list[i].name)) {
-			command_list[i].main(argc, argv);
-			return;
-		}
+		if (!strcmp(name, command_list[i].name))
+			return command_list[i].main;
+	}
+	return NULL;
+}
+
+int open_file(char *filename, int flags, int newfd)
+{
+	int fd;
+
+	fd = open(filename, flags, 0644);
+	if (fd < 0) {
+		printf("Error opening file %s: %d\n", filename, fd);
+		return -1;
 	}
 
-	if (*argv[0]) {
-		puts("Command not found");
+	if (dup2(fd, newfd))
+		return -1;
+	return 0;
+}
+
+int execute_command(void *func, char *stdin_file, char *stdout_file, int argc, char **argv)
+{
+	int pid, status;
+	char *envp[2] = { NULL };
+
+ 	pid = fork();
+	if (pid) {
+		waitpid(pid, &status, 0);
+		printf("The child exited with %d\n", status);
 	}
+	else {
+		if (stdout_file) {
+			if (open_file(stdout_file, O_WRONLY | O_CREAT, STDOUT_FILENO))
+				exit(-1);
+		}
+
+		//status = exec(argv[1], argv2, envp);
+		status = SYSCALL3(SYS_EXECBUILTIN, (int) func, (int) argv, (int) envp);
+		// The exec() system call will only return if an error occurs
+		printf("Failed to execute %s: %d\n", argv[1], status);
+		exit(-1);
+	}
+
+	return 0;
 }
 
 
 #define BUF_SIZE	100
 #define ARG_SIZE	10
+#define PIPE_SIZE	5
 
 void serial_read_loop()
 {
-	int16_t argc;
+	int argc;
+	main_t main;
 	char buffer[BUF_SIZE];
-	char *args[ARG_SIZE];
+	char *argv[ARG_SIZE];
+	struct pipe_command commands[PIPE_SIZE];
 
 	while (1) {
+		memset_s(commands, 0, sizeof(struct pipe_command) * PIPE_SIZE);
 		putsn("% ");
 		readline(buffer, BUF_SIZE);
-		argc = parseline(buffer, args);
+		if (parse_command_line(buffer, commands))
+			continue;
 
-		if (!strcmp(args[0], "test")) {
-			puts("this is only a test");
+		/*
+		for (int i = 0; i < PIPE_SIZE && commands[i].cmd; i++) {
+			printf("C: %s\n", commands[i].cmd);
+			printf("I: %s\n", commands[i].stdin_file);
+			printf("O: %s\n", commands[i].stdout_file);
 		}
-		else if (!strcmp(args[0], "exit")) {
-			// TODO this doesn't always work
-			return;
-		}
-		else if (!strcmp(args[0], "info")) {
-			info();
-		}
-		else if (!strcmp(args[0], "writerom")) {
-			writerom();
-		}
-		else if (!strcmp(args[0], "dump")) {
-			if (argc <= 1)
-				puts("You need an address");
-			else {
-				short length = 0x40;
+		*/
 
-				if (argc >= 3)
-					length = strtol(args[2], NULL, 16);
-				dump((const uint16_t *) strtol(args[1], NULL, 16), length);
-			}
-		}
-		else if (!strcmp(args[0], "queue")) {
-			print_run_queue();
-		}
+		argc = parseline(commands[0].cmd, argv);
 
-		// Tests
-		else if (!strcmp(args[0], "pipetest")) {
-			test_pipe();
-		}
-		else if (!strcmp(args[0], "forkpipe")) {
-			test_forkpipe();
-		}
-		else if (!strcmp(args[0], "forktest")) {
-			test_fork();
-		}
+		if (*argv[0] == '\0')
+			continue;
 
-		else {
-			run_command(argc, args);
-		}
+		main = find_command(argv[0]);
+		if (main)
+			execute_command(main, commands[0].stdin_file, commands[0].stdout_file, argc, argv);
+		else
+			puts("Command not found");
+
 	}
 }
 
 
-#include <kernel/printk.h>
+extern int tty_68681_tx_safe_mode();
 
-void file_test()
-{
-	int fd;
-	int error;
-	struct vfile *file;
+int test_files();
+int test_dirs();
 
-	error = vfs_open(NULL, "/dir", O_CREAT, S_IFDIR | 0755, SU_UID, &file);
-	if (error) {
-		printk("Error: %d\n", error);
-		return;
-	}
-	vfs_close(file);
+int init_minix();
 
-	error = vfs_open(NULL, "/dir/test", O_CREAT, 0644, SU_UID, &file);
-	if (error) {
-		printk("Error: %d\n", error);
-		return;
-	}
-	vfs_close(file);
-
-/*
-	fd = creat("/dir", S_IFDIR | 0755);
-	if (fd < 0) {
-		printk("Error: %d\n", fd);
-		return;
-	}
-	close(fd);
-
-	fd = creat("/dir/test", 0644);
-	if (fd < 0) {
-		printk("Error: %d\n", fd);
-		return;
-	}
-	close(fd);
-*/
-
-	if ((error = vfs_open(NULL, "test", O_CREAT, 0755, SU_UID, &file))) {
-		printk("Error at open %d\n", error);
-		return;
-	}
-
-	if ((error = vfs_write(file, "This is a file test\n", 20)) <= 0) {
-		printk("Error when writing %d\n", error);
-		return;
-	}
-
-	vfs_seek(file, 0, 0);
-
-	char buffer[256];
-
-	error = vfs_read(file, buffer, 256);
-	if (error < 0) {
-		printk("Error when reading\n");
-		return;
-	}
-	printk("Read: %d\n", error);
-	buffer[error] = '\0';
-
-	puts(buffer);
-
-	vfs_close(file);
-
-
-	extern const char hello_task[800];
-	if ((error = vfs_open(NULL, "/hello", O_CREAT, 0755, SU_UID, &file))) {
-		printk("Error at open new file %d\n", error);
-		return;
-	}
-
-	if ((error = vfs_write(file, hello_task, 256)) <= 0) {
-		printk("Error when writing %d\n", error);
-		return;
-	}
-
-	vfs_close(file);
-
-	puts("done");
-
-	if ((error = vfs_open(NULL, "/size", O_CREAT, 0644, SU_UID, &file))) {
-		printk("Error at open new file %d\n", error);
-		return;
-	}
-
-	char data[2];
-	for (short i = 0; i < 100; i++) {
-		for (short j = 0; j < 10; j++) {
-			data[0] = '0' + j;
-			//printk("%d\n", data[0]);
-			if ((error = vfs_write(file, data, 1)) <= 0) {
-				printk("Error when writing %d\n", error);
-				return;
-			}
-		}
-	}
-
-	vfs_close(file);
-
-
-	if (access("/dir/test", R_OK) == 0)
-		printk("Readable\n");
-	else
-		printk("Not readable\n");
-
-
-	error = rename("size", "dir/size");
-	if (error) {
-		printk("Error renaming: %d\n", error);
-		return;
-	}
-
-	//if (chown("hello", 2, 0)) {
-	//	printk("Error changing owner: %d\n", error);
-	//}
-
-}
-
-void dir_test()
-{
-	int error;
-	struct vfile *file;
-	struct vdir dir;
-
-	if ((error = vfs_open(NULL, "/", 0, 0, SU_UID, &file))) {
-		printk("Error at open %d\n", error);
-		return;
-	}
-
-	while (1) {
-		error = vfs_readdir(file, &dir);
-		if (error < 0) {
-			printk("Error at readdir %d\n", error);
-			return;
-		}
-		else if (error == 0)
-			break;
-		else {
-			printk("File: %d:%s\n", error, dir.name);
-		}
-	}
-
-	vfs_close(file);
-}
-
-
-
-
+/**************
+ * Main Entry *
+ **************/
 
 int sh_task()
 {
-	file_test();
-	dir_test();
+	test_files();
+	test_dirs();
 
+	// TODO this is temporary while debugging
 	init_minix();
-
-	// Allocate memory for loading a processess
-	program_mem = malloc(0x1000);
 
 	puts("\n\nThe Pseudo Shell!\n");
 
 	serial_read_loop();
 
 	puts("Exiting to monitor");
+	tty_68681_tx_safe_mode();
 	return 0;
 }
 

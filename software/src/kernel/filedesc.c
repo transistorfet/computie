@@ -27,7 +27,7 @@ void dup_fd_table(fd_table_t dest, fd_table_t source)
 	for (char i = 0; i < OPEN_MAX; i++) {
 		if (source[i])
 			// TODO this needs to be replaced with a new vfs_duplicate() function
-			dest[i] = dup_fileptr(source[i]);
+			dest[i] = vfs_duplicate_fileptr(source[i]);
 	}
 }
 
@@ -52,6 +52,14 @@ void set_fd(fd_table_t table, int fd, struct vfile *file)
 	if (fd >= OPEN_MAX)
 		return;
 	table[fd] = file;
+}
+
+void dup_fd(fd_table_t table, int fd, struct vfile *file)
+{
+	if (fd >= OPEN_MAX)
+		return;
+	table[fd] = vfs_duplicate_fileptr(file);
+	printk("%d %x %x\n", fd, table[fd], file);
 }
 
 void unset_fd(fd_table_t table, int fd)

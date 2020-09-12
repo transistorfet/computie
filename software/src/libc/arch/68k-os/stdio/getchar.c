@@ -6,6 +6,6 @@
 int getchar()
 {
 	unsigned char ch;
-	read(0, &ch, 1);
+	read(STDIN_FILENO, &ch, 1);
 	return ch;
 }

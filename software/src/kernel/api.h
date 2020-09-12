@@ -5,6 +5,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+struct vdir;
+
 void init_syscall();
 void do_syscall();
 
@@ -33,5 +35,6 @@ extern int do_stat(const char *path, struct stat *statbuf);
 extern int do_fstat(int fd, struct stat *statbuf);
 extern int do_lseek(int fd, offset_t offset, int whence);
 extern int do_pipe(int pipefd[2]);
+extern int do_dup2(int oldfd, int newfd);
 
 #endif

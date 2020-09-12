@@ -22,6 +22,7 @@ extern void sh_task();
 extern void init_mallocfs();
 extern void init_minix();
 
+
 extern struct driver tty_68681_driver;
 extern struct vnode_ops mallocfs_vnode_ops;
 
@@ -33,73 +34,6 @@ struct driver *drivers[] = {
 extern struct process *current_proc;
 extern void *current_proc_stack;
 
-
-#define TASK_SIZE	800
-const char hello_task[TASK_SIZE] = {
-#include "../test.txt"
-};
-
-
-void *create_context(void *user_stack, void *entry);
-
-struct process *run_task()
-{
-	int error = 0;
-
-	struct process *proc = new_proc(SU_UID);
-	if (!proc) {
-		printk("Ran out of procs\n");
-		return NULL;
-	}
-
-	current_proc = proc;
-
-	int fd = do_open("tty", 0, 0);
-	if (fd < 0) {
-		printk("Error opening file tty %d\n", error);
-		return NULL;
-	}
-	printk("FD: %d\n", fd);
-
-	do_write(fd, "Hey\n", 4);
-
-
-	//for (int i = 0; i < 0x4000; i++)
-	//	asm volatile("");
-
-	int task_size = 0x1800;
-	char *task = malloc(task_size);
-	char *task_stack_p = task + task_size;
-	printk("Task Address: %x\n", task);
-	printk("Task Stack: %x\n", task_stack_p);
-
-	//memset_s(task, 0, 0xC00);		// With memset doing nothing, this value will not cause a fatal
-	//memset_s(task, 0, 0xD00);		// With memset doing nothing, this value will sometimes cause a fatal
-	//memset_s(task, 0, 0xF00);		// With memset doing nothing, this value will mostly cause a fatal
-
-	//memset_s(task + 0x400, 0, 0x1000);	// TODO this will cause the fatal and the string glitch
-	//memset_s(task + 0x800, 0, 0xB00);	// Works but causes the string glitch
-	//memset_s(task + 0x400, 0, 0xB00);	// Works but causes the string glitch
-
-	//memset_s(task, 0, task_size);
-	memcpy_s(task, hello_task, TASK_SIZE);
-	//dump(task, task_size);
-
-	//print_stack();
-
- 	task_stack_p = create_context(task_stack_p, task);
- 	//task_stack_p = create_context(task_stack_p, exit2);
-
-	//dump(task_stack_p, 0x40);
-
-	proc->map.segments[M_TEXT].base = task;
-	proc->map.segments[M_TEXT].length = task_size;
-	proc->sp = task_stack_p;
-
-	printk("After: %x\n", task_stack_p);
-
-	return proc;
-}
 
 struct process *run_sh()
 {
@@ -182,8 +116,7 @@ int main()
 
 	//init_minix();
 
-	struct process *task = run_task();
-	run_sh();
+	struct process *task = run_sh();
 
 	//for (int i = 0; i < 0x2800; i++)
 	//	asm volatile("");

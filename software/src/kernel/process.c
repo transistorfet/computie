@@ -180,8 +180,6 @@ void schedule()
 {
 	struct process *next;
 
-	//putchar('!');
-
 	if (!current_proc || !PROC_IS_RUNNABLE(current_proc) || !current_proc->node.next)
 		next = (struct process *) run_queue.head;
 	else

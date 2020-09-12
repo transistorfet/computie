@@ -180,7 +180,7 @@ void tty_68681_reset_leds(uint8_t bits)
 }
 
 
-int getchar(void)
+int getchar_buffered(void)
 {
 	/*
 	char in;
@@ -216,7 +216,7 @@ int getchar(void)
 	//putchar_direct('#');
 	while (_buf_is_empty(&channel_a.rx)) {
 		asm volatile("");
-		//putchar('^');
+		//putchar_buffered('^');
 	}
 	return _buf_get_char(&channel_a.rx);
 }
@@ -229,9 +229,7 @@ int putchar_direct(int ch)
 	return ch;
 }
 
-//int putchar(int ch) { return putchar_direct(ch); }
-
-int putchar(int ch)
+int putchar_buffered(int ch)
 {
 	tty_68681_set_leds(0x02);
 	//while (_buf_is_full(&channel_a.tx)) {
@@ -250,13 +248,11 @@ int putchar(int ch)
 	return ch;
 }
 
-int tty_puts_direct(const char *str)
-{
-	for (; *str != '\0'; str++)
-		putchar_direct(*str);
-}
+//int putchar(int ch) { return putchar_buffered(ch); }
+
 
 #define PRINTK_BUFFER	128
+
 int vprintk(const char *fmt, va_list args)
 {
 	int i;
@@ -264,7 +260,8 @@ int vprintk(const char *fmt, va_list args)
 
 	vsnprintf(buffer, PRINTK_BUFFER, fmt, args);
 	for (i = 0; i < PRINTK_BUFFER && buffer[i]; i++)
-		putchar_direct(buffer[i]);
+		//putchar_direct(buffer[i]);
+		putchar_buffered(buffer[i]);
 	return i;
 }
 
@@ -274,7 +271,7 @@ int printk(const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	ret = vprintf(fmt, args);
+	ret = vprintk(fmt, args);
 	va_end(args);
 
 	return ret;
@@ -304,7 +301,7 @@ int tty_68681_read(devminor_t minor, char *buffer, size_t size)
 			}
 			return size - i;
 		}
-		*buffer = getchar();
+		*buffer = getchar_buffered();
 	}
 	return size;
 }
@@ -322,13 +319,13 @@ int tty_68681_write(devminor_t minor, const char *buffer, size_t size)
 
 	for (; i > 0; i--, buffer++)
 		//putchar_indirect(*buffer);
-		putchar(*buffer);
+		putchar_buffered(*buffer);
 	return size;
 }
 
 int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
 {
-
+	return -1;
 }
 
 
@@ -348,7 +345,7 @@ void handle_serial_irq()
 	// TODO this is for debugging
 	if (status & (SR_OVERRUN_ERROR | SR_PARITY_ERROR | SR_FRAMING_ERROR)) {
 		*OUT_SET_ADDR = 0x10;
-		tty_puts_direct("Game Over");
+		printk("Game Over");
 		asm("stop #0x2700\n");
 	}
 

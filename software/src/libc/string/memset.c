@@ -23,3 +23,5 @@ void *memset_s(void *ptr, int value, size_t num)
 	*/
 	return ptr;
 }
+
+extern void *memset(void *ptr, int value, size_t num) __attribute__((alias("memset_s")));

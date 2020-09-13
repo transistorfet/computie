@@ -19,8 +19,8 @@
 #define ROM_SIZE	0x1400
 
 
-void delay(short count) {
-	while (--count > 0) { }
+void delay(int count) {
+	while (--count > 0) { asm volatile(""); }
 }
 
 char hexchar(uint8_t byte)
@@ -413,6 +413,8 @@ int readline(char *buffer, short max)
 		}
 
 		switch (buffer[i]) {
+			case 0x03:	// Control-C
+				return 0;
 			case 0x08: {
 				if (i >= 1) {
 					putchar(0x08);
@@ -433,7 +435,7 @@ int readline(char *buffer, short max)
 			}
 		}
 	}
-	return 0;
+	return i;
 }
 
 int parseline(char *input, char **vargs)
@@ -463,17 +465,23 @@ struct pipe_command {
 	char *cmd;
 	char *stdin_file;
 	char *stdout_file;
+	int append;
 };
+
+static inline int is_whitespace(char ch)
+{
+	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r';
+}
 
 char *parse_word(char **input)
 {
 	char *start;
 
-	for (; **input != '\0' && (**input == ' ' || **input == '\t'); (*input)++) { }
+	for (; **input != '\0' && is_whitespace(**input); (*input)++) { }
 
 	start = *input;
 
-	for (; **input != '\0' && **input != ' ' && **input != '\t'; (*input)++) { }
+	for (; **input != '\0' && !is_whitespace(**input); (*input)++) { }
 	**input = '\0';
 	*input++;
 
@@ -493,7 +501,12 @@ int parse_command_line(char *input, struct pipe_command *commands)
 			commands[j].cmd = input + 1;
 		}
 		else if (*input == '>') {
+			if (*(input + 1) == '>') {
+				commands[j].append = 1;
+				input++;
+			}
 			*input++ = '\0';
+
 			if (commands[j].stdout_file) {
 				printf("parse error: stdout is redirected more than once\n");
 				return -1;
@@ -560,7 +573,7 @@ int open_file(char *filename, int flags, int newfd)
 	return 0;
 }
 
-int execute_command(void *func, char *stdin_file, char *stdout_file, int argc, char **argv)
+int execute_command(void *func, struct pipe_command *command, int argc, char **argv)
 {
 	int pid, status;
 	char *envp[2] = { NULL };
@@ -568,11 +581,10 @@ int execute_command(void *func, char *stdin_file, char *stdout_file, int argc, c
  	pid = fork();
 	if (pid) {
 		waitpid(pid, &status, 0);
-		printf("The child exited with %d\n", status);
 	}
 	else {
-		if (stdout_file) {
-			if (open_file(stdout_file, O_WRONLY | O_CREAT, STDOUT_FILENO))
+		if (command->stdout_file) {
+			if (open_file(command->stdout_file, O_WRONLY | O_CREAT | (command->append ? O_APPEND : O_TRUNC), STDOUT_FILENO))
 				exit(-1);
 		}
 
@@ -602,7 +614,10 @@ void serial_read_loop()
 	while (1) {
 		memset_s(commands, 0, sizeof(struct pipe_command) * PIPE_SIZE);
 		putsn("% ");
-		readline(buffer, BUF_SIZE);
+		if (!readline(buffer, BUF_SIZE)) {
+			putchar('\n');
+			continue;
+		}
 		if (parse_command_line(buffer, commands))
 			continue;
 
@@ -621,7 +636,7 @@ void serial_read_loop()
 
 		main = find_command(argv[0]);
 		if (main)
-			execute_command(main, commands[0].stdin_file, commands[0].stdout_file, argc, argv);
+			execute_command(main, &commands[0], argc, argv);
 		else
 			puts("Command not found");
 

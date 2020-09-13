@@ -65,6 +65,14 @@ void free(void *ptr)
 {
 	struct block *cur = ((struct block *) ptr) - 1;
 
+	/*
+	for (struct block *other; other; other->next) {
+		if (other == cur) {
+			panic("Double free detected! %x\n", other);
+		}
+	}
+	*/
+
 	// TODO this doesn't keep the blocks in address order
 
 	// Insert into free list

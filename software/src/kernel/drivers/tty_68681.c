@@ -231,14 +231,14 @@ int putchar_direct(int ch)
 
 int putchar_buffered(int ch)
 {
-	tty_68681_set_leds(0x02);
-	//while (_buf_is_full(&channel_a.tx)) {
+	//tty_68681_set_leds(0x02);
+
 	// TODO this timelimit is because of an issue on boot where it will lock up before interrupts are enabled because the buffer is full
 	for (int i = 0; _buf_is_full(&channel_a.tx) && i < 10000; i++) {
 		asm volatile("");
-		//putchar_direct('@');
 	}
-	tty_68681_reset_leds(0x02);
+
+	//tty_68681_reset_leds(0x02);
 
 	_buf_put_char(&channel_a.tx, ch);
 
@@ -335,7 +335,7 @@ void handle_serial_irq()
 	register char isr = *ISR_RD_ADDR;
 	register char status = *SRA_RD_ADDR;
 
-	*OUT_SET_ADDR = 0x10;
+	//*OUT_SET_ADDR = 0x10;
 
 	if (status & SR_RX_FULL) {
 		// De-Assert CTS
@@ -344,7 +344,6 @@ void handle_serial_irq()
 
 	// TODO this is for debugging
 	if (status & (SR_OVERRUN_ERROR | SR_PARITY_ERROR | SR_FRAMING_ERROR)) {
-		*OUT_SET_ADDR = 0x10;
 		printk("Game Over");
 		asm("stop #0x2700\n");
 	}
@@ -368,8 +367,6 @@ void handle_serial_irq()
 
 
 	if (isr & ISR_CH_A_TX_READY) {
-		//*OUT_SET_ADDR = 0x20;
-
 		int ch = _buf_get_char(&channel_a.tx);
 		if (ch != -1) {
 			*TBA_WR_ADDR = (char) ch;
@@ -398,13 +395,20 @@ void handle_serial_irq()
 		schedule();
 	}
 
-/*
 	if (isr & ISR_INPUT_CHANGE) {
-// TODO commenting out because with the context switch, this code doesn't work correctly
-
 		// Reading from the IPCR register will clear the interrupt
 		uint8_t status = *IPCR_RD_ADDR;
 
+		if (status & 0x03) {
+			putchar_buffered('!');
+			TRACE_ON();
+		}
+		//else if (!(status & 0x03)) {
+		//	TRACE_OFF();
+		//}
+
+		/*
+		// TODO commenting out because with the context switch, this code doesn't work correctly
 		printk("%x\n", status);
 
 		if (*INPUT_RD_ADDR & 0x08) {
@@ -418,11 +422,11 @@ void handle_serial_irq()
 		//TRACE_ON();
 
 		//extern char *current_proc_stack;
-		//*((uint16_t *) (current_proc_stack - CONTEX_SIZE)) |= 0x8000;
+		// *((uint16_t *) (current_proc_stack - CONTEX_SIZE)) |= 0x8000;
+		*/
 	}
-*/
 
-	*OUT_RESET_ADDR = 0x10;
+	//*OUT_RESET_ADDR = 0x10;
 }
 
 

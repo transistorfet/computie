@@ -253,16 +253,22 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 
 	if (flags & O_CREAT) {
 		const char *filename = path_last_component(path);
-
-		// Verify that parent directory is writable
-		if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
-			return EPERM;
-
+		if (!path_valid_component(filename))
+			return EINVAL;
+			
 		// Lookup the last path component, or create a new file if an error occurs during lookup
 		if (vnode->ops->lookup(vnode, filename, &vnode)) {
+			// Verify that parent directory is writable
+			if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
+				return EPERM;
+
 			error = vnode->ops->create(vnode, filename, mode, &vnode);
 			if (error)
 				return error;
+		}
+		else {
+			// TODO this needs to be refactored
+			vfs_make_vnode_ref(vnode);
 		}
 	}
 	else {
@@ -286,7 +292,7 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 	if (flags & O_TRUNC && !(vnode->mode & S_IFDIR))
 		vnode->ops->truncate(vnode);
 
-	if (flags & O_APPEND)
+	if (flags & O_APPEND && !(vnode->mode & S_IFDIR))
 		(*file)->position = (*file)->vnode->size;
 
 	error = vnode->ops->fops->open(*file, flags);
@@ -356,3 +362,13 @@ const char *path_last_component(const char *path)
 	i += 1;
 	return &path[i];
 }
+
+int path_valid_component(const char *path)
+{
+	for (; *path; path++) {
+		if (*path <= 0x20 || *path == '/')
+			return 0;
+	}
+	return 1;
+}
+

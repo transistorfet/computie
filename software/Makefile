@@ -9,6 +9,7 @@ RANLIB = m68k-linux-gnu-ranlib
 INCLUDE = ./include
 ASFLAGS = -m68010 --defsym __mc68010__=1
 CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -mpcrel -Os
+#-fanalyzer
 #CFLAGS += -z max-page-size=0x04	# reduce the elf output size by reducing the alignment
 
 ASLISTING = -alh
@@ -97,6 +98,7 @@ kernel.bin: $(KERNEL_OBJS)
 	echo "load" > $@
 	wc -c $^ | awk '{printf "%04X", $$1}' >> $@
 	hexdump -v -e '/1 "%02X"' $^ >> $@
+	echo "\nboot" >> $@
 
 %.send: %.bin
 	echo "send $(notdir $(basename $@))" > $@

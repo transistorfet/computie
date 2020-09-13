@@ -59,7 +59,6 @@ void dup_fd(fd_table_t table, int fd, struct vfile *file)
 	if (fd >= OPEN_MAX)
 		return;
 	table[fd] = vfs_duplicate_fileptr(file);
-	printk("%d %x %x\n", fd, table[fd], file);
 }
 
 void unset_fd(fd_table_t table, int fd)

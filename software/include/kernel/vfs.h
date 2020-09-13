@@ -125,6 +125,7 @@ struct vfile *vfs_duplicate_fileptr(struct vfile *file);
 int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile);
 
 const char *path_last_component(const char *path);
+int path_valid_component(const char *path);
 
 
 static inline void vfs_init_vnode(struct vnode *vnode, struct vnode_ops *ops, mode_t mode, uid_t uid, gid_t gid, offset_t size, time_t mtime)

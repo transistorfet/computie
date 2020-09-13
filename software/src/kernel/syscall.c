@@ -75,8 +75,9 @@ void tty_68681_reset_leds(uint8_t bits);
 //
 void do_syscall()
 {
-	tty_68681_set_leds(0x04);
 	int ret;
+
+	tty_68681_set_leds(0x04);
 	ret = ((syscall_t) syscall_table[current_syscall->syscall])(current_syscall->arg1, current_syscall->arg2, current_syscall->arg3);
 	if (current_proc->state == PS_READY) {
 		// If the process is still in the ready state, then set the return value in the process's context
@@ -86,6 +87,7 @@ void do_syscall()
 		// If the process has been suspended, we wont return as normal but instead schedule another process
 		schedule();
 	}
+
 	tty_68681_reset_leds(0x04);
 }
 
@@ -331,8 +333,6 @@ pid_t do_fork()
 
 	//dump((uint16_t *) current_proc->sp, 0x100);
 	//dump((uint16_t *) proc->sp, 0x100);
-
-	printk("PID: %d\n", proc->pid);
 
 	return proc->pid;
 }

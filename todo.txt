@@ -1,16 +1,20 @@
 
 Operating System:
 
+	* there is a bug where running "echo something > file" twice, followed by catting the file causes a severe hang.  I've traced it to malloc
+	  but I can't seem to get any information past there.  It's not running out of memory, so either the free list has a cycle and never terminates
+	  or the block record is getting corrupted by something else
+
+	* add pipe setup to command evaluation
+
 	* add mounting of filesystems, and root node stuff, so you can remove the special case in vfs.c
-	* add syscalls: mount/umount, dup, (rmdir?)
+	* add syscalls: mount/umount, rmdir?
+	* implement minix filesystem
 	* add commands: mv, cp, rmdir, pwd
 
-	* add a file pointer duplicate ala vfs_duplicate (to replace directly calling dup_fileptr)
 	* move binary file format and arg copying to another file, but where? proc/ mm/ kernel/???
-	* there is still one issue with the mallocfs root node, where refcount is 2 instead of just 1
 	* should the access stuff be entirely in the file system module?
 
-	* implement minix filesystem
 
 	* implement signals
 	* add commands: ps, kill
@@ -19,8 +23,12 @@ Operating System:
 	* sort out process groups, and which process gets input
 	* syscalls to implement: getpid, kill, signals, alarm, pause, getuid/setuid, time
 
-	* there is a bug where cat'ing the 'size' file causes output to hang, even though the scheduler is still running
 
+
+
+	* there is a bug where cat'ing the 'size' file causes output to hang, even though the scheduler is still running
+	* there is still one issue with the mallocfs root node, where refcount is 2 instead of just 1
+	* remove the execbuiltin syscall, which is temporary until all commands can be executable files
 
 
 	* refactor bufcache into a generic cache data structure which can be used for bufcache as well as vnode cache in minixfs

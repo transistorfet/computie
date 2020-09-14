@@ -92,6 +92,9 @@ static struct mallocfs_block *zone_free_all(struct vnode *vnode)
 		if (MALLOCFS_DATA(vnode).zones[i])
 			MFS_FREE_BLOCK(MALLOCFS_DATA(vnode).zones[i]);
 	}
+
+	for (char i = 0; i < MALLOCFS_TIER1_ZONES; i++)
+		MALLOCFS_DATA(vnode).zones[i] = NULL;
 }
 
 #endif

@@ -47,6 +47,7 @@ void *malloc(int size)
 			} else {
 				nextfree = cur->next;
 			}
+			cur->next = NULL;
 
 			if (prev) {
 				prev->next = nextfree;
@@ -63,21 +64,19 @@ void *malloc(int size)
 
 void free(void *ptr)
 {
-	struct block *cur = ((struct block *) ptr) - 1;
+	struct block *block = ((struct block *) ptr) - 1;
 
-	/*
-	for (struct block *other; other; other->next) {
-		if (other == cur) {
-			panic("Double free detected! %x\n", other);
+	for (struct block *cur = main_heap.free_blocks; cur; cur = cur->next) {
+		if (cur == block) {
+			panic("Double free detected at %x! Halting...\n", cur);
 		}
 	}
-	*/
 
 	// TODO this doesn't keep the blocks in address order
 
 	// Insert into free list
-	cur->next = main_heap.free_blocks;
-	main_heap.free_blocks = cur;
+	block->next = main_heap.free_blocks;
+	main_heap.free_blocks = block;
 }
 
 /*

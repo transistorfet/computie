@@ -224,6 +224,7 @@ int getchar_buffered(void)
 
 int putchar_direct(int ch)
 {
+	*CRA_WR_ADDR = CMD_ENABLE_TX;
 	while (!(*SRA_RD_ADDR & SR_TX_READY)) { }
 	*TBA_WR_ADDR = (char) ch;
 	return ch;
@@ -399,10 +400,18 @@ void handle_serial_irq()
 		// Reading from the IPCR register will clear the interrupt
 		uint8_t status = *IPCR_RD_ADDR;
 
-		if (status & 0x03) {
-			putchar_buffered('!');
-			TRACE_ON();
-		}
+		tty_68681_tx_safe_mode();
+		asm(
+		"move.l	#0, %a0\n"
+		"movec	%a0, %vbr\n"
+		"move.l	#0x20, %a0\n"
+		"jmp	(%a0)\n"
+		);
+
+		//if (status & 0x03) {
+		//	putchar_buffered('!');
+		//	TRACE_ON();
+		//}
 		//else if (!(status & 0x03)) {
 		//	TRACE_OFF();
 		//}

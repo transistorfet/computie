@@ -42,7 +42,7 @@ int vfs_sync(struct mount *mp);
 int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct vnode **result)
 {
 	// TODO this is temporary because we don't have mounts yet
-	extern struct vnode *mallocfs_root;
+	extern struct mount mallocfs_root;
 
 	int error;
 	int i = 0, j;
@@ -52,10 +52,10 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 	if (!result)
 		return EINVAL;
 
-	cur = cwd ? cwd : mallocfs_root;
+	cur = cwd ? cwd : mallocfs_root.root_node;
 	// We are always starting from the root node, so ignore a leading slash
 	if (path[0] == VFS_SEP) {
-		cur = mallocfs_root;
+		cur = mallocfs_root.root_node;
 		i += 1;
 	}
 
@@ -74,6 +74,9 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 		if (path[i] == VFS_SEP)
 			i += 1;
 		component[j] = '\0';
+
+		if (!(cur->mode & S_IFDIR))
+			return ENOTDIR;
 
 		// If creating, then skip the last component lookup
 		if (flags & VLOOKUP_PARENT_OF && path[i] == '\0')
@@ -200,9 +203,6 @@ static inline int _rename_find_parent(struct vnode *cwd, const char *path, uid_t
 	if (!verify_mode_access(uid, W_OK | X_OK, vnode->uid, vnode->gid, vnode->mode))
 		return EACCES;
 
-	if (!(vnode->mode & S_IFDIR))
-		return ENOTDIR;
-
 	*result = vnode;
 	return 0;
 }
@@ -255,7 +255,7 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 		const char *filename = path_last_component(path);
 		if (!path_valid_component(filename))
 			return EINVAL;
-			
+
 		// Lookup the last path component, or create a new file if an error occurs during lookup
 		if (vnode->ops->lookup(vnode, filename, &vnode)) {
 			// Verify that parent directory is writable

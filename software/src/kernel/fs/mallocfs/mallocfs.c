@@ -12,6 +12,7 @@
 #include "mallocfs.h"
 #include "alloc.h"
 #include "zones.h"
+#include "dir.h"
 
 
 
@@ -37,24 +38,43 @@ struct vnode_ops mallocfs_vnode_ops = {
 	mallocfs_release,
 };
 
+struct mount_ops mallocfs_mount_ops = {
+	mallocfs_mount,
+	mallocfs_unmount,
+	NULL,
+	mallocfs_sync,
+};
 
-// TODO this will be stored in the mount
-struct vnode *mallocfs_root;
 
-static struct mallocfs_dirent *_alloc_dirent(struct vnode *vnode, const char *filename);
-static struct mallocfs_dirent *_find_empty_dirent(struct vnode *dir);
-static struct mallocfs_dirent *_find_dirent(struct vnode *dir, struct vnode *file);
-static struct mallocfs_dirent *_find_dirent_by_name(struct vnode *dir, const char *filename);
-static short _is_empty_dirent(struct vnode *vnode);
+struct mount mallocfs_root;
+	
+
 
 int init_mallocfs()
 {
 	init_mallocfs_alloc();
 
-	mallocfs_root = new_mallocfs_vnode_with_block(S_IFDIR | 0755, NULL);
-	// Set the parent entry (..) to be the root vnode
-	// TODO This wouldn't be the case for a mounted filesystem
-	MALLOCFS_DATA(mallocfs_root).zones[0]->entries[1].vnode = mallocfs_root;
+	mallocfs_mount(&mallocfs_root, NULL);
+}
+
+int mallocfs_mount(struct mount *mp, struct vnode *parent)
+{
+	mp->root_node = new_mallocfs_vnode(0, S_IFDIR | 0755);
+	dir_setup(mp->root_node, parent);
+
+	return 0;
+}
+
+int mallocfs_unmount(struct mount *mp)
+{
+	// TODO implement
+	return 0;
+}
+
+int mallocfs_sync(struct mount *mp)
+{
+	// NOTE nothing to sync
+	return 0;
 }
 
 int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result)
@@ -63,19 +83,19 @@ int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, stru
 	struct mallocfs_dirent *dir;
 	struct mallocfs_block *block;
 
-	if (!(vnode->mode & S_IFDIR))
-		return ENOTDIR;
-
 	if (strlen(filename) > MALLOCFS_MAX_FILENAME)
 		return ENAMETOOLONG;
 
 	// The dirent wont be 'in use' until we set the vnode reference
-	dir = _alloc_dirent(vnode, filename);
+	dir = dir_alloc_entry(vnode, filename);
 	if (!dir)
 		return ENOSPC;
 
-	newnode = new_mallocfs_vnode_with_block(mode, vnode);
+	newnode = new_mallocfs_vnode(0, mode);
 	if (!newnode)
+		return ENOMEM;
+
+	if (mode & S_IFDIR && !dir_setup(newnode, vnode))
 		return ENOMEM;
 
 	dir->vnode = newnode;
@@ -90,20 +110,18 @@ int mallocfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, devic
 	struct vnode *newnode;
 	struct mallocfs_dirent *dir;
 
-	if (!(vnode->mode & S_IFDIR))
-		return ENOTDIR;
-
 	if (strlen(filename) > MALLOCFS_MAX_FILENAME)
 		return ENAMETOOLONG;
 
 	// The dirent wont be 'in use' until we set the vnode reference
-	dir = _alloc_dirent(vnode, filename);
+	dir = dir_alloc_entry(vnode, filename);
 	if (!dir)
 		return ENOSPC;
 
 	newnode = new_mallocfs_vnode(dev, mode);
 	if (!newnode)
 		return EMFILE;
+
 	dir->vnode = newnode;
 
 	if (result)
@@ -113,44 +131,35 @@ int mallocfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, devic
 
 int mallocfs_lookup(struct vnode *vnode, const char *filename, struct vnode **result)
 {
-	struct zone_iter iter;
-	struct mallocfs_block *zone;
+	struct mallocfs_dirent *entry;
 
 	// If a valid pointer isn't provided, return invalid argument
 	if (!result)
 		return EINVAL;
 
-	if (!(vnode->mode & S_IFDIR))
-		return ENOTDIR;
-
 	if (strlen(filename) > MALLOCFS_MAX_FILENAME)
 		return ENAMETOOLONG;
 
-	zone_iter_start(&iter);
-	while ((zone = zone_iter_next(&iter, MALLOCFS_DATA(vnode).zones))) {
-		for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
-			if (zone->entries[i].vnode && !strcmp(filename, zone->entries[i].name)) {
-				*result = zone->entries[i].vnode;
-				return 0;
-			}
-		}
-	}
-	return ENOENT;
+	entry = dir_find_entry_by_name(vnode, filename, MFS_LOOKUP_ZONE);
+	if (!entry)
+		return ENOENT;
+
+	*result = entry->vnode;
+	return 0;
 }
 
 int mallocfs_unlink(struct vnode *parent, struct vnode *vnode)
 {
 	struct mallocfs_dirent *dir;
 
-	if (vnode->mode & S_IFDIR && !_is_empty_dirent(vnode))
+	if (vnode->mode & S_IFDIR && !dir_is_empty(vnode))
 		return ENOTEMPTY;
 
-	dir = _find_dirent(parent, vnode);
+	dir = dir_find_entry_by_vnode(parent, vnode, MFS_LOOKUP_ZONE);
 	if (!dir)
 		return ENOENT;
 
 	dir->vnode = NULL;
-	// TODO should this be moved into vfs.c
 	vfs_release_vnode(vnode);
 }
 
@@ -158,18 +167,18 @@ int mallocfs_rename(struct vnode *vnode, struct vnode *oldparent, const char *ol
 {
 	struct mallocfs_dirent *olddir, *newdir;
 
-	newdir = _find_dirent_by_name(newparent, newname);
+	newdir = dir_find_entry_by_name(newparent, newname, MFS_LOOKUP_ZONE);
 	if (newdir) {
 		// TODO delete existing file instead of error??
 		return EEXIST;
 	}
 	else {
-		newdir = _alloc_dirent(newparent, newname);
+		newdir = dir_alloc_entry(newparent, newname);
 		if (!newdir)
 			return ENOSPC;
 	}
 
-	olddir = _find_dirent_by_name(oldparent, oldname);
+	olddir = dir_find_entry_by_name(oldparent, oldname, MFS_LOOKUP_ZONE);
 	if (!olddir)
 		return ENOENT;
 
@@ -189,6 +198,7 @@ int mallocfs_truncate(struct vnode *vnode)
 
 int mallocfs_update(struct vnode *vnode)
 {
+	// NOTE since it's entirely in memory, we don't need to commit the change
 	return 0;
 }
 
@@ -202,6 +212,8 @@ int mallocfs_release(struct vnode *vnode)
 
 int mallocfs_open(struct vfile *file, int flags)
 {
+	if (file->vnode->mode & S_IFCHR)
+		return dev_open(MALLOCFS_DATA(file->vnode).device, flags);
 	return 0;
 }
 
@@ -209,7 +221,6 @@ int mallocfs_close(struct vfile *file)
 {
 	if (file->vnode->mode & S_IFCHR)
 		return dev_close(MALLOCFS_DATA(file->vnode).device);
-
 	return 0;
 }
 
@@ -235,7 +246,7 @@ int mallocfs_read(struct vfile *file, char *buf, size_t nbytes)
 		zpos = file->position & (MALLOCFS_BLOCK_SIZE - 1);
 
 		do {
-			zone = (char *) zone_lookup(file->vnode, znum, 0);
+			zone = (char *) zone_lookup(file->vnode, znum, MFS_LOOKUP_ZONE);
 			if (!zone)
 				break;
 
@@ -308,7 +319,6 @@ int mallocfs_ioctl(struct vfile *file, unsigned int request, void *argp)
 {
 	if (file->vnode->mode & S_IFCHR)
 		return dev_ioctl(MALLOCFS_DATA(file->vnode).device, request, argp);
-
 	return -1;
 }
 
@@ -354,7 +364,7 @@ int mallocfs_readdir(struct vfile *file, struct vdir *dir)
 	zpos = file->position & (MALLOCFS_DIRENTS - 1);
 
 	while (1) {
-		zone = zone_lookup(file->vnode, znum, 0);
+		zone = zone_lookup(file->vnode, znum, MFS_LOOKUP_ZONE);
 		if (!zone)
 			return 0;
 
@@ -375,79 +385,6 @@ int mallocfs_readdir(struct vfile *file, struct vdir *dir)
 	strncpy(dir->name, zone->entries[zpos].name, max);
 	dir->name[max - 1] = '\0';
 
-	return 1;
-}
-
-
-static struct mallocfs_dirent *_alloc_dirent(struct vnode *vnode, const char *filename)
-{
-	struct mallocfs_dirent *dir;
-
-	dir = _find_empty_dirent(vnode);
-	if (!dir)
-		return NULL;
-
-	strncpy(dir->name, filename, MALLOCFS_MAX_FILENAME);
-	dir->name[MALLOCFS_MAX_FILENAME - 1] = '\0';
-
-	return dir;
-}
-
-static struct mallocfs_dirent *_find_empty_dirent(struct vnode *dir)
-{
-	struct mallocfs_block *zone;
-
-	for (mallocfs_zone_t znum = 0; zone = zone_lookup(dir, znum, MFS_CREATE_ZONE); znum++) {
-		for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
-			if (zone->entries[i].vnode == NULL)
-				return &zone->entries[i];
-		}
-	}
-	return NULL;
-}
-
-static struct mallocfs_dirent *_find_dirent(struct vnode *dir, struct vnode *file)
-{
-	struct zone_iter iter;
-	struct mallocfs_block *zone;
-
-	zone_iter_start(&iter);
-	while((zone = zone_iter_next(&iter, MALLOCFS_DATA(dir).zones))) {
-		for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
-			if (zone->entries[i].vnode == file)
-				return &zone->entries[i];
-		}
-	}
-	return NULL;
-}
-
-static struct mallocfs_dirent *_find_dirent_by_name(struct vnode *dir, const char *filename)
-{
-	struct zone_iter iter;
-	struct mallocfs_block *zone;
-
-	zone_iter_start(&iter);
-	while ((zone = zone_iter_next(&iter, MALLOCFS_DATA(dir).zones))) {
-		for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
-			if (zone->entries[i].vnode && !strcmp(filename, zone->entries[i].name))
-				return &zone->entries[i];
-		}
-	}
-	return NULL;
-}
-
-static short _is_empty_dirent(struct vnode *vnode)
-{
-	struct zone_iter iter;
-	struct mallocfs_block *zone;
-
-	zone_iter_start(&iter);
-	while ((zone = zone_iter_next(&iter, MALLOCFS_DATA(vnode).zones))) {
-		for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
-			if (zone->entries[i].vnode && strcmp(zone->entries[i].name, ".") && strcmp(zone->entries[i].name, ".."))
-				return 0;
-		}
-	}
 	return 1;
 }
 

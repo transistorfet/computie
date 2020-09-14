@@ -37,10 +37,7 @@ struct mallocfs_block {
 
 struct mallocfs_data {
 	device_t device;
-	union {
-		struct mallocfs_block *block;
-		struct mallocfs_block *zones[MALLOCFS_TOTAL_ZONES];
-	};
+	struct mallocfs_block *zones[MALLOCFS_TOTAL_ZONES];
 };
 
 struct mallocfs_vnode {
@@ -48,7 +45,10 @@ struct mallocfs_vnode {
 	struct mallocfs_data data;
 };
 
-extern struct vnode *mallocfs_root;
+
+int mallocfs_mount(struct mount *mp, struct vnode *parent);
+int mallocfs_unmount(struct mount *mp);
+int mallocfs_sync(struct mount *mp);
 
 int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result);
 int mallocfs_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, struct vnode **result);

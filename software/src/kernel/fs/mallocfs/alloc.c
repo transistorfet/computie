@@ -52,31 +52,3 @@ struct mallocfs_block *new_mallocfs_block(char zero)
 	return block;
 }
 
-struct vnode *new_mallocfs_vnode_with_block(mode_t mode, struct vnode *parent)
-{
-	struct vnode *vnode;
-	struct mallocfs_block *block;
-
-	vnode = new_mallocfs_vnode(0, mode);
-	if (!vnode)
-		return NULL;
-
-	block = new_mallocfs_block(MFS_ZERO);
-	if (!block) {
-		vfs_release_vnode(vnode);
-		return NULL;
-	}
-
-	MALLOCFS_DATA(vnode).block = block;
-	if (mode & S_IFDIR) {
-		block->entries[0].vnode = vnode;
-		strcpy(block->entries[0].name, ".");
-
-		block->entries[1].vnode = parent;
-		strcpy(block->entries[1].name, "..");
-	}
-
-	return vnode;
-}
-
-

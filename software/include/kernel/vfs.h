@@ -32,7 +32,6 @@ struct vdir;
 struct mount_ops {
 	int (*mount)(struct mount *mp, struct vnode *parent);	// Mount the filesystem using the pre-allocated struct mount
 	int (*unmount)(struct mount *mp);			// Unmount the filesystem
-	int (*root)(struct mount *mp, struct vnode **result);	// Get the root vnode
 	int (*sync)(struct mount *mp);				// Sync data to disk
 };
 

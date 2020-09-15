@@ -41,14 +41,12 @@ struct vnode_ops mallocfs_vnode_ops = {
 struct mount_ops mallocfs_mount_ops = {
 	mallocfs_mount,
 	mallocfs_unmount,
-	NULL,
 	mallocfs_sync,
 };
 
 
 struct mount mallocfs_root;
 	
-
 
 int init_mallocfs()
 {

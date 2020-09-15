@@ -20,6 +20,8 @@
 #define VFS_SEP			'/'
 #define VFS_FILENAME_MAX	14
 
+#define VBF_MOUNTED	0x0001
+
 
 struct mount;
 struct vnode;
@@ -29,7 +31,7 @@ struct vdir;
 
 struct mount_ops {
 	int (*mount)(struct mount *mp, struct vnode *parent);	// Mount the filesystem using the pre-allocated struct mount
-	int (*umount)(struct mount *mp);			// Unmount the filesystem
+	int (*unmount)(struct mount *mp);			// Unmount the filesystem
 	int (*root)(struct mount *mp, struct vnode **result);	// Get the root vnode
 	int (*sync)(struct mount *mp);				// Sync data to disk
 };
@@ -78,8 +80,7 @@ struct vnode {
 	gid_t gid;
 	time_t mtime;
 	offset_t size;
-
-	struct mount *mounted;		// TODO what do you think about this? not sure
+	uint16_t bits;
 
 	union {} data;
 };
@@ -101,8 +102,8 @@ struct vdir {
 
 int init_vfs();
 
-int vfs_mount(struct mount *mp);
-int vfs_umount(struct mount *mp);
+int vfs_mount(struct vnode *cwd, const char *path, struct vnode *dev, struct mount_ops *ops, uid_t uid, struct mount **result);
+int vfs_unmount(struct mount *mp, uid_t uid);
 int vfs_sync(struct mount *mp);
 
 int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct vnode **result);
@@ -137,6 +138,7 @@ static inline void vfs_init_vnode(struct vnode *vnode, struct vnode_ops *ops, mo
 	vnode->gid = gid;
 	vnode->size = size;
 	vnode->mtime = mtime;
+	vnode->bits = 0;
 }
 
 static inline struct vnode *vfs_make_vnode_ref(struct vnode *vnode)

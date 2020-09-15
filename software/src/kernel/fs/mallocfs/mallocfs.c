@@ -54,14 +54,15 @@ int init_mallocfs()
 {
 	init_mallocfs_alloc();
 
-	mallocfs_mount(&mallocfs_root, NULL);
+	// TODO this would be moved elsewhere
+	struct mount *mp;
+	vfs_mount(NULL, "/", NULL, &mallocfs_mount_ops, SU_UID, &mp);
 }
 
 int mallocfs_mount(struct mount *mp, struct vnode *parent)
 {
 	mp->root_node = new_mallocfs_vnode(0, S_IFDIR | 0755);
 	dir_setup(mp->root_node, parent);
-
 	return 0;
 }
 

@@ -16,15 +16,26 @@
 
 #define VFS_MOUNT_MAX		2
 
-//static struct vnode *vfs_root;
+static struct mount *root_fs;
 static struct mount mountpoints[VFS_MOUNT_MAX];
+
+static struct mount *_find_mount_by_vnode(struct vnode *mount)
+{
+	root_fs = NULL;
+
+	for (short i = 0; i < VFS_MOUNT_MAX; i++) {
+		if (mountpoints[i].mount_node == mount)
+			return &mountpoints[i];
+	}
+	return NULL;
+}
+
 
 int init_vfs()
 {
 	//vfs_root = new_vnode(0, 0777);
 
-	for (char i = 0; i < VFS_MOUNT_MAX; i++) {
-		// TODO this isn't a proper way of determining use
+	for (short i = 0; i < VFS_MOUNT_MAX; i++) {
 		mountpoints[i].ops = NULL;
 	}
 
@@ -33,10 +44,79 @@ int init_vfs()
 }
 
 
-int vfs_mount(struct mount *mp);
-int vfs_umount(struct mount *mp);
-struct vnode *vfs_root(struct mount *mp);
-int vfs_sync(struct mount *mp);
+int vfs_mount(struct vnode *cwd, const char *path, struct vnode *dev, struct mount_ops *ops, uid_t uid, struct mount **result)
+{
+	int error;
+	struct vnode *vnode;
+
+	if (uid != SU_UID)
+		return EPERM;
+
+	if (!root_fs)
+		vnode = NULL;
+	else {
+		error = vfs_lookup(cwd, path, VLOOKUP_NORMAL, uid, &vnode);
+		if (error)
+			return error;
+	}
+
+	if (vnode && (vnode->bits & VBF_MOUNTED))
+		return EBUSY;
+
+	// TODO make sure not already mounted
+
+	for (short i = 0; i < VFS_MOUNT_MAX; i++) {
+		if (mountpoints[i].ops == NULL) {
+			mountpoints[i].ops = ops;
+			mountpoints[i].mount_node = vnode;
+			mountpoints[i].root_node = NULL;
+
+			error = ops->mount(&mountpoints[i], vnode);
+			if (error) {
+				mountpoints[i].ops = NULL;
+				return error;
+			}
+
+			if (vnode) {
+				vfs_make_vnode_ref(vnode);
+				vnode->bits |= VBF_MOUNTED;
+			}
+			else
+				root_fs = &mountpoints[i];
+
+			if (*result)
+				*result = &mountpoints[i];
+			return 0;
+		}
+	}
+	return ENOMEM;
+}
+
+int vfs_unmount(struct mount *mp, uid_t uid)
+{
+	int error;
+
+	if (uid != SU_UID)
+		return EPERM;
+
+	error = mp->ops->unmount(mp);
+	if (error)
+		return error;
+
+	if (mp->mount_node) {
+		mp->mount_node->bits &= ~VBF_MOUNTED;
+		vfs_release_vnode(mp->mount_node);
+	}
+	else
+		root_fs = NULL;
+	mp->ops = NULL;
+	return 0;
+}
+
+int vfs_sync(struct mount *mp)
+{
+	return mp->ops->sync(mp);
+}
 
 
 int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct vnode **result)
@@ -46,20 +126,28 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 
 	int error;
 	int i = 0, j;
+	struct mount *mp;
 	struct vnode *cur;
 	char component[VFS_FILENAME_MAX];
 
 	if (!result)
 		return EINVAL;
 
-	cur = cwd ? cwd : mallocfs_root.root_node;
+	cur = cwd ? cwd : root_fs->root_node;
 	// We are always starting from the root node, so ignore a leading slash
 	if (path[0] == VFS_SEP) {
-		cur = mallocfs_root.root_node;
+		cur = root_fs->root_node;
 		i += 1;
 	}
 
 	while (1) {
+		if (cur->bits & VBF_MOUNTED) {
+			mp = _find_mount_by_vnode(cur);
+			if (!mp)
+				return ENXIO;
+			cur = mp->root_node;
+		}
+
 		if (path[i] == '\0') {
 			*result = cur;
 			return 0;

@@ -53,7 +53,7 @@ int test_process()
 	//	asm volatile("");
 
 	int task_size = 0x1800;
-	char *task = malloc(task_size);
+	char *task = kmalloc(task_size);
 	char *task_stack_p = task + task_size;
 	printk("Task Address: %x\n", task);
 	printk("Task Stack: %x\n", task_stack_p);

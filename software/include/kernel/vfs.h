@@ -30,9 +30,9 @@ struct vdir;
 
 
 struct mount_ops {
-	int (*mount)(struct mount *mp, struct vnode *parent);	// Mount the filesystem using the pre-allocated struct mount
-	int (*unmount)(struct mount *mp);			// Unmount the filesystem
-	int (*sync)(struct mount *mp);				// Sync data to disk
+	int (*mount)(struct mount *mp, device_t dev, struct vnode *parent);	// Mount the filesystem using the pre-allocated struct mount
+	int (*unmount)(struct mount *mp);					// Unmount the filesystem
+	int (*sync)(struct mount *mp);						// Sync data to disk
 };
 
 
@@ -68,6 +68,7 @@ struct mount {
 	struct mount_ops *ops;
 	struct vnode *mount_node;	// The vnode this fs is mounted on
 	struct vnode *root_node;	// the root vnode of this fs
+	device_t dev;
 };
 
 struct vnode {
@@ -101,7 +102,7 @@ struct vdir {
 
 int init_vfs();
 
-int vfs_mount(struct vnode *cwd, const char *path, struct vnode *dev, struct mount_ops *ops, uid_t uid, struct mount **result);
+int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_ops *ops, uid_t uid, struct mount **result);
 int vfs_unmount(struct mount *mp, uid_t uid);
 int vfs_sync(struct mount *mp);
 

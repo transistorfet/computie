@@ -1,5 +1,6 @@
 
 #include <stddef.h>
+#include <kernel/kmalloc.h>
 
 struct block {
 	int size;
@@ -14,7 +15,7 @@ struct heap {
 static struct heap main_heap = { 0 };
 
 
-void init_heap(void *addr, int size)
+void init_kernel_heap(void *addr, int size)
 {
 	struct block *space = (struct block *) addr;
 
@@ -24,7 +25,7 @@ void init_heap(void *addr, int size)
 	main_heap.free_blocks = space;
 }
 
-void *malloc(int size)
+void *kmalloc(int size)
 {
 	struct block *prev = NULL;
 	struct block *nextfree = NULL;
@@ -59,16 +60,16 @@ void *malloc(int size)
 		}
 	}
 	// Out Of Memory
+	panic("Kernel out of memory!  Halting...\n");
 	return NULL;
 }
 
-void free(void *ptr)
+void kmfree(void *ptr)
 {
 	struct block *block = ((struct block *) ptr) - 1;
 
 	for (struct block *cur = main_heap.free_blocks; cur; cur = cur->next) {
 		if (cur == block) {
-			// TODO this needs to be removed
 			panic("Double free detected at %x! Halting...\n", cur);
 		}
 	}
@@ -80,15 +81,3 @@ void free(void *ptr)
 	main_heap.free_blocks = block;
 }
 
-/*
-#include <stdio.h>
-
-void print_free()
-{
-	int i = 0;
-	struct block *cur = main_heap.free_blocks;
-	for (; cur; cur = cur->next, i++) {
-		printf("%d %x %x\n", i, cur, cur->size);
-	} 
-}
-*/

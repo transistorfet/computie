@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <errno.h>
+#include <kernel/kmalloc.h>
 #include <kernel/syscall.h>
 
 #include "nop.h"
@@ -52,7 +53,7 @@ int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile)
 {
 	struct vnode *vnode;
 
-	vnode = malloc(sizeof(struct pipe_vnode));
+	vnode = kmalloc(sizeof(struct pipe_vnode));
 	if (!vnode)
 		return ENOMEM;
 	// TODO replace uid and gid with valid values based on current proc?
@@ -65,12 +66,12 @@ int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile)
 	// Allocate two file pointers
 	*rfile = new_fileptr(vnode, 0);
 	if (!*rfile) {
-		free(vnode);
+		kmfree(vnode);
 		return ENFILE;
 	}
 	*wfile = new_fileptr(vnode, 0);
 	if (!*wfile) {
-		free(vnode);
+		kmfree(vnode);
 		free_fileptr(*rfile);
 		return ENFILE;
 	}
@@ -86,7 +87,7 @@ int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile)
 
 int pipe_release(struct vnode *vnode)
 {
-	free(vnode);
+	kmfree(vnode);
 }
 
 int pipe_close(struct vfile *file)

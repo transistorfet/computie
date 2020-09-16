@@ -8,6 +8,7 @@
 #include <kernel/vfs.h>
 #include <kernel/printk.h>
 #include <kernel/driver.h>
+#include <kernel/kmalloc.h>
 
 #include "api.h"
 #include "access.h"
@@ -313,7 +314,7 @@ pid_t do_fork()
 	current_proc->sp = current_proc_stack;
 
 	int stack_size = current_proc->map.segments[M_STACK].length;
-	char *stack = malloc(stack_size);
+	char *stack = kmalloc(stack_size);
 	char *stack_pointer = (stack + stack_size) - ((current_proc->map.segments[M_STACK].base + current_proc->map.segments[M_STACK].length) - current_proc->sp);
 
 	memcpy_s(stack, current_proc->map.segments[M_STACK].base, current_proc->map.segments[M_STACK].length);
@@ -442,7 +443,7 @@ int load_flat_binary(const char *path, struct mem_map *map)
 
 	// The extra data is for the bss segment, which we don't know the proper size of
 	int task_size = file->vnode->size + 0x200;
-	char *task_text = malloc(task_size);
+	char *task_text = kmalloc(task_size);
 
 	error = vfs_read(file, task_text, task_size);
 	vfs_close(file);
@@ -484,7 +485,7 @@ int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
 {
 	current_proc->map.segments[M_TEXT].base = NULL;
 	current_proc->map.segments[M_TEXT].length = 0;
-	current_proc->map.segments[M_STACK].base = malloc(0x400);
+	current_proc->map.segments[M_STACK].base = kmalloc(0x400);
 	current_proc->map.segments[M_STACK].length = 0x400;
 
 	// Reset the stack to start our new process

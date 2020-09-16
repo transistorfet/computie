@@ -57,7 +57,7 @@ int init_mallocfs()
 	vfs_mount(NULL, "/", NULL, &mallocfs_mount_ops, SU_UID, &mp);
 }
 
-int mallocfs_mount(struct mount *mp, struct vnode *parent)
+int mallocfs_mount(struct mount *mp, device_t dev, struct vnode *parent)
 {
 	mp->root_node = new_mallocfs_vnode(0, S_IFDIR | 0755);
 	dir_setup(mp->root_node, parent);

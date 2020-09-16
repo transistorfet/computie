@@ -1,10 +1,10 @@
 
 #include <stddef.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include <kernel/driver.h>
 #include <kernel/printk.h>
+#include <kernel/kmalloc.h>
 
 #include "bufcache.h"
 #include "../interrupts.h"
@@ -12,8 +12,8 @@
 
 
 #define BC_BLOCK_SIZE		1024
-#define BC_ALLOC_BLOCK()	(malloc(BC_BLOCK_SIZE))
-#define BC_FREE_BLOCK(ptr)	free(ptr)
+#define BC_ALLOC_BLOCK()	(kmalloc(BC_BLOCK_SIZE))
+#define BC_FREE_BLOCK(ptr)	kmfree(ptr)
 
 
 #define BLOCKCACHE_MAX		20

@@ -46,7 +46,7 @@ struct mallocfs_vnode {
 };
 
 
-int mallocfs_mount(struct mount *mp, struct vnode *parent);
+int mallocfs_mount(struct mount *mp, device_t dev, struct vnode *parent);
 int mallocfs_unmount(struct mount *mp);
 int mallocfs_sync(struct mount *mp);
 

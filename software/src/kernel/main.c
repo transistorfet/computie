@@ -6,6 +6,7 @@
 
 #include <sys/stat.h>
 
+#include <kernel/kmalloc.h>
 #include <kernel/syscall.h>
 #include <kernel/driver.h>
 #include <kernel/printk.h>
@@ -68,7 +69,7 @@ struct process *run_sh()
 	int stack_size = 0x2000;
 	proc->map.segments[M_TEXT].base = NULL;
 	proc->map.segments[M_TEXT].length = 0x10000;
-	proc->map.segments[M_STACK].base = malloc(stack_size);
+	proc->map.segments[M_STACK].base = kmalloc(stack_size);
 	proc->map.segments[M_STACK].length = stack_size;
 
 	// Set up initial stack
@@ -84,7 +85,7 @@ int main()
 {
 	DISABLE_INTS();
 
-	init_heap((void *) 0x110000, 0xD0000);
+	init_kernel_heap((void *) 0x110000, 0xD0000);
 
 	init_interrupts();
 	init_syscall();

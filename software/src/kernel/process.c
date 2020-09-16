@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include <kernel/printk.h>
+#include <kernel/kmalloc.h>
 
 #include "api.h"
 #include "access.h"
@@ -93,7 +94,7 @@ void exit_proc(struct process *proc, int status)
 	release_fd_table(proc->fd_table);
 	for (char j = 0; j < NUM_SEGMENTS; j++) {
 		if (proc->map.segments[j].base)
-			free(proc->map.segments[j].base);
+			kmfree(proc->map.segments[j].base);
 	}
 
 	_queue_remove(&run_queue, &proc->node);
@@ -219,7 +220,7 @@ struct process *create_kernel_task(int (*task_start)())
 		panic("Ran out of procs\n");
 
 	int stack_size = 0x800;
-	char *stack = malloc(stack_size);
+	char *stack = kmalloc(stack_size);
 	char *stack_pointer = stack + stack_size;
 
  	stack_pointer = create_context(stack_pointer, task_start);

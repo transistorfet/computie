@@ -44,7 +44,7 @@ int init_vfs()
 }
 
 
-int vfs_mount(struct vnode *cwd, const char *path, struct vnode *dev, struct mount_ops *ops, uid_t uid, struct mount **result)
+int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_ops *ops, uid_t uid, struct mount **result)
 {
 	int error;
 	struct vnode *vnode;
@@ -70,8 +70,9 @@ int vfs_mount(struct vnode *cwd, const char *path, struct vnode *dev, struct mou
 			mountpoints[i].ops = ops;
 			mountpoints[i].mount_node = vnode;
 			mountpoints[i].root_node = NULL;
+			mountpoints[i].dev = dev;
 
-			error = ops->mount(&mountpoints[i], vnode);
+			error = ops->mount(&mountpoints[i], dev, vnode);
 			if (error) {
 				mountpoints[i].ops = NULL;
 				return error;
@@ -98,6 +99,10 @@ int vfs_unmount(struct mount *mp, uid_t uid)
 
 	if (uid != SU_UID)
 		return EPERM;
+
+	error = mp->ops->sync(mp);
+	if (error)
+		return error;
 
 	error = mp->ops->unmount(mp);
 	if (error)

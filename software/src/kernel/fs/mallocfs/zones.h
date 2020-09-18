@@ -8,7 +8,7 @@
 #define MFS_LOOKUP_ZONE		0
 #define MFS_CREATE_ZONE		1
 
-static struct mallocfs_block *zone_lookup(struct vnode *vnode, mallocfs_zone_t znum, char create)
+static struct mallocfs_block *zone_lookup(struct vnode *vnode, zone_t znum, char create)
 {
 	struct mallocfs_block **zone;
 	struct mallocfs_block **zones = MALLOCFS_DATA(vnode).zones;
@@ -46,7 +46,7 @@ static struct mallocfs_block *zone_free_all(struct vnode *vnode)
 
 	// TODO this can only be used with files or empty directories
 
-	for (mallocfs_zone_t znum = 0; zone = zone_lookup(vnode, znum, MFS_LOOKUP_ZONE); znum++)
+	for (zone_t znum = 0; zone = zone_lookup(vnode, znum, MFS_LOOKUP_ZONE); znum++)
 		MFS_FREE_BLOCK(zone);
 
 	for (char i = MALLOCFS_TIER1_ZONES; i < MALLOCFS_TOTAL_ZONES; i++) {

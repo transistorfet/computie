@@ -30,7 +30,7 @@ static short dir_is_empty(struct vnode *vnode)
 {
 	struct mallocfs_block *zone;
 
-	for (mallocfs_zone_t znum = 0; zone = zone_lookup(vnode, znum, MFS_LOOKUP_ZONE); znum++) {
+	for (zone_t znum = 0; zone = zone_lookup(vnode, znum, MFS_LOOKUP_ZONE); znum++) {
 		for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
 			if (zone->entries[i].vnode && strcmp(zone->entries[i].name, ".") && strcmp(zone->entries[i].name, ".."))
 				return 0;
@@ -43,7 +43,7 @@ static struct mallocfs_dirent *dir_find_entry_by_vnode(struct vnode *dir, struct
 {
 	struct mallocfs_block *zone;
 
-	for (mallocfs_zone_t znum = 0; zone = zone_lookup(dir, znum, create); znum++) {
+	for (zone_t znum = 0; zone = zone_lookup(dir, znum, create); znum++) {
 		for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
 			if (zone->entries[i].vnode == file)
 				return &zone->entries[i];
@@ -56,7 +56,7 @@ static struct mallocfs_dirent *dir_find_entry_by_name(struct vnode *dir, const c
 {
 	struct mallocfs_block *zone;
 
-	for (mallocfs_zone_t znum = 0; zone = zone_lookup(dir, znum, create); znum++) {
+	for (zone_t znum = 0; zone = zone_lookup(dir, znum, create); znum++) {
 		for (short i = 0; i < MALLOCFS_DIRENTS; i++) {
 			if (zone->entries[i].vnode && !strcmp(filename, zone->entries[i].name))
 				return &zone->entries[i];

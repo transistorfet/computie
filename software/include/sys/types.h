@@ -15,6 +15,8 @@ typedef short device_t;
 typedef unsigned short mode_t;
 typedef unsigned long offset_t;
 typedef unsigned int block_t;
+typedef unsigned int zone_t;
+typedef unsigned int inode_t;
 
 typedef unsigned short uid_t;
 typedef unsigned short gid_t;

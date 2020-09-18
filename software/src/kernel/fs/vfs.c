@@ -11,9 +11,6 @@
 
 #include "../access.h"
 
-// TODO this will be removed when you add fs mounting
-#include "mallocfs/mallocfs.h"
-
 #define VFS_MOUNT_MAX		2
 
 static struct mount *root_fs;
@@ -21,8 +18,6 @@ static struct mount mountpoints[VFS_MOUNT_MAX];
 
 static struct mount *_find_mount_by_vnode(struct vnode *mount)
 {
-	root_fs = NULL;
-
 	for (short i = 0; i < VFS_MOUNT_MAX; i++) {
 		if (mountpoints[i].mount_node == mount)
 			return &mountpoints[i];
@@ -33,6 +28,7 @@ static struct mount *_find_mount_by_vnode(struct vnode *mount)
 
 int init_vfs()
 {
+	root_fs = NULL;
 	//vfs_root = new_vnode(0, 0777);
 
 	for (short i = 0; i < VFS_MOUNT_MAX; i++) {

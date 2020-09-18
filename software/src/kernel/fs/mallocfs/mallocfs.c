@@ -51,10 +51,6 @@ struct mount mallocfs_root;
 int init_mallocfs()
 {
 	init_mallocfs_alloc();
-
-	// TODO this would be moved elsewhere
-	struct mount *mp;
-	vfs_mount(NULL, "/", NULL, &mallocfs_mount_ops, SU_UID, &mp);
 }
 
 int mallocfs_mount(struct mount *mp, device_t dev, struct vnode *parent)
@@ -236,7 +232,7 @@ int mallocfs_read(struct vfile *file, char *buf, size_t nbytes)
 		short zpos;
 		short zlen;
 		size_t offset = 0;
-		mallocfs_zone_t znum;
+		zone_t znum;
 
 		if (nbytes > file->vnode->size - file->position)
 			nbytes = file->vnode->size - file->position;
@@ -280,7 +276,7 @@ int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
 		short zlen;
 		int error = 0;
 		size_t offset = 0;
-		mallocfs_zone_t znum;
+		zone_t znum;
 
 		znum = file->position >> MALLOCFS_LOG_BLOCK_SIZE;
 		zpos = file->position & (MALLOCFS_BLOCK_SIZE - 1);
@@ -353,7 +349,7 @@ int mallocfs_readdir(struct vfile *file, struct vdir *dir)
 {
 	int max;
 	short zpos;
-	mallocfs_zone_t znum;
+	zone_t znum;
 	struct mallocfs_block *zone;
 
 	if (!(file->vnode->mode & S_IFDIR))

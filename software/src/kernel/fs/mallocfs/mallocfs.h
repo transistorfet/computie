@@ -20,7 +20,6 @@
 #define MALLOCFS_BLOCK(block)		((struct mallocfs_block *) (block))
 #define MALLOCFS_DATA(vnode)		(((struct mallocfs_vnode *) (vnode))->data)
 
-typedef unsigned int mallocfs_zone_t;
 
 struct mallocfs_dirent {
 	struct vnode *vnode;

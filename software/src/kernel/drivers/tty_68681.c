@@ -166,7 +166,25 @@ int tty_68681_init()
 void tty_68681_tx_safe_mode()
 {
 	DISABLE_INTS();
+
+	*CRA_WR_ADDR = CMD_RESET_MR;
+
+	// Configure channel A serial port
+	*MR1A_MR2A_ADDR = MR1A_MODE_A_REG_1_CONFIG;
+	*MR1A_MR2A_ADDR = MR2A_MODE_A_REG_2_CONFIG;
+	*CSRA_WR_ADDR = CSRA_CLK_SELECT_REG_A_CONFIG;
+	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
+
 	*CRA_WR_ADDR = CMD_ENABLE_TX_RX;
+
+	/*
+	// Enable interrupts
+	set_interrupt(TTY_INT_VECTOR, enter_irq);
+	*IVR_WR_ADDR = TTY_INT_VECTOR;
+	*IMR_WR_ADDR = ISR_CH_A_RX_READY_FULL | ISR_CH_A_TX_READY;
+
+	ENABLE_INTS();
+	*/
 }
 
 void tty_68681_set_leds(uint8_t bits)

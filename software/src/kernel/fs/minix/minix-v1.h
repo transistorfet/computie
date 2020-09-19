@@ -5,15 +5,32 @@
 #include <stdint.h>
 
 #define MINIX_V1_ZONE_SIZE		1024
+#define MINIX_V1_LOG_ZONE_SIZE		__builtin_ctz(MINIX_V1_ZONE_SIZE)
+#define MINIX_V1_ZONENUMS_PER_ZONE	(MINIX_V1_ZONE_SIZE / sizeof(minix_v1_zone_t))
+#define MINIX_V1_LOG_ZONENUMS_PER_ZONE	__builtin_ctz(MINIX_V1_ZONENUMS_PER_ZONE)
+#define MINIX_V1_DIRENTS_PER_ZONE	(MINIX_V1_ZONE_SIZE / sizeof(struct minix_v1_dirent))
+#define MINIX_V1_LOG_DIRENTS_PER_ZONE	__builtin_ctz(MINIX_V1_DIRENTS_PER_ZONE)
+#define MINIX_V1_INODES_PER_ZONE	(MINIX_V1_ZONE_SIZE / sizeof(struct minix_v1_inode))
+#define MINIX_V1_LOG_INODES_PER_ZONE	__builtin_ctz(MINIX_V1_INODES_PER_ZONE)
 
 #define	MINIX_V1_BITS_PER_ZONE		(MINIX_V1_ZONE_SIZE * 8)
 
-#define MINIX_V1_INODE_ZONES		9
 #define MINIX_V1_MAX_FILENAME		14
 
-// TODO this is temporary until I have a proper way of supporting different versions
-typedef uint16_t minix_zone_t;
-//typedef uint16_t minix_v1_zone_t;
+#define MINIX_V1_INODE_ZONENUMS		9
+#define MINIX_V1_TIER1_ZONENUMS		7
+#define MINIX_V1_INDIRECT_TIERS		2
+#define MINIX_V1_TOTAL_ZONENUMS		MINIX_V1_TIER1_ZONENUMS + MINIX_V1_INDIRECT_TIERS
+
+#define MINIX_V1_INODE_BITMAP_START(super_v1)	(MINIX_BITMAP_ZONES)
+#define MINIX_V1_ZONE_BITMAP_START(super_v1)	(MINIX_BITMAP_ZONES + (super_v1)->imap_blocks)
+#define MINIX_V1_INODE_TABLE_START(super_v1)	(MINIX_BITMAP_ZONES + (super_v1)->imap_blocks + (super_v1)->zmap_blocks)
+
+
+
+typedef uint16_t minix_v1_zone_t;
+typedef uint16_t minix_v1_inode_t;
+
 
 struct minix_v1_superblock {
 	uint16_t num_inodes;
@@ -34,11 +51,11 @@ struct minix_v1_inode {
 	uint32_t mtime;
 	uint8_t gid;
 	uint8_t nlinks;
-	uint16_t zones[MINIX_V1_INODE_ZONES];
+	minix_v1_zone_t zones[MINIX_V1_INODE_ZONENUMS];
 };
 
 struct minix_v1_dirent {
-	uint16_t inode;
+	minix_v1_inode_t inode;
 	char filename[MINIX_V1_MAX_FILENAME];
 };
 

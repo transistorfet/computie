@@ -40,7 +40,7 @@ static struct mallocfs_block *zone_lookup(struct vnode *vnode, zone_t znum, char
 	return *zone;
 }
 
-static struct mallocfs_block *zone_free_all(struct vnode *vnode)
+static void zone_free_all(struct vnode *vnode)
 {
 	struct mallocfs_block *zone;
 

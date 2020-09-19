@@ -2,6 +2,9 @@
 #include <stddef.h>
 #include <kernel/kmalloc.h>
 
+#include "../interrupts.h"
+
+
 struct block {
 	int size;
 	struct block *next;
@@ -60,7 +63,7 @@ void *kmalloc(int size)
 		}
 	}
 	// Out Of Memory
-	panic("Kernel out of memory!  Halting...\n");
+	//panic("Kernel out of memory!  Halting...\n");
 	return NULL;
 }
 

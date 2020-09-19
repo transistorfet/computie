@@ -14,6 +14,8 @@ struct bitmap {
 };
 */
 
+typedef int bitnum_t;
+
 static inline char bit_mask(char bits)
 {
 	char byte = 0x00;
@@ -22,8 +24,8 @@ static inline char bit_mask(char bits)
 	return byte;
 }
 
-int bitmap_init(device_t dev, minix_zone_t bitmap_start, int bitmap_size, int num_entries, short reserve);
-minix_zone_t bit_alloc(device_t dev, minix_zone_t bitmap_start, int bitmap_size, minix_zone_t near);
-int bit_free(device_t dev, minix_zone_t bitmap_start, minix_zone_t zonenum);
+int bitmap_init(device_t dev, zone_t bitmap_start, int bitmap_size, int num_entries, short reserve);
+bitnum_t bit_alloc(device_t dev, zone_t bitmap_start, int bitmap_size, zone_t near);
+int bit_free(device_t dev, zone_t bitmap_start, bitnum_t bitnum);
 
 #endif

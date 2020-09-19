@@ -125,6 +125,7 @@ static inline struct buf *_find_free_entry()
 	if (last->block) {
 		_write_entry(last);
 		BC_FREE_BLOCK(last->block);
+		last->block = NULL;
 	}
 	return last;
 }
@@ -134,7 +135,7 @@ static inline int _read_entry(struct buf *entry)
 {
 	if (entry->num >= 128)
 		return -1;
-	printk("READING: %x <- %x x %x\n", entry->block, device_base_tmp + (entry->num * BC_BLOCK_SIZE), BC_BLOCK_SIZE);
+	printk("READING %d: %x <- %x x %x\n", entry->dev, entry->block, device_base_tmp + (entry->num * BC_BLOCK_SIZE), BC_BLOCK_SIZE);
 	memcpy_s(entry->block, device_base_tmp + (entry->num * BC_BLOCK_SIZE), BC_BLOCK_SIZE);
 	return 0;
 }
@@ -143,7 +144,7 @@ static inline int _write_entry(struct buf *entry)
 {
 	if (!(entry->flags & BCF_DIRTY))
 		return 0;
-	printk("WRITING: %x <- %x x %x\n", device_base_tmp + (entry->num * BC_BLOCK_SIZE), entry->block, BC_BLOCK_SIZE);
+	printk("WRITING %d: %x <- %x x %x\n", entry->dev, device_base_tmp + (entry->num * BC_BLOCK_SIZE), entry->block, BC_BLOCK_SIZE);
 	memcpy_s(device_base_tmp + (entry->num * BC_BLOCK_SIZE), entry->block, BC_BLOCK_SIZE);
 	entry->flags &= ~BCF_DIRTY;
 	return 1;

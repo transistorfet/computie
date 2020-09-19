@@ -57,7 +57,7 @@ int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile)
 	if (!vnode)
 		return ENOMEM;
 	// TODO replace uid and gid with valid values based on current proc?
-	vfs_init_vnode(vnode, &pipe_vnode_ops, 0600, 0, 0, 0, 0);
+	vfs_init_vnode(vnode, &pipe_vnode_ops, NULL, 0600, 0, 0, 0, 0);
 
 	// We will be creating two references to this vnode, so increament the refcount
 	vnode->refcount++;

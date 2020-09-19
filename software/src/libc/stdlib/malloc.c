@@ -66,12 +66,14 @@ void free(void *ptr)
 {
 	struct block *block = ((struct block *) ptr) - 1;
 
+	/*
 	for (struct block *cur = main_heap.free_blocks; cur; cur = cur->next) {
 		if (cur == block) {
-			// TODO this needs to be removed
+			// TODO this is only defined inside the kernel
 			panic("Double free detected at %x! Halting...\n", cur);
 		}
 	}
+	*/
 
 	// TODO this doesn't keep the blocks in address order
 

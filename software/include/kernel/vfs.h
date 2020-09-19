@@ -21,6 +21,7 @@
 #define VFS_FILENAME_MAX	14
 
 #define VBF_MOUNTED	0x0001
+#define VBF_DIRTY	0x0002
 
 
 struct mount;
@@ -67,12 +68,14 @@ struct vfile_ops {
 struct mount {
 	struct mount_ops *ops;
 	struct vnode *mount_node;	// The vnode this fs is mounted on
-	struct vnode *root_node;	// the root vnode of this fs
+	struct vnode *root_node;	// The root vnode of this fs
+	void *super;			// The fs-specific superblock
 	device_t dev;
 };
 
 struct vnode {
 	struct vnode_ops *ops;
+	struct mount *mp;		// The mountpoint this vnode belongs to
 	short refcount;
 
 	mode_t mode;
@@ -129,9 +132,10 @@ const char *path_last_component(const char *path);
 int path_valid_component(const char *path);
 
 
-static inline void vfs_init_vnode(struct vnode *vnode, struct vnode_ops *ops, mode_t mode, uid_t uid, gid_t gid, offset_t size, time_t mtime)
+static inline void vfs_init_vnode(struct vnode *vnode, struct vnode_ops *ops, struct mount *mp, mode_t mode, uid_t uid, gid_t gid, offset_t size, time_t mtime)
 {
 	vnode->ops = ops;
+	vnode->mp = mp;
 	vnode->refcount = 1;
 	vnode->mode = mode;
 	vnode->uid = uid;

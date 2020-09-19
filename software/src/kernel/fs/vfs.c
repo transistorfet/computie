@@ -11,7 +11,7 @@
 
 #include "../access.h"
 
-#define VFS_MOUNT_MAX		2
+#define VFS_MOUNT_MAX		4
 
 static struct mount *root_fs;
 static struct mount mountpoints[VFS_MOUNT_MAX];
@@ -81,7 +81,7 @@ int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_op
 			else
 				root_fs = &mountpoints[i];
 
-			if (*result)
+			if (result)
 				*result = &mountpoints[i];
 			return 0;
 		}
@@ -122,9 +122,6 @@ int vfs_sync(struct mount *mp)
 
 int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct vnode **result)
 {
-	// TODO this is temporary because we don't have mounts yet
-	extern struct mount mallocfs_root;
-
 	int error;
 	int i = 0, j;
 	struct mount *mp;

@@ -233,6 +233,26 @@ void test_dirs()
 	vfs_close(file);
 }
 
+void test_minixfs()
+{
+	int error;
+	struct mount *mp;
+	struct vfile *file;
+	extern struct mount_ops minix_mount_ops;
+
+	error = vfs_open(NULL, "/mnt", O_CREAT, S_IFDIR | 0755, SU_UID, &file);
+	if (error)
+		printk("Error: %d\n", error);
+	else
+		vfs_close(file);
+
+	error = vfs_mount(NULL, "/mnt", 1, &minix_mount_ops, SU_UID, &mp);
+	if (error)
+		printk("Mount error: %d\n", error);
+	printk("Mounted minixfs\n");
+
+	vfs_sync(mp);
+}
 
 void test_fork()
 {

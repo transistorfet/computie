@@ -103,17 +103,17 @@ __attribute__((interrupt)) void fatal_error()
 
 	// Dump stack
 	printk("Stack: %x\n", sp);
-	for (char i = 0; i < 16; i++) {
+	for (char i = 0; i < 48; i++) {
 		printk("%04x ", ((uint16_t *) frame)[i]);
-		if ((i & 0x3) == 0x3)
+		if ((i & 0x7) == 0x7)
 			printk("\n");
 	}
 
 	// Dump code where the error occurred
-	printk("\nCode:");
-	for (char i = 0; i < 16; i++) {
+	printk("\nCode:\n");
+	for (char i = 0; i < 48; i++) {
 		printk("%04x ", frame->pc[i]);
-		if ((i & 0x3) == 0x3)
+		if ((i & 0x7) == 0x7)
 			printk("\n");
 	}
 

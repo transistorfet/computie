@@ -1,6 +1,16 @@
 
 Operating System:
 
+	* chdir is not working because cd is run as a separate process, and child processes don't seem to inherit the cwd yet, which needs to be fixed
+	* dump command doesn't seem to be working correctly when trying to inspect the cached block memory
+
+	* move all checks that *result is non-null and return EINVAL should be done in the vfs functions, and the implementations should be able to assume... the
+	  vnode needs to be decref'd anyways, or else it will be a memleak
+	* add uid/gid params to the fs implementation functions since we're assuming those values atm
+
+	* should all vnodes have a pointer to the mointpoint that vnode belongs to, and the mp has a pointer to the superblock record, or is combined with it
+	  like with vnodes... rather than having a hidden reference to the superblock in each vnode
+
 	* should you make an fs-global vnode implementation that takes a node size and uses malloc to allocate the in-mem backing, with the
 	  specific fs implementation handling the disk-backed inode allocation... similar to bufcache...  It would be based on device number and inode number
 	  The more I think about bufcache, the more I think this should be done

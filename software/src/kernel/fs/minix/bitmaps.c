@@ -5,7 +5,7 @@
 #include "bitmaps.h"
 
 
-int bitmap_init(device_t dev, minix_zone_t bitmap_start, int bitmap_size, int num_entries, short reserve)
+int bitmap_init(device_t dev, zone_t bitmap_start, int bitmap_size, int num_entries, short reserve)
 {
 	char *block;
 	struct buf *buf;
@@ -51,7 +51,7 @@ int bitmap_init(device_t dev, minix_zone_t bitmap_start, int bitmap_size, int nu
 	return 0;
 }
 
-minix_zone_t bit_alloc(device_t dev, minix_zone_t bitmap_start, int bitmap_size, minix_zone_t near)
+bitnum_t bit_alloc(device_t dev, zone_t bitmap_start, int bitmap_size, zone_t near)
 {
 	char bit;
 	char *block;
@@ -80,11 +80,11 @@ minix_zone_t bit_alloc(device_t dev, minix_zone_t bitmap_start, int bitmap_size,
 	return 0;
 }
 
-int bit_free(device_t dev, minix_zone_t bitmap_start, minix_zone_t zonenum)
+int bit_free(device_t dev, zone_t bitmap_start, bitnum_t bitnum)
 {
-	minix_zone_t zone = (zonenum >> 3) / MINIX_V1_ZONE_SIZE;
-	int i = (zonenum >> 3);
-	char bit = (zonenum & 0x7);
+	zone_t zone = (bitnum >> 3) / MINIX_V1_ZONE_SIZE;
+	int i = (bitnum >> 3);
+	char bit = (bitnum & 0x7);
 	struct buf *buf = get_block(dev, bitmap_start + zone);
 	if (!buf)
 		return -1;

@@ -110,6 +110,7 @@ int command_dump(int argc, char **argv)
 			length = strtol(argv[2], NULL, 16);
 		dump((const uint16_t *) strtol(argv[1], NULL, 16), length);
 	}
+	return 0;
 }
 
 
@@ -634,6 +635,12 @@ void serial_read_loop()
 		if (*argv[0] == '\0')
 			continue;
 
+		// TODO this is a hack that should be removed
+		if (!strcmp(argv[0], "sync")) {
+			minix_sync(NULL);
+			continue;
+		}
+
 		main = find_command(argv[0]);
 		if (main)
 			execute_command(main, &commands[0], argc, argv);
@@ -660,15 +667,17 @@ int sh_task()
 	test_files();
 	test_dirs();
 
-	// TODO this is temporary while debugging
-	init_minix();
+
+	//test_minixfs();
+	//sync_vnodes();
+
 
 	puts("\n\nThe Pseudo Shell!\n");
 
 	serial_read_loop();
 
-	puts("Exiting to monitor");
 	tty_68681_tx_safe_mode();
+	puts("Exiting to monitor");
 	return 0;
 }
 

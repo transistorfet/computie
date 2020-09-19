@@ -25,7 +25,8 @@ extern void init_minix();
 
 
 extern struct driver tty_68681_driver;
-extern struct vnode_ops mallocfs_vnode_ops;
+extern struct mount_ops mallocfs_mount_ops;
+extern struct mount_ops minix_mount_ops;
 
 struct driver *drivers[] = {
 	&tty_68681_driver,
@@ -47,21 +48,21 @@ struct process *run_sh()
 	// Open stdin
 	int fd = do_open("tty", O_RDONLY, 0);
 	if (fd < 0) {
-		printk("Error opening file tty %d\n", error);
+		printk("Error opening file tty %d\n", fd);
 		return NULL;
 	}
 
 	// Open stdout
 	fd = do_open("tty", O_WRONLY, 0);
 	if (fd < 0) {
-		printk("Error opening file tty %d\n", error);
+		printk("Error opening file tty %d\n", fd);
 		return NULL;
 	}
 
 	// Open stderr
 	fd = do_open("tty", O_WRONLY, 0);
 	if (fd < 0) {
-		printk("Error opening file tty %d\n", error);
+		printk("Error opening file tty %d\n", fd);
 		return NULL;
 	}
 
@@ -80,7 +81,6 @@ struct process *run_sh()
 	return proc;
 }
 
-
 int main()
 {
 	DISABLE_INTS();
@@ -93,15 +93,34 @@ int main()
 
 	init_vfs();
 	init_mallocfs();
-	//init_minix();
+	init_minix();
+
+	// TODO this would be moved elsewhere
+	struct mount *mp;
+	//vfs_mount(NULL, "/", 0, &mallocfs_mount_ops, SU_UID, &mp);
+	vfs_mount(NULL, "/", 1, &minix_mount_ops, SU_UID, &mp);
 
 	// Initialize drivers
 	for (char i = 0; drivers[i]; i++) {
 		drivers[i]->init();
 	}
 
-	//init_minix();
+/*
+	{
+		int error;
+		struct vfile *file;
+		error = vfs_open(NULL, "/mnt", O_CREAT, S_IFDIR | 0755, SU_UID, &file);
+		if (error)
+			printk("Error: %d\n", error);
+		else
+			vfs_close(file);
 
+		struct mount *mp2;
+		error = vfs_mount(NULL, "/mnt", 1, &minix_mount_ops, SU_UID, &mp2);
+		if (error)
+			printk("Mount error: %d\n", error);
+	}
+*/
 
 	// Create initial task
 	current_proc = run_sh();

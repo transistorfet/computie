@@ -391,17 +391,17 @@ int copy_string_array(char **stack, int *count, char *const arr[])
 	if (len & 0x01)
 		len += 1;
 
-	char **dest = (char **) (*stack - len);
-	char *buffer = *stack + (sizeof(char *) * (*count) + 1);
-	*stack = (char *) dest;
+	char **dest_arr = (char **) (*stack - len);
+	char *buffer = ((char *) dest_arr) + (sizeof(char *) * (*count + 1));
+	*stack = (char *) dest_arr;
 
 	int i = 0, j = 0;
 	for (; j < *count; j++) {
-		dest[j] = &buffer[i];
-		strcpy(dest[j], arr[j]);
+		dest_arr[j] = &buffer[i];
+		strcpy(dest_arr[j], arr[j]);
 		i += strlen(arr[j]) + 1;
 	}
-	dest[j] = NULL;
+	dest_arr[j] = NULL;
 
 	return 0;
 }
@@ -470,7 +470,7 @@ int do_exec(const char *path, char *const argv[], char *const envp[])
 		return error;
 
 	// Reset the stack to start our new process
-	char *task_stack_pointer = current_proc->map.segments[M_TEXT].base + current_proc->map.segments[M_TEXT].length;
+	char *task_stack_pointer = current_proc->map.segments[M_STACK].base + current_proc->map.segments[M_STACK].length;
 
 	// Setup new stack image
  	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp);
@@ -485,8 +485,8 @@ int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
 {
 	current_proc->map.segments[M_TEXT].base = NULL;
 	current_proc->map.segments[M_TEXT].length = 0;
-	current_proc->map.segments[M_STACK].base = kmalloc(0x400);
-	current_proc->map.segments[M_STACK].length = 0x400;
+	//current_proc->map.segments[M_STACK].base = kmalloc(0x400);
+	//current_proc->map.segments[M_STACK].length = 0x400;
 
 	// Reset the stack to start our new process
 	char *task_stack_pointer = current_proc->map.segments[M_STACK].base + current_proc->map.segments[M_STACK].length;

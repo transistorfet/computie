@@ -22,7 +22,7 @@ extern void sh_task();
 
 extern void init_mallocfs();
 extern void init_minix();
-
+extern void tty_68681_preinit();
 
 extern struct driver tty_68681_driver;
 extern struct mount_ops mallocfs_mount_ops;
@@ -84,6 +84,8 @@ struct process *run_sh()
 int main()
 {
 	DISABLE_INTS();
+
+	tty_68681_preinit();
 
 	init_kernel_heap((void *) 0x110000, 0xD0000);
 

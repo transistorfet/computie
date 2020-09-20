@@ -122,6 +122,17 @@ char tick = 0;
 
 extern void enter_irq();
 
+void tty_68681_tx_safe_mode();
+
+
+void tty_68681_preinit()
+{
+	_buf_init(&channel_a.rx);
+	_buf_init(&channel_a.tx);
+
+	tty_68681_tx_safe_mode();
+}
+
 int tty_68681_init()
 {
 	*CRA_WR_ADDR = CMD_RESET_MR;
@@ -136,9 +147,6 @@ int tty_68681_init()
 
 	// Enable the channel A serial port
 	*CRA_WR_ADDR = CMD_ENABLE_TX_RX;
-
-	_buf_init(&channel_a.rx);
-	_buf_init(&channel_a.tx);
 
 	// Configure timer
 	*CTUR_WR_ADDR = 0x1F;
@@ -159,8 +167,6 @@ int tty_68681_init()
 
 	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
 	vfs_mknod(NULL, "tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, 0, SU_UID, &tty_vnode);
-
-	*((char *) 0x201d) = 0x00;
 }
 
 void tty_68681_tx_safe_mode()

@@ -2,7 +2,7 @@
 #ifndef _SRC_KERNEL_MISC_CIRCLEBUF_H
 #define _SRC_KERNEL_MISC_CIRCLEBUF_H
 
-#define CIRCLE_BUFFER_SIZE	1024
+#define CIRCLE_BUFFER_SIZE	512
 
 struct circular_buffer {
 	volatile short in;

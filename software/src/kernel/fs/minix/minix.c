@@ -56,11 +56,8 @@ struct mount_ops minix_mount_ops = {
 int init_minix()
 {
 	init_minix_vnodes();
-
-
+	return 0;
 }
-
-
 
 
 int minix_mount(struct mount *mp, device_t dev, struct vnode *parent)
@@ -129,8 +126,7 @@ int minix_create(struct vnode *vnode, const char *filename, mode_t mode, struct 
 	dir->inode = MINIX_DATA(newnode).ino;
 	release_block(buf, BCF_DIRTY);
 
-	if (result)
-		*result = newnode;
+	*result = newnode;
 	return 0;
 }
 
@@ -166,11 +162,6 @@ int minix_lookup(struct vnode *vnode, const char *filename, struct vnode **resul
 {
 	struct buf *buf;
 	struct minix_v1_dirent *entry;
-
-	// TODO all EINVAL checks should be in vfs
-	// If a valid pointer isn't provided, return invalid argument
-	if (!result)
-		return EINVAL;
 
 	if (strlen(filename) > MINIX_V1_MAX_FILENAME)
 		return ENAMETOOLONG;

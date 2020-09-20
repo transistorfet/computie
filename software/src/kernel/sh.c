@@ -656,8 +656,6 @@ extern int tty_68681_tx_safe_mode();
 int test_files();
 int test_dirs();
 
-int init_minix();
-
 /**************
  * Main Entry *
  **************/
@@ -666,10 +664,6 @@ int sh_task()
 {
 	test_files();
 	test_dirs();
-
-
-	//test_minixfs();
-	//sync_vnodes();
 
 
 	puts("\n\nThe Pseudo Shell!\n");

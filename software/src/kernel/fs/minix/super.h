@@ -9,8 +9,6 @@
 
 
 
-
-
 static int minix_mkfs(device_t dev)
 {
 	struct buf *super_buf;
@@ -40,13 +38,13 @@ static int minix_mkfs(device_t dev)
 	bitmap_init(dev, MINIX_V1_ZONE_BITMAP_START(super_v1), super_v1->zmap_blocks, super_v1->num_zones, super_v1->first_zone);
 
 	// Zero the inode table
-	// TODO you need to calculate the number of zones the inode table covers in order to properly zero this
-	//for (int i = 0; i < **INODE_ZONES**; i++) {
-	struct buf *inode_buf = get_block(dev, MINIX_V1_INODE_TABLE_START(super_v1));
-	if (!inode_buf)
-		return ENOMEM;
-	memset_s(inode_buf->block, 0x00, MINIX_V1_ZONE_SIZE);
-	release_block(inode_buf, BCF_DIRTY);
+	for (int i = 0; i < (super_v1->num_inodes >> MINIX_V1_LOG_INODES_PER_ZONE); i++) {
+		struct buf *inode_buf = get_block(dev, MINIX_V1_INODE_TABLE_START(super_v1) + i);
+		if (!inode_buf)
+			return ENOMEM;
+		memset_s(inode_buf->block, 0x00, MINIX_V1_ZONE_SIZE);
+		release_block(inode_buf, BCF_DIRTY);
+	}
 
 	// Initialize root inode
 	bitnum_t inode_num = alloc_inode(super_v1, dev, S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO, SU_UID, 0);
@@ -77,18 +75,6 @@ static struct minix_super *load_superblock(device_t dev)
 	memcpy_s(&super->super_v1, super_v1, sizeof(struct minix_v1_superblock));
 	super->dev = dev;
 	super->max_filename = MINIX_V1_MAX_FILENAME;
-
-
-	/*
-	int zone;
-	for (int i = 0; i < 102; i++) {
-		zone = bit_alloc(dev, MINIX_BITMAP_ZONES + super->imap_blocks, super->zmap_blocks, 0);
-		printk("Alloced %d\n", zone);
-	}
-
-	bit_free(dev, MINIX_BITMAP_ZONES, 19);
-	bit_free(dev, MINIX_BITMAP_ZONES, 52);
-	*/
 
 	return super;
 }

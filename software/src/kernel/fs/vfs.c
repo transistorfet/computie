@@ -48,6 +48,9 @@ int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_op
 	if (uid != SU_UID)
 		return EPERM;
 
+	if (!result)
+		return EINVAL;
+
 	if (!root_fs)
 		vnode = NULL;
 	else {
@@ -81,8 +84,7 @@ int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_op
 			else
 				root_fs = &mountpoints[i];
 
-			if (result)
-				*result = &mountpoints[i];
+			*result = &mountpoints[i];
 			return 0;
 		}
 	}

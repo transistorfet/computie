@@ -94,8 +94,7 @@ int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, stru
 
 	dir->vnode = newnode;
 
-	if (result)
-		*result = newnode;
+	*result = newnode;
 	return 0;
 }
 
@@ -118,18 +117,13 @@ int mallocfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, devic
 
 	dir->vnode = newnode;
 
-	if (result)
-		*result = newnode;
+	*result = newnode;
 	return 0;
 }
 
 int mallocfs_lookup(struct vnode *vnode, const char *filename, struct vnode **result)
 {
 	struct mallocfs_dirent *entry;
-
-	// If a valid pointer isn't provided, return invalid argument
-	if (!result)
-		return EINVAL;
 
 	if (strlen(filename) > MALLOCFS_MAX_FILENAME)
 		return ENAMETOOLONG;

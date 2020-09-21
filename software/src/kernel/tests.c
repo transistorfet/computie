@@ -233,6 +233,7 @@ void test_dirs()
 	vfs_close(file);
 }
 
+/*
 void test_minixfs()
 {
 	int error;
@@ -253,6 +254,7 @@ void test_minixfs()
 
 	vfs_sync(mp);
 }
+*/
 
 void test_fork()
 {

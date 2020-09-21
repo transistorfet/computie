@@ -22,6 +22,21 @@ MONITOR_OBJS = \
 	src/monitor/tty_68681.o \
 	libc-68k-none.a
 
+DEVFS_OBJS = \
+	src/kernel/fs/devfs/devfs.o
+
+MALLOCFS_OBJS = \
+	src/kernel/fs/mallocfs/alloc.o \
+	src/kernel/fs/mallocfs/mallocfs.o
+
+MINIXFS_OBJS = \
+	src/kernel/fs/minix/bitmaps.o \
+	src/kernel/fs/minix/minix.o
+
+FILESYSTEM_OBJS = \
+	$(MALLOCFS_OBJS) \
+	$(MINIXFS_OBJS)
+
 KERNEL_OBJS = \
 	include/kernel/syscall.h \
 	src/kernel/start.o \
@@ -39,10 +54,7 @@ KERNEL_OBJS = \
 	src/kernel/fs/access.o \
 	src/kernel/fs/fileptr.o \
 	src/kernel/fs/bufcache.o \
-	src/kernel/fs/mallocfs/mallocfs.o \
-	src/kernel/fs/mallocfs/alloc.o \
-	src/kernel/fs/minix/minix.o \
-	src/kernel/fs/minix/bitmaps.o \
+	$(FILESYSTEM_OBJS) \
 	src/kernel/drivers/tty_68681.o \
 	src/kernel/sh.o \
 	src/kernel/tests.o \

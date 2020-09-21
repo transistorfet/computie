@@ -1,20 +1,9 @@
 
 Operating System:
 
-	* if we require ops->lookup to always receive a results pointer with NULL, which if non-NULL will be released by the ops->lookup functions.
-	  vfs_lookup doesn't have to work like that though... (ie. the results pointer is ignored)
-	* passing the vnodes back during readdir() is a leak.  We don't even use the refs, let alone free them.  Perhaps there should be a different
-	  way, even if that means making mallocfs 'invent' a ino number to pass back instead
-
-	* I've modified mallocfs to clone the vnode ref during lookup,
-	  but vfs_lookup doesn't drop the references properly, nor does any vfs_lookup calls
-	  nor have the clones been removed from vfs_open...
-	  (I've remove the vfs_open clones)
-
-	* fix the vnode reference counting between vfs and fs-specific implementations, particularly lookup, which I don't think increments the count...
+	* look for any bugs that might be caused by a function returning the same vnode as was passed in
 	* should you move the zone alloc/free from super.h into something else
 	* should you refactor the header files into actual c files, with a common header to declare the functions?
-	* should vfs_make_vnode_ref be changed to vfs_clone_vnode_ref()
 
 	* minixfs: implement proper 3 or 4 tier zone trees
 	* minixfs, implement multiple versions
@@ -25,15 +14,13 @@ Operating System:
 	* add uid/gid params to the fs implementation functions since we're assuming those values atm
 	* rename get_block, etc to get_buf???
 
-	* add mounting of filesystems, and root node stuff, so you can remove the special case in vfs.c
-	* add syscalls: mount/umount, rmdir?
+	* add syscalls: mount/umount
 	* implement minix filesystem
 	* add commands: mv, cp, rmdir, pwd
 
 	* add pipe setup to command evaluation
 
 	* move binary file format and arg copying to another file, but where? proc/ mm/ kernel/???
-	* should the access stuff be entirely in the file system module?
 
 
 	* implement signals
@@ -46,7 +33,6 @@ Operating System:
 
 
 
-	* there is still one issue with the mallocfs root node, where refcount is 2 instead of just 1
 	* remove the execbuiltin syscall, which is temporary until all commands can be executable files
 
 

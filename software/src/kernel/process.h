@@ -64,10 +64,10 @@ void exit_proc(struct process *proc, int status);
 void cleanup_proc(struct process *proc);
 struct process *find_exited_child(pid_t parent, pid_t child);
 
+void set_proc_return(struct process *proc, int ret);
 void suspend_current_proc();
 void resume_proc(struct process *proc);
 void resume_blocked_procs(int syscall_num, struct vnode *vnode);
-void resume_all_procs();
 
 void schedule();
 struct process *create_kernel_task(int (*task_start)());

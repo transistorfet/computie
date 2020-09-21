@@ -6,6 +6,7 @@ Operating System:
 	* should you refactor the header files into actual c files, with a common header to declare the functions?
 	* move binary file format and arg copying to another file, but where? proc/ mm/ kernel/???
 	* should you refactor the errors to use vfs_return() to simplify the code a bit??
+	* fix minix_vnode cast warnings
 
 	* minixfs: implement proper 3 or 4 tier zone trees
 	* minixfs, implement multiple versions
@@ -13,9 +14,9 @@ Operating System:
 
 	* add uid/gid params to the fs implementation functions since we're assuming those values atm
 	* rename get_block, etc to get_buf???
+	* make a block driver interface (or should you use a char driver like freebsd does), and make bufcache use it instead of hardcoded addresses
 
 	* add syscalls: mount/umount
-	* implement minix filesystem
 	* add commands: mv, cp, rmdir, pwd
 
 	* add pipe setup to command evaluation
@@ -34,9 +35,7 @@ Operating System:
 	* remove the execbuiltin syscall, which is temporary until all commands can be executable files
 
 
-	* refactor bufcache into a generic cache data structure which can be used for bufcache as well as vnode cache in minixfs
 	* do you need to add variable sized buffers/blocks into bufcache? (yes)
-	* make a block driver interface, or should you use a char driver like freebsd does
 	* re-evaluate file permissions checks to make sure they're correct according to posix
 
 

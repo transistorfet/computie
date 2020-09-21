@@ -120,6 +120,10 @@ struct process *find_exited_child(pid_t parent, pid_t child)
 	return NULL;
 }
 
+void set_proc_return(struct process *proc, int ret)
+{
+	*((uint32_t *) proc->sp) = ret;
+}
 
 void suspend_current_proc()
 {
@@ -156,25 +160,6 @@ void resume_blocked_procs(int syscall_num, struct vnode *vnode)
 }
 
 
-
-void resume_all_procs()
-{
-	struct process *cur = (struct process *) blocked_queue.tail;
-
-	for (; cur; cur = (struct process *) cur->node.prev)
-		resume_proc(cur);
-}
-
-
-
-
-void print_run_queue()
-{
-	for (struct queue_node *cur = run_queue.head; cur; cur = cur->next) {
-		struct process *proc = (struct process *) cur;
-		printk("%d: sp = %x\n", proc->pid, proc->sp);
-	}
-}
 
 void schedule()
 {

@@ -84,31 +84,6 @@ static void free_superblock(struct minix_super *super)
 	kmfree(super);
 }
 
-static zone_t minix_alloc_zone(struct minix_super *super)
-{
-	bitnum_t bit;
-	struct buf *buf;
-	struct minix_block *block;
-
-	bit = bit_alloc(super->dev, MINIX_V1_ZONE_BITMAP_START(&super->super_v1), super->super_v1.zmap_blocks, 0);
-	if (!bit)
-		return NULL;
-	buf = get_block(super->dev, bit);
-	if (!buf)
-		return NULL;
-
-	memset_s(buf->block, 0, MINIX_V1_ZONE_SIZE);
-	release_block(buf, BCF_DIRTY);
-
-	return bit;
-}
-
-static void minix_free_zone(struct minix_super *super, zone_t zonenum)
-{
-	bit_free(super->dev, MINIX_V1_ZONE_BITMAP_START(&super->super_v1), zonenum);
-}
-
-
 
 /*
 #include "../../byteorder.h"

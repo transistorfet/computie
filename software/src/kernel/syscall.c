@@ -77,6 +77,9 @@ void do_syscall()
 {
 	int ret;
 
+	//if (current_syscall->syscall >= SYSCALL_MAX)
+	//	return ENOSYS;
+
 	tty_68681_set_leds(0x04);
 	ret = ((syscall_t) syscall_table[current_syscall->syscall])(current_syscall->arg1, current_syscall->arg2, current_syscall->arg3);
 	if (current_proc->state == PS_READY) {
@@ -332,9 +335,6 @@ pid_t do_fork()
 	// Apply return values to the context on the stack (%d0 is at the top)
 	*((uint32_t *) current_proc->sp) = proc->pid;
 	*((uint32_t *) proc->sp) = 0;
-
-	//dump((uint16_t *) current_proc->sp, 0x100);
-	//dump((uint16_t *) proc->sp, 0x100);
 
 	return proc->pid;
 }

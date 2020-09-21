@@ -7,7 +7,6 @@
 #include <kernel/kmalloc.h>
 
 #include "api.h"
-#include "access.h"
 #include "process.h"
 #include "filedesc.h"
 #include "interrupts.h"

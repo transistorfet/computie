@@ -6,10 +6,10 @@
 #include <kernel/vfs.h>
 #include <kernel/printk.h>
 
+#include "access.h"
 #include "fileptr.h"
 #include "bufcache.h"
 
-#include "../access.h"
 
 #define VFS_MOUNT_MAX		4
 

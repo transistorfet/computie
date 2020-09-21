@@ -29,7 +29,6 @@ KERNEL_OBJS = \
 	src/kernel/interrupts.o \
 	src/kernel/syscall_entry.o \
 	src/kernel/syscall.o \
-	src/kernel/access.o \
 	src/kernel/filedesc.o \
 	src/kernel/process.o \
 	src/kernel/driver.o \
@@ -37,6 +36,7 @@ KERNEL_OBJS = \
 	src/kernel/fs/vfs.o \
 	src/kernel/fs/nop.o \
 	src/kernel/fs/pipe.o \
+	src/kernel/fs/access.o \
 	src/kernel/fs/fileptr.o \
 	src/kernel/fs/bufcache.o \
 	src/kernel/fs/mallocfs/mallocfs.o \

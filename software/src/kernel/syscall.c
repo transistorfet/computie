@@ -307,6 +307,7 @@ pid_t do_fork()
 	proc = new_proc(current_proc->uid);
 	if (!proc)
 		panic("Ran out of procs\n");
+	proc->cwd = current_proc->cwd;
 	dup_fd_table(proc->fd_table, current_proc->fd_table);
 
 	// Save the current process's stack pointer back to it's struct, which
@@ -458,6 +459,8 @@ int load_flat_binary(const char *path, struct mem_map *map)
 
 
 	// TODO overwriting this could be a memory leak if it's not already NULL.  How do I refcount segments?
+	//if (current_proc->map.segments[M_TEXT].base)
+	//	kmfree(current_proc->map.segments[M_TEXT].base);
 	map->segments[M_TEXT].base = task_text;
 	map->segments[M_TEXT].length = task_size;
 
@@ -486,10 +489,10 @@ int do_exec(const char *path, char *const argv[], char *const envp[])
 
 int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
 {
+	//if (current_proc->map.segments[M_TEXT].base)
+	//	kmfree(current_proc->map.segments[M_TEXT].base);
 	current_proc->map.segments[M_TEXT].base = NULL;
 	current_proc->map.segments[M_TEXT].length = 0;
-	//current_proc->map.segments[M_STACK].base = kmalloc(0x400);
-	//current_proc->map.segments[M_STACK].length = 0x400;
 
 	// Reset the stack to start our new process
 	char *task_stack_pointer = current_proc->map.segments[M_STACK].base + current_proc->map.segments[M_STACK].length;

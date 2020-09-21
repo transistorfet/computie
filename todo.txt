@@ -4,12 +4,12 @@ Operating System:
 	* look for any bugs that might be caused by a function returning the same vnode as was passed in
 	* should you move the zone alloc/free from super.h into something else
 	* should you refactor the header files into actual c files, with a common header to declare the functions?
+	* move binary file format and arg copying to another file, but where? proc/ mm/ kernel/???
+	* should you refactor the errors to use vfs_return() to simplify the code a bit??
 
 	* minixfs: implement proper 3 or 4 tier zone trees
 	* minixfs, implement multiple versions
 	* minixfs: add endian-conversion for superblock/inode/etc values, to be truely compatible
-
-	* chdir is not working because cd is run as a separate process, and child processes don't seem to inherit the cwd yet, which needs to be fixed
 
 	* add uid/gid params to the fs implementation functions since we're assuming those values atm
 	* rename get_block, etc to get_buf???
@@ -19,8 +19,6 @@ Operating System:
 	* add commands: mv, cp, rmdir, pwd
 
 	* add pipe setup to command evaluation
-
-	* move binary file format and arg copying to another file, but where? proc/ mm/ kernel/???
 
 
 	* implement signals

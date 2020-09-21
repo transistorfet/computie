@@ -633,6 +633,10 @@ void serial_read_loop()
 
 		if (*argv[0] == '\0')
 			continue;
+		else if (!strcmp(argv[0], "cd")) {
+			command_chdir(argc, argv);
+			continue;
+		}
 
 		// TODO this is a hack that should be removed
 		if (!strcmp(argv[0], "sync")) {

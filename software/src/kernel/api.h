@@ -2,10 +2,9 @@
 #ifndef _SRC_KERNEL_API_H
 #define _SRC_KERNEL_API_H
 
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-struct vdir;
 
 void init_syscall();
 void do_syscall();
@@ -23,7 +22,7 @@ extern size_t do_write(int fd, const char *buf, size_t nbytes);
 extern int do_creat(const char *path, mode_t mode);
 extern int do_open(const char *path, int oflags, mode_t mode);
 extern int do_close(int fd);
-extern int do_readdir(int fd, struct vdir *dir);
+extern int do_readdir(int fd, struct dirent *dir);
 extern int do_unlink(const char *path);
 extern int do_mkdir(const char *path, mode_t mode);
 extern int do_rename(const char *oldpath, const char *newpath);

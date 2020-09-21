@@ -4,6 +4,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <dirent.h>
 #include <sys/types.h>
 
 
@@ -27,7 +28,6 @@
 struct mount;
 struct vnode;
 struct vfile;
-struct vdir;
 
 
 struct mount_ops {
@@ -42,6 +42,7 @@ struct vnode_ops {
 
 	int (*create)(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result);
 	int (*mknod)(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result);
+	// lookup must call vfs_release_vnode on the existing *result vnode if it is non-NULL.  This makes it easier to swap vnode references when resolving paths
 	int (*lookup)(struct vnode *vnode, const char *filename, struct vnode **result);
 	//link
 	int (*unlink)(struct vnode *parent, struct vnode *vnode);
@@ -61,7 +62,7 @@ struct vfile_ops {
 	int (*write)(struct vfile *file, const char *buffer, size_t size);
 	int (*ioctl)(struct vfile *file, unsigned int request, void *argp);
 	offset_t (*seek)(struct vfile *file, offset_t position, int whence);
-	int (*readdir)(struct vfile *file, struct vdir *dir);
+	int (*readdir)(struct vfile *file, struct dirent *dir);
 };
 
 
@@ -95,11 +96,6 @@ struct vfile {
 	offset_t position;
 };
 
-struct vdir {
-	struct vnode *vnode;
-	char name[VFS_FILENAME_MAX];
-};
-
 #define VLOOKUP_NORMAL		0000
 #define VLOOKUP_PARENT_OF	0001
 
@@ -123,7 +119,7 @@ int vfs_read(struct vfile *file, char *buffer, size_t size);
 int vfs_write(struct vfile *file, const char *buffer, size_t size);
 int vfs_ioctl(struct vfile *file, unsigned int request, void *argp);
 offset_t vfs_seek(struct vfile *file, offset_t position, int whence);
-int vfs_readdir(struct vfile *file, struct vdir *dir);
+int vfs_readdir(struct vfile *file, struct dirent *dir);
 struct vfile *vfs_duplicate_fileptr(struct vfile *file);
 
 int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile);
@@ -145,13 +141,24 @@ static inline void vfs_init_vnode(struct vnode *vnode, struct vnode_ops *ops, st
 	vnode->bits = 0;
 }
 
-static inline struct vnode *vfs_make_vnode_ref(struct vnode *vnode)
+static inline struct vnode *vfs_clone_vnode(struct vnode *vnode)
 {
 	vnode->refcount++;
 	return vnode;
 }
 
 int vfs_release_vnode(struct vnode *vnode);
+
+#define VFS_RETURN(ret, vnode)	{ 	\
+	vfs_release_vnode(vnode);	\
+	return (ret);			\
+}
+
+static inline int vfs_return(int error, struct vnode *vnode)
+{
+	vfs_release_vnode(vnode);
+	return error;
+}
 
 #endif
 

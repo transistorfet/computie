@@ -271,8 +271,7 @@ int command_ls(int argc, char **argv)
 {
 	int fd;
 	int error;
-	struct vdir dir;
-	struct vfile *file;
+	struct dirent dir;
 	struct stat statbuf;
 	char filename[100];
 	char filemode[10];

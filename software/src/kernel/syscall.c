@@ -176,7 +176,7 @@ int do_lseek(int fd, offset_t offset, int whence)
 	return vfs_seek(file, offset, whence);
 }
 
-int do_readdir(int fd, struct vdir *dir)
+int do_readdir(int fd, struct dirent *dir)
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file)
@@ -195,7 +195,7 @@ int do_chdir(const char *path)
 	if (!(vnode->mode & S_IFDIR))
 		return ENOTDIR;
 
-	current_proc->cwd = vfs_make_vnode_ref(vnode);
+	current_proc->cwd = vfs_clone_vnode(vnode);
 	return 0;
 }
 
@@ -228,6 +228,7 @@ int do_stat(const char *path, struct stat *statbuf)
 	statbuf->st_gid = vnode->gid;
 	statbuf->st_size = vnode->size;
 
+	vfs_release_vnode(vnode);
 	return 0;
 }
 

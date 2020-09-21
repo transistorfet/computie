@@ -75,7 +75,7 @@ offset_t nop_seek(struct vfile *file, offset_t position, int whence)
 	return 0;
 }
 
-int nop_readdir(struct vfile *file, struct vdir *dir)
+int nop_readdir(struct vfile *file, struct dirent *dir)
 {
 	return 0;
 }

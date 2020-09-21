@@ -89,8 +89,10 @@ int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, stru
 	if (!newnode)
 		return ENOMEM;
 
-	if (mode & S_IFDIR && !dir_setup(newnode, vnode))
+	if (mode & S_IFDIR && !dir_setup(newnode, vnode)) {
+		vfs_release_vnode(newnode);
 		return ENOMEM;
+	}
 
 	dir->vnode = newnode;
 
@@ -132,7 +134,9 @@ int mallocfs_lookup(struct vnode *vnode, const char *filename, struct vnode **re
 	if (!entry)
 		return ENOENT;
 
-	*result = entry->vnode;
+	if (*result)
+		vfs_release_vnode(*result);
+	*result = vfs_clone_vnode(entry->vnode);
 	return 0;
 }
 
@@ -338,7 +342,7 @@ offset_t mallocfs_seek(struct vfile *file, offset_t position, int whence)
 	}
 }
 
-int mallocfs_readdir(struct vfile *file, struct vdir *dir)
+int mallocfs_readdir(struct vfile *file, struct dirent *dir)
 {
 	int max;
 	short zpos;
@@ -369,7 +373,7 @@ int mallocfs_readdir(struct vfile *file, struct vdir *dir)
 
 	max = MALLOCFS_MAX_FILENAME < VFS_FILENAME_MAX ? MALLOCFS_MAX_FILENAME : VFS_FILENAME_MAX;
 
-	dir->vnode = zone->entries[zpos].vnode;
+	dir->ino = 0;	// TODO this should be something... zone->entries[zpos].vnode;
 	strncpy(dir->name, zone->entries[zpos].name, max);
 	dir->name[max - 1] = '\0';
 

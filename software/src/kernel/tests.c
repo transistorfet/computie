@@ -209,8 +209,8 @@ void test_files()
 void test_dirs()
 {
 	int error;
+	struct dirent dir;
 	struct vfile *file;
-	struct vdir dir;
 
 	if ((error = vfs_open(NULL, "/", 0, 0, SU_UID, &file))) {
 		printk("Error at open %d\n", error);

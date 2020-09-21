@@ -26,7 +26,7 @@ struct vnode *new_mallocfs_vnode(struct mount *mp, device_t dev, mode_t mode)
 			vfs_init_vnode((struct vnode *) &vnode_table[i], &mallocfs_vnode_ops, mp, mode, 0, 0, 0, 0);
 
 			// NOTE we increment the refcount to represent the file link, otherwise the vnode will be freed when each file is not open
-			vnode_table[i].vn.refcount++;
+			vfs_clone_vnode(&vnode_table[i].vn);
 
 			MALLOCFS_DATA(&vnode_table[i]).device = dev;
 			for (char j = 0; j < MALLOCFS_TOTAL_ZONES; j++)

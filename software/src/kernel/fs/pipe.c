@@ -60,7 +60,7 @@ int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile)
 	vfs_init_vnode(vnode, &pipe_vnode_ops, NULL, 0600, 0, 0, 0, 0);
 
 	// We will be creating two references to this vnode, so increament the refcount
-	vnode->refcount++;
+	vfs_clone_vnode(vnode);
 
 	// TODO can I allocate these before I create the vnode/inode?
 	// Allocate two file pointers

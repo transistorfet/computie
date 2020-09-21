@@ -71,6 +71,8 @@ static void zone_free_all(struct vnode *vnode)
 
 	for (char i = 0; i < MINIX_V1_TOTAL_ZONENUMS; i++)
 		MINIX_DATA(vnode).zones[i] = 0;
+
+	mark_vnode_dirty(vnode);
 }
 
 #endif

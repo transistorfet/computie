@@ -1,8 +1,24 @@
 
 Operating System:
 
+	* if we require ops->lookup to always receive a results pointer with NULL, which if non-NULL will be released by the ops->lookup functions.
+	  vfs_lookup doesn't have to work like that though... (ie. the results pointer is ignored)
+	* passing the vnodes back during readdir() is a leak.  We don't even use the refs, let alone free them.  Perhaps there should be a different
+	  way, even if that means making mallocfs 'invent' a ino number to pass back instead
+
+	* I've modified mallocfs to clone the vnode ref during lookup,
+	  but vfs_lookup doesn't drop the references properly, nor does any vfs_lookup calls
+	  nor have the clones been removed from vfs_open...
+	  (I've remove the vfs_open clones)
+
+	* fix the vnode reference counting between vfs and fs-specific implementations, particularly lookup, which I don't think increments the count...
+	* should you move the zone alloc/free from super.h into something else
+	* should you refactor the header files into actual c files, with a common header to declare the functions?
+	* should vfs_make_vnode_ref be changed to vfs_clone_vnode_ref()
+
 	* minixfs: implement proper 3 or 4 tier zone trees
 	* minixfs, implement multiple versions
+	* minixfs: add endian-conversion for superblock/inode/etc values, to be truely compatible
 
 	* chdir is not working because cd is run as a separate process, and child processes don't seem to inherit the cwd yet, which needs to be fixed
 

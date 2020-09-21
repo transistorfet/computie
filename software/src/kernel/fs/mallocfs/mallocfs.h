@@ -64,6 +64,6 @@ int mallocfs_read(struct vfile *file, char *buf, size_t nbytes);
 int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes);
 int mallocfs_ioctl(struct vfile *file, unsigned int request, void *argp);
 offset_t mallocfs_seek(struct vfile *file, offset_t position, int whence);
-int mallocfs_readdir(struct vfile *file, struct vdir *dir);
+int mallocfs_readdir(struct vfile *file, struct dirent *dir);
 
 #endif

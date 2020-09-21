@@ -3,6 +3,7 @@
 #define UNISTD_H
 
 #include <stddef.h>
+#include <dirent.h>
 #include <sys/types.h>
 
 #define	STDIN_FILENO	0	// Standard input
@@ -19,7 +20,6 @@
 #define PIPE_READ_FD	0
 #define PIPE_WRITE_FD	1
 
-struct vdir;
 struct stat;
 
 pid_t fork();
@@ -36,7 +36,7 @@ int open(const char *path, int flags, mode_t mode);
 int close(int fd);
 size_t read(int fd, char *buf, size_t nbytes);
 size_t write(int fd, const char *buf, size_t nbytes);
-int readdir(int fd, struct vdir *dir);
+int readdir(int fd, struct dirent *dir);
 
 int access(const char *path, int mode);
 int chdir(const char *path);

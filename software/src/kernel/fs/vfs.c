@@ -59,8 +59,10 @@ int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_op
 			return error;
 	}
 
-	if (vnode && (vnode->bits & VBF_MOUNTED))
+	if (vnode && (vnode->bits & VBF_MOUNTED)) {
+		vfs_release_vnode(vnode);
 		return EBUSY;
+	}
 
 	// TODO make sure not already mounted
 
@@ -74,13 +76,12 @@ int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_op
 			error = ops->mount(&mountpoints[i], dev, vnode);
 			if (error) {
 				mountpoints[i].ops = NULL;
+				vfs_release_vnode(vnode);
 				return error;
 			}
 
-			if (vnode) {
-				vfs_make_vnode_ref(vnode);
+			if (vnode)
 				vnode->bits |= VBF_MOUNTED;
-			}
 			else
 				root_fs = &mountpoints[i];
 
@@ -140,11 +141,16 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 		i += 1;
 	}
 
+	vfs_clone_vnode(cur);
 	while (1) {
 		if (cur->bits & VBF_MOUNTED) {
 			mp = _find_mount_by_vnode(cur);
-			if (!mp)
+			if (!mp) {
+				vfs_release_vnode(cur);
 				return ENXIO;
+			}
+			//if (!mp)
+			//	return vfs_return(ENXIO, cur);
 			cur = mp->root_node;
 		}
 
@@ -154,8 +160,10 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 		}
 
 		// TODO this seems to be wrong according to how linux behaves...
-		if (!verify_mode_access(uid, R_OK, cur->uid, cur->gid, cur->mode))
+		if (!verify_mode_access(uid, R_OK, cur->uid, cur->gid, cur->mode)) {
+			vfs_release_vnode(cur);
 			return EPERM;
+		}
 
 		for (j = 0; path[i] && path[i] != VFS_SEP; i++, j++)
 			component[j] = path[i];
@@ -163,16 +171,20 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 			i += 1;
 		component[j] = '\0';
 
-		if (!(cur->mode & S_IFDIR))
+		if (!(cur->mode & S_IFDIR)) {
+			vfs_release_vnode(cur);
 			return ENOTDIR;
+		}
 
 		// If creating, then skip the last component lookup
 		if (flags & VLOOKUP_PARENT_OF && path[i] == '\0')
 			continue;
 
 		error = cur->ops->lookup(cur, component, &cur);
-		if (error)
+		if (error) {
+			vfs_release_vnode(cur);
 			return error;
+		}
 	}
 
 	return ENOENT;
@@ -188,8 +200,11 @@ int vfs_access(struct vnode *cwd, const char *path, int mode, uid_t uid)
 		return error;
 
 	if (mode && !verify_mode_access(uid, mode, vnode->uid, vnode->gid, vnode->mode))
-		return EPERM;
-	return 0;
+		error = EPERM;
+	else
+		error = 0;
+	vfs_release_vnode(vnode);
+	return error;
 }
 
 
@@ -206,7 +221,9 @@ int vfs_chmod(struct vnode *cwd, const char *path, int mode, uid_t uid)
 		return EPERM;
 
 	vnode->mode = mode & 07777;
-	return vnode->ops->update(vnode);
+	error = vnode->ops->update(vnode);
+	vfs_release_vnode(vnode);
+	return error;
 }
 
 int vfs_chown(struct vnode *cwd, const char *path, uid_t owner, gid_t group, uid_t uid)
@@ -218,60 +235,83 @@ int vfs_chown(struct vnode *cwd, const char *path, uid_t owner, gid_t group, uid
 	if (error)
 		return error;
 
-	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
+	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode)) {
+		vfs_release_vnode(vnode);
 		return EPERM;
+	}
 	vnode->uid = owner;
 	vnode->gid = group;
-	return vnode->ops->update(vnode);
+	error = vnode->ops->update(vnode);
+	vfs_release_vnode(vnode);
+	return error;
 }
 
 int vfs_mknod(struct vnode *cwd, const char *path, mode_t mode, device_t dev, uid_t uid, struct vnode **result)
 {
 	int error;
-	struct vnode *tmp;
 	struct vnode *vnode;
+	struct vnode *tmp = NULL;
 
 	error = vfs_lookup(cwd, path, VLOOKUP_PARENT_OF, uid, &vnode);
 	if (error)
 		return error;
 
-	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
+	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode)) {
+		vfs_release_vnode(vnode);
 		return EPERM;
+	}
 
 	const char *filename = path_last_component(path);
 	error = vnode->ops->lookup(vnode, filename, &tmp);
-	if (error == 0)
+	vfs_release_vnode(tmp);
+	if (error == 0) {
+		vfs_release_vnode(vnode);
 		return EEXIST;
-	else if (error != ENOENT)
+	}
+	else if (error != ENOENT) {
+		vfs_release_vnode(vnode);
 		return error;
+	}
 
-	return vnode->ops->mknod(vnode, filename, mode, dev, result);
+	error = vnode->ops->mknod(vnode, filename, mode, dev, result);
+	vfs_release_vnode(vnode);
+	return error;
 }
 
 int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid)
 {
 	int error;
 	const char *filename;
-	struct vnode *vnode, *parent;
+	struct vnode *parent;
+	struct vnode *vnode = NULL;
 
 	error = vfs_lookup(cwd, path, VLOOKUP_PARENT_OF, uid, &parent);
 	if (error)
 		return error;
 
 	// Verify that parent directory is writable
-	if (!verify_mode_access(uid, W_OK, parent->uid, parent->gid, parent->mode))
+	if (!verify_mode_access(uid, W_OK, parent->uid, parent->gid, parent->mode)) {
+		vfs_release_vnode(parent);
 		return EACCES;
+	}
 
 	filename = path_last_component(path);
 	error = parent->ops->lookup(parent, filename, &vnode);
-	if (error)
+	if (error) {
+		vfs_release_vnode(parent);
 		return error;
+	}
 
 	// Verify that the file we're trying to delete is writable
-	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
+	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode)) {
+		vfs_release_vnode(parent);
+		vfs_release_vnode(vnode);
 		return EPERM;
+	}
 
+	// unlink takes ownership of vnode, but not parent.  If the file is deleted, unlink must call vfs_release_node
 	error = vnode->ops->unlink(parent, vnode);
+	vfs_release_vnode(parent);
 	if (error)
 		return error;
 	return 0;
@@ -288,8 +328,10 @@ static inline int _rename_find_parent(struct vnode *cwd, const char *path, uid_t
 		return error;
 
 	// Verify that the parent directory of the old location is writable and searchable
-	if (!verify_mode_access(uid, W_OK | X_OK, vnode->uid, vnode->gid, vnode->mode))
+	if (!verify_mode_access(uid, W_OK | X_OK, vnode->uid, vnode->gid, vnode->mode)) {
+		vfs_release_vnode(vnode);
 		return EACCES;
+	}
 
 	*result = vnode;
 	return 0;
@@ -298,8 +340,9 @@ static inline int _rename_find_parent(struct vnode *cwd, const char *path, uid_t
 int vfs_rename(struct vnode *cwd, const char *oldpath, const char *newpath, uid_t uid)
 {
 	int error;
+	struct vnode *vnode = NULL;
 	const char *oldname, *newname;
-	struct vnode *vnode, *oldparent, *newparent;
+	struct vnode *oldparent, *newparent;
 
 	oldname = path_last_component(oldpath);
 	if (*oldname == '\0' || !strcmp(oldname, ".") || !strcmp(oldname, ".."))
@@ -314,23 +357,32 @@ int vfs_rename(struct vnode *cwd, const char *oldpath, const char *newpath, uid_
 		return error;
 
 	error = _rename_find_parent(cwd, newpath, uid, &newparent);
-	if (error)
+	if (error) {
+		vfs_release_vnode(oldparent);
 		return error;
+	}
 
 	// TODO verify that both locations are on the same device
 
 	error = oldparent->ops->lookup(oldparent, oldname, &vnode);
-	if (error)
+	if (error) {
+		vfs_release_vnode(oldparent);
+		vfs_release_vnode(newparent);
 		return error;
+	}
 
-	return vnode->ops->rename(vnode, oldparent, oldname, newparent, newname);
+	error = vnode->ops->rename(vnode, oldparent, oldname, newparent, newname);
+	vfs_release_vnode(oldparent);
+	vfs_release_vnode(newparent);
+	vfs_release_vnode(vnode);
+	return error;
 }
 
 int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t uid, struct vfile **file)
 {
 	int error;
-	struct vnode *vnode;
 	mode_t required_mode = 0;
+	struct vnode *vnode = NULL;
 
 	if (!file)
 		return EINVAL;
@@ -341,26 +393,27 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 
 	if (flags & O_CREAT) {
 		const char *filename = path_last_component(path);
-		if (!path_valid_component(filename))
+		if (!path_valid_component(filename)) {
+			vfs_release_vnode(vnode);
 			return EINVAL;
+		}
 
 		// Lookup the last path component, or create a new file if an error occurs during lookup
 		if (vnode->ops->lookup(vnode, filename, &vnode)) {
 			// Verify that parent directory is writable
-			if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
+			if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode)) {
+				vfs_release_vnode(vnode);
 				return EPERM;
+			}
 
-			error = vnode->ops->create(vnode, filename, mode, &vnode);
-			if (error)
+			struct vnode *parent = vnode;
+			error = parent->ops->create(parent, filename, mode, &vnode);
+			vfs_release_vnode(parent);
+			if (error) {
+				vfs_release_vnode(vnode);
 				return error;
+			}
 		}
-		else {
-			// TODO this needs to be refactored
-			vfs_make_vnode_ref(vnode);
-		}
-	}
-	else {
-		vfs_make_vnode_ref(vnode);
 	}
 
 	// Verify the permissions before proceeding
@@ -418,7 +471,7 @@ offset_t vfs_seek(struct vfile *file, offset_t position, int whence)
 	return file->vnode->ops->fops->seek(file, position, whence);
 }
 
-int vfs_readdir(struct vfile *file, struct vdir *dir)
+int vfs_readdir(struct vfile *file, struct dirent *dir)
 {
 	return file->vnode->ops->fops->readdir(file, dir);
 }
@@ -430,6 +483,8 @@ struct vfile *vfs_duplicate_fileptr(struct vfile *file)
 
 int vfs_release_vnode(struct vnode *vnode)
 {
+	if (!vnode)
+		return 0;
 	vnode->refcount--;
 	if (vnode->refcount < 0)
 		printk("Error: double free of vnode, %x\n", vnode);

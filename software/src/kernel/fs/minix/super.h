@@ -79,6 +79,11 @@ static struct minix_super *load_superblock(device_t dev)
 	return super;
 }
 
+static void free_superblock(struct minix_super *super)
+{
+	kmfree(super);
+}
+
 static zone_t minix_alloc_zone(struct minix_super *super)
 {
 	bitnum_t bit;

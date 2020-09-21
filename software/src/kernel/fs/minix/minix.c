@@ -77,16 +77,14 @@ int minix_mount(struct mount *mp, device_t dev, struct vnode *parent)
 	mp->root_node = root;
 	dir_setup(mp->root_node, NULL);
 
-	struct vnode *vnode;
-	int error = minix_create(root, "test", 0644, &vnode);
-	printk("Created %d, %d\n", error, MINIX_DATA(vnode).ino);
-
 	return 0;
 }
 
 int minix_unmount(struct mount *mp)
 {
-	// TODO implement
+	free_superblock((struct minix_super *) mp->super);
+	vfs_release_vnode(mp->root_node);
+	mp->root_node = NULL;
 	return 0;
 }
 
@@ -119,6 +117,7 @@ int minix_create(struct vnode *vnode, const char *filename, mode_t mode, struct 
 	}
 
 	if (mode & S_IFDIR && !dir_setup(newnode, vnode)) {
+		vfs_release_vnode(newnode);
 		release_block(buf, 0);
 		return ENOMEM;
 	}
@@ -170,6 +169,8 @@ int minix_lookup(struct vnode *vnode, const char *filename, struct vnode **resul
 	if (!entry)
 		return ENOENT;
 
+	if (*result)
+		vfs_release_vnode(*result);
 	*result = (struct vnode *) get_vnode(vnode->mp, entry->inode);
 	release_block(buf, 0);
 	return 0;
@@ -191,6 +192,7 @@ int minix_unlink(struct vnode *parent, struct vnode *vnode)
 	release_block(buf, BCF_DIRTY);
 	zone_free_all(vnode);
 	free_vnode((struct minix_vnode *) vnode);
+	return 0;
 }
 
 int minix_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname)
@@ -229,6 +231,7 @@ int minix_truncate(struct vnode *vnode)
 		return EISDIR;
 	zone_free_all(vnode);
 	vnode->size = 0;
+	mark_vnode_dirty(vnode);
 	return 0;
 }
 
@@ -240,7 +243,9 @@ int minix_update(struct vnode *vnode)
 
 int minix_release(struct vnode *vnode)
 {
-	if (vnode->bits & VBF_DIRTY)
+	if (MINIX_DATA(vnode).ino == 0)
+		remove_vnode(vnode);
+	else if (vnode->bits & VBF_DIRTY)
 		write_inode(vnode, MINIX_DATA(vnode).ino);
 	return 0;
 }
@@ -400,7 +405,7 @@ offset_t minix_seek(struct vfile *file, offset_t position, int whence)
 	}
 }
 
-int minix_readdir(struct vfile *file, struct vdir *dir)
+int minix_readdir(struct vfile *file, struct dirent *dir)
 {
 	int max;
 	short zpos;
@@ -438,7 +443,7 @@ int minix_readdir(struct vfile *file, struct vdir *dir)
 
 	max = MINIX_V1_MAX_FILENAME < VFS_FILENAME_MAX ? MINIX_V1_MAX_FILENAME : VFS_FILENAME_MAX;
 
-	dir->vnode = get_vnode(file->vnode->mp, entries[zpos].inode);
+	dir->ino = entries[zpos].inode;
 	strncpy(dir->name, entries[zpos].filename, max);
 	dir->name[max - 1] = '\0';
 	release_block(buf, BCF_DIRTY);

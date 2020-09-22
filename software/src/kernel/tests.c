@@ -10,7 +10,7 @@
 #include <kernel/syscall.h>
 
 
-#include "process.h"
+#include "proc/process.h"
 #include "interrupts.h"
 
 

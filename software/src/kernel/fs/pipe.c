@@ -8,7 +8,7 @@
 
 #include "nop.h"
 #include "fileptr.h"
-#include "../process.h"
+#include "../proc/process.h"
 
 #define PIPE_BUFFER_MAX		512
 

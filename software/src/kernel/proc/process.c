@@ -6,11 +6,12 @@
 #include <kernel/printk.h>
 #include <kernel/kmalloc.h>
 
-#include "api.h"
+#include "../api.h"
+#include "../filedesc.h"
+#include "../interrupts.h"
+#include "../misc/queue.h"
+
 #include "process.h"
-#include "filedesc.h"
-#include "interrupts.h"
-#include "misc/queue.h"
 
 
 // Info for Current Running Process (accessed by syscall interface)
@@ -120,9 +121,28 @@ struct process *find_exited_child(pid_t parent, pid_t child)
 	return NULL;
 }
 
-void set_proc_return(struct process *proc, int ret)
+void set_proc_return_value(struct process *proc, int ret)
 {
 	*((uint32_t *) proc->sp) = ret;
+}
+
+void backup_current_proc()
+{
+	// Save the current process's stack pointer back to it's struct
+	current_proc->sp = current_proc_stack;
+}
+
+void return_to_current_proc(int ret)
+{
+	current_proc_stack = current_proc->sp;
+	if (current_proc->state == PS_READY) {
+		// If the process is still in the ready state, then set the return value in the process's context
+		*((uint32_t *) current_proc_stack) = ret;
+	}
+	else {
+		// If the process has been suspended, we wont return as normal but instead schedule another process
+		schedule();
+	}
 }
 
 void suspend_current_proc()
@@ -193,6 +213,22 @@ void schedule()
 		current_syscall = &current_proc->blocked_call;
 		do_syscall();
 	}
+}
+
+__attribute__((noreturn)) void begin_multitasking(struct process *proc)
+{
+	// Create initial task
+	current_proc = proc;
+	current_proc_stack = current_proc->sp;
+
+	//panic("Panicking for good measure\n");
+
+	// Force an address error for testing
+	//volatile uint16_t *data = (uint16_t *) 0x100001;
+	//volatile uint16_t value = *data;
+
+	// Start Multitasking
+	asm("bra restore_context\n");
 }
 
 struct process *create_kernel_task(int (*task_start)())

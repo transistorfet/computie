@@ -7,8 +7,8 @@
 #include <kernel/printk.h>
 #include <kernel/driver.h>
 
-#include "../process.h"
 #include "../interrupts.h"
+#include "../proc/process.h"
 #include "../misc/circlebuf.h"
 
 
@@ -362,6 +362,8 @@ void handle_serial_irq()
 
 	//*OUT_SET_ADDR = 0x10;
 
+	backup_current_proc();
+
 	if (status & SR_RX_FULL) {
 		// De-Assert CTS
 		*OUT_RESET_ADDR = 0x01;
@@ -454,8 +456,6 @@ void handle_serial_irq()
 		}
 		//TRACE_ON();
 
-		//extern char *current_proc_stack;
-		// *((uint16_t *) (current_proc_stack - CONTEX_SIZE)) |= 0x8000;
 		*/
 	}
 

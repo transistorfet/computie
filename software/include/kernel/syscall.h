@@ -32,6 +32,7 @@
 // TODO remove this after testing
 #define SYS_EXECBUILTIN	25
 
+typedef int (*syscall_t)(int, int, int);
 
 static inline int SYSCALL1(int n, int a1)
 {

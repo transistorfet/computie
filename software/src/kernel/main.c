@@ -12,8 +12,9 @@
 #include <kernel/printk.h>
 #include <kernel/vfs.h>
 
+#include "proc/process.h"
+
 #include "api.h"
-#include "process.h"
 #include "interrupts.h"
 
 
@@ -34,7 +35,6 @@ struct driver *drivers[] = {
 };
 
 extern struct process *current_proc;
-extern void *current_proc_stack;
 
 
 struct process *run_sh()
@@ -124,17 +124,6 @@ int main()
 	}
 */
 
-	// Create initial task
-	current_proc = run_sh();
-	current_proc_stack = current_proc->sp;
-
-	//panic("Panicking for good measure\n");
-
-	// Start Multitasking
-	asm("bra restore_context\n");
-
-	// Force an address error for testing
-	//volatile uint16_t *data = (uint16_t *) 0x100001;
-	//volatile uint16_t value = *data;
+	begin_multitasking(run_sh());
 }
 

@@ -10,14 +10,14 @@
 #include <kernel/driver.h>
 #include <kernel/kmalloc.h>
 
+#include "proc/process.h"
+
 #include "api.h"
-#include "process.h"
 #include "filedesc.h"
 #include "interrupts.h"
 
-#define SYSCALL_MAX	32
 
-typedef int (*syscall_t)(int, int, int);
+#define SYSCALL_MAX	32
 
 void test() { printk("It's a test!\n"); }
 
@@ -77,19 +77,11 @@ void do_syscall()
 {
 	int ret;
 
-	//if (current_syscall->syscall >= SYSCALL_MAX)
-	//	return ENOSYS;
-
 	tty_68681_set_leds(0x04);
+
+	backup_current_proc();
 	ret = ((syscall_t) syscall_table[current_syscall->syscall])(current_syscall->arg1, current_syscall->arg2, current_syscall->arg3);
-	if (current_proc->state == PS_READY) {
-		// If the process is still in the ready state, then set the return value in the process's context
-		*((uint32_t *) current_proc_stack) = ret;
-	}
-	else {
-		// If the process has been suspended, we wont return as normal but instead schedule another process
-		schedule();
-	}
+	return_to_current_proc(ret);
 
 	tty_68681_reset_leds(0x04);
 }
@@ -313,28 +305,11 @@ pid_t do_fork()
 	proc->cwd = current_proc->cwd;
 	dup_fd_table(proc->fd_table, current_proc->fd_table);
 
-	// Save the current process's stack pointer back to it's struct, which
-	// normally only happens in the schedule() function
-	current_proc->sp = current_proc_stack;
-
-	int stack_size = current_proc->map.segments[M_STACK].length;
-	char *stack = kmalloc(stack_size);
-	char *stack_pointer = (stack + stack_size) - ((current_proc->map.segments[M_STACK].base + current_proc->map.segments[M_STACK].length) - current_proc->sp);
-
-	memcpy_s(stack, current_proc->map.segments[M_STACK].base, current_proc->map.segments[M_STACK].length);
-
-	//printk("Parent Stack Pointer: %x\n", current_proc->sp);
-	//printk("Fork Stack: %x\n", stack);
-	//printk("Fork Stack Top: %x\n", stack + stack_size);
-	//printk("Fork Stack Pointer: %x\n", stack_pointer);
-
-	proc->map.segments[M_STACK].base = stack;
-	proc->map.segments[M_STACK].length = stack_size;
-	proc->sp = stack_pointer;
+	clone_stack(current_proc, proc);
 
 	// Apply return values to the context on the stack (%d0 is at the top)
-	*((uint32_t *) current_proc->sp) = proc->pid;
-	*((uint32_t *) proc->sp) = 0;
+	set_proc_return_value(current_proc, proc->pid);
+	set_proc_return_value(proc, 0);
 
 	return proc->pid;
 }
@@ -375,98 +350,6 @@ pid_t do_waitpid(pid_t pid, int *status, int options)
 	}
 }
 
-// TODO moves these functions somewhere else
-int copy_string_array(char **stack, int *count, char *const arr[])
-{
-	int len = 0;
-	*count = 0;
-
-	for (int i = 0; arr[i] != NULL; i++) {
-		// String, line terminator, and a pointer 
-		len += sizeof(char *) + strlen(arr[i]) + 1;
-		*count += 1;
-	}
-	len += sizeof(char *);
-
-	// Align to the nearest word
-	if (len & 0x01)
-		len += 1;
-
-	char **dest_arr = (char **) (*stack - len);
-	char *buffer = ((char *) dest_arr) + (sizeof(char *) * (*count + 1));
-	*stack = (char *) dest_arr;
-
-	int i = 0, j = 0;
-	for (; j < *count; j++) {
-		dest_arr[j] = &buffer[i];
-		strcpy(dest_arr[j], arr[j]);
-		i += strlen(arr[j]) + 1;
-	}
-	dest_arr[j] = NULL;
-
-	return 0;
-}
-
-char *copy_exec_args(char *stack, char *const argv[], char *const envp[])
-{
-	int argc, envc;
-	char **stack_argv, **stack_envp;
-
-	copy_string_array(&stack, &envc, envp);
-	stack_envp = (char **) stack;
-	copy_string_array(&stack, &argc, argv);
-	stack_argv = (char **) stack;
-
-	stack -= sizeof(char **);
-	*((char ***) stack) = stack_envp;
-	stack -= sizeof(char **);
-	*((char ***) stack) = stack_argv;
-	stack -= sizeof(int);
-	*((int *) stack) = argc;
-
-	return stack;
-}
-
-int load_flat_binary(const char *path, struct mem_map *map)
-{
-	int error;
-	struct vfile *file;
-
-	if (vfs_access(current_proc->cwd, path, X_OK, current_proc->uid))
-		return EPERM;
-
-	if ((error = vfs_open(current_proc->cwd, path, O_RDONLY, 0, current_proc->uid, &file)) < 0) {
-		printk("Error opening %s: %d\n", path, error);
-		return error;
-	}
-
-	if (!(file->vnode->mode & (S_IFDIR | S_IFCHR | S_IFIFO))) {
-		vfs_close(file);
-		return EISDIR;
-	}
-
-	// The extra data is for the bss segment, which we don't know the proper size of
-	int task_size = file->vnode->size + 0x200;
-	char *task_text = kmalloc(task_size);
-
-	error = vfs_read(file, task_text, task_size);
-	vfs_close(file);
-
-	if (error < 0) {
-		printk("Error reading file %s: %d\n", path, error);
-		return error;
-	}
-
-
-	// TODO overwriting this could be a memory leak if it's not already NULL.  How do I refcount segments?
-	//if (current_proc->map.segments[M_TEXT].base)
-	//	kmfree(current_proc->map.segments[M_TEXT].base);
-	map->segments[M_TEXT].base = task_text;
-	map->segments[M_TEXT].length = task_size;
-
-	return 0;
-}
-
 int do_exec(const char *path, char *const argv[], char *const envp[])
 {
 	int error;
@@ -475,14 +358,7 @@ int do_exec(const char *path, char *const argv[], char *const envp[])
 	if (error)
 		return error;
 
-	// Reset the stack to start our new process
-	char *task_stack_pointer = current_proc->map.segments[M_STACK].base + current_proc->map.segments[M_STACK].length;
-
-	// Setup new stack image
- 	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp);
- 	task_stack_pointer = create_context(task_stack_pointer, current_proc->map.segments[M_TEXT].base);
-	current_proc->sp = task_stack_pointer;
-	current_proc_stack = task_stack_pointer;
+	reset_stack(current_proc, current_proc->map.segments[M_TEXT].base, argv, envp);
 
 	return 0;
 }
@@ -494,14 +370,7 @@ int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
 	current_proc->map.segments[M_TEXT].base = NULL;
 	current_proc->map.segments[M_TEXT].length = 0;
 
-	// Reset the stack to start our new process
-	char *task_stack_pointer = current_proc->map.segments[M_STACK].base + current_proc->map.segments[M_STACK].length;
-
-	// Setup new stack image
- 	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp);
- 	task_stack_pointer = create_context(task_stack_pointer, addr);
-	current_proc->sp = task_stack_pointer;
-	current_proc_stack = task_stack_pointer;
+	reset_stack(current_proc, addr, argv, envp);
 
 	return 0;
 }

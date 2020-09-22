@@ -5,8 +5,8 @@
 #include <stddef.h>
 #include <kernel/syscall.h>
 
-#include "filedesc.h"
-#include "misc/queue.h"
+#include "../filedesc.h"
+#include "../misc/queue.h"
 
 #define	NUM_SEGMENTS			2
 
@@ -65,11 +65,14 @@ void cleanup_proc(struct process *proc);
 struct process *find_exited_child(pid_t parent, pid_t child);
 
 void set_proc_return(struct process *proc, int ret);
+void backup_current_proc();
+void return_to_current_proc(int ret);
 void suspend_current_proc();
 void resume_proc(struct process *proc);
 void resume_blocked_procs(int syscall_num, struct vnode *vnode);
 
 void schedule();
+__attribute__((noreturn)) void begin_multitasking(struct process *proc);
 struct process *create_kernel_task(int (*task_start)());
 
 extern void *create_context(void *user_stack, void *entry);

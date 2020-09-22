@@ -45,9 +45,11 @@ KERNEL_OBJS = \
 	src/kernel/syscall_entry.o \
 	src/kernel/syscall.o \
 	src/kernel/filedesc.o \
-	src/kernel/process.o \
 	src/kernel/driver.o \
 	src/kernel/mm/kmalloc.o \
+	src/kernel/proc/memory.o \
+	src/kernel/proc/process.o \
+	src/kernel/proc/binaries.o \
 	src/kernel/fs/vfs.o \
 	src/kernel/fs/nop.o \
 	src/kernel/fs/pipe.o \

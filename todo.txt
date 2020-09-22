@@ -1,20 +1,21 @@
 
 Operating System:
 
-	* look for any bugs that might be caused by a function returning the same vnode as was passed in
-	* should you move the zone alloc/free from super.h into something else
-	* should you refactor the header files into actual c files, with a common header to declare the functions?
+	* need to sort out the current_stack_pointer thing, to always save it before the syscall and restore it after, rather than having to save it sometimes
+	  like during a fork
+
+	* add uid/gid params to the fs implementation functions since we're assuming those values atm
 	* move binary file format and arg copying to another file, but where? proc/ mm/ kernel/???
+	* make a block driver interface (or should you use a char driver like freebsd does), and make bufcache use it instead of hardcoded addresses
+	* should you refactor the header files into actual c files, with a common header to declare the functions?
+	* look for any bugs that might be caused by a function returning the same vnode as was passed in
 	* should you refactor the errors to use vfs_return() to simplify the code a bit??
 	* fix minix_vnode cast warnings
+	* rename get_block, etc to get_buf???
 
 	* minixfs: implement proper 3 or 4 tier zone trees
 	* minixfs, implement multiple versions
 	* minixfs: add endian-conversion for superblock/inode/etc values, to be truely compatible
-
-	* add uid/gid params to the fs implementation functions since we're assuming those values atm
-	* rename get_block, etc to get_buf???
-	* make a block driver interface (or should you use a char driver like freebsd does), and make bufcache use it instead of hardcoded addresses
 
 	* add syscalls: mount/umount
 	* add commands: mv, cp, rmdir, pwd

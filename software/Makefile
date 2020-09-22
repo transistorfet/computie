@@ -47,6 +47,7 @@ KERNEL_OBJS = \
 	src/kernel/filedesc.o \
 	src/kernel/driver.o \
 	src/kernel/mm/kmalloc.o \
+	src/kernel/proc/tasks.o \
 	src/kernel/proc/memory.o \
 	src/kernel/proc/process.o \
 	src/kernel/proc/binaries.o \

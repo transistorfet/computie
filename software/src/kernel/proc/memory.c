@@ -1,6 +1,7 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <kernel/kmalloc.h>
 
 #include "process.h"
 

@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 
 #include <kernel/vfs.h>
+#include <kernel/printk.h>
 #include <kernel/kmalloc.h>
 
 #include "process.h"

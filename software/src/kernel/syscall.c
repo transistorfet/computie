@@ -10,6 +10,7 @@
 #include <kernel/driver.h>
 #include <kernel/kmalloc.h>
 
+#include "proc/memory.h"
 #include "proc/process.h"
 
 #include "api.h"
@@ -63,7 +64,6 @@ void init_syscall()
 
 // TODO this is temporary until you have processes working correctly
 extern struct process *current_proc;
-extern void *current_proc_stack;
 extern struct syscall_record *current_syscall;
 
 

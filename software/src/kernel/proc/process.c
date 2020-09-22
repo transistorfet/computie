@@ -21,6 +21,9 @@ struct process *idle_proc;
 struct process *current_proc;
 struct syscall_record *current_syscall;
 
+// TODO could this be used to calculate the offset of process_sp in syscall_entry??
+//const process_sp_offset = offsetof(struct process, sp);
+const int process_sp_offset = (int) &(((struct process *) NULL)->sp);
 
 // Process Table and Queues
 #define PROCESS_MAX	6
@@ -28,8 +31,6 @@ static pid_t next_pid;
 static struct queue run_queue;
 static struct queue blocked_queue;
 static struct process table[PROCESS_MAX];
-
-static int idle_task();
 
 
 void init_proc()
@@ -217,7 +218,7 @@ void schedule()
 
 __attribute__((noreturn)) void begin_multitasking(struct process *proc)
 {
-	// Create initial task
+	// Run the given process first
 	current_proc = proc;
 	current_proc_stack = current_proc->sp;
 
@@ -229,34 +230,6 @@ __attribute__((noreturn)) void begin_multitasking(struct process *proc)
 
 	// Start Multitasking
 	asm("bra restore_context\n");
+	__builtin_unreachable();
 }
-
-struct process *create_kernel_task(int (*task_start)())
-{
-	int error = 0;
-
-	struct process *proc = new_proc(SU_UID);
-	if (!proc)
-		panic("Ran out of procs\n");
-
-	int stack_size = 0x800;
-	char *stack = kmalloc(stack_size);
-	char *stack_pointer = stack + stack_size;
-
- 	stack_pointer = create_context(stack_pointer, task_start);
-
-	proc->map.segments[M_TEXT].base = NULL;
-	proc->map.segments[M_TEXT].length = 0x10000;
-	proc->map.segments[M_STACK].base = stack;
-	proc->map.segments[M_STACK].length = stack_size;
-	proc->sp = stack_pointer;
-
-	return proc;
-}
-
-static int idle_task()
-{
-	while (1) { }
-}
-
 

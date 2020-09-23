@@ -3,22 +3,21 @@
 #define _SRC_KERNEL_FS_MINIX_ZONES_H
 
 #include "minix.h"
-#include "super.h"
 
 #define MFS_LOOKUP_ZONE		0
 #define MFS_CREATE_ZONE		1
 
 
-static zone_t minix_alloc_zone(struct minix_super *super)
+static zone_t minix_alloc_zone(struct minix_v1_superblock *super_v1, device_t dev)
 {
 	bitnum_t bit;
 	struct buf *buf;
 	struct minix_block *block;
 
-	bit = bit_alloc(super->dev, MINIX_V1_ZONE_BITMAP_START(&super->super_v1), super->super_v1.zmap_blocks, 0);
+	bit = bit_alloc(dev, MINIX_V1_ZONE_BITMAP_START(super_v1), super_v1->zmap_blocks, 0);
 	if (!bit)
 		return NULL;
-	buf = get_block(super->dev, bit);
+	buf = get_block(dev, bit);
 	if (!buf)
 		return NULL;
 
@@ -55,7 +54,7 @@ static zone_t zone_lookup(struct vnode *vnode, zone_t znum, char create)
 		// Either quit or create a new empty tier2 zone table
 		if (!zones[t1_zone]) {
 			if (create)
-				zones[t1_zone] = minix_alloc_zone(super);
+				zones[t1_zone] = minix_alloc_zone(&super->super_v1, super->dev);
 			else
 				return 0;
 		}
@@ -67,7 +66,7 @@ static zone_t zone_lookup(struct vnode *vnode, zone_t znum, char create)
 	}
 
 	if (create && !*zone) {
-		*zone = minix_alloc_zone(super);
+		*zone = minix_alloc_zone(&super->super_v1, super->dev);
 		if (buf)
 			mark_block_dirty(buf);
 		mark_vnode_dirty(vnode);

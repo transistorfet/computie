@@ -14,6 +14,7 @@
 
 #define MINIX_SUPER(super)	((struct minix_super *) (super))
 #define MINIX_BLOCK(block)	((struct minix_block *) (block))
+#define MINIX_VNODE(vnode)	((struct minix_vnode *) (vnode))
 #define MINIX_DATA(vnode)	(((struct minix_vnode *) (vnode))->data)
 
 #define MBF_DIRTY		0x0001

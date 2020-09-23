@@ -27,11 +27,11 @@ static void sync_vnodes()
 	for (struct queue_node *cur = cache.head; cur; cur = cur->next) {
 		vnode = (struct minix_vnode *) (((char *) cur) - sizeof(struct vnode));
 		if (vnode->vn.bits & VBF_DIRTY)
-			write_inode(&vnode->vn, vnode->data.ino);
+			write_inode(vnode, vnode->data.ino);
 	}
 }
 
-static struct minix_vnode *load_vnode(struct mount *mp, inode_t ino)
+static struct vnode *load_vnode(struct mount *mp, inode_t ino)
 {
 	int error;
 	struct buf *buf;
@@ -62,7 +62,7 @@ static struct minix_vnode *load_vnode(struct mount *mp, inode_t ino)
 	return vnode;
 }
 
-static struct minix_vnode *get_vnode(struct mount *mp, inode_t ino)
+static struct vnode *get_vnode(struct mount *mp, inode_t ino)
 {
 	struct minix_vnode *vnode;
 
@@ -76,14 +76,14 @@ static struct minix_vnode *get_vnode(struct mount *mp, inode_t ino)
 			// Move to the front of the cache list
 			_queue_remove(&cache, &vnode->data.node);
 			_queue_insert(&cache, &vnode->data.node);
-			return vnode;
+			return (struct vnode *) vnode;
 		}
 	}
 
 	return load_vnode(mp, ino);
 }
 
-static struct minix_vnode *alloc_vnode(struct mount *mp, mode_t mode, uid_t uid, gid_t gid, device_t device)
+static struct vnode *alloc_vnode(struct mount *mp, mode_t mode, uid_t uid, gid_t gid, device_t device)
 {
 	struct minix_vnode *vnode;
 
@@ -99,27 +99,27 @@ static struct minix_vnode *alloc_vnode(struct mount *mp, mode_t mode, uid_t uid,
 	}
 	MINIX_DATA(vnode).device = device;
 	//printk("C:%x;%d\n", vnode, MINIX_DATA(vnode).ino);
-	return vnode;
+	return (struct vnode *) vnode;
 }
 
-static void mark_vnode_dirty(struct minix_vnode *vnode)
+static void mark_vnode_dirty(struct vnode *vnode)
 {
-	vnode->vn.bits |= VBF_DIRTY;
+	vnode->bits |= VBF_DIRTY;
 }
 
-static int free_vnode(struct minix_vnode *vnode)
+static int free_vnode(struct vnode *vnode)
 {
-	if (vnode->vn.bits & VBF_DIRTY)
-		write_inode(vnode, vnode->data.ino);
-	free_inode(&MINIX_SUPER(vnode->vn.mp->super)->super_v1, vnode->vn.mp->dev, vnode->data.ino);
-	vnode->data.ino = 0;
+	if (vnode->bits & VBF_DIRTY)
+		write_inode(vnode, MINIX_DATA(vnode).ino);
+	free_inode(&MINIX_SUPER(vnode->mp->super)->super_v1, vnode->mp->dev, MINIX_DATA(vnode).ino);
+	MINIX_DATA(vnode).ino = 0;
 	vfs_release_vnode(vnode);
 	return 0;
 }
 
-static int remove_vnode(struct minix_vnode *vnode)
+static int remove_vnode(struct vnode *vnode)
 {
-	_queue_remove(&cache, &vnode->data.node);
+	_queue_remove(&cache, &MINIX_DATA(vnode).node);
 	kmfree(vnode);
 	return 0;
 }

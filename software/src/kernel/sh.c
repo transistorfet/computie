@@ -665,8 +665,8 @@ int test_dirs();
 
 int sh_task()
 {
-	test_files();
-	test_dirs();
+	//test_files();
+	//test_dirs();
 
 
 	puts("\n\nThe Pseudo Shell!\n");

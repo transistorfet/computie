@@ -75,7 +75,6 @@ int minix_mount(struct mount *mp, device_t dev, struct vnode *parent)
 	}
 
 	mp->root_node = root;
-	dir_setup(mp->root_node, NULL);
 
 	return 0;
 }

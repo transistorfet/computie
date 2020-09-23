@@ -4,7 +4,6 @@ Operating System:
 	* need to remove the current_proc_stack value, instead writing directly to the process struct
 
 	* make it possible to use the disk as-in in memory instead of re-initializing after a warm reboot
-	* move code to start first process to proc/ (main will be pretty bare after that)
 	* factor out a sched.h interface that can cover most needs inside the proc module
 	* move interrupt and syscall_entry code into proc??
 	* add uid/gid params to the fs implementation functions since we're assuming those values atm

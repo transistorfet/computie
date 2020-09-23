@@ -190,7 +190,7 @@ int minix_unlink(struct vnode *parent, struct vnode *vnode)
 	dir->inode = 0;
 	release_block(buf, BCF_DIRTY);
 	zone_free_all(vnode);
-	free_vnode((struct minix_vnode *) vnode);
+	free_vnode(vnode);
 	return 0;
 }
 

@@ -12,6 +12,10 @@
 
 #define MAX_VNODES	20
 
+// The queue_node is not at the start of the vnode, so we need to adjust the address to point to the start of the vnode struct
+#define MINIX_QUEUE_NODE_TO_VNODE(node) \
+			((struct vnode *) (((char *) node) - sizeof(struct vnode)))
+
 static struct queue cache;
 extern struct vnode_ops minix_vnode_ops;
 
@@ -22,12 +26,12 @@ static void init_minix_vnodes()
 
 static void sync_vnodes()
 {
-	struct minix_vnode *vnode;
+	struct vnode *vnode;
 
 	for (struct queue_node *cur = cache.head; cur; cur = cur->next) {
-		vnode = (struct minix_vnode *) (((char *) cur) - sizeof(struct vnode));
-		if (vnode->vn.bits & VBF_DIRTY)
-			write_inode(vnode, vnode->data.ino);
+		vnode = MINIX_QUEUE_NODE_TO_VNODE(cur);
+		if (vnode->bits & VBF_DIRTY)
+			write_inode(vnode, MINIX_DATA(vnode).ino);
 	}
 }
 
@@ -35,7 +39,7 @@ static struct vnode *load_vnode(struct mount *mp, inode_t ino)
 {
 	int error;
 	struct buf *buf;
-	struct minix_vnode *vnode;
+	struct vnode *vnode;
 
 	// TODO this should recycle a cached vnode if it doesn't have a reference and there are more than a certain number of vnodes already loaded
 	//entry = _find_free_entry();
@@ -44,9 +48,9 @@ static struct vnode *load_vnode(struct mount *mp, inode_t ino)
 		return NULL;
 
 	//printk("L:%x;%d;%d\n", vnode, mp->dev, ino);
-	_queue_insert(&cache, &vnode->data.node);
+	_queue_insert(&cache, &MINIX_DATA(vnode).node);
 
-	vfs_init_vnode((struct vnode *) vnode, &minix_vnode_ops, mp, 0, 0, 0, 0, 0);
+	vfs_init_vnode(vnode, &minix_vnode_ops, mp, 0, 0, 0, 0, 0);
 	MINIX_DATA(vnode).device = 0;
 	MINIX_DATA(vnode).ino = ino;
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
@@ -64,19 +68,19 @@ static struct vnode *load_vnode(struct mount *mp, inode_t ino)
 
 static struct vnode *get_vnode(struct mount *mp, inode_t ino)
 {
-	struct minix_vnode *vnode;
+	struct vnode *vnode;
 
 	for (struct queue_node *cur = cache.head; cur; cur = cur->next) {
-		vnode = (struct minix_vnode *) (((char *) cur) - sizeof(struct vnode));
-		//printk("S:%x;%d;%d\n", vnode, vnode->vn.mp->dev, vnode->data.ino);
-		if (vnode->vn.mp->dev == mp->dev && vnode->data.ino == ino) {
+		vnode = MINIX_QUEUE_NODE_TO_VNODE(cur);
+		//printk("S:%x;%d;%d\n", vnode, vnode->mp->dev, MINIX_DATA(vnode).ino);
+		if (vnode->mp->dev == mp->dev && MINIX_DATA(vnode).ino == ino) {
 			//printk("G:%x;%d;%d\n", vnode, mp->dev, ino);
-			vfs_clone_vnode(&vnode->vn);
+			vfs_clone_vnode(vnode);
 
 			// Move to the front of the cache list
-			_queue_remove(&cache, &vnode->data.node);
-			_queue_insert(&cache, &vnode->data.node);
-			return (struct vnode *) vnode;
+			_queue_remove(&cache, &MINIX_DATA(vnode).node);
+			_queue_insert(&cache, &MINIX_DATA(vnode).node);
+			return vnode;
 		}
 	}
 
@@ -85,7 +89,7 @@ static struct vnode *get_vnode(struct mount *mp, inode_t ino)
 
 static struct vnode *alloc_vnode(struct mount *mp, mode_t mode, uid_t uid, gid_t gid, device_t device)
 {
-	struct minix_vnode *vnode;
+	struct vnode *vnode;
 
 	// TODO this should pass in the mp or superblock, but that would mean alloc_inode couldn't be used by the hacky mkfs function
 	bitnum_t ino = alloc_inode(MINIX_SUPER(mp->super), mode, uid, gid);
@@ -99,7 +103,7 @@ static struct vnode *alloc_vnode(struct mount *mp, mode_t mode, uid_t uid, gid_t
 	}
 	MINIX_DATA(vnode).device = device;
 	//printk("C:%x;%d\n", vnode, MINIX_DATA(vnode).ino);
-	return (struct vnode *) vnode;
+	return vnode;
 }
 
 static void mark_vnode_dirty(struct vnode *vnode)

@@ -18,12 +18,12 @@ void init_mallocfs_alloc()
 	}
 }
 
-struct vnode *new_mallocfs_vnode(struct mount *mp, device_t dev, mode_t mode)
+struct vnode *new_mallocfs_vnode(struct mount *mp, device_t dev, mode_t mode, uid_t uid)
 {
 	for (char i = 0; i < MAX_VNODES; i++) {
 		if (vnode_table[i].vn.refcount <= 0) {
 			// TODO add in proper uid/gid, mtime, etc arguments
-			vfs_init_vnode((struct vnode *) &vnode_table[i], &mallocfs_vnode_ops, mp, mode, 0, 0, 0, 0);
+			vfs_init_vnode((struct vnode *) &vnode_table[i], &mallocfs_vnode_ops, mp, mode, uid, 0, 0, 0);
 
 			// NOTE we increment the refcount to represent the file link, otherwise the vnode will be freed when each file is not open
 			vfs_clone_vnode(&vnode_table[i].vn);

@@ -12,7 +12,7 @@
 #define MFS_ZERO	1
 
 void init_mallocfs_alloc();
-struct vnode *new_mallocfs_vnode(struct mount *mp, device_t dev, mode_t mode);
+struct vnode *new_mallocfs_vnode(struct mount *mp, device_t dev, mode_t mode, uid_t uid);
 struct mallocfs_block *new_mallocfs_block(char zero);
 
 #endif

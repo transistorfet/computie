@@ -40,8 +40,8 @@ struct mount_ops {
 struct vnode_ops {
 	struct vfile_ops *fops;
 
-	int (*create)(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result);
-	int (*mknod)(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result);
+	int (*create)(struct vnode *vnode, const char *filename, mode_t mode, uid_t uid, struct vnode **result);
+	int (*mknod)(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, uid_t uid, struct vnode **result);
 	// lookup must call vfs_release_vnode on the existing *result vnode if it is non-NULL.  This makes it easier to swap vnode references when resolving paths
 	int (*lookup)(struct vnode *vnode, const char *filename, struct vnode **result);
 	//link

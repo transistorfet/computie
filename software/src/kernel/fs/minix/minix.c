@@ -94,7 +94,7 @@ int minix_sync(struct mount *mp)
 	return 0;
 }
 
-int minix_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result)
+int minix_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t uid, struct vnode **result)
 {
 	struct buf *buf;
 	struct vnode *newnode;
@@ -109,7 +109,7 @@ int minix_create(struct vnode *vnode, const char *filename, mode_t mode, struct 
 		return ENOSPC;
 
 	// TODO this needs the uid/gid from vfs
-	newnode = (struct vnode *) alloc_vnode(vnode->mp, mode, SU_UID, 0, 0);
+	newnode = (struct vnode *) alloc_vnode(vnode->mp, mode, uid, 0, 0);
 	if (!newnode) {
 		release_block(buf, 0);
 		return ENOMEM;
@@ -128,7 +128,7 @@ int minix_create(struct vnode *vnode, const char *filename, mode_t mode, struct 
 	return 0;
 }
 
-int minix_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result)
+int minix_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, uid_t uid, struct vnode **result)
 {
 	struct buf *buf;
 	struct vnode *newnode;
@@ -143,7 +143,7 @@ int minix_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t
 		return ENOSPC;
 
 	// TODO this needs the uid/gid from vfs
-	newnode = (struct vnode *) alloc_vnode(vnode->mp, mode, SU_UID, 0, dev);
+	newnode = (struct vnode *) alloc_vnode(vnode->mp, mode, uid, 0, dev);
 	if (!newnode) {
 		release_block(buf, 0);
 		return EMFILE;

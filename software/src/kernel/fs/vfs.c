@@ -273,7 +273,7 @@ int vfs_mknod(struct vnode *cwd, const char *path, mode_t mode, device_t dev, ui
 		return error;
 	}
 
-	error = vnode->ops->mknod(vnode, filename, mode, dev, result);
+	error = vnode->ops->mknod(vnode, filename, mode, dev, uid, result);
 	vfs_release_vnode(vnode);
 	return error;
 }
@@ -407,7 +407,7 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 			}
 
 			struct vnode *parent = vnode;
-			error = parent->ops->create(parent, filename, mode, &vnode);
+			error = parent->ops->create(parent, filename, mode, uid, &vnode);
 			vfs_release_vnode(parent);
 			if (error) {
 				vfs_release_vnode(vnode);

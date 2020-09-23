@@ -5,12 +5,12 @@
 #include "nop.h"
 
 
-int nop_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result)
+int nop_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t uid, struct vnode **result)
 {
 	return EPERM;
 }
 
-int nop_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, struct vnode **result)
+int nop_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, uid_t uid, struct vnode **result)
 {
 	return EPERM;
 }

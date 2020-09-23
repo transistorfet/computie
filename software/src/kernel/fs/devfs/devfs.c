@@ -49,7 +49,7 @@ int init_devfs()
 		devices[i].vnode = NULL;
 }
 
-int devfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result)
+int devfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, uid_t uid, struct vnode **result)
 {
 	struct vnode *newnode;
 	struct devfs_dirent *dir;

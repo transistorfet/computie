@@ -55,7 +55,7 @@ int init_mallocfs()
 
 int mallocfs_mount(struct mount *mp, device_t dev, struct vnode *parent)
 {
-	mp->root_node = new_mallocfs_vnode(mp, 0, S_IFDIR | 0755);
+	mp->root_node = new_mallocfs_vnode(mp, 0, S_IFDIR | 0755, SU_UID);
 	dir_setup(mp->root_node, parent);
 	return 0;
 }
@@ -72,7 +72,7 @@ int mallocfs_sync(struct mount *mp)
 	return 0;
 }
 
-int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result)
+int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t uid, struct vnode **result)
 {
 	struct vnode *newnode;
 	struct mallocfs_dirent *dir;
@@ -85,7 +85,7 @@ int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, stru
 	if (!dir)
 		return ENOSPC;
 
-	newnode = new_mallocfs_vnode(vnode->mp, 0, mode);
+	newnode = new_mallocfs_vnode(vnode->mp, 0, mode, uid);
 	if (!newnode)
 		return ENOMEM;
 
@@ -100,7 +100,7 @@ int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, stru
 	return 0;
 }
 
-int mallocfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, struct vnode **result)
+int mallocfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, uid_t uid, struct vnode **result)
 {
 	struct vnode *newnode;
 	struct mallocfs_dirent *dir;
@@ -113,7 +113,7 @@ int mallocfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, devic
 	if (!dir)
 		return ENOSPC;
 
-	newnode = new_mallocfs_vnode(vnode->mp, dev, mode);
+	newnode = new_mallocfs_vnode(vnode->mp, dev, mode, uid);
 	if (!newnode)
 		return EMFILE;
 

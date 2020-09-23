@@ -27,6 +27,12 @@
 #define MINIX_V1_INODE_TABLE_START(super_v1)	(MINIX_BITMAP_ZONES + (super_v1)->imap_blocks + (super_v1)->zmap_blocks)
 
 
+/*
+ V1: as belowe
+ V2: zone_t increases to 32bit, inode format changes to 64 byte, superblock remains the same, dirents remain the same
+ V3: superblock format changes, dirents change to 64 bytes (4 byte inode, 60 byte name)... Does the inode_t size change to 32 bits as well??
+*/
+
 
 typedef uint16_t minix_v1_zone_t;
 typedef uint16_t minix_v1_inode_t;

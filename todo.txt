@@ -4,18 +4,20 @@ Operating System:
 	* factor out a sched.h interface that can cover most needs inside the proc module
 	* need to remove the current_proc_stack value, instead writing directly to the process struct
 
-	* add uid/gid params to the fs implementation functions since we're assuming those values atm
 	* make a block driver interface (or should you use a char driver like freebsd does), and make bufcache use it instead of hardcoded addresses
 	* create a memory driver, with GETBLKSIZE and MEMUNLOCK/MEMERASE ioctl() functions which can be used for everything else
+
 	* should you refactor the header files into actual c files, with a common header to declare the functions?
 	* look for any bugs that might be caused by a function returning the same vnode as was passed in
 	* should you refactor the errors to use vfs_return() to simplify the code a bit??
 	* rename get_block, etc to get_buf???
 
+	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
 	* minixfs: implement proper 3 or 4 tier zone trees
 	* minixfs, implement multiple versions
 	* minixfs: add endian-conversion for superblock/inode/etc values, to be truely compatible
 
+	* should there be something that periodically syncs data to disk?
 	* add syscalls: mount/umount
 	* add commands: mv, cp, rmdir, pwd
 

@@ -4,8 +4,8 @@
 
 #include <kernel/vfs.h>
 
-int nop_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result);
-int nop_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, struct vnode **result);
+int nop_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t uid, struct vnode **result);
+int nop_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, uid_t uid, struct vnode **result);
 int nop_lookup(struct vnode *vnode, const char *name, struct vnode **result);
 int nop_unlink(struct vnode *parent, struct vnode *vnode);
 int nop_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname);

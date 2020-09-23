@@ -8,19 +8,19 @@
 
 #include "minix.h"
 
-static inode_t alloc_inode(struct minix_v1_superblock *super_v1, device_t dev, mode_t mode, uid_t uid, gid_t gid)
+static inode_t alloc_inode(struct minix_super *super, mode_t mode, uid_t uid, gid_t gid)
 {
 	bitnum_t inode_num;
 	struct buf *inode_buf;
 	block_t inode_table_zone;
 	struct minix_v1_inode *inode_table;
 
-	inode_num = bit_alloc(dev, MINIX_V1_INODE_BITMAP_START(super_v1), super_v1->imap_blocks, 0);
+	inode_num = bit_alloc(super->dev, MINIX_V1_INODE_BITMAP_START(&super->super_v1), super->super_v1.imap_blocks, 0);
 	if (!inode_num)
 		return ENOSPC;
 
 	zone_t offset = inode_num >> MINIX_V1_LOG_INODES_PER_ZONE;
-	inode_buf = get_block(dev, MINIX_V1_INODE_TABLE_START(super_v1) + offset);
+	inode_buf = get_block(super->dev, MINIX_V1_INODE_TABLE_START(&super->super_v1) + offset);
 	if (!inode_buf)
 		return ENOMEM;
 
@@ -38,9 +38,9 @@ static inode_t alloc_inode(struct minix_v1_superblock *super_v1, device_t dev, m
 	return inode_num;
 }
 
-static int free_inode(struct minix_v1_superblock *super_v1, device_t dev, inode_t ino)
+static int free_inode(struct minix_super *super, inode_t ino)
 {
-	return bit_free(dev, MINIX_V1_INODE_BITMAP_START(super_v1), ino);
+	return bit_free(super->dev, MINIX_V1_INODE_BITMAP_START(&super->super_v1), ino);
 }
 
 static int read_inode(struct vnode *vnode, inode_t ino)

@@ -7,37 +7,27 @@
 #include "zones.h"
 
 
-static zone_t dir_create_data(struct minix_v1_superblock *super_v1, device_t dev, inode_t self, inode_t parent)
+static struct vnode *dir_setup(struct vnode *vnode, struct vnode *parent)
 {
 	zone_t zone;
 	struct buf *buf;
 	struct minix_v1_dirent *entries;
 
-	zone = minix_alloc_zone(super_v1, dev);
-	buf = get_block(dev, zone);
+	zone = minix_alloc_zone(vnode->mp->super);
+	buf = get_block(vnode->mp->dev, zone);
 	if (!buf)
 		return 0;
 
 	entries = (struct minix_v1_dirent *) buf->block;
 
-	entries[0].inode = self;
+	entries[0].inode = MINIX_DATA(vnode).ino;
 	strcpy(entries[0].filename, ".");
 
-	entries[1].inode = parent;
+	entries[1].inode = MINIX_DATA(vnode).ino, parent ? MINIX_DATA(parent).ino : 1;
 	strcpy(entries[1].filename, "..");
 
 	release_block(buf, BCF_DIRTY);
 
-	return zone;
-}
-
-static struct vnode *dir_setup(struct vnode *vnode, struct vnode *parent)
-{
-	zone_t zone;
-
-	zone = dir_create_data(&MINIX_SUPER(vnode->mp->super)->super_v1, vnode->mp->dev, MINIX_DATA(vnode).ino, parent ? MINIX_DATA(parent).ino : 0);
-	if (!zone)
-		return NULL;
 	MINIX_DATA(vnode).zones[0] = zone;
 	mark_vnode_dirty(vnode);
 

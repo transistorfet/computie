@@ -8,16 +8,16 @@
 #define MFS_CREATE_ZONE		1
 
 
-static zone_t minix_alloc_zone(struct minix_v1_superblock *super_v1, device_t dev)
+static zone_t minix_alloc_zone(struct minix_super *super)
 {
 	bitnum_t bit;
 	struct buf *buf;
 	struct minix_block *block;
 
-	bit = bit_alloc(dev, MINIX_V1_ZONE_BITMAP_START(super_v1), super_v1->zmap_blocks, 0);
+	bit = bit_alloc(super->dev, MINIX_V1_ZONE_BITMAP_START(&super->super_v1), super->super_v1.zmap_blocks, 0);
 	if (!bit)
 		return NULL;
-	buf = get_block(dev, bit);
+	buf = get_block(super->dev, bit);
 	if (!buf)
 		return NULL;
 
@@ -54,7 +54,7 @@ static zone_t zone_lookup(struct vnode *vnode, zone_t znum, char create)
 		// Either quit or create a new empty tier2 zone table
 		if (!zones[t1_zone]) {
 			if (create)
-				zones[t1_zone] = minix_alloc_zone(&super->super_v1, super->dev);
+				zones[t1_zone] = minix_alloc_zone(super);
 			else
 				return 0;
 		}
@@ -66,7 +66,7 @@ static zone_t zone_lookup(struct vnode *vnode, zone_t znum, char create)
 	}
 
 	if (create && !*zone) {
-		*zone = minix_alloc_zone(&super->super_v1, super->dev);
+		*zone = minix_alloc_zone(super);
 		if (buf)
 			mark_block_dirty(buf);
 		mark_vnode_dirty(vnode);

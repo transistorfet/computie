@@ -88,13 +88,13 @@ static struct vnode *alloc_vnode(struct mount *mp, mode_t mode, uid_t uid, gid_t
 	struct minix_vnode *vnode;
 
 	// TODO this should pass in the mp or superblock, but that would mean alloc_inode couldn't be used by the hacky mkfs function
-	bitnum_t ino = alloc_inode(&MINIX_SUPER(mp->super)->super_v1, mp->dev, mode, uid, gid);
+	bitnum_t ino = alloc_inode(MINIX_SUPER(mp->super), mode, uid, gid);
 	if (!ino)
 		return NULL;
 
 	vnode = load_vnode(mp, ino);
 	if (!vnode) {
-		free_inode(&MINIX_SUPER(mp->super)->super_v1, mp->dev, ino);;
+		free_inode(MINIX_SUPER(mp->super), ino);;
 		return NULL;
 	}
 	MINIX_DATA(vnode).device = device;
@@ -111,7 +111,7 @@ static int free_vnode(struct vnode *vnode)
 {
 	if (vnode->bits & VBF_DIRTY)
 		write_inode(vnode, MINIX_DATA(vnode).ino);
-	free_inode(&MINIX_SUPER(vnode->mp->super)->super_v1, vnode->mp->dev, MINIX_DATA(vnode).ino);
+	free_inode(MINIX_SUPER(vnode->mp->super), MINIX_DATA(vnode).ino);
 	MINIX_DATA(vnode).ino = 0;
 	vfs_release_vnode(vnode);
 	return 0;

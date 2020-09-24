@@ -1,10 +1,13 @@
 
 Operating System:
 
+	* driver access through the filesystem is broken because it doesn't give an offset to the driver.  It should be possible to track the position
+	  in the file->position value (which isn't passed to the driver), but since file->vnode->size is not set, seeking wont work anyways (will always reset to 0)
+
 	* factor out a sched.h interface that can cover most needs inside the proc module
 	* need to remove the current_proc_stack value, instead writing directly to the process struct
 
-	* make a block driver interface (or should you use a char driver like freebsd does), and make bufcache use it instead of hardcoded addresses
+	* move the mknod calls out of driver init and into another function somewhere
 	* create a memory driver, with GETBLKSIZE and MEMUNLOCK/MEMERASE ioctl() functions which can be used for everything else
 
 	* should you refactor the header files into actual c files, with a common header to declare the functions?

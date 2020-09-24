@@ -83,6 +83,10 @@ static void zone_free_all(struct vnode *vnode)
 
 	// NOTE this can only be used with files or empty directories
 
+	// If this is a device file, then the zone is the device number, so just return
+	if (vnode->mode & S_IFCHR)
+		return;
+
 	for (zone_t znum = 0; zone = zone_lookup(vnode, znum, MFS_LOOKUP_ZONE); znum++)
 		minix_free_zone(MINIX_SUPER(vnode->mp->super), zone);
 

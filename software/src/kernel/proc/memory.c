@@ -5,7 +5,6 @@
 
 #include "process.h"
 
-// TODO moves these functions somewhere else
 int copy_string_array(char **stack, int *count, char *const arr[])
 {
 	int len = 0;

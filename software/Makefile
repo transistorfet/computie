@@ -59,6 +59,7 @@ KERNEL_OBJS = \
 	src/kernel/fs/bufcache.o \
 	$(FILESYSTEM_OBJS) \
 	src/kernel/drivers/tty_68681.o \
+	src/kernel/drivers/mem.o \
 	src/kernel/sh.o \
 	src/kernel/tests.o \
 	libc-68k-os.a

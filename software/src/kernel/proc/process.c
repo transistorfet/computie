@@ -180,6 +180,14 @@ void resume_blocked_procs(int syscall_num, struct vnode *vnode)
 	}
 }
 
+void resume_waiting_parent(struct process *proc)
+{
+	struct process *parent;
+
+	parent = get_proc(proc->parent);
+	if (parent->state == PS_BLOCKED && (parent->blocked_call.syscall == SYS_WAIT || parent->blocked_call.syscall == SYS_WAITPID))
+		resume_proc(parent);
+}
 
 
 void schedule()

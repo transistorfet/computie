@@ -18,19 +18,25 @@
 #include "interrupts.h"
 
 
-extern void init_mallocfs();
-extern void init_minix();
 extern void tty_68681_preinit();
 
 extern struct driver tty_68681_driver;
-extern struct mount_ops mallocfs_mount_ops;
-extern struct mount_ops minix_mount_ops;
+extern struct driver mem_driver;
 
 struct driver *drivers[] = {
 	&tty_68681_driver,
-	NULL	// Null Termination of Driver List
+	&mem_driver,
+	NULL	// Null Termination of Drivers List
 };
 
+extern struct mount_ops mallocfs_mount_ops;
+extern struct mount_ops minix_mount_ops;
+
+struct mount_ops *filesystems[] = {
+	&mallocfs_mount_ops,
+	&minix_mount_ops,
+	NULL	// Null Termination of Filesystems List
+};
 
 int main()
 {
@@ -44,14 +50,20 @@ int main()
 	init_syscall();
 	init_proc();
 
+	// TODO This is a temporary hack until driver init and vfs access is separated
+	register_driver(DEVMAJOR_MEM, &mem_driver);
+
 	init_vfs();
-	init_mallocfs();
-	init_minix();
+
+	// Initialize drivers
+	for (char i = 0; filesystems[i]; i++) {
+		filesystems[i]->init();
+	}
 
 	// TODO this would be moved elsewhere
 	struct mount *mp;
 	//vfs_mount(NULL, "/", 0, &mallocfs_mount_ops, SU_UID, &mp);
-	vfs_mount(NULL, "/", 1, &minix_mount_ops, SU_UID, &mp);
+	vfs_mount(NULL, "/", DEVNUM(DEVMAJOR_MEM, 0), &minix_mount_ops, SU_UID, &mp);
 
 	// Initialize drivers
 	for (char i = 0; drivers[i]; i++) {

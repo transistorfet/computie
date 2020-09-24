@@ -43,17 +43,14 @@ struct vnode_ops minix_vnode_ops = {
 };
 
 struct mount_ops minix_mount_ops = {
+	minix_init,
 	minix_mount,
 	minix_unmount,
 	minix_sync,
 };
 
 
-
-
-
-
-int init_minix()
+int minix_init()
 {
 	init_minix_vnodes();
 	return 0;
@@ -70,7 +67,7 @@ int minix_mount(struct mount *mp, device_t dev, struct vnode *parent)
 
 	struct vnode *root = get_vnode(mp, 1);
 	if (!root) {
-		// TODO do you need to release the superblock reference?
+		free_superblock((struct minix_super *) mp->super);
 		return ENOMEM;
 	}
 
@@ -270,7 +267,7 @@ int minix_read(struct vfile *file, char *buffer, size_t nbytes)
 		return EISDIR;
 
 	if (file->vnode->mode & S_IFCHR)
-		return dev_read(MINIX_DATA(file->vnode).zones[0], buffer, nbytes);
+		return dev_read(MINIX_DATA(file->vnode).zones[0], buffer, 0, nbytes);
 
 	else {
 		short zpos;
@@ -318,7 +315,7 @@ int minix_write(struct vfile *file, const char *buffer, size_t nbytes)
 		return EISDIR;
 
 	if (file->vnode->mode & S_IFCHR)
-		return dev_write(MINIX_DATA(file->vnode).zones[0], buffer, nbytes);
+		return dev_write(MINIX_DATA(file->vnode).zones[0], buffer, 0, nbytes);
 
 	else {
 		short zpos;

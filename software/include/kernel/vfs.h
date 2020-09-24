@@ -31,6 +31,7 @@ struct vfile;
 
 
 struct mount_ops {
+	int (*init)();								// Initialize the filesystem at boot
 	int (*mount)(struct mount *mp, device_t dev, struct vnode *parent);	// Mount the filesystem using the pre-allocated struct mount
 	int (*unmount)(struct mount *mp);					// Unmount the filesystem
 	int (*sync)(struct mount *mp);						// Sync data to disk

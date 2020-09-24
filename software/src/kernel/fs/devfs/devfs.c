@@ -115,12 +115,12 @@ int devfs_close(struct vfile *file)
 
 int devfs_read(struct vfile *file, char *buf, size_t nbytes)
 {
-	return dev_read(DEVFS_DATA(file->vnode).device, buf, nbytes);
+	return dev_read(DEVFS_DATA(file->vnode).device, buf, 0, nbytes);
 }
 
 int devfs_write(struct vfile *file, const char *buf, size_t nbytes)
 {
-	return dev_write(DEVFS_DATA(file->vnode).device, buf, nbytes);
+	return dev_write(DEVFS_DATA(file->vnode).device, buf, 0, nbytes);
 }
 
 int devfs_ioctl(struct vfile *file, unsigned int request, void *argp)

@@ -307,22 +307,17 @@ pid_t do_fork()
 
 	clone_stack(current_proc, proc);
 
-	// Apply return values to the context on the stack (%d0 is at the top)
-	set_proc_return_value(current_proc, proc->pid);
+	// Apply return values to the context on the stack
 	set_proc_return_value(proc, 0);
+	//set_proc_return_value(current_proc, proc->pid);
 
 	return proc->pid;
 }
 
 void do_exit(int exitcode)
 {
-	struct process *parent;
-
 	exit_proc(current_proc, exitcode);
-
-	parent = get_proc(current_proc->parent);
-	if (parent->state == PS_BLOCKED && (parent->blocked_call.syscall == SYS_WAIT || parent->blocked_call.syscall == SYS_WAITPID))
-		resume_proc(parent);
+	resume_waiting_parent(current_proc);
 }
 
 pid_t do_wait(int *status)

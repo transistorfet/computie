@@ -39,6 +39,7 @@ struct vnode_ops mallocfs_vnode_ops = {
 };
 
 struct mount_ops mallocfs_mount_ops = {
+	mallocfs_init,
 	mallocfs_mount,
 	mallocfs_unmount,
 	mallocfs_sync,
@@ -48,7 +49,7 @@ struct mount_ops mallocfs_mount_ops = {
 struct mount mallocfs_root;
 	
 
-int init_mallocfs()
+int mallocfs_init()
 {
 	init_mallocfs_alloc();
 }
@@ -222,7 +223,7 @@ int mallocfs_read(struct vfile *file, char *buf, size_t nbytes)
 		return EISDIR;
 
 	if (file->vnode->mode & S_IFCHR)
-		return dev_read(MALLOCFS_DATA(file->vnode).device, buf, nbytes);
+		return dev_read(MALLOCFS_DATA(file->vnode).device, buf, 0, nbytes);
 
 	else {
 		char *zone;
@@ -265,7 +266,7 @@ int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
 		return EISDIR;
 
 	if (file->vnode->mode & S_IFCHR)
-		return dev_write(MALLOCFS_DATA(file->vnode).device, buf, nbytes);
+		return dev_write(MALLOCFS_DATA(file->vnode).device, buf, 0, nbytes);
 
 	else {
 		char *zone;

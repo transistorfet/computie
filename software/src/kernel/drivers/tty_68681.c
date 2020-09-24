@@ -16,8 +16,8 @@
 int tty_68681_init();
 int tty_68681_open(devminor_t minor, int access);
 int tty_68681_close(devminor_t minor);
-int tty_68681_read(devminor_t minor, char *buffer, size_t size);
-int tty_68681_write(devminor_t minor, const char *buffer, size_t size);
+int tty_68681_read(devminor_t minor, char *buffer, offset_t offset, size_t size);
+int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_t size);
 int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp);
 
 struct driver tty_68681_driver = {
@@ -314,7 +314,7 @@ int tty_68681_close(devminor_t minor)
 	return 0;
 }
 
-int tty_68681_read(devminor_t minor, char *buffer, size_t size)
+int tty_68681_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 {
 	int i = size;
 
@@ -332,7 +332,7 @@ int tty_68681_read(devminor_t minor, char *buffer, size_t size)
 	return size;
 }
 
-int tty_68681_write(devminor_t minor, const char *buffer, size_t size)
+int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_t size)
 {
 	int i = size;
 

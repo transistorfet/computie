@@ -8,7 +8,7 @@
 
 #include "minix.h"
 
-static inode_t alloc_inode(struct minix_super *super, mode_t mode, uid_t uid, gid_t gid)
+static inode_t alloc_inode(struct minix_super *super, mode_t mode, uid_t uid, gid_t gid, device_t device)
 {
 	bitnum_t inode_num;
 	struct buf *inode_buf;
@@ -32,6 +32,8 @@ static inode_t alloc_inode(struct minix_super *super, mode_t mode, uid_t uid, gi
 	inode_table[inode_num].nlinks = 1;
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		inode_table[inode_num].zones[j] = NULL;
+	if (mode & S_IFCHR)
+		inode_table[inode_num].zones[0] = device;
 
 	release_block(inode_buf, BCF_DIRTY);
 

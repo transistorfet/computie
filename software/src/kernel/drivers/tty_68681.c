@@ -166,7 +166,7 @@ int tty_68681_init()
 	*OUT_SET_ADDR = 0x01;
 
 	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
-	if (vfs_mknod(NULL, "tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, 0, SU_UID, &tty_vnode))
+	if (vfs_mknod(NULL, "tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, DEVNUM(DEVMAJOR_TTY, 0), SU_UID, &tty_vnode))
 		vfs_lookup(NULL, "tty", SU_UID, VLOOKUP_NORMAL, &tty_vnode);
 }
 

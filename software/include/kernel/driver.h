@@ -5,7 +5,9 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#define DEVMAJOR_TTY	0
+#define DEVMAJOR_TTY	1
+
+#define DEVNUM(major, minor)	((major) << 8 | (minor))
 
 typedef unsigned char devmajor_t;
 typedef unsigned char devminor_t;

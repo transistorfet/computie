@@ -3,7 +3,7 @@
 #include <sys/types.h>
 #include <kernel/driver.h>
 
-#define MAX_DRIVERS	2
+#define MAX_DRIVERS	6
 
 static struct driver *drv_table[MAX_DRIVERS];
 

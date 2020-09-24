@@ -31,7 +31,6 @@ struct minix_super {
 
 struct minix_vnode_data {
 	struct queue_node node;
-	device_t device;		// device file (not mount device)
 	minix_v1_inode_t ino;
 	minix_v1_zone_t zones[MINIX_V1_INODE_ZONENUMS];
 };

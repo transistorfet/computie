@@ -51,7 +51,6 @@ static struct vnode *load_vnode(struct mount *mp, inode_t ino)
 	_queue_insert(&cache, &MINIX_DATA(vnode).node);
 
 	vfs_init_vnode(vnode, &minix_vnode_ops, mp, 0, 0, 0, 0, 0);
-	MINIX_DATA(vnode).device = 0;
 	MINIX_DATA(vnode).ino = ino;
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		MINIX_DATA(vnode).zones[j] = NULL;
@@ -92,7 +91,7 @@ static struct vnode *alloc_vnode(struct mount *mp, mode_t mode, uid_t uid, gid_t
 	struct vnode *vnode;
 
 	// TODO this should pass in the mp or superblock, but that would mean alloc_inode couldn't be used by the hacky mkfs function
-	bitnum_t ino = alloc_inode(MINIX_SUPER(mp->super), mode, uid, gid);
+	bitnum_t ino = alloc_inode(MINIX_SUPER(mp->super), mode, uid, gid, device);
 	if (!ino)
 		return NULL;
 
@@ -101,7 +100,7 @@ static struct vnode *alloc_vnode(struct mount *mp, mode_t mode, uid_t uid, gid_t
 		free_inode(MINIX_SUPER(mp->super), ino);;
 		return NULL;
 	}
-	MINIX_DATA(vnode).device = device;
+
 	//printk("C:%x;%d\n", vnode, MINIX_DATA(vnode).ino);
 	return vnode;
 }

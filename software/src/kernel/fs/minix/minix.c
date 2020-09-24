@@ -253,14 +253,14 @@ int minix_release(struct vnode *vnode)
 int minix_open(struct vfile *file, int flags)
 {
 	if (file->vnode->mode & S_IFCHR)
-		return dev_open(MINIX_DATA(file->vnode).device, flags);
+		return dev_open(MINIX_DATA(file->vnode).zones[0], flags);
 	return 0;
 }
 
 int minix_close(struct vfile *file)
 {
 	if (file->vnode->mode & S_IFCHR)
-		return dev_close(MINIX_DATA(file->vnode).device);
+		return dev_close(MINIX_DATA(file->vnode).zones[0]);
 	return 0;
 }
 
@@ -270,7 +270,7 @@ int minix_read(struct vfile *file, char *buffer, size_t nbytes)
 		return EISDIR;
 
 	if (file->vnode->mode & S_IFCHR)
-		return dev_read(MINIX_DATA(file->vnode).device, buffer, nbytes);
+		return dev_read(MINIX_DATA(file->vnode).zones[0], buffer, nbytes);
 
 	else {
 		short zpos;
@@ -318,7 +318,7 @@ int minix_write(struct vfile *file, const char *buffer, size_t nbytes)
 		return EISDIR;
 
 	if (file->vnode->mode & S_IFCHR)
-		return dev_write(MINIX_DATA(file->vnode).device, buffer, nbytes);
+		return dev_write(MINIX_DATA(file->vnode).zones[0], buffer, nbytes);
 
 	else {
 		short zpos;
@@ -372,7 +372,7 @@ int minix_write(struct vfile *file, const char *buffer, size_t nbytes)
 int minix_ioctl(struct vfile *file, unsigned int request, void *argp)
 {
 	if (file->vnode->mode & S_IFCHR)
-		return dev_ioctl(MINIX_DATA(file->vnode).device, request, argp);
+		return dev_ioctl(MINIX_DATA(file->vnode).zones[0], request, argp);
 	return -1;
 }
 

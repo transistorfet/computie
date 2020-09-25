@@ -50,7 +50,7 @@ static struct vnode *load_vnode(struct mount *mp, inode_t ino)
 	//printk("L:%x;%d;%d\n", vnode, mp->dev, ino);
 	_queue_insert(&cache, &MINIX_DATA(vnode).node);
 
-	vfs_init_vnode(vnode, &minix_vnode_ops, mp, 0, 0, 0, 0, 0);
+	vfs_init_vnode(vnode, &minix_vnode_ops, mp, 0, 1, 0, 0, 0, 0, 0, 0);
 	MINIX_DATA(vnode).ino = ino;
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		MINIX_DATA(vnode).zones[j] = NULL;

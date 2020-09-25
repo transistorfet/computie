@@ -4,8 +4,8 @@ Operating System:
 	* driver access through the filesystem is broken because it doesn't give an offset to the driver.  It should be possible to track the position
 	  in the file->position value (which isn't passed to the driver), but since file->vnode->size is not set, seeking wont work anyways (will always reset to 0)
 
-	* move the mknod calls out of driver init and into another function somewhere
 	* modify the resume function used by tty_68681 to not require the tty vnode
+	* move the mknod calls out of driver init and into another function somewhere
 	* factor out a sched.h interface that can cover most needs inside the proc module
 	* need to remove the current_proc_stack value, instead writing directly to the process struct
 

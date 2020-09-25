@@ -81,11 +81,15 @@ struct vnode {
 	short refcount;
 
 	mode_t mode;
+	short nlinks;
 	uid_t uid;
 	gid_t gid;
-	time_t mtime;
 	offset_t size;
 	uint16_t bits;
+
+	time_t atime;
+	time_t mtime;
+	time_t ctime;
 
 	union {} data;
 };
@@ -129,17 +133,21 @@ const char *path_last_component(const char *path);
 int path_valid_component(const char *path);
 
 
-static inline void vfs_init_vnode(struct vnode *vnode, struct vnode_ops *ops, struct mount *mp, mode_t mode, uid_t uid, gid_t gid, offset_t size, time_t mtime)
+static inline void vfs_init_vnode(struct vnode *vnode, struct vnode_ops *ops, struct mount *mp, mode_t mode, short nlinks, uid_t uid, gid_t gid, offset_t size, time_t atime, time_t mtime, time_t ctime)
 {
 	vnode->ops = ops;
 	vnode->mp = mp;
 	vnode->refcount = 1;
 	vnode->mode = mode;
+	vnode->nlinks = nlinks;
 	vnode->uid = uid;
 	vnode->gid = gid;
 	vnode->size = size;
-	vnode->mtime = mtime;
 	vnode->bits = 0;
+
+	vnode->atime = atime;
+	vnode->mtime = mtime;
+	vnode->ctime = ctime;
 }
 
 static inline struct vnode *vfs_clone_vnode(struct vnode *vnode)

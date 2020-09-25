@@ -26,10 +26,11 @@ static inode_t alloc_inode(struct minix_super *super, mode_t mode, uid_t uid, gi
 
 	inode_table = inode_buf->block;
 	inode_table[inode_num].mode = mode;
+	inode_table[inode_num].nlinks = 1;
 	inode_table[inode_num].uid = uid;
 	inode_table[inode_num].gid = gid;
 	inode_table[inode_num].size = 0;
-	inode_table[inode_num].nlinks = 1;
+	// TODO add a/m/c time stamps
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		inode_table[inode_num].zones[j] = NULL;
 	if (mode & S_IFCHR)
@@ -60,11 +61,13 @@ static int read_inode(struct vnode *vnode, inode_t ino)
 
 	inode_table = inode_buf->block;
 	vnode->mode = inode_table[ino].mode;
+	vnode->nlinks = inode_table[ino].nlinks;
 	vnode->uid = inode_table[ino].uid;
 	vnode->gid = inode_table[ino].gid;
 	vnode->size = inode_table[ino].size;
-	// TODO we probably need to store this in minix_vnode_data
-	//inode_table[ino].nlinks = 1;
+	vnode->atime = 0;
+	vnode->mtime = inode_table[ino].mtime;
+	vnode->ctime = 0;
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		MINIX_DATA(vnode).zones[j] = inode_table[ino].zones[j];
 
@@ -88,11 +91,11 @@ static int write_inode(struct vnode *vnode, inode_t ino)
 
 	inode_table = inode_buf->block;
 	inode_table[ino].mode = vnode->mode;
+	inode_table[ino].nlinks = vnode->nlinks;
 	inode_table[ino].uid = vnode->uid;
 	inode_table[ino].gid = vnode->gid;
 	inode_table[ino].size = vnode->size;
-	// TODO we probably need to store this in minix_vnode_data
-	inode_table[ino].nlinks = 1;
+	inode_table[ino].mtime = vnode->mtime;
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		inode_table[ino].zones[j] = MINIX_DATA(vnode).zones[j];
 

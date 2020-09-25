@@ -7,7 +7,7 @@
 #define W_OK               2	// Test if file is writable
 #define R_OK               4	// Test if file is readable
 
-typedef long time_t;
+typedef int time_t;
 
 typedef int pid_t;
 typedef short device_t;

@@ -30,10 +30,18 @@
 
 struct stat {
 	device_t st_dev;
+	//inode_t st_ino;
 	mode_t st_mode;
+	short st_nlinks;
 	uid_t st_uid;
 	gid_t st_gid;
+	//device_t st_rdev;
 	offset_t st_size;
+	//??_t st_blksize;
+	//block_t st_blocks;
+	time_t st_atime;
+	time_t st_mtime;
+	time_t st_ctime;
 };
 
 #endif

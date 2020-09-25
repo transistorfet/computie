@@ -218,9 +218,13 @@ int do_stat(const char *path, struct stat *statbuf)
 
 	statbuf->st_dev = 0;
 	statbuf->st_mode = vnode->mode;
+	statbuf->st_nlinks = vnode->nlinks;
 	statbuf->st_uid = vnode->uid;
 	statbuf->st_gid = vnode->gid;
 	statbuf->st_size = vnode->size;
+	statbuf->st_atime = vnode->atime;
+	statbuf->st_mtime = vnode->mtime;
+	statbuf->st_ctime = vnode->ctime;
 
 	vfs_release_vnode(vnode);
 	return 0;
@@ -236,9 +240,13 @@ int do_fstat(int fd, struct stat *statbuf)
 
 	statbuf->st_dev = 0;
 	statbuf->st_mode = file->vnode->mode;
+	statbuf->st_nlinks = file->vnode->nlinks;
 	statbuf->st_uid = file->vnode->uid;
 	statbuf->st_gid = file->vnode->gid;
 	statbuf->st_size = file->vnode->size;
+	statbuf->st_atime = file->vnode->atime;
+	statbuf->st_mtime = file->vnode->mtime;
+	statbuf->st_ctime = file->vnode->ctime;
 
 	return 0;
 }

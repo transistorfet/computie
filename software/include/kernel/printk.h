@@ -4,8 +4,9 @@
 
 #include <stdarg.h>
 
-int vprintk(const char *fmt, va_list args);
+int vprintk(int direct, const char *fmt, va_list args);
 int printk(const char *fmt, ...);
+int printk_safe(const char *fmt, ...);
 
 #endif
 

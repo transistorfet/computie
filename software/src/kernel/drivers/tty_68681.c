@@ -182,7 +182,14 @@ void tty_68681_tx_safe_mode()
 	*CSRA_WR_ADDR = CSRA_CLK_SELECT_REG_A_CONFIG;
 	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
 
+	*IMR_WR_ADDR = 0;
 	*CRA_WR_ADDR = CMD_ENABLE_TX_RX;
+
+	*OPCR_WR_ADDR = 0x00;
+	*OUT_SET_ADDR = 0xF0;
+
+	// Assert CTS
+	*OUT_SET_ADDR = 0x01;
 
 	/*
 	// Enable interrupts
@@ -279,15 +286,17 @@ int putchar_buffered(int ch)
 
 #define PRINTK_BUFFER	128
 
-int vprintk(const char *fmt, va_list args)
+int vprintk(int direct, const char *fmt, va_list args)
 {
 	int i;
 	char buffer[PRINTK_BUFFER];
+	int (*put)(int) = direct ? putchar_direct : putchar_buffered;
 
 	vsnprintf(buffer, PRINTK_BUFFER, fmt, args);
 	for (i = 0; i < PRINTK_BUFFER && buffer[i]; i++)
 		//putchar_direct(buffer[i]);
-		putchar_buffered(buffer[i]);
+		//putchar_buffered(buffer[i]);
+		put(buffer[i]);
 	return i;
 }
 
@@ -297,12 +306,23 @@ int printk(const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	ret = vprintk(fmt, args);
+	ret = vprintk(0, fmt, args);
 	va_end(args);
 
 	return ret;
 }
 
+int printk_safe(const char *fmt, ...)
+{
+	int ret;
+	va_list args;
+
+	va_start(args, fmt);
+	ret = vprintk(1, fmt, args);
+	va_end(args);
+
+	return ret;
+}
 
 int tty_68681_open(devminor_t minor, int access)
 {

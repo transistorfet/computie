@@ -526,6 +526,8 @@ int parse_command_line(char *input, struct pipe_command *commands)
 	return 0;
 }
 
+extern void test_pipe();
+extern void test_forkpipe();
 
 typedef int (*main_t)(int argc, char **argv);
 
@@ -546,6 +548,8 @@ struct command command_list[] = {
 	{ "rm", 	command_rm },
 	{ "cd", 	command_chdir },
 	{ "exec", 	command_exec },
+	{ "test_pipe", 	test_pipe },
+	{ "test_forkpipe", 	test_forkpipe },
 	{ NULL },
 };
 

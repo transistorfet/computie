@@ -52,8 +52,10 @@ __attribute__((noreturn)) void panic(const char *fmt, ...)
 {
 	va_list args;
 
+	tty_68681_tx_safe_mode();
+
 	va_start(args, fmt);
-	vprintk(fmt, args);
+	vprintk(1, fmt, args);
 	va_end(args);
 
 	asm("stop #0x2700\n");
@@ -96,25 +98,25 @@ __attribute__((interrupt)) void fatal_error()
 	GET_FRAME(frame);
 
 	tty_68681_tx_safe_mode();
-	printk("\n\nFatal Error at %x (status: %x, vector: %x). Halting...\n", frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
+	printk_safe("\n\nFatal Error at %x (status: %x, vector: %x). Halting...\n", frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
 
 	char *sp;
 	asm volatile("move.l  %%sp, %0\n" : "=r" (sp));
 
 	// Dump stack
-	printk("Stack: %x\n", sp);
+	printk_safe("Stack: %x\n", sp);
 	for (char i = 0; i < 48; i++) {
-		printk("%04x ", ((uint16_t *) frame)[i]);
+		printk_safe("%04x ", ((uint16_t *) frame)[i]);
 		if ((i & 0x7) == 0x7)
-			printk("\n");
+			printk_safe("\n");
 	}
 
 	// Dump code where the error occurred
-	printk("\nCode:\n");
+	printk_safe("\nCode:\n");
 	for (char i = 0; i < 48; i++) {
-		printk("%04x ", frame->pc[i]);
+		printk_safe("%04x ", frame->pc[i]);
 		if ((i & 0x7) == 0x7)
-			printk("\n");
+			printk_safe("\n");
 	}
 
 	// Jump to the monitor to allow debugging
@@ -137,5 +139,5 @@ __attribute__((interrupt)) void handle_trace()
 
 	GET_FRAME(frame);
 
-	printk("Trace %x (%x)\n", frame->pc, *frame->pc);
+	printk_safe("Trace %x (%x)\n", frame->pc, *frame->pc);
 }

@@ -60,7 +60,8 @@ KERNEL_OBJS = \
 	$(FILESYSTEM_OBJS) \
 	src/kernel/drivers/tty_68681.o \
 	src/kernel/drivers/mem.o \
-	src/kernel/sh.o \
+	src/commands/init.o \
+	src/commands/sh.o \
 	src/kernel/tests.o \
 	libc-68k-os.a
 

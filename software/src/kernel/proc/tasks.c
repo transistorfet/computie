@@ -16,29 +16,8 @@ struct process *create_init_task()
 	int error = 0;
 
 	struct process *proc = new_proc(SU_UID);
-
-	current_proc = proc;
-
-	// Open stdin
-	int fd = do_open("tty", O_RDONLY, 0);
-	if (fd < 0) {
-		printk("Error opening file tty %d\n", fd);
-		return NULL;
-	}
-
-	// Open stdout
-	fd = do_open("tty", O_WRONLY, 0);
-	if (fd < 0) {
-		printk("Error opening file tty %d\n", fd);
-		return NULL;
-	}
-
-	// Open stderr
-	fd = do_open("tty", O_WRONLY, 0);
-	if (fd < 0) {
-		printk("Error opening file tty %d\n", fd);
-		return NULL;
-	}
+	if (!proc)
+		panic("Ran out of procs\n");
 
 	// Setup memory segments
 	int stack_size = 0x2000;
@@ -47,14 +26,9 @@ struct process *create_init_task()
 	proc->map.segments[M_STACK].base = kmalloc(stack_size);
 	proc->map.segments[M_STACK].length = stack_size;
 
-	extern void sh_task();
+	extern void init_task();
 	char *argv[1] = { NULL }, *envp[1] = { NULL };
-	reset_stack(proc, sh_task, argv, envp);
-
-	// Set up initial stack
-	//char *stack_p = proc->map.segments[M_STACK].base + stack_size;
- 	//stack_p = create_context(stack_p, sh_task);
-	//proc->sp = stack_p;
+	reset_stack(proc, init_task, argv, envp);
 
 	return proc;
 }

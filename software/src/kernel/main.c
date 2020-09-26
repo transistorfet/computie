@@ -50,8 +50,10 @@ int main()
 	init_syscall();
 	init_proc();
 
-	// TODO This is a temporary hack until driver init and vfs access is separated
-	register_driver(DEVMAJOR_MEM, &mem_driver);
+	// Initialize drivers
+	for (char i = 0; drivers[i]; i++) {
+		drivers[i]->init();
+	}
 
 	init_vfs();
 
@@ -65,10 +67,19 @@ int main()
 	//vfs_mount(NULL, "/", 0, &mallocfs_mount_ops, SU_UID, &mp);
 	vfs_mount(NULL, "/", DEVNUM(DEVMAJOR_MEM, 0), &minix_mount_ops, SU_UID, &mp);
 
-	// Initialize drivers
-	for (char i = 0; drivers[i]; i++) {
-		drivers[i]->init();
-	}
+
+	struct vnode *vnode;
+
+	if (vfs_mknod(NULL, "tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, DEVNUM(DEVMAJOR_TTY, 0), SU_UID, &vnode))
+		vfs_lookup(NULL, "tty", SU_UID, VLOOKUP_NORMAL, &vnode);
+	vfs_release_vnode(vnode);
+
+	if (vfs_mknod(NULL, "mem0", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, DEVNUM(DEVMAJOR_MEM, 0), SU_UID, &vnode))
+		vfs_lookup(NULL, "mem0", SU_UID, VLOOKUP_NORMAL, &vnode);
+	vfs_release_vnode(vnode);
+
+
+
 
 /*
 	{

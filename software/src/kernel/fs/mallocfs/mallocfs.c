@@ -206,14 +206,14 @@ int mallocfs_release(struct vnode *vnode)
 int mallocfs_open(struct vfile *file, int flags)
 {
 	if (file->vnode->mode & S_IFCHR)
-		return dev_open(MALLOCFS_DATA(file->vnode).device, flags);
+		return dev_open(file->vnode->rdev, flags);
 	return 0;
 }
 
 int mallocfs_close(struct vfile *file)
 {
 	if (file->vnode->mode & S_IFCHR)
-		return dev_close(MALLOCFS_DATA(file->vnode).device);
+		return dev_close(file->vnode->rdev);
 	return 0;
 }
 
@@ -223,7 +223,7 @@ int mallocfs_read(struct vfile *file, char *buf, size_t nbytes)
 		return EISDIR;
 
 	if (file->vnode->mode & S_IFCHR)
-		return dev_read(MALLOCFS_DATA(file->vnode).device, buf, 0, nbytes);
+		return dev_read(file->vnode->rdev, buf, 0, nbytes);
 
 	else {
 		char *zone;
@@ -266,7 +266,7 @@ int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
 		return EISDIR;
 
 	if (file->vnode->mode & S_IFCHR)
-		return dev_write(MALLOCFS_DATA(file->vnode).device, buf, 0, nbytes);
+		return dev_write(file->vnode->rdev, buf, 0, nbytes);
 
 	else {
 		char *zone;
@@ -311,7 +311,7 @@ int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
 int mallocfs_ioctl(struct vfile *file, unsigned int request, void *argp)
 {
 	if (file->vnode->mode & S_IFCHR)
-		return dev_ioctl(MALLOCFS_DATA(file->vnode).device, request, argp);
+		return dev_ioctl(file->vnode->rdev, request, argp);
 	return -1;
 }
 

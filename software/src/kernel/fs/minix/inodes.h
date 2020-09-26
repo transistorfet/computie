@@ -8,7 +8,7 @@
 
 #include "minix.h"
 
-static inode_t alloc_inode(struct minix_super *super, mode_t mode, uid_t uid, gid_t gid, device_t device)
+static inode_t alloc_inode(struct minix_super *super, mode_t mode, uid_t uid, gid_t gid, device_t rdev)
 {
 	bitnum_t inode_num;
 	struct buf *inode_buf;
@@ -34,7 +34,7 @@ static inode_t alloc_inode(struct minix_super *super, mode_t mode, uid_t uid, gi
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		inode_table[inode_num].zones[j] = NULL;
 	if (mode & S_IFCHR)
-		inode_table[inode_num].zones[0] = device;
+		inode_table[inode_num].zones[0] = rdev;
 
 	release_block(inode_buf, BCF_DIRTY);
 
@@ -68,6 +68,7 @@ static int read_inode(struct vnode *vnode, inode_t ino)
 	vnode->atime = 0;
 	vnode->mtime = inode_table[ino].mtime;
 	vnode->ctime = 0;
+	vnode->rdev = (inode_table[ino].mode & S_IFCHR) ? inode_table[ino].zones[0] : 0;
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		MINIX_DATA(vnode).zones[j] = inode_table[ino].zones[j];
 
@@ -96,6 +97,8 @@ static int write_inode(struct vnode *vnode, inode_t ino)
 	inode_table[ino].gid = vnode->gid;
 	inode_table[ino].size = vnode->size;
 	inode_table[ino].mtime = vnode->mtime;
+	if (vnode->mode & S_IFCHR)
+		MINIX_DATA(vnode).zones[0] = vnode->rdev;
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		inode_table[ino].zones[j] = MINIX_DATA(vnode).zones[j];
 

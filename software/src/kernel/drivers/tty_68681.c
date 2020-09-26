@@ -110,9 +110,6 @@ struct serial_channel {
 	struct circular_buffer tx;
 };
 
-struct vnode;
-
-static struct vnode *tty_vnode;
 static struct serial_channel channel_a;
 static struct serial_channel channel_b;
 
@@ -166,8 +163,6 @@ int tty_68681_init()
 	*OUT_SET_ADDR = 0x01;
 
 	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
-	if (vfs_mknod(NULL, "tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, DEVNUM(DEVMAJOR_TTY, 0), SU_UID, &tty_vnode))
-		vfs_lookup(NULL, "tty", SU_UID, VLOOKUP_NORMAL, &tty_vnode);
 }
 
 void tty_68681_tx_safe_mode()
@@ -410,7 +405,7 @@ void handle_serial_irq()
 			}
 		}
 
-		resume_blocked_procs(SYS_READ, tty_vnode);
+		resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, 0));
 	}
 
 

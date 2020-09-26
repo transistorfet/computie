@@ -86,6 +86,19 @@ void do_syscall()
 	tty_68681_reset_leds(0x04);
 }
 
+/*
+int do_mount(const char *source, const char *target)
+{
+	struct mount *mp;
+	struct vnode *vnode;
+
+	if (vfs_lookup(current_proc->cwd, source, VLOOKUP_NORMAL, current_proc->uid, &vnode))
+		return ENOENT;
+
+	vfs_mount(current_proc->cwd, target, DEVNUM(DEVMAJOR_MEM, 0), &minix_mount_ops, current_proc->uid, &mp);
+}
+*/
+
 int do_unlink(const char *path)
 {
 	return vfs_unlink(current_proc->cwd, path, current_proc->uid);

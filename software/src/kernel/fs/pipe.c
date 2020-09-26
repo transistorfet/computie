@@ -58,7 +58,7 @@ int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile)
 	if (!vnode)
 		return ENOMEM;
 	// TODO replace uid and gid with valid values based on current proc?
-	vfs_init_vnode(vnode, &pipe_vnode_ops, NULL, 0600, 1, 0, 0, 0, 0, 0, 0);
+	vfs_init_vnode(vnode, &pipe_vnode_ops, NULL, 0600, 1, 0, 0, 0, 0, 0, 0, 0);
 
 	// We will be creating two references to this vnode, so increament the refcount
 	vfs_clone_vnode(vnode);
@@ -123,7 +123,7 @@ int pipe_read(struct vfile *file, char *buf, size_t nbytes)
 	}
 
 	// Wake up any processes that are blocked while writing to this vnode
-	resume_blocked_procs(SYS_WRITE, vnode);
+	resume_blocked_procs(SYS_WRITE, vnode, 0);
 
 	return nbytes;
 }
@@ -152,7 +152,7 @@ int pipe_write(struct vfile *file, const char *buf, size_t nbytes)
 		vnode->size = file->position;
 
 	// Wake up any processes that are blocked while reading from this vnode
-	resume_blocked_procs(SYS_READ, vnode);
+	resume_blocked_procs(SYS_READ, vnode, 0);
 
 	return nbytes;
 }

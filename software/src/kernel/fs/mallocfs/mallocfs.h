@@ -35,7 +35,6 @@ struct mallocfs_block {
 };
 
 struct mallocfs_data {
-	device_t device;
 	struct mallocfs_block *zones[MALLOCFS_TOTAL_ZONES];
 };
 

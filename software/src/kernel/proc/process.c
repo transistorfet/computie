@@ -166,14 +166,14 @@ void resume_proc(struct process *proc)
 	proc->state = PS_RESUMING;
 }
 
-void resume_blocked_procs(int syscall_num, struct vnode *vnode)
+void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev)
 {
 	struct process *cur = (struct process *) blocked_queue.tail;
 
 	for (; cur; cur = (struct process *) cur->node.prev) {
 		if (cur->blocked_call.syscall == syscall_num) {
 			int fd = cur->blocked_call.arg1;
-			if (cur->fd_table[fd]->vnode == vnode) {
+			if ((vnode && cur->fd_table[fd]->vnode == vnode) || (rdev && cur->fd_table[fd]->vnode->rdev == rdev)) {
 				resume_proc(cur);
 			}
 		}

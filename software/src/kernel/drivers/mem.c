@@ -40,13 +40,7 @@ static struct mem_geometry devices[] = {
 
 int mem_init()
 {
-	struct vnode *vnode;
-
 	register_driver(DEVMAJOR_MEM, &mem_driver);
-	if (vfs_mknod(NULL, "mem", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, DEVNUM(DEVMAJOR_MEM, 0), SU_UID, &vnode))
-		vfs_lookup(NULL, "mem", SU_UID, VLOOKUP_NORMAL, &vnode);
-	vfs_release_vnode(vnode);
-
 	return 0;
 }
 

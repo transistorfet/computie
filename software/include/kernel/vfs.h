@@ -86,6 +86,7 @@ struct vnode {
 	gid_t gid;
 	offset_t size;
 	uint16_t bits;
+	device_t rdev;
 
 	time_t atime;
 	time_t mtime;
@@ -133,7 +134,19 @@ const char *path_last_component(const char *path);
 int path_valid_component(const char *path);
 
 
-static inline void vfs_init_vnode(struct vnode *vnode, struct vnode_ops *ops, struct mount *mp, mode_t mode, short nlinks, uid_t uid, gid_t gid, offset_t size, time_t atime, time_t mtime, time_t ctime)
+static inline void vfs_init_vnode(
+	struct vnode *vnode,
+	struct vnode_ops *ops,
+	struct mount *mp,
+	mode_t mode,
+	short nlinks,
+	uid_t uid,
+	gid_t gid,
+	offset_t size,
+	device_t rdev,
+	time_t atime,
+	time_t mtime,
+	time_t ctime)
 {
 	vnode->ops = ops;
 	vnode->mp = mp;
@@ -144,6 +157,7 @@ static inline void vfs_init_vnode(struct vnode *vnode, struct vnode_ops *ops, st
 	vnode->gid = gid;
 	vnode->size = size;
 	vnode->bits = 0;
+	vnode->rdev = rdev;
 
 	vnode->atime = atime;
 	vnode->mtime = mtime;

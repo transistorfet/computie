@@ -69,7 +69,7 @@ void backup_current_proc();
 void return_to_current_proc(int ret);
 void suspend_current_proc();
 void resume_proc(struct process *proc);
-void resume_blocked_procs(int syscall_num, struct vnode *vnode);
+void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev);
 void resume_waiting_parent(struct process *proc);
 
 void schedule();

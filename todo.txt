@@ -1,6 +1,9 @@
 
 Operating System:
 
+	* should there be a vnode op to fill in the statbuf struct?  There are 4 values which are not in the vnode (ino, rdev, blksize, blocks), but at least the first
+	  two *could* be added to the vnode
+
 	* driver access through the filesystem is broken because it doesn't give an offset to the driver.  It should be possible to track the position
 	  in the file->position value (which isn't passed to the driver), but since file->vnode->size is not set, seeking wont work anyways (will always reset to 0)
 
@@ -17,7 +20,6 @@ Operating System:
 	* rename get_block, etc to get_buf???
 
 	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
-	* minixfs: implement proper 3 or 4 tier zone trees
 	* minixfs, implement multiple versions
 	* minixfs: add endian-conversion for superblock/inode/etc values, to be truely compatible
 

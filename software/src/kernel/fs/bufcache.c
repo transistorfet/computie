@@ -11,7 +11,7 @@
 #include "../misc/queue.h"
 
 
-#define BC_BLOCK_SIZE		1024
+#define BC_BLOCK_SIZE		256
 #define BC_ALLOC_BLOCK()	(kmalloc(BC_BLOCK_SIZE))
 #define BC_FREE_BLOCK(ptr)	kmfree(ptr)
 
@@ -95,33 +95,36 @@ static struct buf *_load_block(device_t dev, block_t num)
 	if (!entry)
 		return NULL;
 
-	_queue_insert(&cache, &entry->node);
-
 	entry->refcount = 1;
 	entry->flags = BCF_ALLOCATED;
 	entry->dev = dev;
 	entry->num = num;
 	entry->block = BC_ALLOC_BLOCK();
 
-	if (_read_entry(entry) < 0)
+	if (_read_entry(entry) < 0) {
+		entry->refcount = 0;
 		return NULL;
+	}
 
 	return entry;
 }
 
 static inline struct buf *_find_free_entry()
 {
-	// Recycle the last used entry
-	struct buf *last = (struct buf *) cache.tail;
+	struct buf *last;
 
-	if (!last || last->refcount > 0) {
+	// Recycle the last used entry
+	for (last = (struct buf *) cache.tail; last && last->refcount > 0; last = (struct buf *) last->node.prev) { }
+
+	if (!last) {
 		panic("Error: ran out of bufcache entries\n");
 		return NULL;
 	}
 
 	_queue_remove(&cache, &last->node);
+	_queue_insert(&cache, &last->node);
 	if (last->block) {
-		_write_entry(last);
+		//_write_entry(last);
 		BC_FREE_BLOCK(last->block);
 		last->block = NULL;
 	}

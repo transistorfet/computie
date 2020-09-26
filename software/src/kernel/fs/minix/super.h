@@ -19,7 +19,6 @@ static struct minix_super *load_superblock(device_t dev)
 		return NULL;
 	super_v1 = (struct minix_v1_superblock *) super_buf->block;
 
-
 	// TODO this is a temporary hack for cold starting a ram disk
 	if (super_v1->magic != 0x137F) {
 		printk("Initializing disk\n");
@@ -27,12 +26,13 @@ static struct minix_super *load_superblock(device_t dev)
 			return NULL;
 	}
 
-
 	super = kmalloc(sizeof(struct minix_super));
 	memcpy_s(&super->super_v1, super_v1, sizeof(struct minix_v1_superblock));
 	super->dev = dev;
 	super->max_filename = MINIX_V1_MAX_FILENAME;
 
+	// TODO this should actually modify the state value stored in the superblock and write it
+	release_block(super_buf, 0);
 	return super;
 }
 

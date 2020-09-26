@@ -11,7 +11,7 @@
 #include "../misc/queue.h"
 
 
-#define BC_BLOCK_SIZE		256
+#define BC_BLOCK_SIZE		1024
 #define BC_ALLOC_BLOCK()	(kmalloc(BC_BLOCK_SIZE))
 #define BC_FREE_BLOCK(ptr)	kmfree(ptr)
 
@@ -124,7 +124,7 @@ static inline struct buf *_find_free_entry()
 	_queue_remove(&cache, &last->node);
 	_queue_insert(&cache, &last->node);
 	if (last->block) {
-		//_write_entry(last);
+		_write_entry(last);
 		BC_FREE_BLOCK(last->block);
 		last->block = NULL;
 	}

@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-#define MINIX_V1_ZONE_SIZE		256
+#define MINIX_V1_ZONE_SIZE		1024
 #define MINIX_V1_LOG_ZONE_SIZE		__builtin_ctz(MINIX_V1_ZONE_SIZE)
 #define MINIX_V1_ZONENUMS_PER_ZONE	(MINIX_V1_ZONE_SIZE / sizeof(minix_v1_zone_t))
 #define MINIX_V1_LOG_ZONENUMS_PER_ZONE	__builtin_ctz(MINIX_V1_ZONENUMS_PER_ZONE)

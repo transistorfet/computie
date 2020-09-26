@@ -1,33 +1,33 @@
 
 Operating System:
 
+	* add syscalls: mount/umount
+	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
+	* add commands: mv, cp, rmdir, pwd, dd
+
 	* should there be a vnode op to fill in the statbuf struct?  There are 4 values which are not in the vnode (ino, rdev, blksize, blocks), but at least the first
 	  two *could* be added to the vnode
+	* modify the resume function used by tty_68681 to not require the tty vnode
+	* move the mknod calls out of driver init and into another function somewhere
+	* factor out a sched.h interface that can cover most needs inside the proc module
 
 	* driver access through the filesystem is broken because it doesn't give an offset to the driver.  It should be possible to track the position
 	  in the file->position value (which isn't passed to the driver), but since file->vnode->size is not set, seeking wont work anyways (will always reset to 0)
 
-	* modify the resume function used by tty_68681 to not require the tty vnode
-	* move the mknod calls out of driver init and into another function somewhere
-	* factor out a sched.h interface that can cover most needs inside the proc module
-	* need to remove the current_proc_stack value, instead writing directly to the process struct
 
+	* minixfs, implement multiple versions
 	* create a memory driver, with GETBLKSIZE and MEMUNLOCK/MEMERASE ioctl() functions which can be used for everything else
 
+	* need to remove the current_proc_stack value, instead writing directly to the process struct
 	* should you refactor the header files into actual c files, with a common header to declare the functions?
-	* look for any bugs that might be caused by a function returning the same vnode as was passed in
 	* should you refactor the errors to use vfs_return() to simplify the code a bit??
 	* rename get_block, etc to get_buf???
 
-	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
-	* minixfs, implement multiple versions
 	* minixfs: add endian-conversion for superblock/inode/etc values, to be truely compatible
-
 	* should there be something that periodically syncs data to disk?
-	* add syscalls: mount/umount
-	* add commands: mv, cp, rmdir, pwd
 
 	* add pipe setup to command evaluation
+	* look for any bugs that might be caused by a function returning the same vnode as was passed in
 
 
 	* implement signals
@@ -36,6 +36,9 @@ Operating System:
 	* what is needed to implement a 'ps' command in userspace? pstat()
 	* sort out process groups, and which process gets input
 	* syscalls to implement: getpid, kill, signals, alarm, pause, getuid/setuid, time
+
+	* make a proper init process which forks/executes sh.c
+	* make a background process of some kind, perhaps launched by init
 
 
 

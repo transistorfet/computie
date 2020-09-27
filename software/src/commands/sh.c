@@ -8,15 +8,8 @@
 #include <unistd.h>
 
 #include <sys/stat.h>
-#include <kernel/vfs.h>
 #include <kernel/syscall.h>
 
-
-#define RAM_ADDR	0x100000
-#define RAM_SIZE	1024
-
-#define ROM_ADDR	0x200000
-#define ROM_SIZE	0x1400
 
 
 void delay(int count) {
@@ -648,6 +641,9 @@ void serial_read_loop()
 
 		if (*argv[0] == '\0')
 			continue;
+		else if (!strcmp(argv[0], "exit")) {
+			return 0;
+		}
 		else if (!strcmp(argv[0], "cd")) {
 			command_chdir(argc, argv);
 			continue;
@@ -663,28 +659,16 @@ void serial_read_loop()
 	}
 }
 
-
-extern int tty_68681_tx_safe_mode();
-
-int test_files();
-int test_dirs();
-
 /**************
  * Main Entry *
  **************/
 
 int sh_task()
 {
-	test_files();
-	test_dirs();
-
-
 	puts("\n\nThe Pseudo Shell!\n");
 
 	serial_read_loop();
 
-	tty_68681_tx_safe_mode();
-	puts("Exiting to monitor");
 	return 0;
 }
 

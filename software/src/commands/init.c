@@ -15,6 +15,14 @@ int init_task()
 	// Open stderr
 	dup2(fd, 2);
 
+
+	// TODO temporary, for testing
+	int test_files();
+	int test_dirs();
+	test_files();
+	test_dirs();
+
+
 	int pid, status;
 	char *argv[2] = { NULL };
 	char *envp[2] = { NULL };

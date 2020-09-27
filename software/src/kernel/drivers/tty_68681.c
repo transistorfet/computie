@@ -37,6 +37,14 @@ struct driver tty_68681_driver = {
 #define CRA_WR_ADDR	((volatile uint8_t *) 0x700005)
 #define TBA_WR_ADDR	((volatile uint8_t *) 0x700007)
 #define RBA_RD_ADDR	((volatile uint8_t *) 0x700007)
+
+#define MR1B_MR2B_ADDR	((volatile uint8_t *) 0x700011)
+#define SRB_RD_ADDR	((volatile uint8_t *) 0x700013)
+#define CSRB_WR_ADDR	((volatile uint8_t *) 0x700013)
+#define CRB_WR_ADDR	((volatile uint8_t *) 0x700015)
+#define TBB_WR_ADDR	((volatile uint8_t *) 0x700017)
+#define RBB_RD_ADDR	((volatile uint8_t *) 0x700017)
+
 #define ACR_WR_ADDR	((volatile uint8_t *) 0x700009)
 
 #define CTUR_WR_ADDR	((volatile uint8_t *) 0x70000D)
@@ -132,6 +140,9 @@ void tty_68681_preinit()
 
 int tty_68681_init()
 {
+	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
+
+	// Reset channel A serial port
 	*CRA_WR_ADDR = CMD_RESET_MR;
 	asm volatile("nop\n");
 	*CRA_WR_ADDR = CMD_RESET_TX;
@@ -140,10 +151,10 @@ int tty_68681_init()
 	*MR1A_MR2A_ADDR = MR1A_MODE_A_REG_1_CONFIG;
 	*MR1A_MR2A_ADDR = MR2A_MODE_A_REG_2_CONFIG;
 	*CSRA_WR_ADDR = CSRA_CLK_SELECT_REG_A_CONFIG;
-	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
 
 	// Enable the channel A serial port
 	*CRA_WR_ADDR = CMD_ENABLE_TX_RX;
+
 
 	// Configure timer
 	*CTUR_WR_ADDR = 0x1F;
@@ -259,14 +270,10 @@ int putchar_direct(int ch)
 
 int putchar_buffered(int ch)
 {
-	//tty_68681_set_leds(0x02);
-
 	// TODO this timelimit is because of an issue on boot where it will lock up before interrupts are enabled because the buffer is full
 	for (int i = 0; _buf_is_full(&channel_a.tx) && i < 10000; i++) {
 		asm volatile("");
 	}
-
-	//tty_68681_reset_leds(0x02);
 
 	_buf_put_char(&channel_a.tx, ch);
 
@@ -376,19 +383,11 @@ void handle_serial_irq()
 	register char isr = *ISR_RD_ADDR;
 	register char status = *SRA_RD_ADDR;
 
-	//*OUT_SET_ADDR = 0x10;
-
 	backup_current_proc();
 
 	if (status & SR_RX_FULL) {
 		// De-Assert CTS
 		*OUT_RESET_ADDR = 0x01;
-	}
-
-	// TODO this is for debugging
-	if (status & (SR_OVERRUN_ERROR | SR_PARITY_ERROR | SR_FRAMING_ERROR)) {
-		printk("Game Over");
-		asm("stop #0x2700\n");
 	}
 
 	if (isr & ISR_CH_A_RX_READY_FULL) {
@@ -474,8 +473,6 @@ void handle_serial_irq()
 
 		*/
 	}
-
-	//*OUT_RESET_ADDR = 0x10;
 }
 
 

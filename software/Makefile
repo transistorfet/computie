@@ -62,7 +62,7 @@ KERNEL_OBJS = \
 	src/kernel/drivers/mem.o \
 	src/commands/init.o \
 	src/commands/sh.o \
-	src/kernel/tests.o \
+	src/tests/kernel/tests.o \
 	libc-68k-os.a
 
 COMMANDS = \

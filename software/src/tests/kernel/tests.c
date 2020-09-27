@@ -10,13 +10,13 @@
 #include <kernel/syscall.h>
 
 
-#include "proc/process.h"
-#include "interrupts.h"
+#include "../../kernel/proc/process.h"
+#include "../../kernel/interrupts.h"
 
 
 #define TASK_SIZE	800
 const char hello_task[TASK_SIZE] = {
-#include "../test.txt"
+#include "../../../test.txt"
 };
 
 
@@ -153,7 +153,7 @@ void test_files()
 
 
 	extern const char hello_task[800];
-	if ((error = vfs_open(NULL, "/hello", O_CREAT, 0755, SU_UID, &file))) {
+	if ((error = vfs_open(NULL, "/bin/hello", O_CREAT, 0755, SU_UID, &file))) {
 		printk("Error at open new file %d\n", error);
 		return;
 	}

@@ -5,25 +5,15 @@
 int init_task()
 {
 	// Open stdin
-	int fd = open("tty", O_RDONLY, 0);
+	int fd = open("/dev/tty0", O_RDONLY, 0);
 	if (fd < 0) {
 		printk("Error opening file tty %d\n", fd);
 		return NULL;
 	}
-
 	// Open stdout
-	fd = open("tty", O_WRONLY, 0);
-	if (fd < 0) {
-		printk("Error opening file tty %d\n", fd);
-		return NULL;
-	}
-
+	dup2(fd, 1);
 	// Open stderr
-	fd = open("tty", O_WRONLY, 0);
-	if (fd < 0) {
-		printk("Error opening file tty %d\n", fd);
-		return NULL;
-	}
+	dup2(fd, 2);
 
 	int pid, status;
 	char *argv[2] = { NULL };

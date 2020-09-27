@@ -577,10 +577,19 @@ int open_file(char *filename, int flags, int newfd)
 	return 0;
 }
 
-int execute_command(void *func, struct pipe_command *command, int argc, char **argv)
+int execute_command(struct pipe_command *command, int argc, char **argv)
 {
 	int pid, status;
+	void *main = NULL;
 	char *envp[2] = { NULL };
+
+	if (access(argv[0], X_OK)) {
+		main = find_command(argv[0]);
+		if (!main) {
+			puts("Command not found");
+			return 1;
+		}
+	}
 
  	pid = fork();
 	if (pid) {
@@ -592,8 +601,10 @@ int execute_command(void *func, struct pipe_command *command, int argc, char **a
 				exit(-1);
 		}
 
-		//status = exec(argv[1], argv2, envp);
-		status = SYSCALL3(SYS_EXECBUILTIN, (int) func, (int) argv, (int) envp);
+		if (main)
+			status = SYSCALL3(SYS_EXECBUILTIN, (int) main, (int) argv, (int) envp);
+		else
+			status = exec(argv[0], argv, envp);
 		// The exec() system call will only return if an error occurs
 		printf("Failed to execute %s: %d\n", argv[1], status);
 		exit(-1);
@@ -648,12 +659,7 @@ void serial_read_loop()
 			continue;
 		}
 
-		main = find_command(argv[0]);
-		if (main)
-			execute_command(main, &commands[0], argc, argv);
-		else
-			puts("Command not found");
-
+		execute_command(&commands[0], argc, argv);
 	}
 }
 

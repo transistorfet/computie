@@ -172,16 +172,5 @@ static inline struct vnode *vfs_clone_vnode(struct vnode *vnode)
 
 int vfs_release_vnode(struct vnode *vnode);
 
-#define VFS_RETURN(ret, vnode)	{ 	\
-	vfs_release_vnode(vnode);	\
-	return (ret);			\
-}
-
-static inline int vfs_return(int error, struct vnode *vnode)
-{
-	vfs_release_vnode(vnode);
-	return error;
-}
-
 #endif
 

@@ -38,6 +38,31 @@ struct mount_ops *filesystems[] = {
 	NULL	// Null Termination of Filesystems List
 };
 
+
+void create_dir_or_panic(const char *path)
+{
+	struct vfile *file;
+	struct vnode *vnode;
+
+	if (!vfs_lookup(NULL, path, SU_UID, VLOOKUP_NORMAL, &vnode))
+		vfs_release_vnode(vnode);
+	else {
+		if (vfs_open(NULL, path, O_CREAT, S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO, SU_UID, &file))
+			panic("Unable to create %s\n", path);
+		vfs_close(file);
+	}
+}
+
+void create_special_or_panic(const char *path, device_t rdev)
+{
+	struct vnode *vnode;
+
+	if (vfs_lookup(NULL, path, SU_UID, VLOOKUP_NORMAL, &vnode))
+		if (vfs_mknod(NULL, path, S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, rdev, SU_UID, &vnode))
+			panic("Unable to create special file %s\n", path);
+	vfs_release_vnode(vnode);
+}
+
 int main()
 {
 	DISABLE_INTS();
@@ -68,18 +93,11 @@ int main()
 	vfs_mount(NULL, "/", DEVNUM(DEVMAJOR_MEM, 0), &minix_mount_ops, SU_UID, &mp);
 
 
-	struct vnode *vnode;
+	create_dir_or_panic("/bin");
+	create_dir_or_panic("/dev");
 
-	if (vfs_mknod(NULL, "tty", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, DEVNUM(DEVMAJOR_TTY, 0), SU_UID, &vnode))
-		vfs_lookup(NULL, "tty", SU_UID, VLOOKUP_NORMAL, &vnode);
-	vfs_release_vnode(vnode);
-
-	if (vfs_mknod(NULL, "mem0", S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, DEVNUM(DEVMAJOR_MEM, 0), SU_UID, &vnode))
-		vfs_lookup(NULL, "mem0", SU_UID, VLOOKUP_NORMAL, &vnode);
-	vfs_release_vnode(vnode);
-
-
-
+	create_special_or_panic("/dev/tty0", DEVNUM(DEVMAJOR_TTY, 0));
+	create_special_or_panic("/dev/mem0", DEVNUM(DEVMAJOR_MEM, 0));
 
 /*
 	{

@@ -8,6 +8,7 @@
 #define R_OK               4	// Test if file is readable
 
 typedef int time_t;
+typedef int clock_t;
 
 typedef int pid_t;
 typedef short device_t;

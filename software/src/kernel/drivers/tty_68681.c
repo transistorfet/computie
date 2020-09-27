@@ -7,6 +7,7 @@
 #include <kernel/printk.h>
 #include <kernel/driver.h>
 
+#include "../time.h"
 #include "../interrupts.h"
 #include "../proc/process.h"
 #include "../misc/circlebuf.h"
@@ -157,8 +158,8 @@ int tty_68681_init()
 
 
 	// Configure timer
-	*CTUR_WR_ADDR = 0x1F;
-	*CTLR_WR_ADDR = 0xFF;
+	*CTUR_WR_ADDR = 0x20;
+	*CTLR_WR_ADDR = 0x00;
 
 	// Enable interrupts
 	set_interrupt(TTY_INT_VECTOR, enter_irq);
@@ -432,6 +433,8 @@ void handle_serial_irq()
 			tick = 1;
 			*OUT_RESET_ADDR = 0x80;
 		}
+
+		adjust_system_time(71111);
 
 		// Schedule a new process
 		schedule();

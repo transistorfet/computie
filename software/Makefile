@@ -45,6 +45,7 @@ KERNEL_OBJS = \
 	src/kernel/syscall_entry.o \
 	src/kernel/syscall.o \
 	src/kernel/filedesc.o \
+	src/kernel/time.o \
 	src/kernel/driver.o \
 	src/kernel/mm/kmalloc.o \
 	src/kernel/proc/tasks.o \

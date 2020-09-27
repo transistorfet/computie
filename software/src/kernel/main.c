@@ -15,6 +15,7 @@
 #include "proc/process.h"
 
 #include "api.h"
+#include "time.h"
 #include "interrupts.h"
 
 
@@ -71,6 +72,7 @@ int main()
 
 	init_kernel_heap((void *) 0x110000, 0xD0000);
 
+	init_time();
 	init_interrupts();
 	init_syscall();
 	init_proc();

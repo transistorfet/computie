@@ -1,4 +1,6 @@
 
+#include <stdio.h>
+
 #include <unistd.h>
 #include <kernel/syscall.h>
 
@@ -7,7 +9,7 @@ int init_task()
 	// Open stdin
 	int fd = open("/dev/tty0", O_RDONLY, 0);
 	if (fd < 0) {
-		printk("Error opening file tty %d\n", fd);
+		printf("Error opening file tty %d\n", fd);
 		return NULL;
 	}
 	// Open stdout

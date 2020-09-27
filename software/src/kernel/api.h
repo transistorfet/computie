@@ -2,6 +2,7 @@
 #ifndef _SRC_KERNEL_API_H
 #define _SRC_KERNEL_API_H
 
+#include <time.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -38,5 +39,8 @@ extern int do_fstat(int fd, struct stat *statbuf);
 extern int do_lseek(int fd, offset_t offset, int whence);
 extern int do_pipe(int pipefd[2]);
 extern int do_dup2(int oldfd, int newfd);
+
+// Time
+extern time_t do_time(struct tm *tptr);
 
 #endif

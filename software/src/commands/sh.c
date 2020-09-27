@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <time.h>
 #include <unistd.h>
 
 #include <sys/stat.h>
@@ -385,6 +386,13 @@ int command_exec(int argc, char **argv)
 	return 0;
 }
 
+int command_time(int argc, char **argv)
+{
+	time_t t = time(NULL);
+
+	printf("%d\n", t);
+	return 0;
+}
 
 
 
@@ -541,6 +549,7 @@ struct command command_list[] = {
 	{ "rm", 	command_rm },
 	{ "cd", 	command_chdir },
 	{ "exec", 	command_exec },
+	{ "time", 	command_time },
 	{ "test_pipe", 	test_pipe },
 	{ "test_forkpipe", 	test_forkpipe },
 	{ NULL },
@@ -641,9 +650,8 @@ void serial_read_loop()
 
 		if (*argv[0] == '\0')
 			continue;
-		else if (!strcmp(argv[0], "exit")) {
-			return 0;
-		}
+		else if (!strcmp(argv[0], "exit"))
+			return;
 		else if (!strcmp(argv[0], "cd")) {
 			command_chdir(argc, argv);
 			continue;

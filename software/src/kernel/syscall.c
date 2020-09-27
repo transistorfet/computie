@@ -14,6 +14,7 @@
 #include "proc/process.h"
 
 #include "api.h"
+#include "time.h"
 #include "filedesc.h"
 #include "interrupts.h"
 
@@ -54,6 +55,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_getpid,
 	do_getppid,
 	do_getuid,
+	do_time,
 
 	do_execbuiltin,
 };
@@ -408,5 +410,10 @@ int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
 	reset_stack(current_proc, addr, argv, envp);
 
 	return 0;
+}
+
+time_t do_time(struct tm *tptr)
+{
+	return get_system_time();
 }
 

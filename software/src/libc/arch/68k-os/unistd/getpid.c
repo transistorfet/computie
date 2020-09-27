@@ -1,5 +1,5 @@
 
-#include <kernel/vfs.h>
+#include <sys/types.h>
 #include <kernel/syscall.h>
 
 

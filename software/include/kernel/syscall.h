@@ -31,9 +31,10 @@
 #define SYS_GETPID	25
 #define SYS_GETPPID	26
 #define SYS_GETUID	27
+#define SYS_TIME	28
 
 // TODO remove this after testing
-#define SYS_EXECBUILTIN	28
+#define SYS_EXECBUILTIN	29
 
 typedef int (*syscall_t)(int, int, int);
 

@@ -1,10 +1,14 @@
 
 Operating System:
 
+	* rename exec to execve() to match unistd
+	* implement links in minix filesystem
+
 	* add time syscall, some means of the tty driver's timer advancing the clock, and updating of fs timestamps
 	* add syscalls: mount/umount
 	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
 	* add commands: mv, cp, rmdir, pwd, dd
+	* add support for second tty/serial port
 
 	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 	* factor out a sched.h interface that can cover most needs inside the proc module
@@ -26,11 +30,9 @@ Operating System:
 	* sort out process groups, and which process gets input
 	* syscalls to implement: kill, signals, alarm, pause, setuid, time
 
-	* make a proper init process which forks/executes sh.c
-	* make a background process of some kind, perhaps launched by init
+	* make a background process of some kind, perhaps launched by init, but I don't know what it could do since there are no other devices yet...
 	* add pipe setup to command evaluation
 
-	* add support for second tty/serial port
 	* add network syscalls for local IPC (unix file, sockets, maybe even fifos?)
 	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
 

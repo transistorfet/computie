@@ -51,6 +51,9 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_access,
 	do_rename,
 	do_dup2,
+	do_getpid,
+	do_getppid,
+	do_getuid,
 
 	do_execbuiltin,
 };
@@ -365,6 +368,22 @@ pid_t do_waitpid(pid_t pid, int *status, int options)
 		return pid;
 	}
 }
+
+pid_t do_getpid()
+{
+	return current_proc->pid;
+}
+
+pid_t do_getppid()
+{
+	return current_proc->parent;
+}
+
+uid_t do_getuid()
+{
+	return current_proc->uid;
+}
+
 
 int do_exec(const char *path, char *const argv[], char *const envp[])
 {

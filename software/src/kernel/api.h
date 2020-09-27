@@ -15,6 +15,9 @@ extern pid_t do_fork();
 extern int do_exec(const char *path, char *const argv[], char *const envp[]);
 extern pid_t do_wait(int *status);
 extern pid_t do_waitpid(pid_t pid, int *status, int options);
+extern pid_t do_getpid();
+extern pid_t do_getppid();
+extern uid_t do_getuid();
 
 // Files & Directories
 extern size_t do_read(int fd, char *buf, size_t nbytes);

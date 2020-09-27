@@ -27,6 +27,9 @@ void exit(int status);
 int exec(const char *path, char *const argv[], char *const envp[]);
 pid_t wait(int *status);
 pid_t waitpid(pid_t pid, int *status, int options);
+pid_t getpid();
+pid_t getppid();
+uid_t getuid();
 
 int mkdir(const char *path, mode_t mode);
 int rename(const char *oldpath, const char *newpath);

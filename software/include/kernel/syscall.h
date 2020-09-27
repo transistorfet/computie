@@ -28,9 +28,12 @@
 #define SYS_ACCESS	22
 #define SYS_RENAME	23
 #define SYS_DUP2	24
+#define SYS_GETPID	25
+#define SYS_GETPPID	26
+#define SYS_GETUID	27
 
 // TODO remove this after testing
-#define SYS_EXECBUILTIN	25
+#define SYS_EXECBUILTIN	28
 
 typedef int (*syscall_t)(int, int, int);
 

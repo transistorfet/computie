@@ -24,11 +24,13 @@ Operating System:
 	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 	* what is needed to implement a 'ps' command in userspace? pstat()
 	* sort out process groups, and which process gets input
-	* syscalls to implement: getpid, kill, signals, alarm, pause, getuid/setuid, time
+	* syscalls to implement: kill, signals, alarm, pause, setuid, time
 
 	* make a proper init process which forks/executes sh.c
 	* make a background process of some kind, perhaps launched by init
 	* add pipe setup to command evaluation
+
+	* add network syscalls for local IPC (unix file, sockets, maybe even fifos?)
 
 	* should there be something that periodically syncs data to disk?
 	* should you refactor the header files into actual c files, with a common header to declare the functions?

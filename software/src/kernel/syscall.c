@@ -412,8 +412,11 @@ int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
 	return 0;
 }
 
-time_t do_time(struct tm *tptr)
+time_t do_time(time_t *t)
 {
-	return get_system_time();
+	time_t current = get_system_time();
+	if (t)
+		*t = current;
+	return current;
 }
 

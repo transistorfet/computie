@@ -18,7 +18,7 @@ struct tm {
 
 //extern char *tzname[];
 
-time_t time(struct tm *tptr);
+time_t time(time_t *t);
 
 #endif
 

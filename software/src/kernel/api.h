@@ -41,6 +41,6 @@ extern int do_pipe(int pipefd[2]);
 extern int do_dup2(int oldfd, int newfd);
 
 // Time
-extern time_t do_time(struct tm *tptr);
+extern time_t do_time(time_t *t);
 
 #endif

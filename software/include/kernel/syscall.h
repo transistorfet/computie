@@ -12,29 +12,33 @@
 #define SYS_CLOSE	6
 #define SYS_WAIT	7
 #define SYS_CREAT	8
-//#define SYS_LINK	9
+#define SYS_LINK	9
 #define SYS_UNLINK	10
-#define SYS_EXEC	11
-#define SYS_STAT	12
-#define SYS_FSTAT	13
-#define SYS_LSEEK	14
-#define SYS_WAITPID	15
-#define SYS_PIPE	16
-#define SYS_READDIR	17
-#define SYS_MKDIR	18
-#define SYS_CHDIR	19
-#define SYS_CHMOD	20
-#define SYS_CHOWN	21
-#define SYS_ACCESS	22
-#define SYS_RENAME	23
-#define SYS_DUP2	24
-#define SYS_GETPID	25
-#define SYS_GETPPID	26
-#define SYS_GETUID	27
-#define SYS_TIME	28
+#define SYS_WAITPID	11
+#define SYS_CHDIR	12
+#define SYS_TIME	13
+#define SYS_MKNOD	14
+#define SYS_CHMOD	15
+#define SYS_CHOWN	16
+#define SYS_STAT	17
+#define SYS_LSEEK	18
+#define SYS_GETPID	19
+#define SYS_MOUNT	20
+#define SYS_UMOUNT	21
+#define SYS_GETUID	22
+#define SYS_FSTAT	23
+#define SYS_ACCESS	24
+#define SYS_RENAME	25
+#define SYS_MKDIR	26
+#define SYS_DUP2	27
+#define SYS_PIPE	28
+#define SYS_EXECVE	29
+#define SYS_READDIR	30
+#define SYS_GETPPID	31
+#define SYS_SYMLINK	32
 
 // TODO remove this after testing
-#define SYS_EXECBUILTIN	29
+#define SYS_EXECBUILTIN	33
 
 typedef int (*syscall_t)(int, int, int);
 

@@ -377,7 +377,7 @@ int command_exec(int argc, char **argv)
 		printf("The child exited with %d\n", status);
 	}
 	else {
-		status = exec(argv[1], argv2, envp);
+		status = execve(argv[1], argv2, envp);
 		// The exec() system call will only return if an error occurs
 		printf("Failed to execute %s: %d\n", argv[1], status);
 		exit(-1);
@@ -606,7 +606,7 @@ int execute_command(struct pipe_command *command, int argc, char **argv)
 		if (main)
 			status = SYSCALL3(SYS_EXECBUILTIN, (int) main, (int) argv, (int) envp);
 		else
-			status = exec(argv[0], argv, envp);
+			status = execve(argv[0], argv, envp);
 		// The exec() system call will only return if an error occurs
 		printf("Failed to execute %s: %d\n", argv[1], status);
 		exit(-1);

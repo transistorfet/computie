@@ -112,6 +112,23 @@ struct driver tty_68681_driver = {
 #define TTY_INT_VECTOR			IV_USER_VECTORS
 
 
+struct channel_ports {
+	volatile uint8_t *status;
+	volatile uint8_t *send;
+	volatile uint8_t *recv;
+};
+
+const struct channel_ports channel_a_ports = {
+	SRA_RD_ADDR,
+	TBA_WR_ADDR,
+	RBA_RD_ADDR,
+};
+
+const struct channel_ports channel_b_ports = {
+	SRB_RD_ADDR,
+	TBB_WR_ADDR,
+	RBB_RD_ADDR,
+};
 
 
 struct serial_channel {

@@ -19,7 +19,7 @@
 #include "interrupts.h"
 
 
-#define SYSCALL_MAX	32
+#define SYSCALL_MAX	40
 
 void test() { printk("It's a test!\n"); }
 
@@ -38,24 +38,28 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_creat,
 	test,		// 9 = link, not yet implemented
 	do_unlink,
-	do_exec,
-	do_stat,
-	do_fstat,
-	do_lseek,
 	do_waitpid,
-	do_pipe,
-	do_readdir,
-	do_mkdir,
 	do_chdir,
+	do_time,
+	do_mknod,
 	do_chmod,
 	do_chown,
+	do_stat,
+	do_lseek,
+	do_getpid,
+	do_mount,
+	do_umount,
+	do_getuid,
+	do_fstat,
 	do_access,
 	do_rename,
+	do_mkdir,
 	do_dup2,
-	do_getpid,
+	do_pipe,
+	do_exec,
+	do_readdir,
 	do_getppid,
-	do_getuid,
-	do_time,
+	test,		// 32 = symlink, not yet implemented
 
 	do_execbuiltin,
 };
@@ -91,9 +95,9 @@ void do_syscall()
 	tty_68681_reset_leds(0x04);
 }
 
-/*
 int do_mount(const char *source, const char *target)
 {
+	/*
 	struct mount *mp;
 	struct vnode *vnode;
 
@@ -101,8 +105,27 @@ int do_mount(const char *source, const char *target)
 		return ENOENT;
 
 	vfs_mount(current_proc->cwd, target, DEVNUM(DEVMAJOR_MEM, 0), &minix_mount_ops, current_proc->uid, &mp);
+	*/
+	return -1;
 }
-*/
+
+int do_umount(const char *source)
+{
+	//return vfs_unmount(current_proc->cwd, target, DEVNUM(DEVMAJOR_MEM, 0), &minix_mount_ops, current_proc->uid, &mp);
+	return -1;
+}
+
+int do_mknod(const char *path, mode_t mode, device_t dev)
+{
+	int error;
+	struct vnode *vnode;
+
+	error = vfs_mknod(current_proc->cwd, path, mode, dev, current_proc->uid, &vnode);
+	if (error)
+		return error;
+	vfs_release_vnode(vnode);
+	return 0;
+}
 
 int do_unlink(const char *path)
 {

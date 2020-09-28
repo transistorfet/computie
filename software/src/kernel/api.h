@@ -27,6 +27,7 @@ extern int do_creat(const char *path, mode_t mode);
 extern int do_open(const char *path, int oflags, mode_t mode);
 extern int do_close(int fd);
 extern int do_readdir(int fd, struct dirent *dir);
+extern int do_mknod(const char *path, mode_t mode, device_t dev);
 extern int do_unlink(const char *path);
 extern int do_mkdir(const char *path, mode_t mode);
 extern int do_rename(const char *oldpath, const char *newpath);
@@ -39,6 +40,8 @@ extern int do_fstat(int fd, struct stat *statbuf);
 extern int do_lseek(int fd, offset_t offset, int whence);
 extern int do_pipe(int pipefd[2]);
 extern int do_dup2(int oldfd, int newfd);
+int do_mount(const char *source, const char *target);
+int do_umount(const char *source);
 
 // Time
 extern time_t do_time(time_t *t);

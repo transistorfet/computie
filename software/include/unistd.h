@@ -24,7 +24,7 @@ struct stat;
 
 pid_t fork();
 void exit(int status);
-int exec(const char *path, char *const argv[], char *const envp[]);
+int execve(const char *path, char *const argv[], char *const envp[]);
 pid_t wait(int *status);
 pid_t waitpid(pid_t pid, int *status, int options);
 pid_t getpid();
@@ -34,6 +34,7 @@ uid_t getuid();
 int mkdir(const char *path, mode_t mode);
 int rename(const char *oldpath, const char *newpath);
 
+int mknod(const char *path, mode_t mode, device_t dev);
 int creat(const char *path, mode_t mode);
 int open(const char *path, int flags, mode_t mode);
 int close(int fd);
@@ -47,6 +48,8 @@ int chown(const char *path, uid_t owner, gid_t group);
 int chmod(const char *path, mode_t mode);
 int stat(const char *path, struct stat *statbuf);
 int fstat(int fd, struct stat *statbuf);
+int link(const char *oldpath, const char *newpath);
+int symlink(const char *target, const char *linkpath);
 int unlink(const char *path);
 offset_t lseek(int fd, offset_t offset, int whence);
 

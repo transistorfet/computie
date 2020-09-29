@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <errno.h>
 
 #include <sys/stat.h>
 #include <kernel/vfs.h>
@@ -113,27 +114,40 @@ struct driver tty_68681_driver = {
 
 
 struct channel_ports {
+	volatile uint8_t *port_config;
+	volatile uint8_t *clock_config;
 	volatile uint8_t *status;
+	volatile uint8_t *command;
 	volatile uint8_t *send;
 	volatile uint8_t *recv;
+	char ctsbit;
 };
 
 const struct channel_ports channel_a_ports = {
+	MR1A_MR2A_ADDR,
+	CSRA_WR_ADDR,
 	SRA_RD_ADDR,
+	CRA_WR_ADDR,
 	TBA_WR_ADDR,
 	RBA_RD_ADDR,
+	0x01,
 };
 
 const struct channel_ports channel_b_ports = {
+	MR1B_MR2B_ADDR,
+	CSRB_WR_ADDR,
 	SRB_RD_ADDR,
+	CRB_WR_ADDR,
 	TBB_WR_ADDR,
 	RBB_RD_ADDR,
+	0x02,
 };
 
 
 struct serial_channel {
 	struct circular_buffer rx;
 	struct circular_buffer tx;
+	const struct channel_ports *ports;
 };
 
 static struct serial_channel channel_a;
@@ -145,299 +159,125 @@ char tick = 0;
 
 extern void enter_irq();
 
-void tty_68681_tx_safe_mode();
-
-
-void tty_68681_preinit()
+static inline void config_serial_channel(struct serial_channel *channel)
 {
-	_buf_init(&channel_a.rx);
-	_buf_init(&channel_a.tx);
-
-	tty_68681_tx_safe_mode();
-}
-
-int tty_68681_init()
-{
-	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
-
 	// Reset channel A serial port
-	*CRA_WR_ADDR = CMD_RESET_MR;
+	*channel->ports->command = CMD_RESET_MR;
 	asm volatile("nop\n");
-	*CRA_WR_ADDR = CMD_RESET_TX;
+	*channel->ports->command = CMD_RESET_TX;
 
 	// Configure channel A serial port
-	*MR1A_MR2A_ADDR = MR1A_MODE_A_REG_1_CONFIG;
-	*MR1A_MR2A_ADDR = MR2A_MODE_A_REG_2_CONFIG;
-	*CSRA_WR_ADDR = CSRA_CLK_SELECT_REG_A_CONFIG;
+	*channel->ports->port_config = MR1A_MODE_A_REG_1_CONFIG;
+	*channel->ports->port_config = MR2A_MODE_A_REG_2_CONFIG;
+	*channel->ports->clock_config = CSRA_CLK_SELECT_REG_A_CONFIG;
 
 	// Enable the channel A serial port
-	*CRA_WR_ADDR = CMD_ENABLE_TX_RX;
-
-
-	// Configure timer
-	*CTUR_WR_ADDR = 0x20;
-	*CTLR_WR_ADDR = 0x00;
-
-	// Enable interrupts
-	set_interrupt(TTY_INT_VECTOR, enter_irq);
-	*IVR_WR_ADDR = TTY_INT_VECTOR;
-	*IMR_WR_ADDR = ISR_TIMER_CHANGE | ISR_INPUT_CHANGE | ISR_CH_A_RX_READY_FULL | ISR_CH_A_TX_READY;
-
-	// Flash LEDs briefly at boot
-	*OPCR_WR_ADDR = 0x00;
-	*OUT_SET_ADDR = 0xF0;
-	*OUT_RESET_ADDR = 0xF0;
-
-	// Assert CTS
-	*OUT_SET_ADDR = 0x01;
-
-	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
-}
-
-void tty_68681_tx_safe_mode()
-{
-	DISABLE_INTS();
-
-	*CRA_WR_ADDR = CMD_RESET_MR;
-
-	// Configure channel A serial port
-	*MR1A_MR2A_ADDR = MR1A_MODE_A_REG_1_CONFIG;
-	*MR1A_MR2A_ADDR = MR2A_MODE_A_REG_2_CONFIG;
-	*CSRA_WR_ADDR = CSRA_CLK_SELECT_REG_A_CONFIG;
-	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
-
-	*IMR_WR_ADDR = 0;
-	*CRA_WR_ADDR = CMD_ENABLE_TX_RX;
-
-	*OPCR_WR_ADDR = 0x00;
-	*OUT_SET_ADDR = 0xF0;
-
-	// Assert CTS
-	*OUT_SET_ADDR = 0x01;
-
-	/*
-	// Enable interrupts
-	set_interrupt(TTY_INT_VECTOR, enter_irq);
-	*IVR_WR_ADDR = TTY_INT_VECTOR;
-	*IMR_WR_ADDR = ISR_CH_A_RX_READY_FULL | ISR_CH_A_TX_READY;
-
-	ENABLE_INTS();
-	*/
-}
-
-void tty_68681_set_leds(uint8_t bits)
-{
-	*OUT_SET_ADDR = (bits << 4);
-}
-
-void tty_68681_reset_leds(uint8_t bits)
-{
-	*OUT_RESET_ADDR = (bits << 4);
+	*channel->ports->command = CMD_ENABLE_TX_RX;
 }
 
 
-int getchar_buffered(void)
+static inline struct serial_channel *from_minor_dev(device_t minor)
 {
-	/*
-	char in;
-
-	while (1) {
-		if (*SRA_RD_ADDR & SR_RX_READY)
-			return *RBA_RD_ADDR;
-
-		// Debugging - Set all LEDs on if an input is active
-		//in = (*INPUT_RD_ADDR & 0x3f);
-		//if (in & 0x18) {
-		//	*OUT_SET_ADDR = 0xF0;
-		//} else {
-		//	*OUT_RESET_ADDR = 0xF0;
-		//}
-
-		// Debugging - Set LEDs on timer
-		//if (*ISR_RD_ADDR & ISR_TIMER_CHANGE) {
-		//	tick = !tick;
-		//	*OUT_SET_ADDR = tick;
-		//	*OUT_RESET_ADDR = !tick;
-		//}
+	switch (minor) {
+		case 0:
+			return &channel_a;
+		case 1:
+			return &channel_b;
+		default:
+			return NULL;
 	}
-	*/
+}
 
-	//uint16_t status;
-	//asm("move.w	%%sr, %0\n" : "=g" (status));
-	//printk("Status: %x\n", status);
-
+static inline int getchar_buffered(struct serial_channel *channel)
+{
 	// Assert CTS
-	*OUT_SET_ADDR = 0x01;
+	*OUT_SET_ADDR = channel->ports->ctsbit;
 
 	//putchar_direct('#');
-	while (_buf_is_empty(&channel_a.rx)) {
+	while (_buf_is_empty(&channel->rx)) {
 		asm volatile("");
 		//putchar_buffered('^');
 	}
-	return _buf_get_char(&channel_a.rx);
+	return _buf_get_char(&channel->rx);
 }
 
 
-int putchar_direct(int ch)
+static inline int putchar_direct(struct serial_channel *channel, int ch)
 {
-	*CRA_WR_ADDR = CMD_ENABLE_TX;
-	while (!(*SRA_RD_ADDR & SR_TX_READY)) { }
-	*TBA_WR_ADDR = (char) ch;
+	*channel->ports->command = CMD_ENABLE_TX;
+	while (!(*channel->ports->status & SR_TX_READY)) { }
+	*channel->ports->send = (char) ch;
 	return ch;
 }
 
-int putchar_buffered(int ch)
+static inline int putchar_buffered(struct serial_channel *channel, int ch)
 {
 	// TODO this timelimit is because of an issue on boot where it will lock up before interrupts are enabled because the buffer is full
-	for (int i = 0; _buf_is_full(&channel_a.tx) && i < 10000; i++) {
+	for (int i = 0; _buf_is_full(&channel->tx) && i < 10000; i++) {
 		asm volatile("");
 	}
 
-	_buf_put_char(&channel_a.tx, ch);
+	_buf_put_char(&channel->tx, ch);
 
 	// Enable the channel A transmitter
-	*CRA_WR_ADDR = CMD_ENABLE_TX;
+	*channel->ports->command = CMD_ENABLE_TX;
 
 	return ch;
 }
 
-//int putchar(int ch) { return putchar_buffered(ch); }
+//int putchar(int ch) { return putchar_buffered(&channel_a, ch); }
 
-
-#define PRINTK_BUFFER	128
-
-int vprintk(int direct, const char *fmt, va_list args)
+ static inline void handle_channel_io(register char isr, struct serial_channel *channel)
 {
-	int i;
-	char buffer[PRINTK_BUFFER];
-	int (*put)(int) = direct ? putchar_direct : putchar_buffered;
+	register char status = *channel->ports->status;
+	register rx_ready = channel == &channel_a ? ISR_CH_A_RX_READY_FULL : ISR_CH_B_RX_READY_FULL;
+	register tx_ready = channel == &channel_a ? ISR_CH_A_TX_READY : ISR_CH_B_TX_READY;
 
-	vsnprintf(buffer, PRINTK_BUFFER, fmt, args);
-	for (i = 0; i < PRINTK_BUFFER && buffer[i]; i++)
-		//putchar_direct(buffer[i]);
-		//putchar_buffered(buffer[i]);
-		put(buffer[i]);
-	return i;
-}
+	if (status & SR_RX_FULL) {
+		// De-Assert CTS
+		*OUT_RESET_ADDR = channel->ports->ctsbit;
+	}
 
-int printk(const char *fmt, ...)
-{
-	int ret;
-	va_list args;
-
-	va_start(args, fmt);
-	ret = vprintk(0, fmt, args);
-	va_end(args);
-
-	return ret;
-}
-
-int printk_safe(const char *fmt, ...)
-{
-	int ret;
-	va_list args;
-
-	va_start(args, fmt);
-	ret = vprintk(1, fmt, args);
-	va_end(args);
-
-	return ret;
-}
-
-int tty_68681_open(devminor_t minor, int access)
-{
-	return 0;
-}
-
-int tty_68681_close(devminor_t minor)
-{
-	return 0;
-}
-
-int tty_68681_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
-{
-	int i = size;
-
-	for (; i > 0; i--, buffer++) {
-		if (_buf_is_empty(&channel_a.rx)) {
-			// Suspend the process only if we haven't read any data yet
-			if (size == i) {
-				//putchar_direct('S');
-				suspend_current_proc();
+	if (isr & rx_ready) {
+		while (*channel->ports->status & SR_RX_READY) {
+			if (!_buf_is_full(&channel->rx)) {
+				char ch = *channel->ports->recv;
+				_buf_put_char(&channel->rx, ch);
 			}
-			return size - i;
+			else {
+				// De-Assert CTS
+				*OUT_RESET_ADDR = channel->ports->ctsbit;
+				break;
+			}
 		}
-		*buffer = getchar_buffered();
-	}
-	return size;
-}
 
-int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_t size)
-{
-	int i = size;
-
-	// TODO with this method, each write's size must always be smaller than buffer size
-	if (_buf_free_space(&channel_a.tx) < size) {
-		//putchar_direct('S');
-		suspend_current_proc();
-		return 0;
+		resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, channel == &channel_a ? 0 : 1));
 	}
 
-	for (; i > 0; i--, buffer++)
-		//putchar_indirect(*buffer);
-		putchar_buffered(*buffer);
-	return size;
-}
 
-int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
-{
-	return -1;
+	if (isr & tx_ready) {
+		int ch = _buf_get_char(&channel->tx);
+		if (ch != -1) {
+			*channel->ports->send = (char) ch;
+		}
+		else {
+			// Disable the channel A transmitter if empty
+			if (status & SR_TX_EMPTY)
+				*channel->ports->command = CMD_DISABLE_TX;
+		}
+	}
 }
-
 
 // NOTE the entry to this is in syscall_entry.s
 void handle_serial_irq()
 {
 	register char isr = *ISR_RD_ADDR;
-	register char status = *SRA_RD_ADDR;
 
 	backup_current_proc();
 
-	if (status & SR_RX_FULL) {
-		// De-Assert CTS
-		*OUT_RESET_ADDR = 0x01;
-	}
+	handle_channel_io(isr, &channel_a);
 
-	if (isr & ISR_CH_A_RX_READY_FULL) {
-		while (*SRA_RD_ADDR & SR_RX_READY) {
-			if (!_buf_is_full(&channel_a.rx)) {
-				char ch = *RBA_RD_ADDR;
-				_buf_put_char(&channel_a.rx, ch);
-			}
-			else {
-				// De-Assert CTS
-				*OUT_RESET_ADDR = 0x01;
-				//printk("Lost: %d %d\n", channel_a.rx.in, channel_a.rx.out);
-				break;
-			}
-		}
-
-		resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, 0));
-	}
-
-
-	if (isr & ISR_CH_A_TX_READY) {
-		int ch = _buf_get_char(&channel_a.tx);
-		if (ch != -1) {
-			*TBA_WR_ADDR = (char) ch;
-		}
-		else {
-			if (status & SR_TX_EMPTY)
-			// Disable the channel A transmitter
-			*CRA_WR_ADDR = CMD_DISABLE_TX;
-			//*TBA_WR_ADDR = '*';
-		}
-	}
+	handle_channel_io(isr, &channel_b);
 
 	if (isr & ISR_TIMER_CHANGE) {
 		// Clear the interrupt bit by reading the stop address
@@ -495,4 +335,190 @@ void handle_serial_irq()
 	}
 }
 
+
+
+#define PRINTK_BUFFER	128
+
+int vprintk(int direct, const char *fmt, va_list args)
+{
+	int i;
+	char buffer[PRINTK_BUFFER];
+	int (*put)(struct serial_channel *, int) = direct ? putchar_direct : putchar_buffered;
+
+	vsnprintf(buffer, PRINTK_BUFFER, fmt, args);
+	for (i = 0; i < PRINTK_BUFFER && buffer[i]; i++)
+		//putchar_direct(&channel_a, buffer[i]);
+		//putchar_buffered(&channel_a, buffer[i]);
+		put(&channel_a, buffer[i]);
+	return i;
+}
+
+int printk(const char *fmt, ...)
+{
+	int ret;
+	va_list args;
+
+	va_start(args, fmt);
+	ret = vprintk(0, fmt, args);
+	va_end(args);
+
+	return ret;
+}
+
+int printk_safe(const char *fmt, ...)
+{
+	int ret;
+	va_list args;
+
+	va_start(args, fmt);
+	ret = vprintk(1, fmt, args);
+	va_end(args);
+
+	return ret;
+}
+
+
+
+void tty_68681_tx_safe_mode()
+{
+	DISABLE_INTS();
+
+	*CRA_WR_ADDR = CMD_RESET_MR;
+
+	// Configure channel A serial port
+	*MR1A_MR2A_ADDR = MR1A_MODE_A_REG_1_CONFIG;
+	*MR1A_MR2A_ADDR = MR2A_MODE_A_REG_2_CONFIG;
+	*CSRA_WR_ADDR = CSRA_CLK_SELECT_REG_A_CONFIG;
+	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
+
+	*IMR_WR_ADDR = 0;
+	*CRA_WR_ADDR = CMD_ENABLE_TX_RX;
+
+	*OPCR_WR_ADDR = 0x00;
+	*OUT_SET_ADDR = 0xF0;
+
+	// Assert CTS
+	*OUT_SET_ADDR = 0x01;
+
+	/*
+	// Enable interrupts
+	set_interrupt(TTY_INT_VECTOR, enter_irq);
+	*IVR_WR_ADDR = TTY_INT_VECTOR;
+	*IMR_WR_ADDR = ISR_CH_A_RX_READY_FULL | ISR_CH_A_TX_READY;
+
+	ENABLE_INTS();
+	*/
+}
+
+void tty_68681_normal_mode()
+{
+	// Configure baud rate set and clock source
+	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
+
+	config_serial_channel(&channel_a);
+	config_serial_channel(&channel_b);
+
+	// Configure timer
+	*CTUR_WR_ADDR = 0x20;
+	*CTLR_WR_ADDR = 0x00;
+
+	// Enable interrupts
+	set_interrupt(TTY_INT_VECTOR, enter_irq);
+	*IVR_WR_ADDR = TTY_INT_VECTOR;
+	*IMR_WR_ADDR = ISR_TIMER_CHANGE | ISR_INPUT_CHANGE | ISR_CH_A_RX_READY_FULL | ISR_CH_A_TX_READY;
+
+	// Flash LEDs briefly at boot
+	*OPCR_WR_ADDR = 0x00;
+	*OUT_SET_ADDR = 0xF0;
+	*OUT_RESET_ADDR = 0xF0;
+
+	// Assert CTS on both channels
+	*OUT_SET_ADDR = 0x03;
+}
+
+
+void tty_68681_preinit()
+{
+	_buf_init(&channel_a.rx);
+	_buf_init(&channel_a.tx);
+	channel_a.ports = &channel_a_ports;
+
+	_buf_init(&channel_b.rx);
+	_buf_init(&channel_b.tx);
+	channel_b.ports = &channel_b_ports;
+
+	tty_68681_tx_safe_mode();
+}
+
+int tty_68681_init()
+{
+	tty_68681_normal_mode();
+
+	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
+}
+
+int tty_68681_open(devminor_t minor, int access)
+{
+	return 0;
+}
+
+int tty_68681_close(devminor_t minor)
+{
+	return 0;
+}
+
+int tty_68681_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
+{
+	int i = size;
+	struct serial_channel *channel = from_minor_dev(minor);
+
+	if (!channel)
+		return ENODEV;
+
+	for (; i > 0; i--, buffer++) {
+		if (_buf_is_empty(&channel->rx)) {
+			// Suspend the process only if we haven't read any data yet
+			if (size == i)
+				suspend_current_proc();
+			return size - i;
+		}
+		*buffer = getchar_buffered(channel);
+	}
+	return size;
+}
+
+int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_t size)
+{
+	int i = size;
+	struct serial_channel *channel = from_minor_dev(minor);
+
+	if (!channel)
+		return ENODEV;
+
+	// TODO with this method, each write's size must always be smaller than buffer size
+	if (_buf_free_space(&channel->tx) < size) {
+		suspend_current_proc();
+		return 0;
+	}
+
+	for (; i > 0; i--, buffer++)
+		//putchar_indirect(channel, *buffer);
+		putchar_buffered(channel, *buffer);
+	return size;
+}
+
+int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
+{
+	return -1;
+}
+
+void tty_68681_set_leds(uint8_t bits)
+{
+	*OUT_SET_ADDR = (bits << 4);
+}
+
+void tty_68681_reset_leds(uint8_t bits)
+{
+	*OUT_RESET_ADDR = (bits << 4);
+}
 

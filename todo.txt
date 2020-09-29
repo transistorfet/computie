@@ -16,6 +16,7 @@ Operating System:
 	* need to remove the current_proc_stack value, instead writing directly to the process struct
 	* driver access through the filesystem is broken because it doesn't give an offset to the driver.  It should be possible to track the position
 	  in the file->position value (which isn't passed to the driver), but since file->vnode->size is not set, seeking wont work anyways (will always reset to 0)
+	  It looks like linux passes an offset pointer to the read/write functions, which the driver function adjusts by deref'ing
 	* we could also move them to the vfs functions...
 
 
@@ -33,7 +34,7 @@ Operating System:
 	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
 
 	* should there be something that periodically syncs data to disk?
-	* should you refactor the header files into actual c files, with a common header to declare the functions?
+	* should you refactor the header files in minix implementation into actual c files, with a common header to declare the functions?
 	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)
 
 

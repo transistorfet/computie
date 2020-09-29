@@ -95,24 +95,27 @@ void do_syscall()
 	tty_68681_reset_leds(0x04);
 }
 
-int do_mount(const char *source, const char *target)
+int do_mount(const char *source, const char *target, struct mount_opts *opts)
 {
-	/*
-	struct mount *mp;
 	struct vnode *vnode;
 
 	if (vfs_lookup(current_proc->cwd, source, VLOOKUP_NORMAL, current_proc->uid, &vnode))
 		return ENOENT;
 
-	vfs_mount(current_proc->cwd, target, DEVNUM(DEVMAJOR_MEM, 0), &minix_mount_ops, current_proc->uid, &mp);
-	*/
+	// TODO use opts
+	extern struct mount_ops minix_mount_ops;
+	vfs_mount(current_proc->cwd, target, vnode->rdev, &minix_mount_ops, current_proc->uid);
 	return -1;
 }
 
 int do_umount(const char *source)
 {
-	//return vfs_unmount(current_proc->cwd, target, DEVNUM(DEVMAJOR_MEM, 0), &minix_mount_ops, current_proc->uid, &mp);
-	return -1;
+	struct vnode *vnode;
+
+	if (vfs_lookup(current_proc->cwd, source, VLOOKUP_NORMAL, current_proc->uid, &vnode))
+		return ENOENT;
+
+	return vfs_unmount(current_proc->cwd, vnode->rdev);
 }
 
 int do_mknod(const char *path, mode_t mode, device_t dev)

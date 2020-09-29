@@ -72,7 +72,7 @@ struct mount {
 	struct vnode *mount_node;	// The vnode this fs is mounted on
 	struct vnode *root_node;	// The root vnode of this fs
 	void *super;			// The fs-specific superblock
-	device_t dev;
+	device_t dev;			// The device that's mounted
 };
 
 struct vnode {
@@ -107,9 +107,9 @@ struct vfile {
 
 int init_vfs();
 
-int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_ops *ops, uid_t uid, struct mount **result);
-int vfs_unmount(struct mount *mp, uid_t uid);
-int vfs_sync(struct mount *mp);
+int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_ops *ops, uid_t uid);
+int vfs_unmount(device_t dev, uid_t uid);
+int vfs_sync(device_t dev);
 
 int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct vnode **result);
 int vfs_access(struct vnode *cwd, const char *path, int mode, uid_t uid);

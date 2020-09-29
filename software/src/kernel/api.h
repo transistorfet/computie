@@ -6,6 +6,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/mount.h>
 
 void init_syscall();
 void do_syscall();
@@ -40,7 +41,7 @@ extern int do_fstat(int fd, struct stat *statbuf);
 extern int do_lseek(int fd, offset_t offset, int whence);
 extern int do_pipe(int pipefd[2]);
 extern int do_dup2(int oldfd, int newfd);
-int do_mount(const char *source, const char *target);
+int do_mount(const char *source, const char *target, struct mount_opts *opts);
 int do_umount(const char *source);
 
 // Time

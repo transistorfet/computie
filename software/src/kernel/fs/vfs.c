@@ -32,7 +32,7 @@ int init_vfs()
 	//vfs_root = new_vnode(0, 0777);
 
 	for (short i = 0; i < VFS_MOUNT_MAX; i++) {
-		mountpoints[i].ops = NULL;
+		mountpoints[i].dev = 0;
 	}
 
 	init_bufcache();
@@ -40,16 +40,13 @@ int init_vfs()
 }
 
 
-int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_ops *ops, uid_t uid, struct mount **result)
+int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_ops *ops, uid_t uid)
 {
 	int error;
 	struct vnode *vnode;
 
 	if (uid != SU_UID)
 		return EPERM;
-
-	if (!result)
-		return EINVAL;
 
 	if (!root_fs)
 		vnode = NULL;
@@ -67,7 +64,7 @@ int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_op
 	// TODO make sure not already mounted
 
 	for (short i = 0; i < VFS_MOUNT_MAX; i++) {
-		if (mountpoints[i].ops == NULL) {
+		if (mountpoints[i].dev == 0) {
 			mountpoints[i].ops = ops;
 			mountpoints[i].mount_node = vnode;
 			mountpoints[i].root_node = NULL;
@@ -75,7 +72,7 @@ int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_op
 
 			error = ops->mount(&mountpoints[i], dev, vnode);
 			if (error) {
-				mountpoints[i].ops = NULL;
+				mountpoints[i].dev = 0;
 				vfs_release_vnode(vnode);
 				return error;
 			}
@@ -84,17 +81,26 @@ int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_op
 				vnode->bits |= VBF_MOUNTED;
 			else
 				root_fs = &mountpoints[i];
-
-			*result = &mountpoints[i];
 			return 0;
 		}
 	}
 	return ENOMEM;
 }
 
-int vfs_unmount(struct mount *mp, uid_t uid)
+int vfs_unmount(device_t dev, uid_t uid)
 {
 	int error;
+	struct mount *mp = NULL;
+
+	for (short i = 0; i < VFS_MOUNT_MAX; i++) {
+		if (mountpoints[i].dev == dev) {
+			mp = &mountpoints[i];
+			break;
+		}
+	}
+
+	if (!mp)
+		return ENODEV;
 
 	if (uid != SU_UID)
 		return EPERM;
@@ -117,9 +123,13 @@ int vfs_unmount(struct mount *mp, uid_t uid)
 	return 0;
 }
 
-int vfs_sync(struct mount *mp)
+int vfs_sync(device_t dev)
 {
-	return mp->ops->sync(mp);
+	for (short i = 0; i < VFS_MOUNT_MAX; i++) {
+		if (mountpoints[i].dev == dev) {
+			return mountpoints[i].ops->sync(&mountpoints[i]);
+		}
+	}
 }
 
 

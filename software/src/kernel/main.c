@@ -90,15 +90,15 @@ int main()
 	}
 
 	// TODO this would be moved elsewhere
-	struct mount *mp;
-	//vfs_mount(NULL, "/", 0, &mallocfs_mount_ops, SU_UID, &mp);
-	vfs_mount(NULL, "/", DEVNUM(DEVMAJOR_MEM, 0), &minix_mount_ops, SU_UID, &mp);
+	//vfs_mount(NULL, "/", 0, &mallocfs_mount_ops, SU_UID);
+	vfs_mount(NULL, "/", DEVNUM(DEVMAJOR_MEM, 0), &minix_mount_ops, SU_UID);
 
 
 	create_dir_or_panic("/bin");
 	create_dir_or_panic("/dev");
 
 	create_special_or_panic("/dev/tty0", DEVNUM(DEVMAJOR_TTY, 0));
+	create_special_or_panic("/dev/tty1", DEVNUM(DEVMAJOR_TTY, 1));
 	create_special_or_panic("/dev/mem0", DEVNUM(DEVMAJOR_MEM, 0));
 
 /*

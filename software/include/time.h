@@ -19,6 +19,7 @@ struct tm {
 //extern char *tzname[];
 
 time_t time(time_t *t);
+struct tm *gmtime(const time_t *t);
 
 #endif
 

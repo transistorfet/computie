@@ -52,6 +52,8 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_getuid,
 	do_fstat,
 	do_access,
+	do_sync,
+	do_kill,
 	do_rename,
 	do_mkdir,
 	do_dup2,
@@ -59,7 +61,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_exec,
 	do_readdir,
 	do_getppid,
-	test,		// 32 = symlink, not yet implemented
+	test,		// 34 = symlink, not yet implemented
 
 	do_execbuiltin,
 };
@@ -116,6 +118,11 @@ int do_umount(const char *source)
 		return ENOENT;
 
 	return vfs_unmount(current_proc->cwd, vnode->rdev);
+}
+
+int do_sync()
+{
+	return vfs_sync(0);
 }
 
 int do_mknod(const char *path, mode_t mode, device_t dev)
@@ -412,6 +419,13 @@ uid_t do_getuid()
 	return current_proc->uid;
 }
 
+int do_kill(pid_t pid, int sig)
+{
+	// TODO this is temporary until signals are implemented properly
+	exit_proc(get_proc(pid), -1);
+	//resume_waiting_parent(current_proc);
+	return 0;
+}
 
 int do_exec(const char *path, char *const argv[], char *const envp[])
 {

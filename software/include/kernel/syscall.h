@@ -28,17 +28,19 @@
 #define SYS_GETUID	22
 #define SYS_FSTAT	23
 #define SYS_ACCESS	24
-#define SYS_RENAME	25
-#define SYS_MKDIR	26
-#define SYS_DUP2	27
-#define SYS_PIPE	28
-#define SYS_EXECVE	29
-#define SYS_READDIR	30
-#define SYS_GETPPID	31
-#define SYS_SYMLINK	32
+#define SYS_SYNC	25
+#define SYS_KILL	26
+#define SYS_RENAME	27
+#define SYS_MKDIR	28
+#define SYS_DUP2	29
+#define SYS_PIPE	30
+#define SYS_EXECVE	31
+#define SYS_READDIR	32
+#define SYS_GETPPID	33
+#define SYS_SYMLINK	34
 
 // TODO remove this after testing
-#define SYS_EXECBUILTIN	33
+#define SYS_EXECBUILTIN	35
 
 typedef int (*syscall_t)(int, int, int);
 

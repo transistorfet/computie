@@ -30,6 +30,7 @@ pid_t waitpid(pid_t pid, int *status, int options);
 pid_t getpid();
 pid_t getppid();
 uid_t getuid();
+int kill(pid_t pid, int sig);
 
 int mkdir(const char *path, mode_t mode);
 int rename(const char *oldpath, const char *newpath);

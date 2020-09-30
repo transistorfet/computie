@@ -20,6 +20,7 @@ extern pid_t do_waitpid(pid_t pid, int *status, int options);
 extern pid_t do_getpid();
 extern pid_t do_getppid();
 extern uid_t do_getuid();
+extern int do_kill(pid_t pid, int sig);
 
 // Files & Directories
 extern size_t do_read(int fd, char *buf, size_t nbytes);
@@ -41,8 +42,9 @@ extern int do_fstat(int fd, struct stat *statbuf);
 extern int do_lseek(int fd, offset_t offset, int whence);
 extern int do_pipe(int pipefd[2]);
 extern int do_dup2(int oldfd, int newfd);
-int do_mount(const char *source, const char *target, struct mount_opts *opts);
-int do_umount(const char *source);
+extern int do_mount(const char *source, const char *target, struct mount_opts *opts);
+extern int do_umount(const char *source);
+extern int do_sync();
 
 // Time
 extern time_t do_time(time_t *t);

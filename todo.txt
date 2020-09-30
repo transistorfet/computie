@@ -2,29 +2,32 @@
 Operating System:
 
 	* add updating of fs timestamps
-	* add syscalls: mount/umount
 	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
-	* add support for second tty/serial port
 	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 	* factor out a sched.h interface that can cover most needs inside the proc module
+	* should a process's parent be updated when the parent exits or when it's cleaned up
 
+	* make a device-independent tty subsystem
 	* implement links and/or symlinks in minix filesystem
 	* add commands: mv, cp, rmdir, pwd, dd
-	* minixfs, implement multiple versions
-	* create a memory driver, with GETBLKSIZE and MEMUNLOCK/MEMERASE ioctl() functions which can be used for everything else
 
-	* need to remove the current_proc_stack value, instead writing directly to the process struct
 	* driver access through the filesystem is broken because it doesn't give an offset to the driver.  It should be possible to track the position
 	  in the file->position value (which isn't passed to the driver), but since file->vnode->size is not set, seeking wont work anyways (will always reset to 0)
 	  It looks like linux passes an offset pointer to the read/write functions, which the driver function adjusts by deref'ing
 	* we could also move them to the vfs functions...
 
 
+	* control-c
 	* implement signals
+	* implement sleep/alarms
 	* add commands: ps, kill
 	* what is needed to implement a 'ps' command in userspace? pstat()
 	* sort out process groups, and which process gets input
 	* syscalls to implement: kill, signals, alarm, pause, setuid
+
+
+	* minixfs, implement multiple versions
+	* need to remove the current_proc_stack value, instead writing directly to the process struct
 
 
 	* make a background process of some kind, perhaps launched by init, but I don't know what it could do since there are no other devices yet...
@@ -36,6 +39,7 @@ Operating System:
 	* should there be something that periodically syncs data to disk?
 	* should you refactor the header files in minix implementation into actual c files, with a common header to declare the functions?
 	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)
+	* add GETBLKSIZE and MEMUNLOCK/MEMERASE ioctl() functions which can be used for everything else to memory driver
 
 
 

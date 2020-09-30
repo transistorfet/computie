@@ -125,9 +125,13 @@ int vfs_unmount(device_t dev, uid_t uid)
 
 int vfs_sync(device_t dev)
 {
+	int error = 0;
+
 	for (short i = 0; i < VFS_MOUNT_MAX; i++) {
-		if (mountpoints[i].dev == dev) {
-			return mountpoints[i].ops->sync(&mountpoints[i]);
+		if (!dev || mountpoints[i].dev == dev) {
+			error = mountpoints[i].ops->sync(&mountpoints[i]);
+			if (error)
+				return error;
 		}
 	}
 }

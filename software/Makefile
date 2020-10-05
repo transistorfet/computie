@@ -50,6 +50,7 @@ KERNEL_OBJS = \
 	src/kernel/mm/kmalloc.o \
 	src/kernel/proc/tasks.o \
 	src/kernel/proc/memory.o \
+	src/kernel/proc/signal.o \
 	src/kernel/proc/process.o \
 	src/kernel/proc/binaries.o \
 	src/kernel/fs/vfs.o \

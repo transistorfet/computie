@@ -3,6 +3,7 @@
 #define _SRC_KERNEL_PROCESS_H
 
 #include <stddef.h>
+#include <kernel/signal.h>
 #include <kernel/syscall.h>
 
 #include "../filedesc.h"
@@ -25,13 +26,18 @@ struct mem_map {
 	struct mem_seg segments[NUM_SEGMENTS];
 };
 
-#define PROC_IS_RUNNABLE(proc)		((proc)->state == PS_READY || (proc)->state == PS_RESUMING)
+
+#define PB_ALARM_ON			0x0001
+#define PB_SYSCALL			0x0002
+#define PB_WAITING			0x0004
+
+#define PROC_IS_RUNNABLE(proc)		((proc)->state == PS_RUNNING || (proc)->state == PS_RESUMING)
 
 typedef enum {
-	PS_READY,
-	PS_BLOCKED,
-	PS_WAITING,
+	PS_RUNNING,
 	PS_RESUMING,
+	PS_BLOCKED,
+	PS_STOPPED,
 	PS_EXITED,
 } proc_state_t;
 
@@ -42,18 +48,21 @@ struct process {
 	struct queue_node node;
 	pid_t pid;
 	pid_t parent;
-	uint16_t state;
+	pid_t pgid;
+	pid_t session;
 
+	uint16_t state;
 	struct mem_map map;
 	void *sp;
 
+	uint16_t bits;
 	int exitcode;
 	struct syscall_record blocked_call;
+	struct signal_data signals;
 
-	//struct process_fs_data {
 	uid_t uid;
+	device_t ctty;
 	struct vnode *cwd;
-	//};
 	fd_table_t fd_table;
 };
 
@@ -67,6 +76,9 @@ struct process *find_exited_child(pid_t parent, pid_t child);
 void set_proc_return_value(struct process *proc, int ret);
 void backup_current_proc();
 void return_to_current_proc(int ret);
+
+void stop_proc(struct process *proc);
+void suspend_proc(struct process *proc, int flags);
 void suspend_current_proc();
 void resume_proc(struct process *proc);
 void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev);

@@ -1,15 +1,26 @@
 
 Operating System:
 
-	* add updating of fs timestamps
-	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
-	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
-	* factor out a sched.h interface that can cover most needs inside the proc module
-	* should a process's parent be updated when the parent exits or when it's cleaned up
+	* stop/cont seems to work for cat but not for the shell.  Perhaps there needs to be a tweak such that resume_proc() wont work for a stopped proc, to prevent whatever issue
+	  is happening with the shell which puts the proc back into a blocked state
+	* when you send the sigstop signal, the suspend function wont change the state of a process that was already suspended while blocking on I/O... so nothing happens, and the
+	  process wakes up when I/O comes and acts like nothing else happened.  What conditions are uninterruptable by I/O, vs interruptable?  Do you need to save the syscall that's
+	  blocking when running a signal handler?  Do you need a special flag or state value for when a process is suspended for I/O, or an alarm, or something else?
+	  there are a lot of missing details here on how things should work
 
 	* make a device-independent tty subsystem
-	* implement links and/or symlinks in minix filesystem
-	* add commands: mv, cp, rmdir, pwd, dd
+	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
+	* need to add the various checks related to foreground pgid and ctty (and signals) such that you have to be in the same session, or something, and SIGTTOU is sent sometimes
+	  instead of returning success or failure
+	* it seems like in minix, an interrupt occurs, and a tty event message is placed on a queue, which is handled by a loop in the tty driver task which is its own process.
+	  that calls a hook in the tty device struct which points to one of the hardware driver's functions, which reads the character and then directly calls in_process() to do
+	  cannonical processing, from which a SIGINT can be dispatched to the process group recorded in the tty struct (as well as echo the char and such), and all that while the
+	  process that receives the sigint isn't doing i/o on the tty where the ^C originates....  This is all before the data is placed in a buffer, which wont be returned to the
+	  process that reads it until an entire line is entered
+	* implement signals
+	* implement sleep/alarms
+	* sort out process groups, and which process gets input
+	* syscalls to implement: alarm, pause, setuid
 
 	* driver access through the filesystem is broken because it doesn't give an offset to the driver.  It should be possible to track the position
 	  in the file->position value (which isn't passed to the driver), but since file->vnode->size is not set, seeking wont work anyways (will always reset to 0)
@@ -17,29 +28,36 @@ Operating System:
 	* we could also move them to the vfs functions...
 
 
-	* control-c
-	* implement signals
-	* implement sleep/alarms
+
+	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
+	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
+	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
+	* factor out a sched.h interface that can cover most needs inside the proc module
+	* implement getopt
+	* add commands: mv, cp
+	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
+	* implement gmtime() and make the time command return a formatted time
+
+
 	* add commands: ps, kill
 	* what is needed to implement a 'ps' command in userspace? pstat()
-	* sort out process groups, and which process gets input
-	* syscalls to implement: kill, signals, alarm, pause, setuid
 
-
-	* minixfs, implement multiple versions
+	* add commands rmdir, pwd, dd
+	* implement links and/or symlinks in minix filesystem
 	* need to remove the current_proc_stack value, instead writing directly to the process struct
 
 
-	* make a background process of some kind, perhaps launched by init, but I don't know what it could do since there are no other devices yet...
-	* add pipe setup to command evaluation
 
+	* add pipe setup to command evaluation
 	* add network syscalls for local IPC (unix file, sockets, maybe even fifos?)
+	* make a background process of some kind, perhaps launched by init, but I don't know what it could do since there are no other devices yet...
+
 	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
+	* minixfs, implement versions 2 and 3
 
 	* should there be something that periodically syncs data to disk?
 	* should you refactor the header files in minix implementation into actual c files, with a common header to declare the functions?
 	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)
-	* add GETBLKSIZE and MEMUNLOCK/MEMERASE ioctl() functions which can be used for everything else to memory driver
 
 
 

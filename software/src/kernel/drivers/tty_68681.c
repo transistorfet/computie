@@ -1,10 +1,15 @@
 
 #include <stdio.h>
 #include <stdint.h>
+
 #include <errno.h>
+#include <signal.h>
 
 #include <sys/stat.h>
+#include <sys/ioc_tty.h>
+
 #include <kernel/vfs.h>
+#include <kernel/signal.h>
 #include <kernel/printk.h>
 #include <kernel/driver.h>
 
@@ -148,6 +153,7 @@ struct serial_channel {
 	struct circular_buffer rx;
 	struct circular_buffer tx;
 	const struct channel_ports *ports;
+	int pgid;
 };
 
 static struct serial_channel channel_a;
@@ -161,6 +167,8 @@ extern void enter_irq();
 
 static inline void config_serial_channel(struct serial_channel *channel)
 {
+	channel->pgid = 0;
+
 	// Reset channel A serial port
 	*channel->ports->command = CMD_RESET_MR;
 	asm volatile("nop\n");
@@ -230,8 +238,8 @@ static inline int putchar_buffered(struct serial_channel *channel, int ch)
  static inline void handle_channel_io(register char isr, struct serial_channel *channel)
 {
 	register char status = *channel->ports->status;
-	register rx_ready = channel == &channel_a ? ISR_CH_A_RX_READY_FULL : ISR_CH_B_RX_READY_FULL;
-	register tx_ready = channel == &channel_a ? ISR_CH_A_TX_READY : ISR_CH_B_TX_READY;
+	register char rx_ready = channel == &channel_a ? ISR_CH_A_RX_READY_FULL : ISR_CH_B_RX_READY_FULL;
+	register char tx_ready = channel == &channel_a ? ISR_CH_A_TX_READY : ISR_CH_B_TX_READY;
 
 	if (status & SR_RX_FULL) {
 		// De-Assert CTS
@@ -242,6 +250,13 @@ static inline int putchar_buffered(struct serial_channel *channel, int ch)
 		while (*channel->ports->status & SR_RX_READY) {
 			if (!_buf_is_full(&channel->rx)) {
 				char ch = *channel->ports->recv;
+				// TODO this is a temporary hack to get ^C -> SIGINT, but it's totally wrong on so many levels
+				if (ch == 0x03 && channel->pgid) {
+					send_signal(channel->pgid, SIGINT);
+				}
+				//if (ch == 0x04 && channel->pgid) {
+				//	send_signal(channel->pgid, SIGCONT);
+				//}
 				_buf_put_char(&channel->rx, ch);
 			}
 			else {
@@ -509,6 +524,15 @@ int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_
 
 int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
 {
+	switch (request) {
+		case TIOCSPGRP: {
+			struct serial_channel *channel = from_minor_dev(minor);
+			channel->pgid = *((int *) argp);
+			return 0;
+		}
+		default:
+			break;
+	}
 	return -1;
 }
 

@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 
+#include <kernel/signal.h>
 #include <kernel/printk.h>
 #include <kernel/kmalloc.h>
 
@@ -55,21 +56,36 @@ struct process *new_proc(uid_t uid)
 		if (!table[i].pid) {
 			_queue_node_init(&table[i].node);
 			table[i].pid = next_pid++;
-			table[i].parent = current_proc ? current_proc->pid : 1;
-			table[i].state = PS_READY;
+			if (current_proc) {
+				table[i].parent = current_proc->pid;
+				table[i].pgid = current_proc->pgid;
+				table[i].session = current_proc->session;
+				table[i].ctty = current_proc->ctty;
+			}
+			else {
+				table[i].parent = 1;
+				table[i].pgid = table[i].pid;
+				table[i].session = table[i].pid;
+				table[i].ctty = 0;
+			}
 
-			table[i].uid = uid;
-			table[i].cwd = NULL;
-
-			init_fd_table(table[i].fd_table);
-
+			table[i].state = PS_RUNNING;
+			table[i].sp = NULL;
 			// Clear memory records
 			for (char j = 0; j < NUM_SEGMENTS; j++) {
 				table[i].map.segments[j].base = NULL;
 				table[i].map.segments[j].length = 0;
 			}
-			table[i].sp = NULL;
 
+			table[i].bits = 0;
+			table[i].exitcode = 0;
+			init_signal_data(&table[i]);
+
+			table[i].uid = uid;
+			table[i].cwd = NULL;
+			init_fd_table(table[i].fd_table);
+
+			// Insert as runnable
 			_queue_insert(&run_queue, &table[i].node);
 
 			return &table[i];
@@ -89,6 +105,13 @@ struct process *get_proc(pid_t pid)
 
 void exit_proc(struct process *proc, int status)
 {
+	if (proc->state == PS_EXITED)
+		return;
+	else if (proc->state == PS_BLOCKED)
+		_queue_remove(&blocked_queue, &proc->node);
+	else
+		_queue_remove(&run_queue, &proc->node);
+
 	proc->state = PS_EXITED;
 	proc->exitcode = status;
 
@@ -97,8 +120,6 @@ void exit_proc(struct process *proc, int status)
 		if (proc->map.segments[j].base)
 			kmfree(proc->map.segments[j].base);
 	}
-
-	_queue_remove(&run_queue, &proc->node);
 
 	// Reassign any child procs' parent to be this proc's parent
 	for (short i = 0; i < PROCESS_MAX; i++) {
@@ -136,7 +157,7 @@ void backup_current_proc()
 void return_to_current_proc(int ret)
 {
 	current_proc_stack = current_proc->sp;
-	if (current_proc->state == PS_READY) {
+	if (current_proc->state == PS_RUNNING) {
 		// If the process is still in the ready state, then set the return value in the process's context
 		*((uint32_t *) current_proc_stack) = ret;
 	}
@@ -146,22 +167,45 @@ void return_to_current_proc(int ret)
 	}
 }
 
+
+void stop_proc(struct process *proc)
+{
+	if (proc->state == PS_EXITED || proc->state == PS_STOPPED)
+		return;
+	else if (proc->state == PS_RUNNING || proc->state == PS_RESUMING)
+		_queue_remove(&run_queue, &proc->node);
+	else if (proc->state == PS_BLOCKED)
+		_queue_remove(&blocked_queue, &proc->node);
+	proc->state = PS_STOPPED;
+}
+
+void suspend_proc(struct process *proc, int flags)
+{
+	if (proc->state != PS_RUNNING)
+		return;
+
+	//proc->blocked_call.syscall = 0;
+	//current_proc->blocked_call = *current_syscall;
+
+	_queue_remove(&run_queue, &proc->node);
+	_queue_insert(&blocked_queue, &proc->node);
+	proc->state = PS_BLOCKED;
+	proc->bits |= (flags & 0x0F);
+}
+
 void suspend_current_proc()
 {
+	suspend_proc(current_proc, PB_SYSCALL);
 	current_proc->blocked_call = *current_syscall;
-
-	if (current_proc->state != PS_READY)
-		return;
-	_queue_remove(&run_queue, &current_proc->node);
-	_queue_insert(&blocked_queue, &current_proc->node);
-	current_proc->state = PS_BLOCKED;
 }
+
 
 void resume_proc(struct process *proc)
 {
-	if (proc->state != PS_BLOCKED && proc->state != PS_WAITING)
+	if (proc->state == PS_RUNNING || proc->state == PS_RESUMING || proc->state == PS_EXITED)
 		return;
-	_queue_remove(&blocked_queue, &proc->node);
+	if (proc->state == PS_BLOCKED)
+		_queue_remove(&blocked_queue, &proc->node);
 	_queue_insert(&run_queue, &proc->node);
 	proc->state = PS_RESUMING;
 }
@@ -199,14 +243,11 @@ void schedule()
 	else
 		next = (struct process *) current_proc->node.next;
 
-	if (!next) {
+	// No processes to run, so run the idle process
+	if (!next)
 		next = idle_proc;
-		//panic("No processes left to run... Halting\n");
-		//return;
-	}
 
-	//printk("next sp: %x\n", next->sp);
-
+	// Run the same process that was already running, so do nothing
 	if (current_proc == next)
 		return;
 
@@ -218,9 +259,12 @@ void schedule()
 
 	if (current_proc->state == PS_RESUMING) {
 		//printk("Restarting %d with call %d\n", current_proc->pid, current_proc->blocked_call.syscall);
-		current_proc->state = PS_READY;
-		current_syscall = &current_proc->blocked_call;
-		do_syscall();
+		current_proc->state = PS_RUNNING;
+		if (current_proc->bits & PB_SYSCALL) {
+			current_proc->bits &= ~PB_SYSCALL;
+			current_syscall = &current_proc->blocked_call;
+			do_syscall();
+		}
 	}
 }
 

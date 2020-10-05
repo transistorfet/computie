@@ -29,6 +29,8 @@ pid_t wait(int *status);
 pid_t waitpid(pid_t pid, int *status, int options);
 pid_t getpid();
 pid_t getppid();
+pid_t getpgid(pid_t pid);
+int setpgid(pid_t pid, pid_t pgid);
 uid_t getuid();
 int kill(pid_t pid, int sig);
 
@@ -42,6 +44,7 @@ int close(int fd);
 size_t read(int fd, char *buf, size_t nbytes);
 size_t write(int fd, const char *buf, size_t nbytes);
 int readdir(int fd, struct dirent *dir);
+int ioctl(int fd, unsigned int request, void *argp);
 
 int access(const char *path, int mode);
 int chdir(const char *path);
@@ -56,5 +59,9 @@ offset_t lseek(int fd, offset_t offset, int whence);
 
 int pipe(int pipefd[2]);
 int dup2(int oldfd, int newfd);
+
+//// Library Functions ////
+
+int getopt(int argc, char * const argv[], const char *optstring);
 
 #endif

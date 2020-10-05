@@ -2,6 +2,8 @@
 #ifndef _TYPES_H
 #define _TYPES_H
 
+#include <stdint.h>
+
 #define F_OK               0	// Test if file exists
 #define X_OK               1	// Test if file is executable
 #define W_OK               2	// Test if file is writable

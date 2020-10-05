@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include <sys/stat.h>
+#include <sys/ioc_tty.h>
 #include <kernel/syscall.h>
 
 
@@ -596,8 +597,17 @@ int execute_command(struct pipe_command *command, int argc, char **argv)
  	pid = fork();
 	if (pid) {
 		waitpid(pid, &status, 0);
+		pid_t fgpid = getpgid(0);
+		ioctl(STDOUT_FILENO, TIOCSPGRP, &fgpid);
 	}
 	else {
+		if (setpgid(0, 0))
+			exit(-1);
+		pid_t fgpid = getpgid(0);
+		ioctl(STDOUT_FILENO, TIOCSPGRP, &fgpid);
+
+		// TODO set the tty's process group to this one? how does it get set back when the process terminates?
+
 		if (command->stdout_file) {
 			if (open_file(command->stdout_file, O_WRONLY | O_CREAT | (command->append ? O_APPEND : O_TRUNC), STDOUT_FILENO))
 				exit(-1);
@@ -673,6 +683,11 @@ void serial_read_loop()
 
 int sh_task()
 {
+	// Set the TTY foreground process group to this proc's
+	setpgid(0, 0);
+	pid_t fgpid = getpgid(0);
+	ioctl(STDOUT_FILENO, TIOCSPGRP, &fgpid);
+
 	puts("\n\nThe Pseudo Shell!\n");
 
 	serial_read_loop();

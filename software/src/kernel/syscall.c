@@ -5,7 +5,9 @@
 
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/ioc_tty.h>
 #include <kernel/vfs.h>
+#include <kernel/signal.h>
 #include <kernel/printk.h>
 #include <kernel/driver.h>
 #include <kernel/kmalloc.h>
@@ -58,10 +60,13 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_mkdir,
 	do_dup2,
 	do_pipe,
+	do_ioctl,
 	do_exec,
 	do_readdir,
 	do_getppid,
 	test,		// 34 = symlink, not yet implemented
+	do_getpgid,
+	do_setpgid,
 
 	do_execbuiltin,
 };
@@ -229,6 +234,15 @@ int do_readdir(int fd, struct dirent *dir)
 	return vfs_readdir(file, dir);
 }
 
+int do_ioctl(int fd, unsigned int request, void *argp)
+{
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file)
+		return EBADF;
+	return vfs_ioctl(file, request, argp);
+}
+
+
 int do_chdir(const char *path)
 {
 	int error;
@@ -392,6 +406,7 @@ pid_t do_waitpid(pid_t pid, int *status, int options)
 	if (pid <= 0 && pid != -1)
 		return EINVAL;
 
+	// TODO should this wake up all parent procesess instead of just one?
 	proc = find_exited_child(current_proc->pid, pid);
 	if (!proc) {
 		suspend_current_proc();
@@ -414,6 +429,32 @@ pid_t do_getppid()
 	return current_proc->parent;
 }
 
+pid_t do_getpgid(pid_t pid)
+{
+	struct process *proc = pid ? get_proc(pid) : current_proc;
+
+	if (!proc)
+		return ESRCH;
+	return proc->pgid;
+}
+
+int do_setpgid(pid_t pid, pid_t pgid)
+{
+	struct process *proc = pid ? get_proc(pid) : current_proc;
+
+	if (pgid < 0)
+		return EINVAL;
+	if (!proc || (proc != current_proc && proc->pid != current_proc->parent))
+		return ESRCH;
+	// TODO also check that the pg is in the same session and all the other stuff
+
+	if (pgid == 0)
+		proc->pgid = proc->pid;
+	else
+		proc->pgid = pgid;
+	return 0;
+}
+
 uid_t do_getuid()
 {
 	return current_proc->uid;
@@ -421,10 +462,7 @@ uid_t do_getuid()
 
 int do_kill(pid_t pid, int sig)
 {
-	// TODO this is temporary until signals are implemented properly
-	exit_proc(get_proc(pid), -1);
-	//resume_waiting_parent(current_proc);
-	return 0;
+	return send_signal(pid, sig);
 }
 
 int do_exec(const char *path, char *const argv[], char *const envp[])

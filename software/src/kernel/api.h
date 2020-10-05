@@ -19,6 +19,8 @@ extern pid_t do_wait(int *status);
 extern pid_t do_waitpid(pid_t pid, int *status, int options);
 extern pid_t do_getpid();
 extern pid_t do_getppid();
+extern pid_t do_getpgid(pid_t pid);
+extern int do_setpgid(pid_t pid, pid_t pgid);
 extern uid_t do_getuid();
 extern int do_kill(pid_t pid, int sig);
 
@@ -29,6 +31,7 @@ extern int do_creat(const char *path, mode_t mode);
 extern int do_open(const char *path, int oflags, mode_t mode);
 extern int do_close(int fd);
 extern int do_readdir(int fd, struct dirent *dir);
+extern int do_ioctl(int fd, unsigned int request, void *argp);
 extern int do_mknod(const char *path, mode_t mode, device_t dev);
 extern int do_unlink(const char *path);
 extern int do_mkdir(const char *path, mode_t mode);

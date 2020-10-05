@@ -34,13 +34,16 @@
 #define SYS_MKDIR	28
 #define SYS_DUP2	29
 #define SYS_PIPE	30
-#define SYS_EXECVE	31
-#define SYS_READDIR	32
-#define SYS_GETPPID	33
-#define SYS_SYMLINK	34
+#define SYS_IOCTL	31
+#define SYS_EXECVE	32
+#define SYS_READDIR	33
+#define SYS_GETPPID	34
+#define SYS_SYMLINK	35
+#define SYS_GETPGID	36
+#define SYS_SETPGID	37
 
 // TODO remove this after testing
-#define SYS_EXECBUILTIN	35
+#define SYS_EXECBUILTIN	38
 
 typedef int (*syscall_t)(int, int, int);
 

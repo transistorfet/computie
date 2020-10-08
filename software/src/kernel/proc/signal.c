@@ -10,7 +10,13 @@
 #define SIG_MASK_DEFAULT_IGNORE		0x00010000
 #define SIG_MASK_DEFAULT_TERMINATE	0x47807FFF
 #define SIG_MASK_DEFAULT_STOP		0x003C0000
+#define SIG_MASK_MASKABLE		0xFFFBFEFF
 
+
+struct sigcontext {
+	int signum;
+	sigset_t prev_mask;
+};
 
 static inline void run_signal_handler(struct process *proc, int signum);
 static inline void run_signal_default_action(struct process *proc, int signum, sigset_t sigmask);
@@ -35,6 +41,8 @@ int get_signal_action(struct process *proc, int signum, struct sigaction *act)
 int set_signal_action(struct process *proc, int signum, struct sigaction *act)
 {
 	proc->signals.actions[signum - 1] = *act;
+	proc->signals.actions[signum - 1].sa_mask |= signal_to_map(signum);
+	proc->signals.actions[signum - 1].sa_mask &= SIG_MASK_MASKABLE;
 	return 0;
 }
 
@@ -79,16 +87,33 @@ int dispatch_signal(struct process *proc, int signum)
 
 static inline void run_signal_handler(struct process *proc, int signum)
 {
-	// TODO use the action sa_mask value to block, and you'll need to push some extra data onto the stack for sigreturn to reverse the mask changes
-	proc->sp = create_context(proc->sp, proc->signals.actions[signum - 1].handlers, _sigreturn);
-	resume_proc(proc);
+	struct sigcontext *context;
+
+	// Save signal data on the stack for use by sigreturn
+	context = (((struct sigcontext *) proc->sp) - 1);
+	context->signum = signum;
+	context->prev_mask = proc->signals.blocked;
+	proc->signals.blocked |= proc->signals.actions[signum - 1].sa_mask;
+
+	// Push a fresh context onto the stack, which will run the handler and then call sigreturn()
+	proc->sp = (void *) context;
+	proc->sp = create_context(proc->sp, proc->signals.actions[signum - 1].sa_handler, _sigreturn);
+
+	// Resume the process without restarting the last syscall
 	// TODO this is a hack to skip over the resuming state
+	resume_proc(proc);
 	proc->state = PS_RUNNING;
 }
 
 void cleanup_signal_handler(struct process *proc)
 {
+	struct sigcontext *context;
+
 	proc->sp = drop_context(proc->sp);
+	context = (struct sigcontext *) proc->sp;
+	proc->signals.blocked = context->prev_mask;
+	proc->sp = (((struct sigcontext *) proc->sp) + 1);
+
 	if ((proc->bits & PB_SYSCALL) && !(proc->bits & PB_PAUSED))
 		//suspend_current_proc();
 		//current_proc->state = PS_RESUMING;

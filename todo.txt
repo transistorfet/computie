@@ -1,9 +1,7 @@
 
 Operating System:
 
-	* you need a mechanism to make sure a signal is not handled while handling another signal (I assume the blocking mechanism)
-	* you need to figure out the behaviour of signal blocking and masking
-	* make proper use of the signal pending bit
+	* add a check_pending_signals() function to run after unblocking
 
 	* factor out a sched.h interface that can cover most needs inside the proc module
 	* there needs to be a lot of refactoring with the signals code about what goes where... the need for splitting processes and scheduling is even greater now

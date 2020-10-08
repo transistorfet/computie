@@ -680,7 +680,11 @@ void serial_read_loop()
 
 void handle_test(int signum)
 {
+	//int a = 0xABAB;
+	// TODO this exact code and only this code just happens to trigger an optimization where it replaces the arg and jumps to puts instead of generating a proper function
 	puts("Hey\n");
+	//printf("Hey %d\n", signum);
+	//dump((uint16_t *) 0x1179EA, 48);
 }
 
 /**************

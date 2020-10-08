@@ -307,6 +307,7 @@ void handle_serial_irq()
 		}
 
 		adjust_system_time(71111);
+		check_timers();
 
 		// Schedule a new process
 		schedule();

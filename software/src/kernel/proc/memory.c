@@ -63,7 +63,7 @@ int reset_stack(struct process *proc, void *entry, char *const argv[], char *con
 
 	// Setup new stack image
  	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp);
- 	task_stack_pointer = create_context(task_stack_pointer, entry);
+ 	task_stack_pointer = create_context(task_stack_pointer, entry, _exit);
 	proc->sp = task_stack_pointer;
 
 	return 0;

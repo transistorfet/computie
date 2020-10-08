@@ -79,6 +79,7 @@ struct process *new_proc(uid_t uid)
 
 			table[i].bits = 0;
 			table[i].exitcode = 0;
+			table[i].next_alarm = 0;
 			init_signal_data(&table[i]);
 
 			table[i].uid = uid;
@@ -231,6 +232,29 @@ void resume_waiting_parent(struct process *proc)
 	parent = get_proc(proc->parent);
 	if (parent->state == PS_BLOCKED && (parent->blocked_call.syscall == SYS_WAIT || parent->blocked_call.syscall == SYS_WAITPID))
 		resume_proc(parent);
+}
+
+int set_alarm(struct process *proc, uint32_t seconds)
+{
+	if (!seconds)
+		proc->bits &= ~PB_ALARM_ON;
+	else {
+		proc->bits |= PB_ALARM_ON;
+		proc->next_alarm = get_system_time() + seconds;
+	}
+	return 0;
+}
+
+void check_timers()
+{
+	time_t t = get_system_time();
+
+	for (short i = 0; i < PROCESS_MAX; i++) {
+		if (table[i].pid && (table[i].bits & PB_ALARM_ON) && t >= table[i].next_alarm) {
+			table[i].bits &= ~PB_ALARM_ON;
+			send_signal(table[i].pid, SIGALRM);
+		}
+	}
 }
 
 

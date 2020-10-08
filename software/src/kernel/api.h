@@ -23,6 +23,10 @@ extern pid_t do_getpgid(pid_t pid);
 extern int do_setpgid(pid_t pid, pid_t pgid);
 extern uid_t do_getuid();
 extern int do_kill(pid_t pid, int sig);
+extern unsigned int do_alarm(unsigned int seconds);
+extern int do_pause();
+extern int do_sigreturn();
+extern int do_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
 
 // Files & Directories
 extern size_t do_read(int fd, char *buf, size_t nbytes);

@@ -2,9 +2,11 @@
 	.global enter_syscall
 	.global enter_irq
 	.global create_context
+	.global drop_context
 	.global save_context
 	.global restore_context
 	.global _exit
+	.global _sigreturn
 
 	.global	syscall_table
 	.global kernel_stack
@@ -88,17 +90,15 @@ enter_irq:
 
 /**
  * Create a new context given a future stack address, return address
- * 	void *create_context(void *user_stack, void *entry);
+ * 	void *create_context(void *user_stack, void *entry, void *exit);
  */
 create_context:
 	move.l	(4,%sp), %a0
 	move.l	(8,%sp), %a1
+	move.l	(12,%sp), %d0
 
 	| Push _exit return address for when main returns
-	move.l	%a5, -(%sp)
-	lea	_exit, %a5
-	move.l	%a5, -(%a0)
-	move.l	(%sp)+, %a5
+	move.l	%d0, -(%a0)
 
 	| Push the 68010 Format/Vector Word
 	.ifdef __mc68010__
@@ -130,6 +130,20 @@ create_context:
 	rts
 
 /**
+ * Remove the context from the stack and return the new stack pointer
+ * 	void *drop_context(void *user_stack);
+ */
+drop_context:
+	move.l	(4,%sp), %a0
+	add.l	#CONTEXT_SIZE, %a0
+	.ifdef __mc68010__
+	add.l	#2, %a0
+	.endif
+	add.l	#6, %a0
+	move.l	%a0, %d0
+	rts
+
+/**
  * Save all registers to the current user stack and switch to the kernel stack
  */
 save_context:
@@ -157,9 +171,15 @@ save_context:
 	| Save the return address before we switch the stacks
 	move.l	(-4,%sp), %a6
 
+	cmp.l	#0, kernel_stack
+	bne	after_check
+	jmp	fatal_error
+    after_check:
+
 	| Switch to the kernel stack
 	move.l	%sp, current_proc_stack
 	move.l	kernel_stack, %sp
+	clr.l	kernel_stack
 
 	| Jump to the return address of the caller
 	jmp	(%a6)
@@ -196,6 +216,14 @@ restore_context:
 _exit:
 	| Execute the exit syscall to terminate the current process
 	moveq	#1, %d0
+	trap	#1
+
+	| This shouldn't run because the syscall should never return
+	stop	#0x2000
+
+_sigreturn:
+	| Execute the sigreturn syscall to clean up the signal handling
+	moveq	#40, %d0
 	trap	#1
 
 	| This shouldn't run because the syscall should never return

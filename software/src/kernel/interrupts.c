@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 
 #include <kernel/printk.h>
 
@@ -32,9 +33,9 @@ static interrupt_handler_t vector_table[INTERRUPT_MAX] = {
 
 void init_interrupts()
 {
-	extern void enter_fatal_error();
+	extern void enter_handle_exception();
 	for (short i = 2; i < INTERRUPT_MAX; i++)
-		vector_table[i] = enter_fatal_error;
+		vector_table[i] = enter_handle_exception;
 
 	extern void enter_handle_trace();
 	set_interrupt(IV_TRACE, enter_handle_trace);
@@ -87,24 +88,12 @@ __attribute__((noreturn)) void enter_##name()		\
 	asm("move.l	%%a5, %0\n" : "=r" (frame_ptr))
 
 
-INTERRUPT_ENTRY(fatal_error);
-
-__attribute__((interrupt)) void fatal_error()
+void fatal_error(struct exception_stack_frame *frame)
 {
-	DISABLE_INTS();
-
-	struct exception_stack_frame *frame;
-
-	GET_FRAME(frame);
-
-	tty_68681_tx_safe_mode();
 	printk_safe("\n\nFatal Error at %x (status: %x, vector: %x). Halting...\n", frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
 
-	char *sp;
-	asm volatile("move.l  %%sp, %0\n" : "=r" (sp));
-
 	// Dump stack
-	printk_safe("Stack: %x\n", sp);
+	printk_safe("Stack: %x\n", frame);
 	for (char i = 0; i < 48; i++) {
 		printk_safe("%04x ", ((uint16_t *) frame)[i]);
 		if ((i & 0x7) == 0x7)
@@ -127,7 +116,46 @@ __attribute__((interrupt)) void fatal_error()
 	"move.l	#4, %a0\n"
 	"jmp	(%a0)\n"
 	);
+}
 
+INTERRUPT_ENTRY(handle_exception);
+
+__attribute__((interrupt)) void handle_exception()
+{
+	DISABLE_INTS();
+
+	struct exception_stack_frame *frame;
+
+	GET_FRAME(frame);
+
+	tty_68681_tx_safe_mode();
+
+	extern void *kernel_stack;
+	extern struct process *current_proc;
+	if (kernel_stack) {
+		fatal_error(frame);
+		printk_safe("KILL PROC\n");
+		dispatch_signal(current_proc, SIGILL);
+	}
+	else {
+		printk_safe("KERNEL PANIC\n");
+		fatal_error(frame);
+		asm volatile("stop #0x2700\n");
+	}
+}
+
+INTERRUPT_ENTRY(handle_fatal_error);
+
+__attribute__((interrupt)) void handle_fatal_error()
+{
+	DISABLE_INTS();
+
+	struct exception_stack_frame *frame;
+
+	GET_FRAME(frame);
+
+	tty_68681_tx_safe_mode();
+	fatal_error(frame);
 	asm volatile("stop #0x2700\n");
 }
 

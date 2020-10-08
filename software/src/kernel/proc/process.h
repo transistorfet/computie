@@ -30,6 +30,7 @@ struct mem_map {
 #define PB_ALARM_ON			0x0001
 #define PB_SYSCALL			0x0002
 #define PB_WAITING			0x0004
+#define PB_PAUSED			0x0008
 
 #define PROC_IS_RUNNABLE(proc)		((proc)->state == PS_RUNNING || (proc)->state == PS_RESUMING)
 
@@ -57,6 +58,7 @@ struct process {
 
 	uint16_t bits;
 	int exitcode;
+	time_t next_alarm;
 	struct syscall_record blocked_call;
 	struct signal_data signals;
 
@@ -83,6 +85,8 @@ void suspend_current_proc();
 void resume_proc(struct process *proc);
 void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev);
 void resume_waiting_parent(struct process *proc);
+int set_alarm(struct process *proc, uint32_t seconds);
+void check_timers();
 
 void schedule();
 __attribute__((noreturn)) void begin_multitasking(struct process *proc);
@@ -91,6 +95,9 @@ struct process *create_init_task();
 struct process *create_kernel_task(int (*task_start)());
 int idle_task();
 
-extern void *create_context(void *user_stack, void *entry);
+extern void *create_context(void *user_stack, void *entry, void *exit);
+extern void *drop_context(void *user_stack);
+extern void _exit();
+extern void _sigreturn();
 
 #endif

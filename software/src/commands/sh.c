@@ -7,6 +7,7 @@
 
 #include <time.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <sys/stat.h>
 #include <sys/ioc_tty.h>
@@ -677,18 +678,33 @@ void serial_read_loop()
 	}
 }
 
+void handle_test(int signum)
+{
+	puts("Hey\n");
+}
+
 /**************
  * Main Entry *
  **************/
 
 int sh_task()
 {
+	// TODO should this be in the init process???
 	// Set the TTY foreground process group to this proc's
 	setpgid(0, 0);
 	pid_t fgpid = getpgid(0);
 	ioctl(STDOUT_FILENO, TIOCSPGRP, &fgpid);
 
+	struct sigaction act;
+	act.sa_handler = handle_test;
+	sigaction(SIGINT, &act, NULL);
+
 	puts("\n\nThe Pseudo Shell!\n");
+
+	//alarm(10);
+	//pause();
+	//puts("Hey!\n");
+
 
 	serial_read_loop();
 

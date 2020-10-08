@@ -29,10 +29,28 @@
 #define	SIGPROF		27	// Profiling timer expired
 #define	SIGSYS		31	// Invalid system call
 
+typedef unsigned int sigset_t;
 typedef void (*sighandler_t)(int);
 
 #define SIG_DFL		((sighandler_t) 0)
 #define SIG_IGN		((sighandler_t) 1)
+
+struct sigaction {
+	sighandler_t sa_handler;	// SIG_DFL, SIG_IGN, or pointer to function
+	sigset_t sa_mask;		// signals to be blocked during handler
+	int sa_flags;			// special flags
+};
+
+// fields for sa_flags
+#define SA_ONSTACK	0x0001	// deliver signal on alternate stack
+#define SA_RESETHAND	0x0002	// reset signal handler when signal caught
+#define SA_NODEFER	0x0004	// don't block signal while catching it
+#define SA_RESTART	0x0008	// automatic system call restart
+#define SA_SIGINFO	0x0010	// extended signal handling
+#define SA_NOCLDWAIT	0x0020	// don't create zombies
+#define SA_NOCLDSTOP	0x0040	// don't receive SIGCHLD when child stops
+
+int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
 
 #endif
 

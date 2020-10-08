@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <errno.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <sys/ioc_tty.h>
 #include <kernel/vfs.h>
@@ -21,7 +22,7 @@
 #include "interrupts.h"
 
 
-#define SYSCALL_MAX	40
+#define SYSCALL_MAX	48
 
 void test() { printk("It's a test!\n"); }
 
@@ -64,9 +65,13 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_exec,
 	do_readdir,
 	do_getppid,
-	test,		// 34 = symlink, not yet implemented
+	test,		// 35 = symlink, not yet implemented
 	do_getpgid,
 	do_setpgid,
+	do_alarm,
+	do_pause,
+	do_sigreturn,
+	do_sigaction,
 
 	do_execbuiltin,
 };
@@ -122,7 +127,7 @@ int do_umount(const char *source)
 	if (vfs_lookup(current_proc->cwd, source, VLOOKUP_NORMAL, current_proc->uid, &vnode))
 		return ENOENT;
 
-	return vfs_unmount(current_proc->cwd, vnode->rdev);
+	return vfs_unmount(vnode->rdev, current_proc->uid);
 }
 
 int do_sync()
@@ -463,6 +468,42 @@ uid_t do_getuid()
 int do_kill(pid_t pid, int sig)
 {
 	return send_signal(pid, sig);
+}
+
+unsigned int do_alarm(unsigned int seconds)
+{
+	return set_alarm(current_proc, seconds);
+}
+
+int do_pause()
+{
+	if (current_proc->bits & PB_PAUSED) {
+		printk_safe("waking\n");
+		current_proc->bits &= ~PB_PAUSED;
+		return -1;
+	}
+	else {
+		printk_safe("pausing\n");
+		current_proc->bits |= PB_PAUSED;
+		suspend_current_proc();
+		return 0;
+	}
+}
+
+int do_sigreturn()
+{
+	cleanup_signal_handler(current_proc);
+	return 0;
+}
+
+int do_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
+{
+	if (oldact)
+		get_signal_action(current_proc, signum, oldact);
+
+	if (act)
+		return set_signal_action(current_proc, signum, act);
+	return 0;
 }
 
 int do_exec(const char *path, char *const argv[], char *const envp[])

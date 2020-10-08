@@ -45,7 +45,7 @@ struct process *create_kernel_task(int (*task_start)())
 	char *stack = kmalloc(stack_size);
 	char *stack_pointer = stack + stack_size;
 
- 	stack_pointer = create_context(stack_pointer, task_start);
+ 	stack_pointer = create_context(stack_pointer, task_start, _exit);
 
 	proc->map.segments[M_TEXT].base = NULL;
 	proc->map.segments[M_TEXT].length = 0x10000;

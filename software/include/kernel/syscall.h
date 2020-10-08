@@ -41,9 +41,13 @@
 #define SYS_SYMLINK	35
 #define SYS_GETPGID	36
 #define SYS_SETPGID	37
+#define SYS_ALARM	38
+#define SYS_PAUSE	39
+#define SYS_SIGRETURN	40
+#define SYS_SIGACTION	41
 
 // TODO remove this after testing
-#define SYS_EXECBUILTIN	38
+#define SYS_EXECBUILTIN	42
 
 typedef int (*syscall_t)(int, int, int);
 

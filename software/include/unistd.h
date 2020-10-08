@@ -33,6 +33,8 @@ pid_t getpgid(pid_t pid);
 int setpgid(pid_t pid, pid_t pgid);
 uid_t getuid();
 int kill(pid_t pid, int sig);
+unsigned int alarm(unsigned int seconds);
+int pause();
 
 int mkdir(const char *path, mode_t mode);
 int rename(const char *oldpath, const char *newpath);

@@ -21,7 +21,7 @@ const char hello_task[TASK_SIZE] = {
 
 
 extern struct process *current_proc;
-extern void *create_context(void *user_stack, void *entry);
+extern void *create_context(void *user_stack, void *entry, void *exit);
 
 /*
 int test_process()

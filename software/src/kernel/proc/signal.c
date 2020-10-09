@@ -60,7 +60,15 @@ int send_signal(pid_t pid, int signum)
 
 int send_signal_process_group(pid_t pgid, int signum)
 {
-	// TODO need to traverse procs...
+	struct process *proc;
+	struct process_iter iter;
+
+	proc_iter_start(&iter);
+	while ((proc = proc_iter_next(&iter))) {
+		if (proc->pgid == pgid)
+			dispatch_signal(proc, signum);
+	}
+	return 0;
 }
 
 int dispatch_signal(struct process *proc, int signum)

@@ -452,12 +452,17 @@ int do_setpgid(pid_t pid, pid_t pgid)
 		return EINVAL;
 	if (!proc || (proc != current_proc && proc->pid != current_proc->parent))
 		return ESRCH;
-	// TODO also check that the pg is in the same session and all the other stuff
 
 	if (pgid == 0)
 		proc->pgid = proc->pid;
-	else
+	else {
+		struct process *pg;
+
+		pg = get_proc(pgid);
+		if (!pg || pg->session != proc->session || proc->pid == proc->session)
+			return EPERM;
 		proc->pgid = pgid;
+	}
 	return 0;
 }
 
@@ -468,7 +473,10 @@ uid_t do_getuid()
 
 int do_kill(pid_t pid, int sig)
 {
-	return send_signal(pid, sig);
+	if (pid < 0)
+		return send_signal_process_group(-pid, sig);
+	else
+		return send_signal(pid, sig);
 }
 
 unsigned int do_alarm(unsigned int seconds)

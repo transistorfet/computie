@@ -93,6 +93,7 @@ void info()
 int command_test(int argc, char **argv)
 {
 	puts("this is only a test");
+	return 0;
 }
 
 int command_dump(int argc, char **argv)

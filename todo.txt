@@ -2,23 +2,22 @@
 Operating System:
 
 	* add a check_pending_signals() function to run after unblocking
-	* add means of sending a signal to a process group, and add syscall support for it
+	* should the timer stuff in proc be moved somewhere else?
+	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
+	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
+	* make sure init is process id 1... you might need to reserve pids if you end up creating a background task for the kernel
+	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 
-	* factor out a sched.h interface that can cover most needs inside the proc module
-	* there needs to be a lot of refactoring with the signals code about what goes where... the need for splitting processes and scheduling is even greater now
+
 	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
 	  that, the tty driver tries to resume procs, but since the state is changed, this doesn't have an affect and it's not until another character is entered that both the
 	  ^C and the other character are read (and the prompt is only then printed).
-
-	* need to add the various checks related to foreground pgid and ctty (and signals) such that you have to be in the same session, or something, and SIGTTOU is sent sometimes
-	  instead of returning success or failure
 	* it seems like in minix, an interrupt occurs, and a tty event message is placed on a queue, which is handled by a loop in the tty driver task which is its own process.
 	  that calls a hook in the tty device struct which points to one of the hardware driver's functions, which reads the character and then directly calls in_process() to do
 	  cannonical processing, from which a SIGINT can be dispatched to the process group recorded in the tty struct (as well as echo the char and such), and all that while the
 	  process that receives the sigint isn't doing i/o on the tty where the ^C originates....  This is all before the data is placed in a buffer, which wont be returned to the
 	  process that reads it until an entire line is entered
-	* implement signal handlers
-	* make sure init is process id 1... you might need to reserve pids if you end up creating a background task for the kernel
+
 
 	* driver access through the filesystem is broken because it doesn't give an offset to the driver.  It should be possible to track the position
 	  in the file->position value (which isn't passed to the driver), but since file->vnode->size is not set, seeking wont work anyways (will always reset to 0)
@@ -27,18 +26,15 @@ Operating System:
 
 
 	* make a device-independent tty subsystem
-	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	* syscalls to implement: setuid
 	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
 	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
-	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
 	* implement gmtime() and make the time command return a formatted time
 
 
 	* add commands: ps, kill
 	* what is needed to implement a 'ps' command in userspace? pstat()
-
 	* implement getopt
 	* add commands: mv, cp, rmdir, pwd, dd
 	* implement links and/or symlinks in minix filesystem

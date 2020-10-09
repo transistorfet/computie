@@ -257,7 +257,7 @@ static inline int putchar_buffered(struct serial_channel *channel, int ch)
 				char ch = *channel->ports->recv;
 				// TODO this is a temporary hack to get ^C -> SIGINT, but it's totally wrong on so many levels
 				if (ch == 0x03 && channel->pgid) {
-					send_signal(channel->pgid, SIGINT);
+					send_signal_process_group(channel->pgid, SIGINT);
 				}
 				//if (ch == 0x04 && channel->pgid) {
 				//	send_signal(channel->pgid, SIGCONT);

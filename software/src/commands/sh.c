@@ -702,10 +702,11 @@ int sh_task()
 	struct sigaction act;
 	act.sa_handler = handle_test;
 	sigaction(SIGINT, &act, NULL);
+	sigaction(SIGALRM, &act, NULL);
 
 	puts("\n\nThe Pseudo Shell!\n");
 
-	//alarm(10);
+	//alarm(3);
 	//pause();
 	//puts("Hey!\n");
 

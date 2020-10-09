@@ -6,8 +6,9 @@
 #include "../api.h"
 #include "../interrupts.h"
 
-#include "process.h"
 #include "memory.h"
+#include "process.h"
+#include "context.h"
 
 extern struct process *current_proc;
 

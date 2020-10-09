@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <kernel/kmalloc.h>
 #include <kernel/syscall.h>
+#include <kernel/scheduler.h>
 
 #include "nop.h"
 #include "fileptr.h"

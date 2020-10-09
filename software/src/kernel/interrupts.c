@@ -6,6 +6,7 @@
 #include <signal.h>
 
 #include <kernel/printk.h>
+#include <kernel/signal.h>
 
 #include "interrupts.h"
 

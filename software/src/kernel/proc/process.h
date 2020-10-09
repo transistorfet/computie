@@ -68,36 +68,25 @@ struct process {
 	fd_table_t fd_table;
 };
 
+struct process_iter {
+	short slot;
+};
+
 void init_proc();
 struct process *new_proc(uid_t uid);
 struct process *get_proc(pid_t pid);
-void exit_proc(struct process *proc, int status);
+void close_proc(struct process *proc);
 void cleanup_proc(struct process *proc);
 struct process *find_exited_child(pid_t parent, pid_t child);
+
+void proc_iter_start(struct process_iter *iter);
+struct process *proc_iter_next(struct process_iter *iter);
 
 void set_proc_return_value(struct process *proc, int ret);
 void backup_current_proc();
 void return_to_current_proc(int ret);
 
-void stop_proc(struct process *proc);
-void suspend_proc(struct process *proc, int flags);
-void suspend_current_proc();
-void resume_proc(struct process *proc);
-void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev);
-void resume_waiting_parent(struct process *proc);
 int set_alarm(struct process *proc, uint32_t seconds);
 void check_timers();
-
-void schedule();
-__attribute__((noreturn)) void begin_multitasking(struct process *proc);
-
-struct process *create_init_task();
-struct process *create_kernel_task(int (*task_start)());
-int idle_task();
-
-extern void *create_context(void *user_stack, void *entry, void *exit);
-extern void *drop_context(void *user_stack);
-extern void _exit();
-extern void _sigreturn();
 
 #endif

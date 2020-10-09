@@ -3,8 +3,10 @@
 
 #include <sys/types.h>
 #include <kernel/signal.h>
+#include <kernel/scheduler.h>
 
 #include "process.h"
+#include "context.h"
 
 
 #define SIG_MASK_DEFAULT_IGNORE		0x00010000
@@ -38,7 +40,7 @@ int get_signal_action(struct process *proc, int signum, struct sigaction *act)
 	*act = proc->signals.actions[signum - 1];
 }
 
-int set_signal_action(struct process *proc, int signum, struct sigaction *act)
+int set_signal_action(struct process *proc, int signum, const struct sigaction *act)
 {
 	proc->signals.actions[signum - 1] = *act;
 	proc->signals.actions[signum - 1].sa_mask |= signal_to_map(signum);
@@ -56,7 +58,7 @@ int send_signal(pid_t pid, int signum)
 	return dispatch_signal(proc, signum);
 }
 
-int send_signal_to_process_group(pid_t pgid, int signum)
+int send_signal_process_group(pid_t pgid, int signum)
 {
 	// TODO need to traverse procs...
 }
@@ -105,35 +107,31 @@ static inline void run_signal_handler(struct process *proc, int signum)
 	proc->state = PS_RUNNING;
 }
 
-void cleanup_signal_handler(struct process *proc)
+void cleanup_signal_handler()
 {
 	struct sigcontext *context;
+	extern void *current_proc_stack;
 
-	proc->sp = drop_context(proc->sp);
-	context = (struct sigcontext *) proc->sp;
-	proc->signals.blocked = context->prev_mask;
-	proc->sp = (((struct sigcontext *) proc->sp) + 1);
+	current_proc->sp = drop_context(current_proc->sp);
+	context = (struct sigcontext *) current_proc->sp;
+	current_proc->signals.blocked = context->prev_mask;
+	current_proc->sp = (((struct sigcontext *) current_proc->sp) + 1);
+	current_proc_stack = current_proc->sp;
 
-	if ((proc->bits & PB_SYSCALL) && !(proc->bits & PB_PAUSED))
-		//suspend_current_proc();
-		//current_proc->state = PS_RESUMING;
-		suspend_proc(proc, 0);
+	if (current_proc->bits & PB_PAUSED)
+		restart_current_syscall();
+	else if (current_proc->bits & PB_SYSCALL)
+		suspend_proc(current_proc, 0);
 }
 
 static inline void run_signal_default_action(struct process *proc, int signum, sigset_t sigmask)
 {
-	if (sigmask & SIG_MASK_DEFAULT_TERMINATE) {
-		printk("terminate\n");
+	if (sigmask & SIG_MASK_DEFAULT_TERMINATE)
 		sig_default_terminate(proc, signum);
-	}
-	else if (sigmask & SIG_MASK_DEFAULT_STOP) {
-		printk("suspend\n");
+	else if (sigmask & SIG_MASK_DEFAULT_STOP)
 		stop_proc(proc);
-	}
-	else if (signum == SIGCONT) {
-		printk("resume\n");
+	else if (signum == SIGCONT)
 		resume_proc(proc);
-	}
 }
 
 static void sig_default_terminate(struct process *proc, int signum)

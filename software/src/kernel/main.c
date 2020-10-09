@@ -6,12 +6,14 @@
 
 #include <sys/stat.h>
 
+#include <kernel/vfs.h>
 #include <kernel/kmalloc.h>
 #include <kernel/syscall.h>
 #include <kernel/driver.h>
 #include <kernel/printk.h>
-#include <kernel/vfs.h>
+#include <kernel/scheduler.h>
 
+#include "proc/tasks.h"
 #include "proc/process.h"
 
 #include "api.h"
@@ -76,6 +78,7 @@ int main()
 	init_interrupts();
 	init_syscall();
 	init_proc();
+	init_scheduler();
 
 	// Initialize drivers
 	for (char i = 0; drivers[i]; i++) {

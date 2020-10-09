@@ -3,7 +3,9 @@
 #include <string.h>
 #include <kernel/kmalloc.h>
 
+#include "memory.h"
 #include "process.h"
+#include "context.h"
 
 int copy_string_array(char **stack, int *count, char *const arr[])
 {

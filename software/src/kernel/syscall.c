@@ -12,6 +12,7 @@
 #include <kernel/printk.h>
 #include <kernel/driver.h>
 #include <kernel/kmalloc.h>
+#include <kernel/scheduler.h>
 
 #include "proc/memory.h"
 #include "proc/process.h"
@@ -478,12 +479,10 @@ unsigned int do_alarm(unsigned int seconds)
 int do_pause()
 {
 	if (current_proc->bits & PB_PAUSED) {
-		printk_safe("waking\n");
 		current_proc->bits &= ~PB_PAUSED;
 		return -1;
 	}
 	else {
-		printk_safe("pausing\n");
 		current_proc->bits |= PB_PAUSED;
 		suspend_current_proc();
 		return 0;
@@ -492,7 +491,7 @@ int do_pause()
 
 int do_sigreturn()
 {
-	cleanup_signal_handler(current_proc);
+	cleanup_signal_handler();
 	return 0;
 }
 

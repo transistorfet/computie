@@ -2,11 +2,10 @@
 Operating System:
 
 	* add a check_pending_signals() function to run after unblocking
+	* add means of sending a signal to a process group, and add syscall support for it
 
 	* factor out a sched.h interface that can cover most needs inside the proc module
 	* there needs to be a lot of refactoring with the signals code about what goes where... the need for splitting processes and scheduling is even greater now
-	* add means of sending a signal to a process group, and add syscall support for it
-	* add a signal() or sigaction() syscall, and remove the hardcoded "Hey" debug message on SIGINT
 	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
 	  that, the tty driver tries to resume procs, but since the state is changed, this doesn't have an affect and it's not until another character is entered that both the
 	  ^C and the other character are read (and the prompt is only then printed).

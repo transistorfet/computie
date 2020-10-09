@@ -12,10 +12,11 @@
 #include <kernel/signal.h>
 #include <kernel/printk.h>
 #include <kernel/driver.h>
+#include <kernel/syscall.h>
+#include <kernel/scheduler.h>
 
 #include "../time.h"
 #include "../interrupts.h"
-#include "../proc/process.h"
 #include "../misc/circlebuf.h"
 
 
@@ -35,6 +36,10 @@ struct driver tty_68681_driver = {
 	tty_68681_write,
 	tty_68681_ioctl,
 };
+
+void tty_68681_tx_safe_mode();
+void tty_68681_set_leds(uint8_t bits);
+void tty_68681_reset_leds(uint8_t bits);
 
 
 // MC68681 Register Addresses
@@ -546,4 +551,5 @@ void tty_68681_reset_leds(uint8_t bits)
 {
 	*OUT_RESET_ADDR = (bits << 4);
 }
+
 

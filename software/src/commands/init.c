@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include <unistd.h>
+#include <sys/ioc_tty.h>
 #include <kernel/syscall.h>
 
 int init_task()
@@ -31,6 +32,10 @@ int init_task()
 
  	pid = fork();
 	if (!pid) {
+		setpgid(0, 0);
+		pid_t fgpid = getpgid(0);
+		ioctl(STDOUT_FILENO, TIOCSPGRP, &fgpid);
+
 		extern void sh_task();
 		status = SYSCALL3(SYS_EXECBUILTIN, (int) sh_task, (int) argv, (int) envp);
 		// The exec() system call will only return if an error occurs

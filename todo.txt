@@ -1,12 +1,17 @@
 
 Operating System:
 
+	* add support for PATH variables
+
 	* add a check_pending_signals() function to run after unblocking
 	* should the timer stuff in proc be moved somewhere else?
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	* make sure init is process id 1... you might need to reserve pids if you end up creating a background task for the kernel
 	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
+
+
+	* it seems like with pre-initialized data, the addresses are absolute still, and when run as a process, accessing it doesn't work...
 
 
 	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
@@ -19,6 +24,7 @@ Operating System:
 	  process that reads it until an entire line is entered
 
 
+	* should drivers also have their own seek function?
 	* driver access through the filesystem is broken because it doesn't give an offset to the driver.  It should be possible to track the position
 	  in the file->position value (which isn't passed to the driver), but since file->vnode->size is not set, seeking wont work anyways (will always reset to 0)
 	  It looks like linux passes an offset pointer to the read/write functions, which the driver function adjusts by deref'ing

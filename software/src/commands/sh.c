@@ -14,7 +14,6 @@
 #include <kernel/syscall.h>
 
 
-
 void delay(int count) {
 	while (--count > 0) { asm volatile(""); }
 }
@@ -92,7 +91,7 @@ void info()
 
 int command_test(int argc, char **argv)
 {
-	puts("this is only a test");
+	//puts("this is only a test");
 	return 0;
 }
 
@@ -246,13 +245,11 @@ int command_cat(int argc, char **argv)
 	return 0;
 }
 
-const char *file_permissions = "-rwxrwxrwx";
-
 void format_file_mode(mode_t mode, char *buffer)
 {
 	mode_t curbit = 0400;
 
-	strcpy(buffer, file_permissions);
+	strcpy(buffer, "-rwxrwxrwx");
 
 	if (mode & S_IFDIR)
 		buffer[0] = 'd';
@@ -530,9 +527,6 @@ int parse_command_line(char *input, struct pipe_command *commands)
 	return 0;
 }
 
-extern void test_pipe();
-extern void test_forkpipe();
-
 typedef int (*main_t)(int argc, char **argv);
 
 struct command {
@@ -540,23 +534,32 @@ struct command {
 	main_t main;
 };
 
-struct command command_list[] = {
-	{ "test", 	command_test },
-	{ "dump", 	command_dump },
-	{ "send", 	command_send },
-	{ "echo", 	command_echo },
-	{ "hex", 	command_hex },
-	{ "cat", 	command_cat },
-	{ "ls", 	command_ls },
-	{ "mkdir", 	command_mkdir },
-	{ "rm", 	command_rm },
-	{ "cd", 	command_chdir },
-	{ "exec", 	command_exec },
-	{ "time", 	command_time },
-	{ "test_pipe", 	test_pipe },
-	{ "test_forkpipe", 	test_forkpipe },
-	{ NULL },
-};
+int commands;
+struct command command_list[20];
+
+#define add_command(n, f)	{		\
+	command_list[commands].name = (n);	\
+	command_list[commands++].main = (f);	\
+}
+
+void init_commands()
+{
+	commands = 0;
+
+	add_command("test", 	command_test);
+	add_command("dump", 	command_dump);
+	add_command("send", 	command_send);
+	add_command("echo", 	command_echo);
+	add_command("hex", 	command_hex);
+	add_command("cat", 	command_cat);
+	add_command("ls", 	command_ls);
+	add_command("mkdir", 	command_mkdir);
+	add_command("rm", 	command_rm);
+	add_command("cd", 	command_chdir);
+	add_command("exec", 	command_exec);
+	add_command("time", 	command_time);
+	add_command(NULL, 	NULL);
+}
 
 main_t find_command(char *name)
 {
@@ -671,7 +674,7 @@ void serial_read_loop()
 
 		// TODO this is a hack that should be removed
 		if (!strcmp(argv[0], "sync")) {
-			minix_sync(NULL);
+			sync();
 			continue;
 		}
 
@@ -694,23 +697,18 @@ void handle_test(int signum)
 
 int sh_task()
 {
-	// TODO should this be in the init process???
-	// Set the TTY foreground process group to this proc's
-	setpgid(0, 0);
-	pid_t fgpid = getpgid(0);
-	ioctl(STDOUT_FILENO, TIOCSPGRP, &fgpid);
+	init_commands();
+
+	puts("\n\nThe Pseudo Shell!\n");
 
 	struct sigaction act;
 	act.sa_handler = handle_test;
 	sigaction(SIGINT, &act, NULL);
 	sigaction(SIGALRM, &act, NULL);
 
-	puts("\n\nThe Pseudo Shell!\n");
-
 	//alarm(3);
 	//pause();
 	//puts("Hey!\n");
-
 
 	serial_read_loop();
 

@@ -26,7 +26,7 @@ def main():
             if not ch:
                 break
             if args.limit:
-                time.sleep(0.001)
+                time.sleep(0.005)
             #time.sleep(0.05)
             tty.write(bytes(ch, 'ascii'))
 

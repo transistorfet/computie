@@ -415,9 +415,11 @@ pid_t do_waitpid(pid_t pid, int *status, int options)
 	// TODO should this wake up all parent procesess instead of just one?
 	proc = find_exited_child(current_proc->pid, pid);
 	if (!proc) {
+		current_proc->bits |= PB_WAITING;
 		suspend_current_proc();
 	}
 	else {
+		current_proc->bits &= ~PB_WAITING;
 		*status = proc->exitcode;
 		pid = proc->pid;
 		cleanup_proc(proc);

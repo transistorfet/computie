@@ -4,11 +4,10 @@ Operating System:
 	* add support for PATH variables
 
 	* add a check_pending_signals() function to run after unblocking
-	* should the timer stuff in proc be moved somewhere else?
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	* make sure init is process id 1... you might need to reserve pids if you end up creating a background task for the kernel
-	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
+	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
 
 
 	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
@@ -27,6 +26,8 @@ Operating System:
 	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
 	* implement gmtime() and make the time command return a formatted time
+	* should the signal dispatcher somehow reschedule the process to run next, so that it handles it as soon as possible?
+	* should the timer stuff in proc be moved somewhere else?
 
 
 	* add commands: ps, kill
@@ -35,28 +36,23 @@ Operating System:
 	* add commands: mv, cp, rmdir, pwd, dd
 	* implement links and/or symlinks in minix filesystem
 	* need to remove the current_proc_stack value, instead writing directly to the process struct
-	* it seems like with pre-initialized data, the addresses are absolute still, and when run as a process, accessing it doesn't work...
-
-
-	* should the signal dispatcher somehow reschedule the process to run next, so that it handles it as soon as possible?
-	* should the default signal actions be handled right away instead of separately (in another system process or some other way)?
 
 
 	* add pipe setup to command evaluation
 	* add network syscalls for local IPC (unix file, sockets, maybe even fifos?)
-	* make a background process of some kind, perhaps launched by init, but I don't know what it could do since there are no other devices yet...
-
-	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
-	* minixfs, implement versions 2 and 3
-
+	* as a test, make a background process of some kind, perhaps launched by init, but I don't know what it could do since there are no other devices yet...
 	* should there be something that periodically syncs data to disk?
 	* should you refactor the header files in minix implementation into actual c files, with a common header to declare the functions?
-	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)
 
-
-
-	* look for any bugs that might be caused by a function returning the same vnode as was passed in
+	* minixfs, implement versions 2 and 3
 	* minixfs: add endian-conversion for superblock/inode/etc values, to be truely compatible
+
+
+
+
+	* in user processes with pre-initialized global variables, if they contain any addresses, the addresses will be relative to 0, and thus not be correct (rather than being relative addresses)
+	* look for any bugs that might be caused by a function returning the same vnode as was passed in
+	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)
 
 	* remove the execbuiltin syscall, which is temporary until all commands can be executable files
 

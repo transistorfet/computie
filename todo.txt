@@ -1,12 +1,19 @@
 
 Operating System:
 
+	* add commands: kill
+	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
+	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
+	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
 	* add support for PATH variables
+	* add fifos (should be easy now)
+	* add a scheduler function that takes a proc and schedules that proc to be run next by removing it from the run queue, and inserting it (before or after) the
+	  current process, and then switching to it.  This should still be fair to processes that were going to run after waiting their turn
 
+	* make a device-independent tty subsystem
 	* add a check_pending_signals() function to run after unblocking
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
-	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
 
 
 	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
@@ -19,23 +26,19 @@ Operating System:
 	  process that reads it until an entire line is entered
 
 
-	* make a device-independent tty subsystem
-	* syscalls to implement: setuid
 	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
-	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
-	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
 	* implement gmtime() and make the time command return a formatted time
 	* should the signal dispatcher somehow reschedule the process to run next, so that it handles it as soon as possible?
 	* should the timer stuff in proc be moved somewhere else?
-
-
-	* add commands: ps, kill
-	* what is needed to implement a 'ps' command in userspace? pstat()
-	* implement getopt
-	* add commands: mv, cp, rmdir, pwd, dd
-	* implement links and/or symlinks in minix filesystem
 	* need to remove the current_proc_stack value, instead writing directly to the process struct
 
+
+	* what is needed to implement a 'ps' command in userspace? pstat()
+	* add commands: ps, mv, cp, rmdir, pwd, dd
+	* implement getopt
+	* implement links and/or symlinks in minix filesystem
+	* syscalls to implement: setuid
+	* implement login system
 
 	* add pipe setup to command evaluation
 	* add network syscalls for local IPC (unix file, sockets, maybe even fifos?)
@@ -52,6 +55,7 @@ Operating System:
 	* in user processes with pre-initialized global variables, if they contain any addresses, the addresses will be relative to 0, and thus not be correct (rather than being relative addresses)
 	* look for any bugs that might be caused by a function returning the same vnode as was passed in
 	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)
+	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 
 	* remove the execbuiltin syscall, which is temporary until all commands can be executable files
 

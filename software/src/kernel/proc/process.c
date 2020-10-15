@@ -26,19 +26,22 @@ extern struct process *current_proc;
 
 void init_proc()
 {
-	next_pid = 1;
+	next_pid = 2;
 
 	for (short i = 0; i < PROCESS_MAX; i++) {
 		table[i].pid = 0;
 	}
 }
 
-struct process *new_proc(uid_t uid)
+struct process *new_proc(pid_t pid, uid_t uid)
 {
+	if (!pid)
+		pid = next_pid++;
+
 	for (short i = 0; i < PROCESS_MAX; i++) {
 		if (!table[i].pid) {
 			_queue_node_init(&table[i].node);
-			table[i].pid = next_pid++;
+			table[i].pid = pid;
 			if (current_proc) {
 				table[i].parent = current_proc->pid;
 				table[i].pgid = current_proc->pgid;
@@ -46,7 +49,7 @@ struct process *new_proc(uid_t uid)
 				table[i].ctty = current_proc->ctty;
 			}
 			else {
-				table[i].parent = 1;
+				table[i].parent = INIT_PID;
 				table[i].pgid = table[i].pid;
 				table[i].session = table[i].pid;
 				table[i].ctty = 0;

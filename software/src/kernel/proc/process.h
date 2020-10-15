@@ -9,7 +9,9 @@
 #include "../filedesc.h"
 #include "../misc/queue.h"
 
-#define	NUM_SEGMENTS			2
+#define INIT_PID	1
+
+#define	NUM_SEGMENTS	2
 
 typedef enum {
 	M_TEXT,
@@ -73,7 +75,7 @@ struct process_iter {
 };
 
 void init_proc();
-struct process *new_proc(uid_t uid);
+struct process *new_proc(pid_t pid, uid_t uid);
 struct process *get_proc(pid_t pid);
 void close_proc(struct process *proc);
 void cleanup_proc(struct process *proc);

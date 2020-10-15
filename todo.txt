@@ -6,7 +6,6 @@ Operating System:
 	* add a check_pending_signals() function to run after unblocking
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
-	* make sure init is process id 1... you might need to reserve pids if you end up creating a background task for the kernel
 	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
 
 

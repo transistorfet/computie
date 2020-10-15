@@ -16,7 +16,7 @@ struct process *create_init_task()
 {
 	int error = 0;
 
-	struct process *proc = new_proc(SU_UID);
+	struct process *proc = new_proc(INIT_PID, SU_UID);
 	if (!proc)
 		panic("Ran out of procs\n");
 
@@ -38,7 +38,7 @@ struct process *create_kernel_task(int (*task_start)())
 {
 	int error = 0;
 
-	struct process *proc = new_proc(SU_UID);
+	struct process *proc = new_proc(0, SU_UID);
 	if (!proc)
 		panic("Ran out of procs\n");
 

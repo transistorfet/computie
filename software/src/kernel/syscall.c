@@ -378,7 +378,7 @@ pid_t do_fork()
 {
 	struct process *proc;
 
-	proc = new_proc(current_proc->uid);
+	proc = new_proc(0, current_proc->uid);
 	if (!proc)
 		panic("Ran out of procs\n");
 	proc->cwd = current_proc->cwd;

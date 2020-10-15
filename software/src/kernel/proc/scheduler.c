@@ -28,6 +28,8 @@ void init_scheduler()
 	_queue_init(&run_queue);
 	_queue_init(&blocked_queue);
 
+	create_init_task();
+
 	idle_proc = create_kernel_task(idle_task);
 	_queue_remove(&run_queue, &idle_proc->node);
 }
@@ -160,10 +162,12 @@ void schedule()
 	}
 }
 
-__attribute__((noreturn)) void begin_multitasking(struct process *proc)
+__attribute__((noreturn)) void begin_multitasking()
 {
 	// Run the given process first
-	current_proc = proc;
+	//current_proc = proc;
+	//current_proc_stack = current_proc->sp;
+	current_proc = (struct process *) run_queue.head;
 	current_proc_stack = current_proc->sp;
 
 	//panic("Panicking for good measure\n");

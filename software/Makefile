@@ -57,6 +57,7 @@ KERNEL_OBJS = \
 	src/kernel/fs/vfs.o \
 	src/kernel/fs/nop.o \
 	src/kernel/fs/pipe.o \
+	src/kernel/fs/device.o \
 	src/kernel/fs/access.o \
 	src/kernel/fs/fileptr.o \
 	src/kernel/fs/bufcache.o \

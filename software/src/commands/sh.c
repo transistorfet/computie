@@ -585,6 +585,13 @@ int open_file(char *filename, int flags, int newfd)
 	return 0;
 }
 
+int resolve_file_location(char *filename, char *buffer, int max)
+{
+	// TODO use the $PATH to find the command to execute
+	char *PATH = "/bin:/sbin";
+
+}
+
 int execute_command(struct pipe_command *command, int argc, char **argv)
 {
 	int pid, status;

@@ -17,6 +17,7 @@ int mem_close(devminor_t minor);
 int mem_read(devminor_t minor, char *buffer, offset_t offset, size_t size);
 int mem_write(devminor_t minor, const char *buffer, offset_t offset, size_t size);
 int mem_ioctl(devminor_t minor, unsigned int request, void *argp);
+offset_t mem_seek(devminor_t minor, offset_t position, int whence, offset_t offset);
 
 
 struct driver mem_driver = {
@@ -26,6 +27,7 @@ struct driver mem_driver = {
 	mem_read,
 	mem_write,
 	mem_ioctl,
+	mem_seek,
 };
 
 struct mem_geometry {
@@ -94,4 +96,27 @@ int mem_ioctl(devminor_t minor, unsigned int request, void *argp)
 	return -1;
 }
 
+offset_t mem_seek(devminor_t minor, offset_t position, int whence, offset_t offset)
+{
+	if (minor >= num_devices)
+		return ENXIO;
+	struct mem_geometry *geo = &devices[minor];
 
+	switch (whence) {
+	    case SEEK_SET:
+		break;
+	    case SEEK_CUR:
+		position = offset + position;
+		break;
+	    case SEEK_END:
+		position = geo->size + position;
+		break;
+	    default:
+		return EINVAL;
+	}
+
+	if (position > geo->size)
+		position = geo->size;
+	return position;
+
+}

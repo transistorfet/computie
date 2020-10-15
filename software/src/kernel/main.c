@@ -121,6 +121,6 @@ int main()
 	}
 */
 
-	begin_multitasking(create_init_task());
+	begin_multitasking();
 }
 

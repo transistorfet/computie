@@ -249,15 +249,11 @@ int minix_release(struct vnode *vnode)
 
 int minix_open(struct vfile *file, int flags)
 {
-	if (file->vnode->mode & S_IFCHR)
-		return dev_open(MINIX_DATA(file->vnode).zones[0], flags);
 	return 0;
 }
 
 int minix_close(struct vfile *file)
 {
-	if (file->vnode->mode & S_IFCHR)
-		return dev_close(MINIX_DATA(file->vnode).zones[0]);
 	return 0;
 }
 
@@ -266,47 +262,42 @@ int minix_read(struct vfile *file, char *buffer, size_t nbytes)
 	if (file->vnode->mode & S_IFDIR)
 		return EISDIR;
 
-	if (file->vnode->mode & S_IFCHR)
-		return dev_read(MINIX_DATA(file->vnode).zones[0], buffer, 0, nbytes);
+	short zpos;
+	short zlen;
+	size_t offset = 0;
+	zone_t znum;
+	zone_t zone;
+	struct buf *buf;
 
-	else {
-		short zpos;
-		short zlen;
-		size_t offset = 0;
-		zone_t znum;
-		zone_t zone;
-		struct buf *buf;
+	if (nbytes > file->vnode->size - file->position)
+		nbytes = file->vnode->size - file->position;
 
-		if (nbytes > file->vnode->size - file->position)
-			nbytes = file->vnode->size - file->position;
+	znum = file->position >> MINIX_V1_LOG_ZONE_SIZE;
+	zpos = file->position & (MINIX_V1_ZONE_SIZE - 1);
 
-		znum = file->position >> MINIX_V1_LOG_ZONE_SIZE;
-		zpos = file->position & (MINIX_V1_ZONE_SIZE - 1);
+	do {
+		zone = zone_lookup(file->vnode, znum, MFS_LOOKUP_ZONE);
+		if (!zone)
+			break;
+		buf = get_block(file->vnode->mp->dev, zone);
+		if (!buf)
+			break;
 
-		do {
-			zone = zone_lookup(file->vnode, znum, MFS_LOOKUP_ZONE);
-			if (!zone)
-				break;
-			buf = get_block(file->vnode->mp->dev, zone);
-			if (!buf)
-				break;
+		zlen = MINIX_V1_ZONE_SIZE - zpos;
+		if (zlen > nbytes)
+			zlen = nbytes;
 
-			zlen = MINIX_V1_ZONE_SIZE - zpos;
-			if (zlen > nbytes)
-				zlen = nbytes;
+		memcpy_s(&buffer[offset], &(((char *) buf->block)[zpos]), zlen);
+		release_block(buf, 0);
 
-			memcpy_s(&buffer[offset], &(((char *) buf->block)[zpos]), zlen);
-			release_block(buf, 0);
+		offset += zlen;
+		nbytes -= zlen;
+		znum += 1;
+		zpos = 0;
+	} while (nbytes > 0);
 
-			offset += zlen;
-			nbytes -= zlen;
-			znum += 1;
-			zpos = 0;
-		} while (nbytes > 0);
-
-		file->position += offset;
-		return offset;
-	}
+	file->position += offset;
+	return offset;
 }
 
 int minix_write(struct vfile *file, const char *buffer, size_t nbytes)
@@ -314,91 +305,79 @@ int minix_write(struct vfile *file, const char *buffer, size_t nbytes)
 	if (file->vnode->mode & S_IFDIR)
 		return EISDIR;
 
-	if (file->vnode->mode & S_IFCHR)
-		return dev_write(MINIX_DATA(file->vnode).zones[0], buffer, 0, nbytes);
+	short zpos;
+	short zlen;
+	int error = 0;
+	size_t offset = 0;
+	zone_t znum;
+	zone_t zone;
+	struct buf *buf;
 
-	else {
-		short zpos;
-		short zlen;
-		int error = 0;
-		size_t offset = 0;
-		zone_t znum;
-		zone_t zone;
-		struct buf *buf;
+	znum = file->position >> MINIX_V1_LOG_ZONE_SIZE;
+	zpos = file->position & (MINIX_V1_ZONE_SIZE - 1);
 
-		znum = file->position >> MINIX_V1_LOG_ZONE_SIZE;
-		zpos = file->position & (MINIX_V1_ZONE_SIZE - 1);
-
-		do {
-			zone = zone_lookup(file->vnode, znum, MFS_CREATE_ZONE);
-			if (!zone) {
-				error = ENOSPC;
-				break;
-			}
-			buf = get_block(file->vnode->mp->dev, zone);
-			if (!buf) {
-				error = EIO;
-				break;
-			}
-
-			zlen = MINIX_V1_ZONE_SIZE - zpos;
-			if (zlen > nbytes)
-				zlen = nbytes;
-
-			memcpy_s(&(((char *) buf->block)[zpos]), &buffer[offset], zlen);
-			release_block(buf, BCF_DIRTY);
-
-			offset += zlen;
-			nbytes -= zlen;
-			znum += 1;
-			zpos = 0;
-		} while (nbytes > 0);
-
-		file->position += offset;
-		if (file->position > file->vnode->size) {
-			file->vnode->size = file->position;
-			mark_vnode_dirty(file->vnode);
+	do {
+		zone = zone_lookup(file->vnode, znum, MFS_CREATE_ZONE);
+		if (!zone) {
+			error = ENOSPC;
+			break;
+		}
+		buf = get_block(file->vnode->mp->dev, zone);
+		if (!buf) {
+			error = EIO;
+			break;
 		}
 
-		if (error)
-			return error;
-		return offset;
+		zlen = MINIX_V1_ZONE_SIZE - zpos;
+		if (zlen > nbytes)
+			zlen = nbytes;
+
+		memcpy_s(&(((char *) buf->block)[zpos]), &buffer[offset], zlen);
+		release_block(buf, BCF_DIRTY);
+
+		offset += zlen;
+		nbytes -= zlen;
+		znum += 1;
+		zpos = 0;
+	} while (nbytes > 0);
+
+	file->position += offset;
+	if (file->position > file->vnode->size) {
+		file->vnode->size = file->position;
+		mark_vnode_dirty(file->vnode);
 	}
+
+	if (error)
+		return error;
+	return offset;
 }
 
 int minix_ioctl(struct vfile *file, unsigned int request, void *argp)
 {
-	if (file->vnode->mode & S_IFCHR)
-		return dev_ioctl(MINIX_DATA(file->vnode).zones[0], request, argp);
 	return -1;
 }
 
 offset_t minix_seek(struct vfile *file, offset_t position, int whence)
 {
-	if (file->vnode->mode & S_IFCHR)
-		return -1;
-
-	else {
-		switch (whence) {
-		    case SEEK_SET:
-			break;
-		    case SEEK_CUR:
-			position = file->position + position;
-			break;
-		    case SEEK_END:
-			position = file->vnode->size + position;
-			break;
-		    default:
-			return EINVAL;
-		}
-
-		// TODO this is a hack for now so I don't have to deal with gaps in files
-		if (position > file->vnode->size)
-			position = file->vnode->size;
-
-		file->position = position;
-		return file->position;
+	switch (whence) {
+	    case SEEK_SET:
+		break;
+	    case SEEK_CUR:
+		position = file->position + position;
+		break;
+	    case SEEK_END:
+		position = file->vnode->size + position;
+		break;
+	    default:
+		return EINVAL;
 	}
+
+	// TODO this is a hack for now so I don't have to deal with gaps in files
+	if (position > file->vnode->size)
+		position = file->vnode->size;
+
+	file->position = position;
+	return file->position;
 }
 
 int minix_readdir(struct vfile *file, struct dirent *dir)

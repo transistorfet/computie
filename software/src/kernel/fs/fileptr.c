@@ -16,6 +16,7 @@ struct vfile file_table[FILE_TABLE_MAX];
 void init_fileptr_table()
 {
 	for (char i = 0; i < FILE_TABLE_MAX; i++) {
+		file_table[i].ops = NULL;
 		file_table[i].vnode = NULL;
 		file_table[i].refcount = 0;
 	}
@@ -25,6 +26,7 @@ struct vfile *new_fileptr(struct vnode *vnode, int flags)
 {
 	for (char i = 0; i < FILE_TABLE_MAX; i++) {
 		if (!file_table[i].vnode) {
+			file_table[i].ops = vnode->ops->fops;
 			file_table[i].vnode = vnode;
 			file_table[i].position = 0;
 			file_table[i].refcount = 1;

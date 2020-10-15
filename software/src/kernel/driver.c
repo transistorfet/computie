@@ -65,3 +65,13 @@ int dev_ioctl(device_t dev, unsigned int request, void *argp)
 	return drv_table[major]->ioctl(minor, request, argp);
 }
 
+offset_t dev_seek(device_t dev, offset_t position, int whence, offset_t offset)
+{
+	devmajor_t major = dev >> 8;
+	devminor_t minor = (devminor_t) dev;
+
+	if (major >= MAX_DRIVERS)
+		return ENXIO;
+	return drv_table[major]->seek(minor, position, whence, offset);
+}
+

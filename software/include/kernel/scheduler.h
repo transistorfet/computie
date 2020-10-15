@@ -18,7 +18,7 @@ void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev);
 void resume_waiting_parent(struct process *proc);
 
 void schedule();
-__attribute__((noreturn)) void begin_multitasking(struct process *proc);
+__attribute__((noreturn)) void begin_multitasking();
 
 #endif
 

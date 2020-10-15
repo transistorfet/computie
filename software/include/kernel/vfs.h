@@ -55,7 +55,6 @@ struct vnode_ops {
 	int (*release)(struct vnode *vnode);			// Release the vnode
 };
 
-// TODO should you just integrate this with the vnode ops
 struct vfile_ops {
 	int (*open)(struct vfile *file, int flags);
 	int (*close)(struct vfile *file);
@@ -96,9 +95,10 @@ struct vnode {
 };
 
 struct vfile {
+	struct vfile_ops *ops;
 	struct vnode *vnode;
-	int refcount;
-	int flags;
+	short refcount;
+	short flags;
 	offset_t position;
 };
 

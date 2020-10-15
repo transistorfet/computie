@@ -7,6 +7,7 @@
 #include <kernel/printk.h>
 
 #include "access.h"
+#include "device.h"
 #include "fileptr.h"
 #include "bufcache.h"
 
@@ -450,6 +451,9 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 	if (flags & O_APPEND && !(vnode->mode & S_IFDIR))
 		(*file)->position = (*file)->vnode->size;
 
+	if (vnode->mode & S_IFCHR)
+		(*file)->ops = &device_vfile_ops;
+
 	error = vnode->ops->fops->open(*file, flags);
 	if (error)
 		free_fileptr(*file);
@@ -460,34 +464,34 @@ int vfs_close(struct vfile *file)
 {
 	int error;
 
-	error = file->vnode->ops->fops->close(file);
+	error = file->ops->close(file);
 	free_fileptr(file);
 	return error;
 }
 
 int vfs_read(struct vfile *file, char *buffer, size_t size)
 {
-	return file->vnode->ops->fops->read(file, buffer, size);
+	return file->ops->read(file, buffer, size);
 }
 
 int vfs_write(struct vfile *file, const char *buffer, size_t size)
 {
-	return file->vnode->ops->fops->write(file, buffer, size);
+	return file->ops->write(file, buffer, size);
 }
 
 int vfs_ioctl(struct vfile *file, unsigned int request, void *argp)
 {
-	return file->vnode->ops->fops->ioctl(file, request, argp);
+	return file->ops->ioctl(file, request, argp);
 }
 
 offset_t vfs_seek(struct vfile *file, offset_t position, int whence)
 {
-	return file->vnode->ops->fops->seek(file, position, whence);
+	return file->ops->seek(file, position, whence);
 }
 
 int vfs_readdir(struct vfile *file, struct dirent *dir)
 {
-	return file->vnode->ops->fops->readdir(file, dir);
+	return file->ops->readdir(file, dir);
 }
 
 struct vfile *vfs_duplicate_fileptr(struct vfile *file)

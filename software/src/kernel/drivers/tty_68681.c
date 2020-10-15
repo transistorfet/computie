@@ -27,6 +27,7 @@ int tty_68681_close(devminor_t minor);
 int tty_68681_read(devminor_t minor, char *buffer, offset_t offset, size_t size);
 int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_t size);
 int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp);
+offset_t tty_68681_seek(devminor_t minor, offset_t position, int whence, offset_t offset);
 
 struct driver tty_68681_driver = {
 	tty_68681_init,
@@ -35,6 +36,7 @@ struct driver tty_68681_driver = {
 	tty_68681_read,
 	tty_68681_write,
 	tty_68681_ioctl,
+	tty_68681_seek,
 };
 
 void tty_68681_tx_safe_mode();
@@ -541,6 +543,12 @@ int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
 	}
 	return -1;
 }
+
+offset_t tty_68681_seek(devminor_t minor, offset_t position, int whence, offset_t offset)
+{
+	return -1;
+}
+
 
 void tty_68681_set_leds(uint8_t bits)
 {

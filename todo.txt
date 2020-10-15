@@ -11,9 +11,6 @@ Operating System:
 	* change the blocking/waiting code to use either of the state enums for blocking or waiting, rather than checking that the syscall is wait or waitpid
 
 
-	* it seems like with pre-initialized data, the addresses are absolute still, and when run as a process, accessing it doesn't work...
-
-
 	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
 	  that, the tty driver tries to resume procs, but since the state is changed, this doesn't have an affect and it's not until another character is entered that both the
 	  ^C and the other character are read (and the prompt is only then printed).
@@ -22,13 +19,6 @@ Operating System:
 	  cannonical processing, from which a SIGINT can be dispatched to the process group recorded in the tty struct (as well as echo the char and such), and all that while the
 	  process that receives the sigint isn't doing i/o on the tty where the ^C originates....  This is all before the data is placed in a buffer, which wont be returned to the
 	  process that reads it until an entire line is entered
-
-
-	* should drivers also have their own seek function?
-	* driver access through the filesystem is broken because it doesn't give an offset to the driver.  It should be possible to track the position
-	  in the file->position value (which isn't passed to the driver), but since file->vnode->size is not set, seeking wont work anyways (will always reset to 0)
-	  It looks like linux passes an offset pointer to the read/write functions, which the driver function adjusts by deref'ing
-	* we could also move them to the vfs functions...
 
 
 	* make a device-independent tty subsystem
@@ -45,6 +35,7 @@ Operating System:
 	* add commands: mv, cp, rmdir, pwd, dd
 	* implement links and/or symlinks in minix filesystem
 	* need to remove the current_proc_stack value, instead writing directly to the process struct
+	* it seems like with pre-initialized data, the addresses are absolute still, and when run as a process, accessing it doesn't work...
 
 
 	* should the signal dispatcher somehow reschedule the process to run next, so that it handles it as soon as possible?

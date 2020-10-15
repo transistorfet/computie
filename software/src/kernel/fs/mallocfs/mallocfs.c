@@ -205,15 +205,11 @@ int mallocfs_release(struct vnode *vnode)
 
 int mallocfs_open(struct vfile *file, int flags)
 {
-	if (file->vnode->mode & S_IFCHR)
-		return dev_open(file->vnode->rdev, flags);
 	return 0;
 }
 
 int mallocfs_close(struct vfile *file)
 {
-	if (file->vnode->mode & S_IFCHR)
-		return dev_close(file->vnode->rdev);
 	return 0;
 }
 
@@ -222,42 +218,37 @@ int mallocfs_read(struct vfile *file, char *buf, size_t nbytes)
 	if (file->vnode->mode & S_IFDIR)
 		return EISDIR;
 
-	if (file->vnode->mode & S_IFCHR)
-		return dev_read(file->vnode->rdev, buf, 0, nbytes);
+	char *zone;
+	short zpos;
+	short zlen;
+	size_t offset = 0;
+	zone_t znum;
 
-	else {
-		char *zone;
-		short zpos;
-		short zlen;
-		size_t offset = 0;
-		zone_t znum;
+	if (nbytes > file->vnode->size - file->position)
+		nbytes = file->vnode->size - file->position;
 
-		if (nbytes > file->vnode->size - file->position)
-			nbytes = file->vnode->size - file->position;
+	znum = file->position >> MALLOCFS_LOG_BLOCK_SIZE;
+	zpos = file->position & (MALLOCFS_BLOCK_SIZE - 1);
 
-		znum = file->position >> MALLOCFS_LOG_BLOCK_SIZE;
-		zpos = file->position & (MALLOCFS_BLOCK_SIZE - 1);
+	do {
+		zone = (char *) zone_lookup(file->vnode, znum, MFS_LOOKUP_ZONE);
+		if (!zone)
+			break;
 
-		do {
-			zone = (char *) zone_lookup(file->vnode, znum, MFS_LOOKUP_ZONE);
-			if (!zone)
-				break;
+		zlen = MALLOCFS_BLOCK_SIZE - zpos;
+		if (zlen > nbytes)
+			zlen = nbytes;
 
-			zlen = MALLOCFS_BLOCK_SIZE - zpos;
-			if (zlen > nbytes)
-				zlen = nbytes;
+		memcpy_s(&buf[offset], &zone[zpos], zlen);
 
-			memcpy_s(&buf[offset], &zone[zpos], zlen);
+		offset += zlen;
+		nbytes -= zlen;
+		znum += 1;
+		zpos = 0;
+	} while (nbytes > 0);
 
-			offset += zlen;
-			nbytes -= zlen;
-			znum += 1;
-			zpos = 0;
-		} while (nbytes > 0);
-
-		file->position += offset;
-		return offset;
-	}
+	file->position += offset;
+	return offset;
 }
 
 int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
@@ -265,82 +256,70 @@ int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
 	if (file->vnode->mode & S_IFDIR)
 		return EISDIR;
 
-	if (file->vnode->mode & S_IFCHR)
-		return dev_write(file->vnode->rdev, buf, 0, nbytes);
+	char *zone;
+	short zpos;
+	short zlen;
+	int error = 0;
+	size_t offset = 0;
+	zone_t znum;
 
-	else {
-		char *zone;
-		short zpos;
-		short zlen;
-		int error = 0;
-		size_t offset = 0;
-		zone_t znum;
+	znum = file->position >> MALLOCFS_LOG_BLOCK_SIZE;
+	zpos = file->position & (MALLOCFS_BLOCK_SIZE - 1);
 
-		znum = file->position >> MALLOCFS_LOG_BLOCK_SIZE;
-		zpos = file->position & (MALLOCFS_BLOCK_SIZE - 1);
+	do {
+		zone = (char *) zone_lookup(file->vnode, znum, MFS_CREATE_ZONE);
+		if (!zone) {
+			error = ENOSPC;
+			break;
+		}
 
-		do {
-			zone = (char *) zone_lookup(file->vnode, znum, MFS_CREATE_ZONE);
-			if (!zone) {
-				error = ENOSPC;
-				break;
-			}
+		zlen = MALLOCFS_BLOCK_SIZE - zpos;
+		if (zlen > nbytes)
+			zlen = nbytes;
 
-			zlen = MALLOCFS_BLOCK_SIZE - zpos;
-			if (zlen > nbytes)
-				zlen = nbytes;
+		memcpy_s(&zone[zpos], &buf[offset], zlen);
 
-			memcpy_s(&zone[zpos], &buf[offset], zlen);
+		offset += zlen;
+		nbytes -= zlen;
+		znum += 1;
+		zpos = 0;
+	} while (nbytes > 0);
 
-			offset += zlen;
-			nbytes -= zlen;
-			znum += 1;
-			zpos = 0;
-		} while (nbytes > 0);
+	file->position += offset;
+	if (file->position > file->vnode->size)
+		file->vnode->size = file->position;
 
-		file->position += offset;
-		if (file->position > file->vnode->size)
-			file->vnode->size = file->position;
-
-		if (error)
-			return error;
-		return offset;
-	}
+	if (error)
+		return error;
+	return offset;
 }
 
 int mallocfs_ioctl(struct vfile *file, unsigned int request, void *argp)
 {
-	if (file->vnode->mode & S_IFCHR)
-		return dev_ioctl(file->vnode->rdev, request, argp);
 	return -1;
 }
 
 offset_t mallocfs_seek(struct vfile *file, offset_t position, int whence)
 {
-	if (file->vnode->mode & S_IFCHR)
-		return -1;
-
-	else {
-		switch (whence) {
-		    case SEEK_SET:
-			break;
-		    case SEEK_CUR:
-			position = file->position + position;
-			break;
-		    case SEEK_END:
-			position = file->vnode->size + position;
-			break;
-		    default:
-			return EINVAL;
-		}
-
-		// TODO this is a hack for now so I don't have to deal with gaps in files
-		if (position > file->vnode->size)
-			position = file->vnode->size;
-
-		file->position = position;
-		return file->position;
+	switch (whence) {
+	    case SEEK_SET:
+		break;
+	    case SEEK_CUR:
+		position = file->position + position;
+		break;
+	    case SEEK_END:
+		position = file->vnode->size + position;
+		break;
+	    default:
+		return EINVAL;
 	}
+
+	// TODO this is a hack for now so I don't have to deal with gaps in files
+	if (position > file->vnode->size)
+		position = file->vnode->size;
+
+	file->position = position;
+	return file->position;
 }
 
 int mallocfs_readdir(struct vfile *file, struct dirent *dir)

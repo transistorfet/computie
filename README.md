@@ -15,11 +15,8 @@ The Operating System
 
 Currently it doesn't have a name.  It's largely based on reading Operating Systems Design and Implementation 2ed by
 Andrew S. Tanenbaum, although I've gone with a monolithic design, at least for the time being, for the simplicity of
-it.  It can do preemptive multitasking using the 68681 timer.  A file system is simulated using fixed size blocks of
-memory allocated for each file or directory.  I will eventually make a proper filesystem implementation, probably for
-the minix filesystem since it's simple and tools are still available on linux to create and mount images, which will
-help with development.
-
+it.  It can do preemptive multitasking using the 68681 timer.  It also has an implementation of the minix version 1
+filesystem, which uses RAM (through a device driver) to store the data.
 
 The 68k Single Board Computer
 -----------------------------
@@ -29,7 +26,7 @@ It has a bus for connecting a supervisor arduino or expansion devices, but it ca
 UARTs.  It has 1MB of onboard Flash, 1MB of onboard SRAM, and a 68681 Dual UART chip with GPIO.  Some of the GPIO
 pins are wired to 4 general purpose LEDs and 2 general purpose buttons.
 
-[68k Board Schematics](https://github.com/transistorfet/computie/raw/master/hardware/68k-SBC/68kBoard/68kBoard.pdf)
+[68k Board Schematics](https://github.com/transistorfet/computie/raw/master/hardware/68k-SBC/68kBoard.pdf)
 
 
 The serial ports require external TTL-to-something conversion and are designed to be used with an FTDI USB-to-Serial

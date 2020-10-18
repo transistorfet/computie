@@ -1,5 +1,10 @@
 EESchema-DOCLIB  Version 2.0
 #
+$CMP 68681-PLCC
+D Interface serie 2 voies + 1 port parallele
+K MPRO
+$ENDCMP
+#
 $CMP HM628512
 D 512K x 8 High-Speed CMOS Static RAM, 55/70ns, DIP-32/SSOP-32
 K RAM SRAM CMOS MEMORY

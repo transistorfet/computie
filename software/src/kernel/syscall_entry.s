@@ -171,6 +171,7 @@ save_context:
 	| Save the return address before we switch the stacks
 	move.l	(-4,%sp), %a6
 
+	| Check that we aren't already on the kernel stack, and fatal error if we are
 	cmp.l	#0, kernel_stack
 	bne	after_check
 	jmp	fatal_error

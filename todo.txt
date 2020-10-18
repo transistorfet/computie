@@ -1,8 +1,10 @@
 
+* the arduino programs could go under software, and the boards to the top level
+
 Operating System:
 
-	* add commands: kill
-	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
+	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
+
 	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
 	* add support for PATH variables
@@ -24,8 +26,14 @@ Operating System:
 	  cannonical processing, from which a SIGINT can be dispatched to the process group recorded in the tty struct (as well as echo the char and such), and all that while the
 	  process that receives the sigint isn't doing i/o on the tty where the ^C originates....  This is all before the data is placed in a buffer, which wont be returned to the
 	  process that reads it until an entire line is entered
+	* we need to modify the context code to allow re-entry to the kernel stack somehow, so that an interrupt can occur while a syscall is running.  You still need a context
+	  switch when entering an interrupt from a user process, or else you can't even switch to a kernel process to handle the rest of the interrupt, but you don't want to context
+	  switch if you're already on the kernel stack and re-entering
+	* If interrupts are enabled when handling a syscall, and if a timer interrupt occurs, the call to schedule() could instead of switching tasks, schedule a task switch for when it
+	  exits the syscall (so it does a check when exiting to see if it should switch)
 
 
+	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
 	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
 	* implement gmtime() and make the time command return a formatted time
 	* should the signal dispatcher somehow reschedule the process to run next, so that it handles it as soon as possible?
@@ -33,6 +41,7 @@ Operating System:
 	* need to remove the current_proc_stack value, instead writing directly to the process struct
 
 
+	* add commands: kill
 	* what is needed to implement a 'ps' command in userspace? pstat()
 	* add commands: ps, mv, cp, rmdir, pwd, dd
 	* implement getopt
@@ -55,7 +64,6 @@ Operating System:
 	* in user processes with pre-initialized global variables, if they contain any addresses, the addresses will be relative to 0, and thus not be correct (rather than being relative addresses)
 	* look for any bugs that might be caused by a function returning the same vnode as was passed in
 	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)
-	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 
 	* remove the execbuiltin syscall, which is temporary until all commands can be executable files
 
@@ -106,6 +114,7 @@ Monitor:
 	* maybe extra power pins?
 
 
+* should you move the Z80 project into it's own repo?
 
 * it might be possible to do a 68030 single board computer, with 74LVC244/245 interfaces to an fpga chip, to provide the glue logic, but it would be a
   lot of surface mount chips, so you'd have to try a few smaller surface mount projects first

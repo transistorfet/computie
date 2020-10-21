@@ -119,6 +119,14 @@ void resume_waiting_parent(struct process *proc)
 		resume_proc(parent);
 }
 
+void reschedule_proc_to_now(struct process *proc)
+{
+	if (proc == current_proc || !PROC_IS_RUNNING(proc) || !PROC_IS_RUNNING(current_proc))
+		return;
+	_queue_remove(&run_queue, &proc->node);
+	_queue_insert_after(&run_queue, &proc->node, &current_proc->node);
+}
+
 void restart_current_syscall()
 {
 	if (current_proc->bits & PB_SYSCALL) {
@@ -132,7 +140,7 @@ void schedule()
 {
 	struct process *next;
 
-	if (!current_proc || !PROC_IS_RUNNABLE(current_proc) || !current_proc->node.next)
+	if (!current_proc || !PROC_IS_RUNNING(current_proc) || !current_proc->node.next)
 		next = (struct process *) run_queue.head;
 	else
 		next = (struct process *) current_proc->node.next;

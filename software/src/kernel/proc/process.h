@@ -34,7 +34,7 @@ struct mem_map {
 #define PB_WAITING			0x0004
 #define PB_PAUSED			0x0008
 
-#define PROC_IS_RUNNABLE(proc)		((proc)->state == PS_RUNNING || (proc)->state == PS_RESUMING)
+#define PROC_IS_RUNNING(proc)		((proc)->state == PS_RUNNING || (proc)->state == PS_RESUMING)
 
 typedef enum {
 	PS_RUNNING,

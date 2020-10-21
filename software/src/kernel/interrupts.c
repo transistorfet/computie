@@ -135,11 +135,9 @@ __attribute__((interrupt)) void handle_exception()
 	extern struct process *current_proc;
 	if (kernel_stack) {
 		fatal_error(frame);
-		printk_safe("KILL PROC\n");
 		dispatch_signal(current_proc, SIGILL);
 	}
 	else {
-		printk_safe("KERNEL PANIC\n");
 		fatal_error(frame);
 		asm volatile("stop #0x2700\n");
 	}

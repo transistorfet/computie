@@ -38,6 +38,18 @@ static inline void _queue_insert(struct queue *queue, struct queue_node *node)
 	queue->head = node;
 }
 
+static inline void _queue_insert_after(struct queue *queue, struct queue_node *node, struct queue_node *after)
+{
+	node->next = after->next;
+	if (after->next)
+		after->next->prev = node;
+	else
+		queue->tail = node;
+
+	after->next = node;
+	node->prev = after;
+}
+
 static inline void _queue_remove(struct queue *queue, struct queue_node *node)
 {
 	if (node->next)

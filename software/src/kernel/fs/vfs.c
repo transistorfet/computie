@@ -158,6 +158,7 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 
 	vfs_clone_vnode(cur);
 	while (1) {
+		// If a filesystem is mounted on this node, replace the node with the mounted fs root node
 		if (cur->bits & VBF_MOUNTED) {
 			mp = _find_mount_by_vnode(cur);
 			if (!mp) {
@@ -169,9 +170,16 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 			cur = mp->root_node;
 		}
 
+		// Return successfully with the result
 		if (path[i] == '\0') {
 			*result = cur;
 			return 0;
+		}
+
+		// This is not the last component, so it must be directory
+		if (!(cur->mode & S_IFDIR)) {
+			vfs_release_vnode(cur);
+			return ENOTDIR;
 		}
 
 		// TODO this seems to be wrong according to how linux behaves...
@@ -180,21 +188,22 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 			return EPERM;
 		}
 
-		for (j = 0; path[i] && path[i] != VFS_SEP; i++, j++)
+		for (j = 0; j < VFS_FILENAME_MAX - 1 && path[i] && path[i] != VFS_SEP; i++, j++)
 			component[j] = path[i];
 		if (path[i] == VFS_SEP)
 			i += 1;
 		component[j] = '\0';
 
-		if (!(cur->mode & S_IFDIR)) {
+		if (j >= VFS_FILENAME_MAX) {
 			vfs_release_vnode(cur);
-			return ENOTDIR;
+			return ENAMETOOLONG;
 		}
 
 		// If creating, then skip the last component lookup
 		if (flags & VLOOKUP_PARENT_OF && path[i] == '\0')
 			continue;
 
+		// Call the fs-specific lookup to get the referenced node
 		error = cur->ops->lookup(cur, component, &cur);
 		if (error) {
 			vfs_release_vnode(cur);

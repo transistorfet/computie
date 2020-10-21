@@ -1,16 +1,14 @@
 
-* the arduino programs could go under software, and the boards to the top level
-
 Operating System:
 
-	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
-
-	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
+
+
+	* could I use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
+	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
 	* add support for PATH variables
 	* add fifos (should be easy now)
-	* add a scheduler function that takes a proc and schedules that proc to be run next by removing it from the run queue, and inserting it (before or after) the
-	  current process, and then switching to it.  This should still be fair to processes that were going to run after waiting their turn
+	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 
 	* make a device-independent tty subsystem
 	* add a check_pending_signals() function to run after unblocking
@@ -31,6 +29,12 @@ Operating System:
 	  switch if you're already on the kernel stack and re-entering
 	* If interrupts are enabled when handling a syscall, and if a timer interrupt occurs, the call to schedule() could instead of switching tasks, schedule a task switch for when it
 	  exits the syscall (so it does a check when exiting to see if it should switch)
+	* should there be a lighter weight task type, instead of processes, so that you can service interrupt processing without a bunch of wasted space for the signals and file
+	  descriptor tables...
+	* what paradigm should be used to communicated from the interrupts to the scheduled interrupt handling task/process?  Generic IPC messages? A custom event queue (how are event
+	  records allocated)?, even just a counter of the number of times an interrupt has occurred.  There could be a burst of hardware interrupts that need to be processed to avoid
+	  losing data, but the post-processing takes a lot longer, and needs to queue up fully.  In that sense, just a counter or a bit to say an interrupt is available, and the
+	  post-processor can figure out how many events need to be processed, since it's tightly coupled to the hardware interrupt handler
 
 
 	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)

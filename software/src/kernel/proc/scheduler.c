@@ -9,7 +9,6 @@
 
 // Info for Current Running Process (accessed by syscall interface)
 void *kernel_stack;
-void *current_proc_stack;
 struct process *idle_proc;
 struct process *current_proc;
 struct syscall_record *current_syscall;
@@ -153,30 +152,18 @@ void schedule()
 	if (current_proc == next)
 		return;
 
-	current_proc->sp = current_proc_stack;
+	// Switch the current process
 	current_proc = next;
-	current_proc_stack = next->sp;
-
-	//printk("RUN: %d\n", current_proc->pid);
 
 	if (current_proc->state == PS_RESUMING) {
-		//printk("Restarting %d with call %d\n", current_proc->pid, current_proc->blocked_call.syscall);
 		current_proc->state = PS_RUNNING;
-		if (current_proc->bits & PB_SYSCALL) {
-			current_proc->bits &= ~PB_SYSCALL;
-			current_syscall = &current_proc->blocked_call;
-			do_syscall();
-		}
+		restart_current_syscall();
 	}
 }
 
 __attribute__((noreturn)) void begin_multitasking()
 {
-	// Run the given process first
-	//current_proc = proc;
-	//current_proc_stack = current_proc->sp;
 	current_proc = (struct process *) run_queue.head;
-	current_proc_stack = current_proc->sp;
 
 	//panic("Panicking for good measure\n");
 

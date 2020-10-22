@@ -101,7 +101,6 @@ void do_syscall()
 
 	tty_68681_set_leds(0x04);
 
-	backup_current_proc();
 	ret = ((syscall_t) syscall_table[current_syscall->syscall])(current_syscall->arg1, current_syscall->arg2, current_syscall->arg3);
 	return_to_current_proc(ret);
 

@@ -118,13 +118,11 @@ static inline void run_signal_handler(struct process *proc, int signum)
 void cleanup_signal_handler()
 {
 	struct sigcontext *context;
-	extern void *current_proc_stack;
 
 	current_proc->sp = drop_context(current_proc->sp);
 	context = (struct sigcontext *) current_proc->sp;
 	current_proc->signals.blocked = context->prev_mask;
 	current_proc->sp = (((struct sigcontext *) current_proc->sp) + 1);
-	current_proc_stack = current_proc->sp;
 
 	if (current_proc->bits & PB_PAUSED)
 		restart_current_syscall();

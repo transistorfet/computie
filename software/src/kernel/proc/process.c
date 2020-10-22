@@ -19,8 +19,6 @@
 static pid_t next_pid;
 static struct process table[PROCESS_MAX];
 
-// TODO these should be removed
-extern void *current_proc_stack;
 extern struct process *current_proc;
 
 
@@ -143,18 +141,11 @@ void set_proc_return_value(struct process *proc, int ret)
 	*((uint32_t *) proc->sp) = ret;
 }
 
-void backup_current_proc()
-{
-	// Save the current process's stack pointer back to it's struct
-	current_proc->sp = current_proc_stack;
-}
-
 void return_to_current_proc(int ret)
 {
-	current_proc_stack = current_proc->sp;
 	if (current_proc->state == PS_RUNNING) {
 		// If the process is still in the ready state, then set the return value in the process's context
-		*((uint32_t *) current_proc_stack) = ret;
+		*((uint32_t *) current_proc->sp) = ret;
 	}
 	else {
 		// If the process has been suspended, we wont return as normal but instead schedule another process

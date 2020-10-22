@@ -49,14 +49,15 @@ struct vnode;
 
 struct process {
 	struct queue_node node;
+
+	void *sp;
+	uint16_t state;
+	struct mem_map map;
+
 	pid_t pid;
 	pid_t parent;
 	pid_t pgid;
 	pid_t session;
-
-	uint16_t state;
-	struct mem_map map;
-	void *sp;
 
 	uint16_t bits;
 	int exitcode;
@@ -85,7 +86,6 @@ void proc_iter_start(struct process_iter *iter);
 struct process *proc_iter_next(struct process_iter *iter);
 
 void set_proc_return_value(struct process *proc, int ret);
-void backup_current_proc();
 void return_to_current_proc(int ret);
 
 int set_alarm(struct process *proc, uint32_t seconds);

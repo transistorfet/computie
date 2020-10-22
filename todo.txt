@@ -42,7 +42,6 @@ Operating System:
 	* implement gmtime() and make the time command return a formatted time
 	* should the signal dispatcher somehow reschedule the process to run next, so that it handles it as soon as possible?
 	* should the timer stuff in proc be moved somewhere else?
-	* need to remove the current_proc_stack value, instead writing directly to the process struct
 
 
 	* add commands: kill

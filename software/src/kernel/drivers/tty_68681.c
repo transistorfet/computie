@@ -295,8 +295,6 @@ void handle_serial_irq()
 {
 	register char isr = *ISR_RD_ADDR;
 
-	backup_current_proc();
-
 	handle_channel_io(isr, &channel_a);
 
 	handle_channel_io(isr, &channel_b);

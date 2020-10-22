@@ -10,11 +10,12 @@
 
 	.global	syscall_table
 	.global kernel_stack
-	.global current_proc_stack
+	.global current_proc
 	.global current_syscall
 	.global do_syscall
 
 	.equ	CONTEXT_SIZE, 60		| The size of the saved registers on the stack (not including the interrupt return)
+	.equ	PROC_SP_OFFSET, 8		| The offset into struct process where the stack pointer is located
 
 	.section .text
 
@@ -79,9 +80,6 @@ enter_irq:
 	or.w	#0x0700, %sr
 	bsr	save_context
 
-	| Move the address of the stack frame into a5
-	move.l	current_proc_stack, %a5
-	add.l	#CONTEXT_SIZE, %a5
 	bsr	handle_serial_irq
 
 	| Jump to the syscall interrupt return
@@ -178,9 +176,10 @@ save_context:
     after_check:
 
 	| Switch to the kernel stack
-	move.l	%sp, current_proc_stack
+	move.l	current_proc, %a5
+	adda.l	#PROC_SP_OFFSET, %a5
+	move.l	%sp, (%a5)
 	move.l	kernel_stack, %sp
-	clr.l	kernel_stack
 
 	| Jump to the return address of the caller
 	jmp	(%a6)
@@ -192,7 +191,9 @@ save_context:
 restore_context:
 	| Switch back to the current process's stack
 	move.l	%sp, kernel_stack
-	move.l	current_proc_stack, %sp
+	move.l	current_proc, %a5
+	adda.l	#PROC_SP_OFFSET, %a5
+	move.l	(%a5), %sp
 
 	| Restore registers
 	move.l	(%sp)+, %d0

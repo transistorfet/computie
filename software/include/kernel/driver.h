@@ -20,7 +20,7 @@ struct driver {
 	int (*read)(devminor_t minor, char *buffer, offset_t offset, size_t size);
 	int (*write)(devminor_t minor, const char *buffer, offset_t offset, size_t size);
 	int (*ioctl)(devminor_t minor, unsigned int request, void *argp);
-	int (*seek)(devminor_t minor, offset_t position, int whence, offset_t offset);
+	offset_t (*seek)(devminor_t minor, offset_t position, int whence, offset_t offset);
 };
 
 

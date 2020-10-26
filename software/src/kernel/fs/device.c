@@ -29,7 +29,7 @@ int device_ops_close(struct vfile *file)
 int device_ops_read(struct vfile *file, char *buffer, size_t size)
 {
 	int nbytes;
-	
+
 	nbytes = dev_read(file->vnode->rdev, buffer, file->position, size);
 	if (nbytes < 0)
 		return nbytes;
@@ -40,7 +40,7 @@ int device_ops_read(struct vfile *file, char *buffer, size_t size)
 int device_ops_write(struct vfile *file, const char *buffer, size_t size)
 {
 	int nbytes;
-	
+
 	nbytes = dev_write(file->vnode->rdev, buffer, file->position, size);
 	if (nbytes < 0)
 		return nbytes;

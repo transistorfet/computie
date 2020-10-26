@@ -93,7 +93,7 @@ void tty_68681_reset_leds(uint8_t bits);
 
 // MC68681 Default Configuration Values
 #define MR1A_MODE_A_REG_1_CONFIG	0b10010011	// RxRTS Enabled, 8 bits, No Parity
-#define MR2A_MODE_A_REG_2_CONFIG	0b00010111	// Normal mode, CTS Enabled, 1 stop bit
+#define MR2A_MODE_A_REG_2_CONFIG	0b00000111	// Normal mode, CTS Disabled, 1 stop bit
 //#define CSRA_CLK_SELECT_REG_A_CONFIG	0b10111011	// 9600 bps @ 3.6864MHz (19200 @ 7.3728 MHz)
 //#define ACR_AUX_CONTROL_REG_CONFIG	0b11111000	// Set2, External Clock / 16, IRQs disabled except IP3
 #define CSRA_CLK_SELECT_REG_A_CONFIG	0b11001100	// 38400 bps @ 3.6864MHz
@@ -205,6 +205,9 @@ static inline struct serial_channel *from_minor_dev(device_t minor)
 
 static inline int getchar_buffered(struct serial_channel *channel)
 {
+	short saved_status;
+	LOCK(saved_status);
+
 	// Assert CTS
 	*OUT_SET_ADDR = channel->ports->ctsbit;
 
@@ -213,20 +216,31 @@ static inline int getchar_buffered(struct serial_channel *channel)
 		asm volatile("");
 		//putchar_buffered('^');
 	}
-	return _buf_get_char(&channel->rx);
+	char ch = _buf_get_char(&channel->rx);
+
+	UNLOCK(saved_status);
+	return ch;
 }
 
 
 static inline int putchar_direct(struct serial_channel *channel, int ch)
 {
+	short saved_status;
+	LOCK(saved_status);
+
 	*channel->ports->command = CMD_ENABLE_TX;
 	while (!(*channel->ports->status & SR_TX_READY)) { }
 	*channel->ports->send = (char) ch;
+
+	UNLOCK(saved_status);
 	return ch;
 }
 
 static inline int putchar_buffered(struct serial_channel *channel, int ch)
 {
+	short saved_status;
+	LOCK(saved_status);
+
 	// TODO this timelimit is because of an issue on boot where it will lock up before interrupts are enabled because the buffer is full
 	for (int i = 0; _buf_is_full(&channel->tx) && i < 10000; i++) {
 		asm volatile("");
@@ -237,12 +251,13 @@ static inline int putchar_buffered(struct serial_channel *channel, int ch)
 	// Enable the channel A transmitter
 	*channel->ports->command = CMD_ENABLE_TX;
 
+	UNLOCK(saved_status);
 	return ch;
 }
 
 //int putchar(int ch) { return putchar_buffered(&channel_a, ch); }
 
- static inline void handle_channel_io(register char isr, struct serial_channel *channel)
+static inline void handle_channel_io(register char isr, struct serial_channel *channel)
 {
 	register char status = *channel->ports->status;
 	register char rx_ready = channel == &channel_a ? ISR_CH_A_RX_READY_FULL : ISR_CH_B_RX_READY_FULL;
@@ -265,6 +280,10 @@ static inline int putchar_buffered(struct serial_channel *channel, int ch)
 				//	send_signal(channel->pgid, SIGCONT);
 				//}
 				_buf_put_char(&channel->rx, ch);
+
+				// Assert CTS
+				*OUT_SET_ADDR = channel->ports->ctsbit;
+
 			}
 			else {
 				// De-Assert CTS
@@ -315,7 +334,9 @@ void handle_serial_irq()
 		check_timers();
 
 		// Schedule a new process
-		schedule();
+		extern int kernel_reentries;
+		if (kernel_reentries <= 1)
+			schedule();
 	}
 
 	if (isr & ISR_INPUT_CHANGE) {

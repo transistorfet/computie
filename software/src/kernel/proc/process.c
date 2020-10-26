@@ -33,11 +33,15 @@ void init_proc()
 
 struct process *new_proc(pid_t pid, uid_t uid)
 {
+	short saved_status;
+
 	if (!pid)
 		pid = next_pid++;
 
 	for (short i = 0; i < PROCESS_MAX; i++) {
 		if (!table[i].pid) {
+			LOCK(saved_status);
+
 			_queue_node_init(&table[i].node);
 			table[i].pid = pid;
 			if (current_proc) {
@@ -72,6 +76,7 @@ struct process *new_proc(pid_t pid, uid_t uid)
 
 			insert_proc(&table[i]);
 
+			UNLOCK(saved_status);
 			return &table[i];
 		}
 	}
@@ -111,8 +116,9 @@ void cleanup_proc(struct process *proc)
 struct process *find_exited_child(pid_t parent, pid_t child)
 {
 	for (short i = 0; i < PROCESS_MAX; i++) {
-		if (table[i].pid && table[i].state == PS_EXITED && table[i].parent == parent && (child == -1 || table[i].pid == child))
+		if (table[i].pid && table[i].state == PS_EXITED && table[i].parent == parent && (child == -1 || table[i].pid == child)) {
 			return &table[i];
+		}
 	}
 	return NULL;
 }

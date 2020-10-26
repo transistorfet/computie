@@ -47,6 +47,15 @@
 #define ARDUINO_TRACE_ON()	asm volatile("movea.l	#0x2019, %%a0\n" "move.b	#1, (%%a0)" : : : "%a0");
 #define ARDUINO_TRACE_OFF()	asm volatile("movea.l	#0x2019, %%a0\n" "move.b	#0, (%%a0)" : : : "%a0");
 
+#define LOCK(saved) {					\
+	asm("move.w	%%sr, %0\n" : "=r" ((saved)));	\
+	DISABLE_INTS();					\
+}
+
+#define UNLOCK(saved) {						\
+	asm("move.w	%0, %%sr\n" : : "r" ((saved)) :);	\
+}
+
 
 typedef void (*interrupt_handler_t)();
 

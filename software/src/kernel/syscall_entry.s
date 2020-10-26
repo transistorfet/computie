@@ -9,6 +9,7 @@
 	.global _sigreturn
 
 	.global	syscall_table
+	.global kernel_reentries
 	.global kernel_stack
 	.global current_proc
 	.global current_syscall
@@ -41,23 +42,10 @@ enter_syscall:
 
 	move.l	%sp, current_syscall
 
-	/*
-	| Calculate the index into the syscall table
-	| TODO this is so far the only non-pc-relative address (there are more now)
-	lea	syscall_table, %a0	
-	lsl.l	#2, %d0
-	add.l	%d0, %a0
-	move.l	(%a0), %a1
-
-	| Call the C function registered in the syscall table
-	jsr	(%a1)
-
-	| Save the return value to the context's %d0 slot
-	move.l	current_proc_stack, %a0
-	move.l	%d0, (%a0)
-	*/
-
+	| Enable interrupts during the syscall
+	and.w	#0xF8FF, %sr
 	jsr	do_syscall
+	or.w	#0x0700, %sr
 
 	| Restore the argument registers
 	move.l	(%sp)+, %d1
@@ -145,6 +133,22 @@ drop_context:
  * Save all registers to the current user stack and switch to the kernel stack
  */
 save_context:
+	| Increment the number of times we've entered the kernel, and skip the stack switch if we're already inside
+	add.l	#1, kernel_reentries
+	cmp.l	#1, kernel_reentries
+	beq	L001
+
+	| We're already on the kernel stack, so just save the scratch registers and return
+	move.l	(%sp), (-16,%sp)
+	add.l	#4, %sp
+	move.l	%a1, -(%sp)
+	move.l	%a0, -(%sp)
+	move.l	%d1, -(%sp)
+	move.l	%d0, -(%sp)
+	sub.l	#4, %sp
+	rts
+
+    L001:
 	| Move the return address ahead of where the context will be
 	move.l	(%sp), (-CONTEXT_SIZE,%sp)
 	add.l	#4, %sp
@@ -169,12 +173,6 @@ save_context:
 	| Save the return address before we switch the stacks
 	move.l	(-4,%sp), %a6
 
-	| Check that we aren't already on the kernel stack, and fatal error if we are
-	cmp.l	#0, kernel_stack
-	bne	after_check
-	jmp	fatal_error
-    after_check:
-
 	| Switch to the kernel stack
 	move.l	current_proc, %a5
 	adda.l	#PROC_SP_OFFSET, %a5
@@ -189,6 +187,18 @@ save_context:
  * Switch to the current user stack, restore the context, and return from the interrupt
  */
 restore_context:
+	| Decrement the number of times we've entered the kernel, and if this is the last time, then switch the stack back
+	sub.l	#1, kernel_reentries
+	beq	L002
+
+	| We'll still be on the kernel stack after returning, so just pop off the saved scratch register values and return
+	move.l	(%sp)+, %d0
+	move.l	(%sp)+, %d1
+	move.l	(%sp)+, %a0
+	move.l	(%sp)+, %a1
+	rte
+
+    L002:
 	| Switch back to the current process's stack
 	move.l	%sp, kernel_stack
 	move.l	current_proc, %a5

@@ -5,9 +5,11 @@
 #include "tasks.h"
 #include "process.h"
 #include "../api.h"
+#include "../interrupts.h"
 #include "../misc/queue.h"
 
 // Info for Current Running Process (accessed by syscall interface)
+int kernel_reentries;
 void *kernel_stack;
 struct process *idle_proc;
 struct process *current_proc;
@@ -22,6 +24,7 @@ static struct queue blocked_queue;
 
 void init_scheduler()
 {
+	kernel_reentries = 1;
 	current_proc = NULL;
 
 	_queue_init(&run_queue);
@@ -40,9 +43,13 @@ void insert_proc(struct process *proc)
 
 void exit_proc(struct process *proc, int status)
 {
+	short saved_status;
+
 	if (proc->state == PS_EXITED)
 		return;
-	else if (proc->state == PS_BLOCKED)
+
+	LOCK(saved_status);
+	if (proc->state == PS_BLOCKED)
 		_queue_remove(&blocked_queue, &proc->node);
 	else
 		_queue_remove(&run_queue, &proc->node);
@@ -51,54 +58,77 @@ void exit_proc(struct process *proc, int status)
 	proc->exitcode = status;
 
 	close_proc(proc);
+	UNLOCK(saved_status);
 }
 
 void stop_proc(struct process *proc)
 {
-	if (proc->state == PS_EXITED || proc->state == PS_STOPPED)
+	short saved_status;
+
+	LOCK(saved_status);
+	if (proc->state == PS_EXITED || proc->state == PS_STOPPED) {
+		UNLOCK(saved_status);
 		return;
+	}
 	else if (proc->state == PS_RUNNING || proc->state == PS_RESUMING)
 		_queue_remove(&run_queue, &proc->node);
 	else if (proc->state == PS_BLOCKED)
 		_queue_remove(&blocked_queue, &proc->node);
 	proc->state = PS_STOPPED;
+	UNLOCK(saved_status);
 }
 
 void suspend_proc(struct process *proc, int flags)
 {
-	if (proc->state != PS_RUNNING)
-		return;
+	short saved_status;
 
-	//proc->blocked_call.syscall = 0;
-	//current_proc->blocked_call = *current_syscall;
+	LOCK(saved_status);
+	if (proc->state != PS_RUNNING) {
+		UNLOCK(saved_status);
+		return;
+	}
 
 	_queue_remove(&run_queue, &proc->node);
 	_queue_insert(&blocked_queue, &proc->node);
 	proc->state = PS_BLOCKED;
 	proc->bits |= (flags & 0x0F);
+	UNLOCK(saved_status);
 }
 
 void suspend_current_proc()
 {
+	short saved_status;
+
+	LOCK(saved_status);
 	suspend_proc(current_proc, PB_SYSCALL);
 	current_proc->blocked_call = *current_syscall;
+	UNLOCK(saved_status);
 }
 
 
 void resume_proc(struct process *proc)
 {
-	if (proc->state == PS_RUNNING || proc->state == PS_RESUMING || proc->state == PS_EXITED)
+	short saved_status;
+
+	LOCK(saved_status);
+	if (proc->state == PS_RUNNING || proc->state == PS_RESUMING || proc->state == PS_EXITED) {
+		UNLOCK(saved_status);
 		return;
-	if (proc->state == PS_BLOCKED)
+	}
+	else if (proc->state == PS_BLOCKED)
 		_queue_remove(&blocked_queue, &proc->node);
 	_queue_insert(&run_queue, &proc->node);
 	proc->state = PS_RESUMING;
+	UNLOCK(saved_status);
 }
 
 void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev)
 {
-	struct process *cur = (struct process *) blocked_queue.tail;
+	short saved_status;
+	struct process *cur;
 
+	LOCK(saved_status);
+	cur = (struct process *) blocked_queue.tail;
 	for (; cur; cur = (struct process *) cur->node.prev) {
 		if (cur->state == PS_BLOCKED && cur->blocked_call.syscall == syscall_num) {
 			int fd = cur->blocked_call.arg1;
@@ -107,6 +137,7 @@ void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev)
 			}
 		}
 	}
+	UNLOCK(saved_status);
 }
 
 void resume_waiting_parent(struct process *proc)
@@ -120,25 +151,39 @@ void resume_waiting_parent(struct process *proc)
 
 void reschedule_proc_to_now(struct process *proc)
 {
-	if (proc == current_proc || !PROC_IS_RUNNING(proc) || !PROC_IS_RUNNING(current_proc))
+	short saved_status;
+
+	LOCK(saved_status);
+	if (proc == current_proc || !PROC_IS_RUNNING(proc) || !PROC_IS_RUNNING(current_proc)) {
+		UNLOCK(saved_status);
 		return;
+	}
+
 	_queue_remove(&run_queue, &proc->node);
 	_queue_insert_after(&run_queue, &proc->node, &current_proc->node);
+	UNLOCK(saved_status);
 }
 
 void restart_current_syscall()
 {
+	short saved_status;
+
 	if (current_proc->bits & PB_SYSCALL) {
+		LOCK(saved_status);
 		current_proc->bits &= ~PB_SYSCALL;
 		current_syscall = &current_proc->blocked_call;
+		UNLOCK(saved_status);
+
 		do_syscall();
 	}
 }
 
 void schedule()
 {
+	short saved_status;
 	struct process *next;
 
+	LOCK(saved_status);
 	if (!current_proc || !PROC_IS_RUNNING(current_proc) || !current_proc->node.next)
 		next = (struct process *) run_queue.head;
 	else
@@ -148,12 +193,9 @@ void schedule()
 	if (!next)
 		next = idle_proc;
 
-	// Run the same process that was already running, so do nothing
-	if (current_proc == next)
-		return;
-
 	// Switch the current process
 	current_proc = next;
+	UNLOCK(saved_status);
 
 	if (current_proc->state == PS_RESUMING) {
 		current_proc->state = PS_RUNNING;

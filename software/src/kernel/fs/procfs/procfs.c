@@ -149,7 +149,7 @@ int procfs_read(struct vfile *file, char *buf, size_t nbytes)
 		return 0;
 	}
 
-	limit = strlen(data);
+	limit = strlen(data) + 1;
 	if (file->position + nbytes >= limit)
 		nbytes = limit - file->position;
 	if (nbytes)

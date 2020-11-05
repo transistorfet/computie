@@ -394,6 +394,57 @@ int command_time(int argc, char **argv)
 	return 0;
 }
 
+#define PS_BUFFER_SIZE	100
+
+int command_ps(int argc, char **argv)
+{
+	pid_t pid;
+	int error;
+	int dd, fd;
+	struct dirent dir;
+	char *buffer[PS_BUFFER_SIZE];
+
+	if ((dd = open("/proc", 0, 0)) < 0) {
+		printf("Error opening /proc\n");
+		return dd;
+	}
+
+	printf("PID\tCMD\n");
+	while (1) {
+		error = readdir(dd, &dir);
+		if (error < 0) {
+			printf("Error at readdir %d\n", error);
+			return error;
+		}
+
+		if (error == 0)
+			break;
+
+		pid = strtol(dir.name, NULL, 10);
+		if (pid > 0) {
+			snprintf(buffer, PS_BUFFER_SIZE, "/proc/%d/cmdline", pid);
+			if ((fd = open(buffer, 0, 0)) < 0) {
+				printf("Error opening %s\n", buffer);
+				return fd;
+			}
+
+			error = read(fd, buffer, PS_BUFFER_SIZE);
+			if (error < 0) {
+				printf("Error reading %s (%d)\n", buffer, error);
+				return error;
+			}
+
+			close(fd);
+
+			printf("%s\t%s\n", dir.name, buffer);
+		}
+	}
+
+	close(dd);
+
+	return 0;
+}
+
 
 
 /*****************************
@@ -558,6 +609,7 @@ void init_commands()
 	add_command("cd", 	command_chdir);
 	add_command("exec", 	command_exec);
 	add_command("time", 	command_time);
+	add_command("ps", 	command_ps);
 	add_command(NULL, 	NULL);
 }
 

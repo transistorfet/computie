@@ -33,7 +33,7 @@ struct vnode_ops devfs_vnode_ops = {
 
 #define MAX_VNODES	6
 
-struct devfs_vnode *devfs_root;
+struct vnode *devfs_root;
 static struct vnode vnode_table[MAX_VNODES];
 static struct devfs_dirent devices[DEVFS_DIRENT_MAX];
 
@@ -47,6 +47,11 @@ int init_devfs()
 
 	for (char i = 0; i < DEVFS_DIRENT_MAX; i++)
 		devices[i].vnode = NULL;
+}
+
+int devfs_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t uid, struct vnode **result)
+{
+
 }
 
 int devfs_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, uid_t uid, struct vnode **result)
@@ -147,7 +152,7 @@ static struct vnode *_new_vnode(device_t dev, mode_t mode, struct vnode_ops *ops
 {
 	for (char i = 0; i < MAX_VNODES; i++) {
 		if (vnode_table[i].refcount <= 0) {
-			vfs_init_vnode(&vnode_table[i], ops, mode, 1, 0, 0, 0, 0, 0, 0);
+			vfs_init_vnode(&vnode_table[i], ops, NULL, mode, 1, 0, 0, 0, 0, 0, 0, 0);
 			DEVFS_DATA(&vnode_table[i]).device = dev;
 			return &vnode_table[i];
 		}

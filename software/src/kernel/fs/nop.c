@@ -5,6 +5,11 @@
 #include "nop.h"
 
 
+int nop_sync(struct mount *mp)
+{
+	return 0;
+}
+
 int nop_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t uid, struct vnode **result)
 {
 	return EPERM;

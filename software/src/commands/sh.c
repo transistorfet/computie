@@ -546,7 +546,7 @@ void init_commands()
 {
 	commands = 0;
 
-	add_command("test", 	command_test);
+	//add_command("test", 	command_test);
 	add_command("dump", 	command_dump);
 	add_command("send", 	command_send);
 	add_command("echo", 	command_echo);

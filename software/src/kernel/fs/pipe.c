@@ -90,6 +90,7 @@ int vfs_create_pipe(struct vfile **rfile, struct vfile **wfile)
 int pipe_release(struct vnode *vnode)
 {
 	kmfree(vnode);
+	return 0;
 }
 
 int pipe_close(struct vfile *file)

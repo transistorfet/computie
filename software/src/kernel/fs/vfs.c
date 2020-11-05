@@ -161,13 +161,10 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 		// If a filesystem is mounted on this node, replace the node with the mounted fs root node
 		if (cur->bits & VBF_MOUNTED) {
 			mp = _find_mount_by_vnode(cur);
-			if (!mp) {
-				vfs_release_vnode(cur);
+			vfs_release_vnode(cur);
+			if (!mp)
 				return ENXIO;
-			}
-			//if (!mp)
-			//	return vfs_return(ENXIO, cur);
-			cur = mp->root_node;
+			cur = vfs_clone_vnode(mp->root_node);
 		}
 
 		// Return successfully with the result

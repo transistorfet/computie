@@ -25,6 +25,9 @@ MONITOR_OBJS = \
 DEVFS_OBJS = \
 	src/kernel/fs/devfs/devfs.o
 
+PROCFS_OBJS = \
+	src/kernel/fs/procfs/procfs.o
+
 MALLOCFS_OBJS = \
 	src/kernel/fs/mallocfs/alloc.o \
 	src/kernel/fs/mallocfs/mallocfs.o
@@ -34,7 +37,7 @@ MINIXFS_OBJS = \
 	src/kernel/fs/minix/minix.o
 
 FILESYSTEM_OBJS = \
-	$(MALLOCFS_OBJS) \
+	$(PROCFS_OBJS) \
 	$(MINIXFS_OBJS)
 
 KERNEL_OBJS = \

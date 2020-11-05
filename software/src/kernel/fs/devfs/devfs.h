@@ -32,8 +32,8 @@ struct devfs_vnode {
 
 extern struct vnode *devfs_root;
 
-int devfs_create(struct vnode *vnode, const char *filename, mode_t mode, struct vnode **result);
-int devfs_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, struct vnode **result);
+int devfs_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t uid, struct vnode **result);
+int devfs_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, uid_t uid, struct vnode **result);
 int devfs_lookup(struct vnode *vnode, const char *name, struct vnode **result);
 int devfs_release(struct vnode *vnode);
 

@@ -66,6 +66,7 @@ struct process {
 	struct signal_data signals;
 
 	uid_t uid;
+	char *cmdline;
 	device_t ctty;
 	struct vnode *cwd;
 	fd_table_t fd_table;

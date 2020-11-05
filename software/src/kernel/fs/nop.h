@@ -4,6 +4,7 @@
 
 #include <kernel/vfs.h>
 
+int nop_sync(struct mount *mp);
 int nop_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t uid, struct vnode **result);
 int nop_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, uid_t uid, struct vnode **result);
 int nop_lookup(struct vnode *vnode, const char *name, struct vnode **result);

@@ -34,10 +34,12 @@ struct driver *drivers[] = {
 
 extern struct mount_ops mallocfs_mount_ops;
 extern struct mount_ops minix_mount_ops;
+extern struct mount_ops procfs_mount_ops;
 
 struct mount_ops *filesystems[] = {
-	&mallocfs_mount_ops,
+	//&mallocfs_mount_ops,
 	&minix_mount_ops,
+	&procfs_mount_ops,
 	NULL	// Null Termination of Filesystems List
 };
 
@@ -99,10 +101,13 @@ int main()
 
 	create_dir_or_panic("/bin");
 	create_dir_or_panic("/dev");
+	create_dir_or_panic("/proc");
 
 	create_special_or_panic("/dev/tty0", DEVNUM(DEVMAJOR_TTY, 0));
 	create_special_or_panic("/dev/tty1", DEVNUM(DEVMAJOR_TTY, 1));
 	create_special_or_panic("/dev/mem0", DEVNUM(DEVMAJOR_MEM, 0));
+
+	vfs_mount(NULL, "/proc", 0, &procfs_mount_ops, SU_UID);
 
 /*
 	{

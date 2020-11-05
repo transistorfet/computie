@@ -60,6 +60,9 @@ char *copy_exec_args(char *stack, char *const argv[], char *const envp[])
 
 int reset_stack(struct process *proc, void *entry, char *const argv[], char *const envp[])
 {
+	// Hackish: set the process's command to the first argument.  This is only used by procfs to show to the user
+	proc->cmdline = argv[0];
+
 	// Reset the stack to start our new process
 	char *task_stack_pointer = proc->map.segments[M_STACK].base + proc->map.segments[M_STACK].length;
 

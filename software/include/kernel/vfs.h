@@ -48,8 +48,6 @@ struct vnode_ops {
 	//link
 	int (*unlink)(struct vnode *parent, struct vnode *vnode);
 	int (*rename)(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname);
-	//mkdir (or can it be done through create)
-	//rmdir (or can it be done through unlink)
 	int (*truncate)(struct vnode *vnode);			// Truncate the file data (size should be 0 after)
 	int (*update)(struct vnode *vnode);
 	int (*release)(struct vnode *vnode);			// Release the vnode

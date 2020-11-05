@@ -445,6 +445,38 @@ int command_ps(int argc, char **argv)
 	return 0;
 }
 
+int command_kill(int argc, char **argv)
+{
+	int error;
+	int i = 1;
+	pid_t pid;
+	char *endptr;
+	int signal = 6;
+
+	if (argc <= 1) {
+		printf("Usage: kill -[\\d] <pid>\n");
+		return 0;
+	}
+
+	if (argv[i][0] == '-') {
+		signal = strtol(&argv[i][1], &endptr, 10);
+		i += 1;
+	}
+
+	pid = strtol(argv[i], &endptr, 10);
+	if (pid < 0 || endptr[0] != '\0') {
+		printf("Invalid pid number\n");
+		return -1;
+	}
+
+	error = kill(pid, signal);
+	if (error < 0) {
+		printf("Error attempting to send signal %d to process %d, return %d\n", signal, pid, error);
+		return -1;
+	}
+
+	return 0;
+}
 
 
 /*****************************
@@ -610,6 +642,7 @@ void init_commands()
 	add_command("exec", 	command_exec);
 	add_command("time", 	command_time);
 	add_command("ps", 	command_ps);
+	add_command("kill", 	command_kill);
 	add_command(NULL, 	NULL);
 }
 

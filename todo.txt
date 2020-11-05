@@ -44,9 +44,7 @@ Operating System:
 	* should the timer stuff in proc be moved somewhere else?
 
 
-	* add commands: kill
-	* what is needed to implement a 'ps' command in userspace? pstat()
-	* add commands: ps, mv, cp, rmdir, pwd, dd
+	* add commands: mv, cp, rmdir, pwd, dd
 	* implement getopt
 	* implement links and/or symlinks in minix filesystem
 	* syscalls to implement: setuid

@@ -101,10 +101,10 @@ void close_proc(struct process *proc)
 			kmfree(proc->map.segments[j].base);
 	}
 
-	// Reassign any child procs' parent to be this proc's parent
+	// Reassign any child procs' parent to be 1 (init), since we can't be sure this proc's parent is waiting, and the zombie proc wont get recycled
 	for (short i = 0; i < PROCESS_MAX; i++) {
 		if (table[i].pid && table[i].parent == proc->pid)
-			table[i].parent = proc->parent;
+			table[i].parent = 1;
 	}
 }
 

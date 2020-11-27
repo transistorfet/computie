@@ -1,4 +1,25 @@
 
+
+* there is a serious issue with reading the compact flash card on the breadboard, in that it seems that the card skips some bytes, causing a couple bytes short to
+  be read, and the data to be incorrect as a result.  It happens very regularly when reading 16-bits at a time, but happens less so in 8-bit transfer mode.  Reading
+  the first sector in 8-bit mode is pretty reliable, but reading 2 sectors causes two characters to be skipped in the second sector, coincidentally they are both
+  expected values of 0xFF, but no such byte is read in (ie. it reads in "FC FD FE 0 1 2", skipping the FF inbetween)
+
+* do you need to swap the data bus around?  there is an issue with the byte position of byte-wise data, even though it will swap the bytes for 16 bit numbers
+
+68k SMT:
+
+	* finish routing logic
+	* figure out final positions for the last few components
+	* should you have a header for ide or just the compact flash slot?
+
+
+68k30 SBC:
+
+	* really need to look up the memory interface...  Some other boards are using GALs for the A1/A0, SIZ1-0, and DTACK1-0 logic
+	* the idea for rev1 is to clock it slow and have limited features.  1M Flash, 1M SRAM would be sufficient, but if it's not too much trouble to have more...
+
+
 Operating System:
 
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
@@ -100,7 +121,6 @@ Monitor:
 
 68k Single Board Computer:
 
-	* maybe extra power pins?
 	* the serial issue turns out to be a problem with the crystal for the serial chip.  It is outputting an inconsistent signal around 100kHz when powered through
 	  USB or power supply.  When powered by the arduino, you have to unplug and replug the serial usb cable to make it work, which seems to reset the oscillator.
 	  Connecting a 22pF capacitor across the crystal jumpstarts it, but the output is a lot lower on the scope with it connected.  The datasheet says to use 15 and 5pF
@@ -112,7 +132,7 @@ Monitor:
 	* can you connect an esp01 as a wifi device?  I suppose you could connect it to the other serial port, even though it would be slow
 
 68k Arduino Shield:
-	* maybe extra power pins?
+	(nothing atm)
 
 
 * should you move the Z80 project into it's own repo?

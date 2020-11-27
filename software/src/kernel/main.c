@@ -25,10 +25,12 @@ extern void tty_68681_preinit();
 
 extern struct driver tty_68681_driver;
 extern struct driver mem_driver;
+extern struct driver ata_driver;
 
 struct driver *drivers[] = {
 	&tty_68681_driver,
 	&mem_driver,
+	&ata_driver,
 	NULL	// Null Termination of Drivers List
 };
 
@@ -81,6 +83,7 @@ int main()
 	init_syscall();
 	init_proc();
 	init_scheduler();
+	//init_async();
 
 	// Initialize drivers
 	for (char i = 0; drivers[i]; i++) {

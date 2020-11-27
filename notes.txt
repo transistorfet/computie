@@ -1,0 +1,20 @@
+
+Compiling:
+
+make clean && make all && make commands
+
+
+Open a terminal:
+
+pyserial-miniterm /dev/ttyUSB0 38400
+
+
+Load the kernel across serial:
+
+python3 tools/load.py kernel.load
+
+
+Send a command:
+
+python3 tools/load.py -l src/commands/daemontest.send
+(the -l limits the speed because flow control doesn't work)

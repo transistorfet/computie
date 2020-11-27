@@ -67,6 +67,7 @@ KERNEL_OBJS = \
 	$(FILESYSTEM_OBJS) \
 	src/kernel/drivers/tty_68681.o \
 	src/kernel/drivers/mem.o \
+	src/kernel/drivers/ata.o \
 	src/commands/init.o \
 	src/commands/sh.o \
 	src/tests/kernel/tests.o \
@@ -74,6 +75,7 @@ KERNEL_OBJS = \
 
 COMMANDS = \
 	src/commands/hello.send	\
+	src/commands/daemontest.send	\
 	src/commands/test.send
 
 LIBC_BASE_OBJS = $(filter-out src/libc/arch/*, \

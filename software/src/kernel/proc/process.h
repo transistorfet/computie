@@ -49,9 +49,9 @@ struct vnode;
 
 struct process {
 	struct queue_node node;
-
 	void *sp;
 	uint16_t state;
+
 	struct mem_map map;
 
 	pid_t pid;

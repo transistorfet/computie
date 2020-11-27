@@ -7,6 +7,7 @@
 
 #define DEVMAJOR_TTY	1
 #define DEVMAJOR_MEM	2
+#define DEVMAJOR_ATA	3
 
 #define DEVNUM(major, minor)	((major) << 8 | (minor))
 

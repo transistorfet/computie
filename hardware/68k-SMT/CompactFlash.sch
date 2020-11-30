@@ -312,7 +312,7 @@ NoConn ~ 5300 2750
 Entry Wire Line
 	3900 2650 3800 2550
 Text Label 3900 2650 0    50   ~ 0
-A11
+A4
 Wire Wire Line
 	4800 2650 3900 2650
 Wire Bus Line
@@ -323,7 +323,7 @@ Connection ~ 3800 1700
 Entry Wire Line
 	6200 2650 6300 2550
 Text Label 6200 2650 2    50   ~ 0
-A12
+A5
 Wire Wire Line
 	6200 2650 5300 2650
 Wire Wire Line

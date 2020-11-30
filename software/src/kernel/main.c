@@ -70,6 +70,8 @@ void create_special_or_panic(const char *path, device_t rdev)
 	vfs_release_vnode(vnode);
 }
 
+
+
 int main()
 {
 	DISABLE_INTS();
@@ -101,16 +103,21 @@ int main()
 	//vfs_mount(NULL, "/", 0, &mallocfs_mount_ops, SU_UID);
 	vfs_mount(NULL, "/", DEVNUM(DEVMAJOR_MEM, 0), &minix_mount_ops, SU_UID);
 
-
 	create_dir_or_panic("/bin");
 	create_dir_or_panic("/dev");
 	create_dir_or_panic("/proc");
+	create_dir_or_panic("/media");
 
 	create_special_or_panic("/dev/tty0", DEVNUM(DEVMAJOR_TTY, 0));
 	create_special_or_panic("/dev/tty1", DEVNUM(DEVMAJOR_TTY, 1));
 	create_special_or_panic("/dev/mem0", DEVNUM(DEVMAJOR_MEM, 0));
+	create_special_or_panic("/dev/ata0", DEVNUM(DEVMAJOR_ATA, 0));
 
-	vfs_mount(NULL, "/proc", 0, &procfs_mount_ops, SU_UID);
+	// TODO device number here is an issue because 0 is used to indicated a mount slot is not used, which when mounting after this causes a /proc error
+	vfs_mount(NULL, "/proc", 1, &procfs_mount_ops, SU_UID);
+
+	vfs_mount(NULL, "/media", DEVNUM(DEVMAJOR_ATA, 0), &minix_mount_ops, SU_UID);
+
 
 /*
 	{

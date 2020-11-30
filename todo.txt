@@ -6,11 +6,11 @@
   expected values of 0xFF, but no such byte is read in (ie. it reads in "FC FD FE 0 1 2", skipping the FF inbetween)
 
 * do you need to swap the data bus around?  there is an issue with the byte position of byte-wise data, even though it will swap the bytes for 16 bit numbers
+* should you use A4/A5 as CS0/CS1 on the ATA bus?  I used A11/A12 because the CF cards have A3-A10 which are tied to ground, but an IDE interface wouldn't have
+  those.  It's more of a question of what addresses in the ATA driver
 
 68k SMT:
 
-	* finish routing logic
-	* figure out final positions for the last few components
 	* should you have a header for ide or just the compact flash slot?
 
 

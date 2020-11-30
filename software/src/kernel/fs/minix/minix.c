@@ -8,6 +8,7 @@
 #include <kernel/vfs.h>
 #include <kernel/printk.h>
 #include <kernel/driver.h>
+#include <asm/macros.h>
  
 #include "minix.h"
 #include "bitmaps.h"
@@ -118,7 +119,7 @@ int minix_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t u
 		return ENOMEM;
 	}
 
-	dir->inode = MINIX_DATA(newnode).ino;
+	dir->inode = to_le16(MINIX_DATA(newnode).ino);
 	release_block(buf, BCF_DIRTY);
 
 	*result = newnode;
@@ -146,7 +147,7 @@ int minix_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t
 		return EMFILE;
 	}
 
-	dir->inode = MINIX_DATA(newnode).ino;
+	dir->inode = to_le16(MINIX_DATA(newnode).ino);
 	release_block(buf, BCF_DIRTY);
 
 	*result = newnode;
@@ -167,7 +168,7 @@ int minix_lookup(struct vnode *vnode, const char *filename, struct vnode **resul
 
 	if (*result)
 		vfs_release_vnode(*result);
-	*result = (struct vnode *) get_vnode(vnode->mp, entry->inode);
+	*result = (struct vnode *) get_vnode(vnode->mp, from_le16(entry->inode));
 	release_block(buf, 0);
 	return 0;
 }
@@ -184,7 +185,7 @@ int minix_unlink(struct vnode *parent, struct vnode *vnode)
 	if (!dir)
 		return ENOENT;
 
-	dir->inode = 0;
+	dir->inode = to_le16(0);
 	release_block(buf, BCF_DIRTY);
 	zone_free_all(vnode);
 	free_vnode(vnode);
@@ -214,8 +215,8 @@ int minix_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldna
 		return ENOENT;
 	}
 
-	newdir->inode = MINIX_DATA(vnode).ino;
-	olddir->inode = 0;
+	newdir->inode = to_le16(MINIX_DATA(vnode).ino);
+	olddir->inode = to_le16(0);
 	release_block(newbuf, BCF_DIRTY);
 	release_block(oldbuf, BCF_DIRTY);
 	return 0;
@@ -418,7 +419,7 @@ int minix_readdir(struct vfile *file, struct dirent *dir)
 
 	max = MINIX_V1_MAX_FILENAME < VFS_FILENAME_MAX ? MINIX_V1_MAX_FILENAME : VFS_FILENAME_MAX;
 
-	dir->ino = entries[zpos].inode;
+	dir->ino = from_le16(entries[zpos].inode);
 	strncpy(dir->name, entries[zpos].filename, max);
 	dir->name[max - 1] = '\0';
 	release_block(buf, BCF_DIRTY);

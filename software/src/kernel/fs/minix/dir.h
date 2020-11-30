@@ -2,6 +2,8 @@
 #ifndef _SRC_KERNEL_FS_MINIX_DIR_H
 #define _SRC_KERNEL_FS_MINIX_DIR_H
 
+#include <asm/macros.h>
+
 #include "minix.h"
 #include "inodes.h"
 #include "zones.h"
@@ -20,15 +22,15 @@ static struct vnode *dir_setup(struct vnode *vnode, struct vnode *parent)
 
 	entries = (struct minix_v1_dirent *) buf->block;
 
-	entries[0].inode = MINIX_DATA(vnode).ino;
+	entries[0].inode = to_le16(MINIX_DATA(vnode).ino);
 	strcpy(entries[0].filename, ".");
 
-	entries[1].inode = MINIX_DATA(vnode).ino, parent ? MINIX_DATA(parent).ino : 1;
+	entries[1].inode = to_le16(parent ? MINIX_DATA(parent).ino : 1);
 	strcpy(entries[1].filename, "..");
 
 	release_block(buf, BCF_DIRTY);
 
-	MINIX_DATA(vnode).zones[0] = zone;
+	MINIX_DATA(vnode).zones[0] = to_le16(zone);
 	mark_vnode_dirty(vnode);
 
 	return vnode;
@@ -68,7 +70,7 @@ static struct minix_v1_dirent *dir_find_entry_by_inode(struct vnode *dir, inode_
 			return NULL;
 		entries = (struct minix_v1_dirent *) buf->block;
 		for (short i = 0; i < MINIX_V1_DIRENTS_PER_ZONE; i++) {
-			if (entries[i].inode == ino) {
+			if (from_le16(entries[i].inode) == ino) {
 				*result = buf;
 				return &entries[i];
 			}

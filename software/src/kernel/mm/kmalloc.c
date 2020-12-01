@@ -35,7 +35,7 @@ void *kmalloc(int size)
 	struct block *cur = main_heap.free_blocks;
 
 	// Align the size to 4 bytes
-	size = size + ((size & 0x3) ? 4 : 0);
+	size += ((4 - (size & 0x3)) & 0x3);
 	int block_size = size + sizeof(struct block);
 
 	for (; cur; prev = cur, cur = cur->next) {

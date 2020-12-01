@@ -1716,6 +1716,26 @@ F 3 "http://www.vishay.com/docs/31509/csc.pdf" H 3900 1250 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	3500 1050 3500 1000
+$Comp
+L Connector_Generic:Conn_01x02 J2
+U 1 1 5FC9A346
+P 10300 2350
+F 0 "J2" H 10380 2342 50  0000 L CNN
+F 1 "POWER" H 10380 2251 50  0000 L CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 10300 2350 50  0001 C CNN
+F 3 "~" H 10300 2350 50  0001 C CNN
+	1    10300 2350
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9600 2250 10100 2250
+Wire Wire Line
+	10100 2250 10100 2350
+Connection ~ 9600 2250
+Wire Wire Line
+	9600 2550 10100 2550
+Wire Wire Line
+	10100 2550 10100 2450
 Wire Bus Line
 	1000 750  1000 1900
 Wire Bus Line
@@ -1728,4 +1748,5 @@ Wire Bus Line
 	7350 750  7350 5050
 Wire Bus Line
 	7250 650  7250 3350
+Connection ~ 9600 2550
 $EndSCHEMATC

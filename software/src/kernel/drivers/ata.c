@@ -4,6 +4,7 @@
 #include <errno.h>
 
 #include <sys/stat.h>
+#include <asm/macros.h>
 #include <kernel/vfs.h>
 #include <kernel/printk.h>
 #include <kernel/driver.h>
@@ -38,7 +39,7 @@ struct ata_geometry {
 	size_t size;
 };
 
-#define ATA_DEV_MAX		2
+#define ATA_DEV_MAX		4
 
 static struct ata_geometry devices[ATA_DEV_MAX];
 
@@ -246,24 +247,36 @@ int ata_write_sector(int sector, char *buffer)
 }
 
 
+// TODO this should be moved into its own driver-independent place
+struct partition_entry {
+	uint8_t status;
+	uint8_t chs_start[3];
+	uint8_t fstype;
+	uint8_t chs_end[3];
+	uint32_t lba_start;
+	uint32_t lba_sectors;
+};
 
 
 int ata_init()
 {
+	struct partition_entry *table;
+
 	//ata_test();
 
 	char buffer[512];
-	ata_read_sector(0x802, buffer);
+	ata_read_sector(0, buffer);
+	table = &buffer[0x1BE];
 
-	/*
-	//ata_write_sector(0x700, buffer);
-	ata_read_sector(0x6FF, buffer);
-	ata_read_sector(0x700, buffer);
-	ata_read_sector(0x701, buffer);
-	*/
+	for (short i = 0; i < 4; i++) {
+		devices[i].base = from_le32(table[i].lba_start);
+		devices[i].size = from_le32(table[i].lba_sectors);
+		printk_safe("Partition %d: %x size %x\n", i, devices[i].base, devices[i].size);
+	}
 
-	devices[0].base = 0x800;
-	devices[0].size = 0xA000;
+
+	//devices[0].base = 0x800;
+	//devices[0].size = 0xA000;
 	register_driver(DEVMAJOR_ATA, &ata_driver);
 	return 0;
 }

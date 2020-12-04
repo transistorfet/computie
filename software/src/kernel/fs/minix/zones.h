@@ -30,7 +30,7 @@ static zone_t minix_alloc_zone(struct minix_super *super)
 
 static void minix_free_zone(struct minix_super *super, zone_t zonenum)
 {
-	bit_free(super->dev, MINIX_V1_ZONE_BITMAP_START(&super->super_v1), zonenum);
+	bit_free(super->dev, MINIX_V1_ZONE_BITMAP_START(&super->super_v1), zonenum - super->super_v1.first_zone + 1);
 }
 
 

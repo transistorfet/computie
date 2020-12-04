@@ -28,10 +28,10 @@ static inode_t alloc_inode(struct minix_super *super, mode_t mode, uid_t uid, gi
 
 	inode_table = inode_buf->block;
 	inode_table[inode_offset].mode = to_le16(mode);
-	inode_table[inode_offset].nlinks = to_le16(1);
 	inode_table[inode_offset].uid = to_le16(uid);
-	inode_table[inode_offset].gid = (uint8_t) gid;
 	inode_table[inode_offset].size = 0;
+	inode_table[inode_offset].gid = (uint8_t) gid;
+	inode_table[inode_offset].nlinks = (uint8_t) 1;
 	// TODO add a/m/c time stamps
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		inode_table[inode_offset].zones[j] = NULL;
@@ -65,13 +65,13 @@ static int read_inode(struct vnode *vnode, inode_t ino)
 
 	inode_table = inode_buf->block;
 	vnode->mode = from_le16(inode_table[inode_offset].mode);
-	vnode->nlinks = from_le16(inode_table[inode_offset].nlinks);
 	vnode->uid = from_le16(inode_table[inode_offset].uid);
-	vnode->gid = (gid_t) inode_table[inode_offset].gid;
 	vnode->size = from_le32(inode_table[inode_offset].size);
 	vnode->atime = 0;
 	vnode->mtime = from_le32(inode_table[inode_offset].mtime);
 	vnode->ctime = 0;
+	vnode->gid = (gid_t) inode_table[inode_offset].gid;
+	vnode->nlinks = (uint8_t) inode_table[inode_offset].nlinks;
 	vnode->rdev = from_le16((inode_table[inode_offset].mode & S_IFCHR) ? inode_table[inode_offset].zones[0] : 0);
 	// NOTE: the zone numbers are stored in little endian in the vnode to make zone lookups easier
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
@@ -98,11 +98,11 @@ static int write_inode(struct vnode *vnode, inode_t ino)
 
 	inode_table = inode_buf->block;
 	inode_table[inode_offset].mode = to_le16(vnode->mode);
-	inode_table[inode_offset].nlinks = to_le16(vnode->nlinks);
 	inode_table[inode_offset].uid = to_le16(vnode->uid);
-	inode_table[inode_offset].gid = (uint8_t) vnode->gid;
 	inode_table[inode_offset].size = to_le32(vnode->size);
 	inode_table[inode_offset].mtime = to_le32(vnode->mtime);
+	inode_table[inode_offset].gid = (uint8_t) vnode->gid;
+	inode_table[inode_offset].nlinks = (uint8_t) vnode->nlinks;
 	if (vnode->mode & S_IFCHR)
 		MINIX_DATA(vnode).zones[0] = to_le16(vnode->rdev);
 	// NOTE: the zone numbers are stored in little endian in the vnode to make zone lookups easier

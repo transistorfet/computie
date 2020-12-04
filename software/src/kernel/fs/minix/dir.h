@@ -31,6 +31,8 @@ static struct vnode *dir_setup(struct vnode *vnode, struct vnode *parent)
 	release_block(buf, BCF_DIRTY);
 
 	MINIX_DATA(vnode).zones[0] = to_le16(zone);
+	// Set the initial directory size to include the two default entries
+	vnode->size = sizeof(struct minix_v1_dirent) << 1;
 	mark_vnode_dirty(vnode);
 
 	return vnode;
@@ -71,6 +73,12 @@ static struct minix_v1_dirent *dir_find_entry_by_inode(struct vnode *dir, inode_
 		entries = (struct minix_v1_dirent *) buf->block;
 		for (short i = 0; i < MINIX_V1_DIRENTS_PER_ZONE; i++) {
 			if (from_le16(entries[i].inode) == ino) {
+				offset_t position = ((znum << MINIX_V1_LOG_DIRENTS_PER_ZONE) + i + 1) << __builtin_ctz(sizeof(struct minix_v1_dirent));
+				if (dir->size < position) {
+					// TODO this is sort of a hack, isn't it?  Also what about shrinking in size
+					dir->size = position;
+					mark_vnode_dirty(dir);
+				}
 				*result = buf;
 				return &entries[i];
 			}

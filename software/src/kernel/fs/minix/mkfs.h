@@ -46,7 +46,7 @@ static int minix_mkfs(device_t dev)
 
 	// Initialize bitmap zones
 	bitmap_init(dev, MINIX_V1_INODE_BITMAP_START(super_v1), super_v1->imap_blocks, super_v1->num_inodes, 2);
-	bitmap_init(dev, MINIX_V1_ZONE_BITMAP_START(super_v1), super_v1->zmap_blocks, super_v1->num_zones, super_v1->first_zone + 1);
+	bitmap_init(dev, MINIX_V1_ZONE_BITMAP_START(super_v1), super_v1->zmap_blocks, super_v1->num_zones, 2);
 
 	// Zero the inode table
 	for (int i = 0; i < (super_v1->num_inodes >> MINIX_V1_LOG_INODES_PER_ZONE); i++) {

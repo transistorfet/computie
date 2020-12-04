@@ -180,9 +180,10 @@ int ata_read_sector(int sector, char *buffer)
 	while (!(*ATA_REG_STATUS) & ATA_ST_DATA_READY) { }
 
 	for (int i = 0; i < 512; i++) {
-		ATA_DELAY(10);
+		ATA_DELAY(100);
 		while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
 		//while (((*ATA_REG_STATUS) & ATA_ST_BUSY) || !((*ATA_REG_STATUS) & ATA_ST_DATA_READY)) { }
+		ATA_DELAY(10);
 
 		//((uint16_t *) buffer)[i] = (*ATA_REG_DATA);
 		//asm volatile("rol.w	#8, %0\n" : "+g" (((uint16_t *) buffer)[i]));
@@ -241,6 +242,8 @@ int ata_write_sector(int sector, char *buffer)
 		//asm volatile("rol.w	#8, %0\n" : "+g" (((uint16_t *) buffer)[i]));
 		(*ATA_REG_DATA_BYTE) = buffer[i];
 	}
+
+	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
 
 	UNLOCK(saved_status);
 	return 512;
@@ -322,6 +325,8 @@ int ata_write(devminor_t minor, const char *buffer, offset_t offset, size_t size
 		return -1;
 	if (offset + size > (geo->size << 9))
 		size = (geo->size << 9) - offset;
+
+
 
 	offset >>= 9;
 	for (int count = size >> 9; count > 0; count--, offset++, buffer = &buffer[512])

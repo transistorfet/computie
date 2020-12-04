@@ -1,17 +1,5 @@
 
 
-* there is a serious issue with reading the compact flash card on the breadboard, in that it seems that the card skips some bytes, causing a couple bytes short to
-  be read, and the data to be incorrect as a result.  It happens very regularly when reading 16-bits at a time, but happens less so in 8-bit transfer mode.  Reading
-  the first sector in 8-bit mode is pretty reliable, but reading 2 sectors causes two characters to be skipped in the second sector, coincidentally they are both
-  expected values of 0xFF, but no such byte is read in (ie. it reads in "FC FD FE 0 1 2", skipping the FF inbetween)
-
-* do you need to swap the data bus around?  there is an issue with the byte position of byte-wise data, even though it will swap the bytes for 16 bit numbers
-
-68k SMT:
-
-	* should you have a header for ide or just the compact flash slot?
-
-
 68k30 SBC:
 
 	* really need to look up the memory interface...  Some other boards are using GALs for the A1/A0, SIZ1-0, and DTACK1-0 logic
@@ -20,6 +8,10 @@
 
 Operating System:
 
+	* there is something very wrong with how my code vs linux's code for minixfs is treating the zone table I think, which is causing the wrong zone to
+	  be allocated when creating a new file.  Perhaps I don't even need that extra argument for reserving bits in the bitmap?
+
+	* make a PIE format that can be loaded and executed.  I think it'll have to be in elf format, but I'd like to be able to strip it down a lot
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
 
 
@@ -35,6 +27,7 @@ Operating System:
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 
 
+
 	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
 	  that, the tty driver tries to resume procs, but since the state is changed, this doesn't have an affect and it's not until another character is entered that both the
 	  ^C and the other character are read (and the prompt is only then printed).
@@ -43,9 +36,6 @@ Operating System:
 	  cannonical processing, from which a SIGINT can be dispatched to the process group recorded in the tty struct (as well as echo the char and such), and all that while the
 	  process that receives the sigint isn't doing i/o on the tty where the ^C originates....  This is all before the data is placed in a buffer, which wont be returned to the
 	  process that reads it until an entire line is entered
-	* we need to modify the context code to allow re-entry to the kernel stack somehow, so that an interrupt can occur while a syscall is running.  You still need a context
-	  switch when entering an interrupt from a user process, or else you can't even switch to a kernel process to handle the rest of the interrupt, but you don't want to context
-	  switch if you're already on the kernel stack and re-entering
 	* If interrupts are enabled when handling a syscall, and if a timer interrupt occurs, the call to schedule() could instead of switching tasks, schedule a task switch for when it
 	  exits the syscall (so it does a check when exiting to see if it should switch)
 	* should there be a lighter weight task type, instead of processes, so that you can service interrupt processing without a bunch of wasted space for the signals and file
@@ -78,6 +68,10 @@ Operating System:
 	* minixfs, implement versions 2 and 3
 	* minixfs: add endian-conversion for superblock/inode/etc values, to be truely compatible
 
+	* as a note about terminology for pseudoterminals, pts/ptm (slave/master);  it would make more sense for them to be named process-end and device-end, which implies
+	  the expected interface to each.   A user process will open the process-end terminal device and communicate with it like any tty.  The emulator or whatever would
+	  connect to the other end and act as if it were a terminal device, in place of what would be an actual I/O device like RS-232 or a hardwired keyboard.  I guess the
+	  abbreviations might be /dev/ptpX and /dev/ptdX?
 
 
 
@@ -131,6 +125,8 @@ Monitor:
 
 68k Arduino Shield:
 	(nothing atm)
+
+68k SMT:
 
 
 * should you move the Z80 project into it's own repo?

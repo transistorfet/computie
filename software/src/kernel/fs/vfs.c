@@ -129,7 +129,7 @@ int vfs_sync(device_t dev)
 	int error = 0;
 
 	for (short i = 0; i < VFS_MOUNT_MAX; i++) {
-		if (!dev || mountpoints[i].dev == dev) {
+		if (mountpoints[i].dev && (!dev || mountpoints[i].dev == dev)) {
 			error = mountpoints[i].ops->sync(&mountpoints[i]);
 			if (error)
 				return error;
@@ -407,6 +407,9 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 
 	if (!file)
 		return EINVAL;
+
+	if (!(mode & S_IFMT))
+		mode |= S_IFREG;
 
 	error = vfs_lookup(cwd, path, (flags & O_CREAT) ? VLOOKUP_PARENT_OF : VLOOKUP_NORMAL, uid, &vnode);
 	if (error)

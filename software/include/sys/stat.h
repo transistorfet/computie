@@ -4,6 +4,8 @@
 
 #include <sys/types.h>
 
+#define S_IFMT  0170000		/* type of file */
+#define S_IFREG 0100000		/* regular */
 #define S_IFBLK  060000		/* block special */
 #define S_IFDIR  040000  	/* directory */
 #define S_IFCHR  020000		/* character special */

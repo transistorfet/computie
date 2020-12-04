@@ -17,6 +17,7 @@ static zone_t minix_alloc_zone(struct minix_super *super)
 	bit = bit_alloc(super->dev, MINIX_V1_ZONE_BITMAP_START(&super->super_v1), super->super_v1.zmap_blocks, 0);
 	if (!bit)
 		return NULL;
+	bit += super->super_v1.first_zone - 1;
 	buf = get_block(super->dev, bit);
 	if (!buf)
 		return NULL;

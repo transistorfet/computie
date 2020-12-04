@@ -44,9 +44,9 @@ KERNEL_OBJS = \
 	include/kernel/syscall.h \
 	src/kernel/start.o \
 	src/kernel/main.o \
-	src/kernel/interrupts.o \
 	src/kernel/syscall_entry.o \
 	src/kernel/syscall.o \
+	src/kernel/interrupts.o \
 	src/kernel/filedesc.o \
 	src/kernel/time.o \
 	src/kernel/driver.o \
@@ -75,6 +75,7 @@ KERNEL_OBJS = \
 
 COMMANDS = \
 	src/commands/hello.send	\
+	src/commands/sh.send	\
 	src/commands/daemontest.send	\
 	src/commands/test.send
 

@@ -141,19 +141,19 @@ int mallocfs_lookup(struct vnode *vnode, const char *filename, struct vnode **re
 	return 0;
 }
 
-int mallocfs_unlink(struct vnode *parent, struct vnode *vnode)
+int mallocfs_unlink(struct vnode *parent, struct vnode *vnode, const char *filename)
 {
 	struct mallocfs_dirent *dir;
 
 	if (vnode->mode & S_IFDIR && !dir_is_empty(vnode))
 		return ENOTEMPTY;
 
-	dir = dir_find_entry_by_vnode(parent, vnode, MFS_LOOKUP_ZONE);
+	dir = dir_find_entry_by_name(parent, filename, MFS_LOOKUP_ZONE);
 	if (!dir)
 		return ENOENT;
 
 	dir->vnode = NULL;
-	vfs_release_vnode(vnode);
+	return 0;
 }
 
 int mallocfs_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname)

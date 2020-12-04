@@ -25,7 +25,7 @@ int nop_lookup(struct vnode *vnode, const char *name, struct vnode **result)
 	return ENOENT;
 }
 
-int nop_unlink(struct vnode *parent, struct vnode *vnode)
+int nop_unlink(struct vnode *parent, struct vnode *vnode, const char *filename)
 {
 	return EPERM;
 }

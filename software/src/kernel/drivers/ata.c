@@ -66,6 +66,7 @@ static struct ata_geometry devices[ATA_DEV_MAX];
 
 #define ATA_ST_BUSY		0x80
 #define ATA_ST_DATA_READY	0x08
+#define ATA_ST_ERROR		0x01
 
 /*
 void ata_test()
@@ -190,6 +191,8 @@ int ata_read_sector(int sector, char *buffer)
 		buffer[i] = (*ATA_REG_DATA_BYTE);
 	}
 
+	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
+
 	printk_safe("Mem %x:\n", sector);
 	for (int i = 0; i < 512; i++) {
 		printk_safe("%x ", 0xff & buffer[i]);
@@ -245,6 +248,10 @@ int ata_write_sector(int sector, char *buffer)
 
 	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
 
+	if (*ATA_REG_STATUS & ATA_ST_ERROR) {
+		printk_safe("Error writing sector %d: %x\n", sector, *ATA_REG_ERROR);
+	}
+
 	UNLOCK(saved_status);
 	return 512;
 }
@@ -266,6 +273,11 @@ int ata_init()
 	struct partition_entry *table;
 
 	//ata_test();
+
+	//printk_safe("Testing\n");
+	//char test[512];
+	//ata_read_sector(0x806, test);
+	//printk_safe("done\n");
 
 	char buffer[512];
 	ata_read_sector(0, buffer);
@@ -325,8 +337,6 @@ int ata_write(devminor_t minor, const char *buffer, offset_t offset, size_t size
 		return -1;
 	if (offset + size > (geo->size << 9))
 		size = (geo->size << 9) - offset;
-
-
 
 	offset >>= 9;
 	for (int count = size >> 9; count > 0; count--, offset++, buffer = &buffer[512])

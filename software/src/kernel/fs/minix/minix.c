@@ -122,6 +122,8 @@ int minix_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t u
 	dir->inode = to_le16(MINIX_DATA(newnode).ino);
 	release_block(buf, BCF_DIRTY);
 
+	// TODO need to adjust the size of the directory size
+
 	*result = newnode;
 	return 0;
 }
@@ -173,7 +175,7 @@ int minix_lookup(struct vnode *vnode, const char *filename, struct vnode **resul
 	return 0;
 }
 
-int minix_unlink(struct vnode *parent, struct vnode *vnode)
+int minix_unlink(struct vnode *parent, struct vnode *vnode, const char *filename)
 {
 	struct buf *buf;
 	struct minix_v1_dirent *dir;
@@ -181,14 +183,14 @@ int minix_unlink(struct vnode *parent, struct vnode *vnode)
 	if (vnode->mode & S_IFDIR && !dir_is_empty(vnode))
 		return ENOTEMPTY;
 
-	dir = dir_find_entry_by_inode(parent, MINIX_DATA(vnode).ino, MFS_LOOKUP_ZONE, &buf);
+	dir = dir_find_entry_by_name(parent, filename, MFS_LOOKUP_ZONE, &buf);
 	if (!dir)
 		return ENOENT;
 
 	dir->inode = to_le16(0);
 	release_block(buf, BCF_DIRTY);
 	zone_free_all(vnode);
-	free_vnode(vnode);
+	delete_vnode(vnode);
 	return 0;
 }
 
@@ -241,7 +243,7 @@ int minix_update(struct vnode *vnode)
 int minix_release(struct vnode *vnode)
 {
 	if (MINIX_DATA(vnode).ino == 0)
-		remove_vnode(vnode);
+		release_vnode(vnode);
 	else if (vnode->bits & VBF_DIRTY)
 		write_inode(vnode, MINIX_DATA(vnode).ino);
 	return 0;

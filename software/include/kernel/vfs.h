@@ -46,7 +46,7 @@ struct vnode_ops {
 	// lookup must call vfs_release_vnode on the existing *result vnode if it is non-NULL.  This makes it easier to swap vnode references when resolving paths
 	int (*lookup)(struct vnode *vnode, const char *filename, struct vnode **result);
 	//link
-	int (*unlink)(struct vnode *parent, struct vnode *vnode);
+	int (*unlink)(struct vnode *parent, struct vnode *vnode, const char *filename);
 	int (*rename)(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname);
 	int (*truncate)(struct vnode *vnode);			// Truncate the file data (size should be 0 after)
 	int (*update)(struct vnode *vnode);

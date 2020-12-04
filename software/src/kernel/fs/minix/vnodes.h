@@ -110,17 +110,16 @@ static void mark_vnode_dirty(struct vnode *vnode)
 	vnode->bits |= VBF_DIRTY;
 }
 
-static int free_vnode(struct vnode *vnode)
+static int delete_vnode(struct vnode *vnode)
 {
 	if (vnode->bits & VBF_DIRTY)
 		write_inode(vnode, MINIX_DATA(vnode).ino);
 	free_inode(MINIX_SUPER(vnode->mp->super), MINIX_DATA(vnode).ino);
 	MINIX_DATA(vnode).ino = 0;
-	vfs_release_vnode(vnode);
 	return 0;
 }
 
-static int remove_vnode(struct vnode *vnode)
+static int release_vnode(struct vnode *vnode)
 {
 	_queue_remove(&cache, &MINIX_DATA(vnode).node);
 	kmfree(vnode);

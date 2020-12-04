@@ -316,6 +316,7 @@ int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid)
 		return EACCES;
 	}
 
+	// We look up the file here to check permissions
 	filename = path_last_component(path);
 	error = parent->ops->lookup(parent, filename, &vnode);
 	if (error) {
@@ -330,9 +331,10 @@ int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid)
 		return EPERM;
 	}
 
-	// unlink takes ownership of vnode, but not parent.  If the file is deleted, unlink must call vfs_release_node
-	error = vnode->ops->unlink(parent, vnode);
+	// unlink does not take ownership of vnode and must not call vfs_release_vnode
+	error = parent->ops->unlink(parent, vnode, filename);
 	vfs_release_vnode(parent);
+	vfs_release_vnode(vnode);
 	if (error)
 		return error;
 	return 0;

@@ -16,11 +16,15 @@
 #define MINIX_QUEUE_NODE_TO_VNODE(node) \
 			((struct vnode *) (((char *) node) - sizeof(struct vnode)))
 
+static int nodes_in_cache;
 static struct queue cache;
 extern struct vnode_ops minix_vnode_ops;
 
+static void release_unused_vnodes();
+
 static void init_minix_vnodes()
 {
+	nodes_in_cache = 0;
 	_queue_init(&cache);
 }
 
@@ -40,6 +44,8 @@ static struct vnode *load_vnode(struct mount *mp, inode_t ino)
 	int error;
 	struct buf *buf;
 	struct vnode *vnode;
+
+	release_unused_vnodes();
 
 	// TODO this should recycle a cached vnode if it doesn't have a reference and there are more than a certain number of vnodes already loaded
 	//entry = _find_free_entry();
@@ -62,6 +68,7 @@ static struct vnode *load_vnode(struct mount *mp, inode_t ino)
 		return NULL;
 	}
 
+	nodes_in_cache += 1;
 	return vnode;
 }
 
@@ -112,8 +119,6 @@ static void mark_vnode_dirty(struct vnode *vnode)
 
 static int delete_vnode(struct vnode *vnode)
 {
-	if (vnode->bits & VBF_DIRTY)
-		write_inode(vnode, MINIX_DATA(vnode).ino);
 	free_inode(MINIX_SUPER(vnode->mp->super), MINIX_DATA(vnode).ino);
 	MINIX_DATA(vnode).ino = 0;
 	return 0;
@@ -121,9 +126,24 @@ static int delete_vnode(struct vnode *vnode)
 
 static int release_vnode(struct vnode *vnode)
 {
+	if (MINIX_DATA(vnode).ino && vnode->bits & VBF_DIRTY)
+		write_inode(vnode, MINIX_DATA(vnode).ino);
 	_queue_remove(&cache, &MINIX_DATA(vnode).node);
 	kmfree(vnode);
+	nodes_in_cache -= 1;
 	return 0;
+}
+
+static void release_unused_vnodes()
+{
+	struct queue_node *last;
+
+	while (nodes_in_cache - 1 >= MAX_VNODES) {
+		for (last = cache.tail; last && MINIX_QUEUE_NODE_TO_VNODE(last)->refcount > 0; last = last->prev) { }
+		if (!last || MINIX_QUEUE_NODE_TO_VNODE(last)->refcount > 0)
+			break;
+		release_vnode(MINIX_QUEUE_NODE_TO_VNODE(last));
+	}
 }
 
 

@@ -8,15 +8,13 @@
 
 Operating System:
 
-	* there is something very wrong with how my code vs linux's code for minixfs is treating the zone table I think, which is causing the wrong zone to
-	  be allocated when creating a new file.  Perhaps I don't even need that extra argument for reserving bits in the bitmap?
+	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
+	* could I use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
 
 	* make a PIE format that can be loaded and executed.  I think it'll have to be in elf format, but I'd like to be able to strip it down a lot
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
 
 
-	* could I use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
-	* minixfs: fix vnode cache to limit in-memory storage to a fixed number of nodes before offloading
 	* add support for PATH variables
 	* add fifos (should be easy now)
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
@@ -53,7 +51,7 @@ Operating System:
 	* should the timer stuff in proc be moved somewhere else?
 
 
-	* add commands: mv, cp, rmdir, pwd, dd
+	* add commands: rmdir, pwd, dd
 	* implement getopt
 	* implement links and/or symlinks in minix filesystem
 	* syscalls to implement: setuid

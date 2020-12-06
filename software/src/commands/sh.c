@@ -326,6 +326,70 @@ int command_mkdir(int argc, char **argv)
 	return 0;
 }
 
+#define CP_BUF_SIZE	512
+
+int command_cp(int argc, char **argv)
+{
+	int result;
+	int src_fd, dest_fd;
+	char buffer[CP_BUF_SIZE];
+
+	if (argc <= 2) {
+		puts("You need two file names");
+		return -1;
+	}
+
+
+	if (!(src_fd = open(argv[1], O_RDONLY, 0))) {
+		printf("Error when opening %s: %d\n", argv[1], src_fd);
+		return -1;
+	}
+
+	if (!(dest_fd = open(argv[2], O_WRONLY | O_CREAT, 0644))) {
+		printf("Error when opening %s: %d\n", argv[2], dest_fd);
+		return -1;
+	}
+
+	while (1) {
+		result = read(src_fd, buffer, CP_BUF_SIZE);
+		if (result == 0)
+			break;
+
+		if (result < 0) {
+			printf("Error while reading: %d\n", result);
+			return result;
+		}
+
+		result = write(dest_fd, buffer, result);
+
+		if (result < 0) {
+			printf("Error while writing: %d\n", result);
+			return result;
+		}
+	}
+
+	close(dest_fd);
+	close(src_fd);
+
+	return 0;
+}
+
+int command_mv(int argc, char **argv)
+{
+	if (argc <= 2) {
+		puts("You need two file names");
+		return -1;
+	}
+
+	int error = rename(argv[1], argv[2]);
+	if (error < 0) {
+		printf("Error while renaming %s: %d\n", argv[1], error);
+	}
+
+	return 0;
+}
+
+
 int command_rm(int argc, char **argv)
 {
 	if (argc <= 1) {
@@ -385,14 +449,22 @@ int command_exec(int argc, char **argv)
 
 	return 0;
 }
-
+/*
 int command_time(int argc, char **argv)
 {
-	time_t t = time(NULL);
+	time_t t;
+	struct tm *current_time;
+
+	t = time(NULL);
+	t = 1604635268;
+	current_time = gmtime(&t);
 
 	printf("%d\n", t);
+	printf("%d/%02d/%02d %02d:%02d:%02d\n", current_time->tm_year, current_time->tm_mon + 1, current_time->tm_mday, current_time->tm_hour, current_time->tm_min, current_time->tm_sec);
+
 	return 0;
 }
+*/
 
 #define PS_BUFFER_SIZE	100
 
@@ -637,10 +709,12 @@ void init_commands()
 	add_command("cat", 	command_cat);
 	add_command("ls", 	command_ls);
 	add_command("mkdir", 	command_mkdir);
+	add_command("cp", 	command_cp);
+	add_command("mv", 	command_mv);
 	add_command("rm", 	command_rm);
 	add_command("cd", 	command_chdir);
 	add_command("exec", 	command_exec);
-	add_command("time", 	command_time);
+	//add_command("time", 	command_time);
 	add_command("ps", 	command_ps);
 	add_command("kill", 	command_kill);
 	add_command(NULL, 	NULL);

@@ -159,9 +159,30 @@ int command_send(int argc, char **argv)
 	return 0;
 }
 
-int command_echo(int argc, char **argv)
+#define ECHO_BUF_SIZE	256
+
+int command_echo(int argc, char **argv, char **envp)
 {
-	printf("%s\n", argv[1]);
+	int k = 0;
+	int open_quote = 0;
+	char buffer[ECHO_BUF_SIZE];
+
+	for (int i = 1; i < argc; i++) {
+		for (int j = 0; argv[i][j]; j++) {
+			if (argv[i][j] == '\"') {
+				open_quote = !open_quote;
+			}
+			else if (argv[i][j] == '$') {
+				// TODO add variable expansion
+				//for (int l = 0; env[l]
+			}
+			else
+				buffer[k++] = argv[i][j];
+		}
+		buffer[k++] = ' ';
+	}
+
+	puts(buffer);
 	return 0;
 }
 
@@ -550,6 +571,12 @@ int command_kill(int argc, char **argv)
 	return 0;
 }
 
+int command_sync(int argc, char **argv)
+{
+	sync();
+}
+
+
 
 /*****************************
  * Command Input And Parsing *
@@ -602,7 +629,7 @@ int parseline(char *input, char **vargs)
 		input++;
 
 	vargs[j++] = input;
-	for (; *input != '\0' && *input != '\n' && *input != '\r'; input++) {
+	while (*input != '\0' && *input != '\n' && *input != '\r') {
 		if (*input == ' ') {
 			*input = '\0';
 			input++;
@@ -610,8 +637,13 @@ int parseline(char *input, char **vargs)
 				input++;
 			vargs[j++] = input;
 		}
+		else
+ 			input++;
 	}
+
 	*input = '\0';
+	if (*vargs[j - 1] == '\0')
+		j -= 1;
 	vargs[j] = NULL;
 
 	return j;
@@ -717,6 +749,7 @@ void init_commands()
 	//add_command("time", 	command_time);
 	add_command("ps", 	command_ps);
 	add_command("kill", 	command_kill);
+	add_command("sync", 	command_sync);
 	add_command(NULL, 	NULL);
 }
 
@@ -835,12 +868,6 @@ void serial_read_loop()
 			return;
 		else if (!strcmp(argv[0], "cd")) {
 			command_chdir(argc, argv);
-			continue;
-		}
-
-		// TODO this is a hack that should be removed
-		if (!strcmp(argv[0], "sync")) {
-			sync();
 			continue;
 		}
 

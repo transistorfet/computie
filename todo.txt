@@ -9,7 +9,7 @@
 Operating System:
 
 	* add a command to set memory locations
-	* add checks for link issues (., .., loop, etc)
+	* add check to vfs_link() for loops
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* could I use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
 
@@ -53,19 +53,18 @@ Operating System:
 	* should the timer stuff in proc be moved somewhere else?
 
 
-	* add commands: rmdir, pwd, dd
+	* add commands: rmdir, pwd, dd, chown
 	* implement getopt
-	* implement links and/or symlinks in minix filesystem
 	* syscalls to implement: setuid
 	* implement login system
 
 	* add pipe setup to command evaluation
 	* add network syscalls for local IPC (unix file, sockets, maybe even fifos?)
-	* as a test, make a background process of some kind, perhaps launched by init, but I don't know what it could do since there are no other devices yet...
 	* should there be something that periodically syncs data to disk?
 	* should you refactor the header files in minix implementation into actual c files, with a common header to declare the functions?
 	* add environment variable substitution to echo command
 
+	* implement symlinks in minixfs
 	* implement links for mallocfs
 	* minixfs, implement versions 2 and 3
 

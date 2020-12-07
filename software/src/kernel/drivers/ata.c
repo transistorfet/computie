@@ -71,11 +71,7 @@ static struct ata_geometry devices[ATA_DEV_MAX];
 /*
 void ata_test()
 {
-	// Reset the IDE bus
-	(*ATA_REG_DEV_CONTROL) = 0x04;
-	for (int i = 0; i < 16; i++) { asm volatile(""); }
-	(*ATA_REG_DEV_CONTROL) = 0x00;
-	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
+
 
 
 	printk_safe("IDE: %x\n", (*ATA_REG_STATUS));
@@ -144,6 +140,48 @@ void ata_test()
 
 #define ATA_DELAY(x)	{ for (int delay = 0; delay < (x); delay++) { asm volatile(""); } }
 
+
+int ata_detect()
+{
+	uint8_t status;
+
+	status = *ATA_REG_STATUS;
+	// If the busy bit is already set, or the two bits that are always 0, then perhaps nothing is connected
+	if (status & (ATA_ST_BUSY | 0x06))
+		return 0;
+	ATA_DELAY(10);
+
+	// Reset the IDE bus
+	(*ATA_REG_COMMAND) = ATA_CMD_IDENTIFY;
+
+	for (int i = 0; i < 1000; i++) {
+		ATA_DELAY(10);
+
+		status = *ATA_REG_STATUS;
+		// If it becomes unbusy within the timeout then a drive is connected
+		if (!(status & ATA_ST_BUSY)) {
+			if (status & ATA_ST_DATA_READY) {
+				ATA_DELAY(100);
+				return 1;
+			}
+			else
+				return 0;
+		}
+	}
+	return 0;
+}
+
+/*
+int ata_reset()
+{
+	(*ATA_REG_DEV_CONTROL) = 0x04;
+	ATA_DELAY(16);
+	(*ATA_REG_DEV_CONTROL) = 0x00;
+	ATA_DELAY(16);
+	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
+	return 0;
+}
+*/
 
 int ata_read_sector(int sector, char *buffer)
 {
@@ -272,6 +310,15 @@ int ata_init()
 {
 	struct partition_entry *table;
 
+	for (short i = 0; i < ATA_DEV_MAX; i++)
+		devices[i].base = 0;
+	register_driver(DEVMAJOR_ATA, &ata_driver);
+
+	if (!ata_detect()) {
+		printk_safe("ATA device not detected\n");
+		return 0;
+	}
+
 	//ata_test();
 
 	//printk_safe("Testing\n");
@@ -289,16 +336,12 @@ int ata_init()
 		printk_safe("Partition %d: %x size %x\n", i, devices[i].base, devices[i].size);
 	}
 
-
-	//devices[0].base = 0x800;
-	//devices[0].size = 0xA000;
-	register_driver(DEVMAJOR_ATA, &ata_driver);
 	return 0;
 }
 
 int ata_open(devminor_t minor, int access)
 {
-	if (minor >= ATA_DEV_MAX)
+	if (minor >= ATA_DEV_MAX || devices[minor].base == 0)
 		return ENXIO;
 	return 0;
 }
@@ -312,7 +355,7 @@ int ata_close(devminor_t minor)
 
 int ata_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 {
-	if (minor >= ATA_DEV_MAX)
+	if (minor >= ATA_DEV_MAX || devices[minor].base == 0)
 		return ENXIO;
 	struct ata_geometry *geo = &devices[minor];
 
@@ -329,7 +372,7 @@ int ata_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 
 int ata_write(devminor_t minor, const char *buffer, offset_t offset, size_t size)
 {
-	if (minor >= ATA_DEV_MAX)
+	if (minor >= ATA_DEV_MAX || devices[minor].base == 0)
 		return ENXIO;
 	struct ata_geometry *geo = &devices[minor];
 
@@ -346,14 +389,14 @@ int ata_write(devminor_t minor, const char *buffer, offset_t offset, size_t size
 
 int ata_ioctl(devminor_t minor, unsigned int request, void *argp)
 {
-	if (minor >= ATA_DEV_MAX)
+	if (minor >= ATA_DEV_MAX || devices[minor].base == 0)
 		return ENXIO;
 	return -1;
 }
 
 offset_t ata_seek(devminor_t minor, offset_t position, int whence, offset_t offset)
 {
-	if (minor >= ATA_DEV_MAX)
+	if (minor >= ATA_DEV_MAX || devices[minor].base == 0)
 		return ENXIO;
 	struct ata_geometry *geo = &devices[minor];
 

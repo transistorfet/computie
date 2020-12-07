@@ -269,9 +269,11 @@ int minix_update(struct vnode *vnode)
 
 int minix_release(struct vnode *vnode)
 {
-	// NOTE we only free vnodes who's inode has been deleted.  The vnode cache will release other vnodes when they are pushed out
+	// NOTE we only free vnodes who's inode has been deleted.  The vnode cache will release other vnodes when they are pushed out by newer nodes
 	if (MINIX_DATA(vnode).ino == 0)
 		release_vnode(vnode);
+	else if (vnode->bits & VBF_DIRTY)
+		write_inode(vnode, MINIX_DATA(vnode).ino);
 	return 0;
 }
 

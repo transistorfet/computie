@@ -24,6 +24,7 @@ struct vnode_ops devfs_vnode_ops = {
 	NULL,
 	devfs_mknod,
 	devfs_lookup,
+	nop_link,
 	nop_unlink,
 	nop_rename,
 	nop_truncate,

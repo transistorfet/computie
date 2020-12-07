@@ -36,6 +36,7 @@ struct vnode_ops minix_vnode_ops = {
 	minix_create,
 	minix_mknod,
 	minix_lookup,
+	minix_link,
 	minix_unlink,
 	minix_rename,
 	minix_truncate,
@@ -175,6 +176,26 @@ int minix_lookup(struct vnode *vnode, const char *filename, struct vnode **resul
 	return 0;
 }
 
+int minix_link(struct vnode *oldvnode, struct vnode *newparent, const char *filename)
+{
+	struct buf *buf;
+	struct minix_v1_dirent *dir;
+
+	if (strlen(filename) > MINIX_V1_MAX_FILENAME)
+		return ENAMETOOLONG;
+
+	dir = dir_alloc_entry(newparent, filename, &buf);
+	if (!dir)
+		return ENOSPC;
+
+	oldvnode->nlinks += 1;
+	dir->inode = to_le16(MINIX_DATA(oldvnode).ino);
+	release_block(buf, BCF_DIRTY);
+	write_inode(oldvnode, MINIX_DATA(oldvnode).ino);
+
+	return 0;
+}
+
 int minix_unlink(struct vnode *parent, struct vnode *vnode, const char *filename)
 {
 	struct buf *buf;
@@ -189,8 +210,14 @@ int minix_unlink(struct vnode *parent, struct vnode *vnode, const char *filename
 
 	dir->inode = to_le16(0);
 	release_block(buf, BCF_DIRTY);
-	zone_free_all(vnode);
-	delete_vnode(vnode);
+
+	vnode->nlinks -= 1;
+	if (vnode->nlinks <= 0) {
+		zone_free_all(vnode);
+		delete_vnode(vnode);
+	}
+	else
+		write_inode(vnode, MINIX_DATA(vnode).ino);
 	return 0;
 }
 

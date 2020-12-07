@@ -405,11 +405,27 @@ int command_mv(int argc, char **argv)
 	int error = rename(argv[1], argv[2]);
 	if (error < 0) {
 		printf("Error while renaming %s: %d\n", argv[1], error);
+		return error;
 	}
 
 	return 0;
 }
 
+int command_ln(int argc, char **argv)
+{
+	if (argc <= 2) {
+		puts("You need two file names");
+		return -1;
+	}
+
+	int error = link(argv[1], argv[2]);
+	if (error < 0) {
+		printf("Error while linking %s to %s: %d\n", argv[1], argv[2], error);
+		return error;
+	}
+
+	return 0;
+}
 
 int command_rm(int argc, char **argv)
 {
@@ -421,21 +437,6 @@ int command_rm(int argc, char **argv)
 	int error = unlink(argv[1]);
 	if (error < 0) {
 		printf("Error while unlinking %s: %d\n", argv[1], error);
-	}
-
-	return 0;
-}
-
-int command_chdir(int argc, char **argv)
-{
-	if (argc <= 1) {
-		puts("You need file name");
-		return -1;
-	}
-
-	int error = chdir(argv[1]);
-	if (error < 0) {
-		printf("Error while changing dir %s: %d\n", argv[1], error);
 	}
 
 	return 0;
@@ -574,6 +575,21 @@ int command_kill(int argc, char **argv)
 int command_sync(int argc, char **argv)
 {
 	sync();
+}
+
+int command_chdir(int argc, char **argv)
+{
+	if (argc <= 1) {
+		puts("You need file name");
+		return -1;
+	}
+
+	int error = chdir(argv[1]);
+	if (error < 0) {
+		printf("Error while changing dir %s: %d\n", argv[1], error);
+	}
+
+	return 0;
 }
 
 
@@ -743,13 +759,14 @@ void init_commands()
 	add_command("mkdir", 	command_mkdir);
 	add_command("cp", 	command_cp);
 	add_command("mv", 	command_mv);
+	add_command("ln", 	command_ln);
 	add_command("rm", 	command_rm);
-	add_command("cd", 	command_chdir);
 	add_command("exec", 	command_exec);
 	//add_command("time", 	command_time);
 	add_command("ps", 	command_ps);
 	add_command("kill", 	command_kill);
 	add_command("sync", 	command_sync);
+	add_command("cd", 	command_chdir);
 	add_command(NULL, 	NULL);
 }
 

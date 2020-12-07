@@ -8,6 +8,8 @@
 
 Operating System:
 
+	* add a command to set memory locations
+	* add checks for link issues (., .., loop, etc)
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* could I use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
 
@@ -62,14 +64,10 @@ Operating System:
 	* as a test, make a background process of some kind, perhaps launched by init, but I don't know what it could do since there are no other devices yet...
 	* should there be something that periodically syncs data to disk?
 	* should you refactor the header files in minix implementation into actual c files, with a common header to declare the functions?
+	* add environment variable substitution to echo command
 
+	* implement links for mallocfs
 	* minixfs, implement versions 2 and 3
-	* minixfs: add endian-conversion for superblock/inode/etc values, to be truely compatible
-
-	* as a note about terminology for pseudoterminals, pts/ptm (slave/master);  it would make more sense for them to be named process-end and device-end, which implies
-	  the expected interface to each.   A user process will open the process-end terminal device and communicate with it like any tty.  The emulator or whatever would
-	  connect to the other end and act as if it were a terminal device, in place of what would be an actual I/O device like RS-232 or a hardwired keyboard.  I guess the
-	  abbreviations might be /dev/ptpX and /dev/ptdX?
 
 
 
@@ -79,11 +77,9 @@ Operating System:
 
 	* remove the execbuiltin syscall, which is temporary until all commands can be executable files
 
-
 	* do you need to add variable sized buffers/blocks into bufcache? (yes)
 	* re-evaluate file permissions checks to make sure they're correct according to posix
 	* move interrupt and syscall_entry code into proc??
-
 
 	* should you make a lib subdir, and put unistd at the top?
 	* move the math functions in libc to arch/68k
@@ -98,8 +94,14 @@ Operating System:
 	* rewrite the math functions to use fewer registers
 	* you need some tests, but ideally it would use a simple emulator.  Maybe easy68k or something could be used
 
+	* as a note about terminology for pseudoterminals, pts/ptm (slave/master);  it would make more sense for them to be named process-end and device-end, which implies
+	  the expected interface to each.   A user process will open the process-end terminal device and communicate with it like any tty.  The emulator or whatever would
+	  connect to the other end and act as if it were a terminal device, in place of what would be an actual I/O device like RS-232 or a hardwired keyboard.  I guess the
+	  abbreviations might be /dev/ptpX and /dev/ptdX?
+
 
 Monitor:
+	* add echoing of characters, backspace, etc
 	* add a help command to print out what commands are available
 	* maybe refactor it to use a list of function pointers and names for the command list, like how you've done in sh.c
 

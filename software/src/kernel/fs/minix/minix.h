@@ -50,6 +50,7 @@ int minix_load_superblock(device_t dev);
 int minix_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t uid, struct vnode **result);
 int minix_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, uid_t uid, struct vnode **result);
 int minix_lookup(struct vnode *vnode, const char *name, struct vnode **result);
+int minix_link(struct vnode *oldvnode, struct vnode *newparent, const char *filename);
 int minix_unlink(struct vnode *parent, struct vnode *vnode, const char *filename);
 int minix_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname);
 int minix_truncate(struct vnode *vnode);

@@ -38,6 +38,7 @@ extern int do_close(int fd);
 extern int do_readdir(int fd, struct dirent *dir);
 extern int do_ioctl(int fd, unsigned int request, void *argp);
 extern int do_mknod(const char *path, mode_t mode, device_t dev);
+extern int do_link(const char *oldpath, const char *newpath);
 extern int do_unlink(const char *path);
 extern int do_mkdir(const char *path, mode_t mode);
 extern int do_rename(const char *oldpath, const char *newpath);

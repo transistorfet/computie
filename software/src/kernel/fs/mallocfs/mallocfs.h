@@ -52,6 +52,7 @@ int mallocfs_sync(struct mount *mp);
 int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t uid, struct vnode **result);
 int mallocfs_mknod(struct vnode *vnode, const char *name, mode_t mode, device_t dev, uid_t uid, struct vnode **result);
 int mallocfs_lookup(struct vnode *vnode, const char *name, struct vnode **result);
+int mallocfs_link(struct vnode *oldvnode, struct vnode *newparent, const char *filename);
 int mallocfs_unlink(struct vnode *parent, struct vnode *vnode, const char *filename);
 int mallocfs_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname);
 int mallocfs_truncate(struct vnode *vnode);

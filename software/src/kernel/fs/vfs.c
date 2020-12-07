@@ -299,6 +299,39 @@ int vfs_mknod(struct vnode *cwd, const char *path, mode_t mode, device_t dev, ui
 	return error;
 }
 
+int vfs_link(struct vnode *cwd, const char *oldpath, const char *newpath, uid_t uid)
+{
+	int error;
+	const char *filename;
+	struct vnode *vnode = NULL;
+	struct vnode *parent = NULL;
+
+	// TODO we need to check that the path doesn't contain . or .., and doesn't create a loop
+
+	error = vfs_lookup(cwd, oldpath, VLOOKUP_NORMAL, uid, &vnode);
+	if (error)
+		return error;
+
+	filename = path_last_component(newpath);
+	error = vfs_lookup(cwd, newpath, VLOOKUP_PARENT_OF, uid, &parent);
+	if (error) {
+		vfs_release_vnode(vnode);
+		return error;
+	}
+
+	// Verify that parent directory is writable
+	if (!verify_mode_access(uid, W_OK, parent->uid, parent->gid, parent->mode)) {
+		vfs_release_vnode(vnode);
+		vfs_release_vnode(parent);
+		return EACCES;
+	}
+
+	error = parent->ops->link(vnode, parent, filename);
+	vfs_release_vnode(parent);
+	vfs_release_vnode(vnode);
+	return error;
+}
+
 int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid)
 {
 	int error;
@@ -335,9 +368,7 @@ int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid)
 	error = parent->ops->unlink(parent, vnode, filename);
 	vfs_release_vnode(parent);
 	vfs_release_vnode(vnode);
-	if (error)
-		return error;
-	return 0;
+	return error;
 }
 
 static inline int _rename_find_parent(struct vnode *cwd, const char *path, uid_t uid, struct vnode **result)

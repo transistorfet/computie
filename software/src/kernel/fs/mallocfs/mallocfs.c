@@ -31,6 +31,7 @@ struct vnode_ops mallocfs_vnode_ops = {
 	mallocfs_create,
 	mallocfs_mknod,
 	mallocfs_lookup,
+	mallocfs_link,
 	mallocfs_unlink,
 	mallocfs_rename,
 	mallocfs_truncate,
@@ -139,6 +140,11 @@ int mallocfs_lookup(struct vnode *vnode, const char *filename, struct vnode **re
 		vfs_release_vnode(*result);
 	*result = vfs_clone_vnode(entry->vnode);
 	return 0;
+}
+
+int mallocfs_link(struct vnode *oldvnode, struct vnode *newparent, const char *filename)
+{
+	// TODO implement
 }
 
 int mallocfs_unlink(struct vnode *parent, struct vnode *vnode, const char *filename)

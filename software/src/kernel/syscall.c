@@ -40,7 +40,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_close,
 	do_wait,
 	do_creat,
-	test,		// 9 = link, not yet implemented
+	do_link,
 	do_unlink,
 	do_waitpid,
 	do_chdir,
@@ -145,6 +145,11 @@ int do_mknod(const char *path, mode_t mode, device_t dev)
 		return error;
 	vfs_release_vnode(vnode);
 	return 0;
+}
+
+int do_link(const char *oldpath, const char *newpath)
+{
+	return vfs_link(current_proc->cwd, oldpath, newpath, current_proc->uid);
 }
 
 int do_unlink(const char *path)
@@ -380,7 +385,9 @@ pid_t do_fork()
 	proc = new_proc(0, current_proc->uid);
 	if (!proc)
 		panic("Ran out of procs\n");
+	// TODO these should be somewhere else
 	proc->cwd = current_proc->cwd;
+	proc->cmdline = current_proc->cmdline;
 	dup_fd_table(proc->fd_table, current_proc->fd_table);
 
 	clone_stack(current_proc, proc);

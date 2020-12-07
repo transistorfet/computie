@@ -43,9 +43,9 @@ struct vnode_ops {
 
 	int (*create)(struct vnode *vnode, const char *filename, mode_t mode, uid_t uid, struct vnode **result);
 	int (*mknod)(struct vnode *vnode, const char *filename, mode_t mode, device_t dev, uid_t uid, struct vnode **result);
-	// lookup must call vfs_release_vnode on the existing *result vnode if it is non-NULL.  This makes it easier to swap vnode references when resolving paths
+	// NOTE lookup must call vfs_release_vnode on the existing *result vnode if it is non-NULL.  This makes it easier to swap vnode references when resolving paths
 	int (*lookup)(struct vnode *vnode, const char *filename, struct vnode **result);
-	//link
+	int (*link)(struct vnode *oldvnode, struct vnode *newparent, const char *filename);
 	int (*unlink)(struct vnode *parent, struct vnode *vnode, const char *filename);
 	int (*rename)(struct vnode *vnode, struct vnode *oldparent, const char *oldname, struct vnode *newparent, const char *newname);
 	int (*truncate)(struct vnode *vnode);			// Truncate the file data (size should be 0 after)
@@ -114,6 +114,7 @@ int vfs_access(struct vnode *cwd, const char *path, int mode, uid_t uid);
 int vfs_chmod(struct vnode *cwd, const char *path, int mode, uid_t uid);
 int vfs_chown(struct vnode *cwd, const char *path, uid_t owner, gid_t group, uid_t uid);
 int vfs_mknod(struct vnode *cwd, const char *path, mode_t mode, device_t dev, uid_t uid, struct vnode **result);
+int vfs_link(struct vnode *cwd, const char *oldpath, const char *newpath, uid_t uid);
 int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid);
 int vfs_rename(struct vnode *cwd, const char *oldpath, const char *newpath, uid_t uid);
 int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t uid, struct vfile **file);

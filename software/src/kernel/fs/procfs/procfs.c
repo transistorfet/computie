@@ -27,6 +27,7 @@ struct vnode_ops procfs_vnode_ops = {
 	nop_create,
 	nop_mknod,
 	procfs_lookup,
+	nop_link,
 	nop_unlink,
 	nop_rename,
 	nop_truncate,

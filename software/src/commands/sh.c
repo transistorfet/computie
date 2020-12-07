@@ -181,6 +181,7 @@ int command_echo(int argc, char **argv, char **envp)
 		}
 		buffer[k++] = ' ';
 	}
+	buffer[k] = '\0';
 
 	puts(buffer);
 	return 0;

@@ -196,7 +196,7 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 			return ENAMETOOLONG;
 		}
 
-		// If creating, then skip the last component lookup
+		// If we're supposed to stop before the last component, then skip the lookup and we'll exit from the loop at the top
 		if (flags & VLOOKUP_PARENT_OF && path[i] == '\0')
 			continue;
 
@@ -305,25 +305,44 @@ int vfs_link(struct vnode *cwd, const char *oldpath, const char *newpath, uid_t 
 	const char *filename;
 	struct vnode *vnode = NULL;
 	struct vnode *parent = NULL;
+	struct vnode *tmpvnode = NULL;
 
-	// TODO we need to check that the path doesn't contain . or .., and doesn't create a loop
+	// TODO We still don't check that there are no loops
 
 	error = vfs_lookup(cwd, oldpath, VLOOKUP_NORMAL, uid, &vnode);
 	if (error)
 		return error;
 
-	filename = path_last_component(newpath);
 	error = vfs_lookup(cwd, newpath, VLOOKUP_PARENT_OF, uid, &parent);
 	if (error) {
 		vfs_release_vnode(vnode);
 		return error;
 	}
 
+	filename = path_last_component(newpath);
+
+	// If the target exists, then return an error
+	error = parent->ops->lookup(parent, filename, &tmpvnode);
+	if (error == ENOENT)
+		error = 0;
+	else {
+		if (!error)
+			vfs_release_vnode(tmpvnode);
+		error = EEXIST;
+	}
+
 	// Verify that parent directory is writable
-	if (!verify_mode_access(uid, W_OK, parent->uid, parent->gid, parent->mode)) {
+	if (!error && !verify_mode_access(uid, W_OK, parent->uid, parent->gid, parent->mode))
+		error = EACCES;
+
+	// Verify they're on the same mount point
+	if (!error && (vnode->mp != parent->mp))
+		error = EXDEV;
+
+	if (error) {
 		vfs_release_vnode(vnode);
 		vfs_release_vnode(parent);
-		return EACCES;
+		return error;
 	}
 
 	error = parent->ops->link(vnode, parent, filename);
@@ -358,14 +377,13 @@ int vfs_unlink(struct vnode *cwd, const char *path, uid_t uid)
 	}
 
 	// Verify that the file we're trying to delete is writable
-	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode)) {
-		vfs_release_vnode(parent);
-		vfs_release_vnode(vnode);
-		return EPERM;
-	}
+	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
+		error = EPERM;
 
-	// unlink does not take ownership of vnode and must not call vfs_release_vnode
-	error = parent->ops->unlink(parent, vnode, filename);
+	if (!error)
+		// unlink does not take ownership of vnode and must not call vfs_release_vnode
+		error = parent->ops->unlink(parent, vnode, filename);
+
 	vfs_release_vnode(parent);
 	vfs_release_vnode(vnode);
 	return error;
@@ -376,7 +394,7 @@ static inline int _rename_find_parent(struct vnode *cwd, const char *path, uid_t
 	int error;
 	struct vnode *vnode;
 
-	// Look up old parent
+	// Look up the parent (if it's not a directory, we'll return with an error)
 	error = vfs_lookup(cwd, path, VLOOKUP_PARENT_OF, uid, &vnode);
 	if (error)
 		return error;

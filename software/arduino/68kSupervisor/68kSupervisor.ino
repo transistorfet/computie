@@ -2,7 +2,7 @@
 #define SERIAL_SPEED	115200
 
 #define MEM_ADDR	0x100000
-#define MEM_SIZE	512
+#define MEM_SIZE	65536
 
 #define FLASH_ADDR	0x000000
 
@@ -589,6 +589,10 @@ void run_read_test()
 	M68_HADDR_PORT = 0;
 	M68_LADDR_PORT = 0;
 	digitalWrite(M68_RW, 1);
+
+
+	Serial.print(MEM_ADDR, HEX);
+	Serial.print(" ");
 	for (long i = 0; i < MEM_SIZE / 2; i++) {
 		long addr = MEM_ADDR + (i << 1);
 
@@ -691,6 +695,19 @@ void run_write_test()
 
 	Serial.print("Complete\n");
 }
+
+
+void run_erase_flash()
+{
+	Serial.println("Erasing flash");
+	write_data(0x555 << 1, 0xAAAA);
+	write_data(0x2AA << 1, 0x5555);
+	write_data(0x555 << 1, 0x8080);
+	write_data(0x555 << 1, 0xAAAA);
+	write_data(0x2AA << 1, 0x5555);
+	write_data(0x00, 0x3030);
+}
+
 
 void program_flash_data(long addr, word data)
 {
@@ -839,6 +856,9 @@ void do_command(String line)
 	}
 	else if (line.equals("send")) {
 		run_send_mem();
+	}
+	else if (line.equals("erase")) {
+		run_erase_flash();
 	}
 	else if (line.equals("testflash")) {
 		run_flash_test();

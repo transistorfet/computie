@@ -13,6 +13,14 @@
 #include <sys/ioc_tty.h>
 #include <kernel/syscall.h>
 
+/*
+int sh_task();
+
+int main()
+{
+	return sh_task();
+}
+*/
 
 void delay(int count) {
 	while (--count > 0) { asm volatile(""); }
@@ -161,7 +169,7 @@ int command_send(int argc, char **argv)
 
 #define ECHO_BUF_SIZE	256
 
-int command_echo(int argc, char **argv, char **envp)
+int command_echo(int argc, char **argv)
 {
 	int k = 0;
 	int open_quote = 0;
@@ -520,7 +528,7 @@ int command_ps(int argc, char **argv)
 	int error;
 	int dd, fd;
 	struct dirent dir;
-	char *buffer[PS_BUFFER_SIZE];
+	char buffer[PS_BUFFER_SIZE];
 
 	if ((dd = open("/proc", 0, 0)) < 0) {
 		printf("Error opening /proc\n");
@@ -568,8 +576,8 @@ int command_kill(int argc, char **argv)
 	int error;
 	int i = 1;
 	pid_t pid;
-	char *endptr;
 	int signal = 6;
+	const char *endptr;
 
 	if (argc <= 1) {
 		printf("Usage: kill -[\\d] <pid>\n");

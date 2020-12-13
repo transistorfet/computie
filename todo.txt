@@ -8,21 +8,27 @@
 
 Operating System:
 
+	* there's an issue which seems to affect the shell program when run as a normal process, as opposed to the builtin copy the kernel is compiled with.  It seems
+	  to affect both the copy sent over serial and the copy transfered by compact flash.  When running commands inside the shell (that's running inside the shell
+	  started during boot), it will sometimes say "Command not found" or hang or crash.  Sometimes it'll work without an issue, but sometimes the second command you
+	  invoke will hang the system.  This doesn't seems to affect the builtin shell.  Could it be a stack overflow problem?
+
+	* separate Makefiles so that the kernel can be compiled normally, and commands/libc-68k-os can be compiled with -mpcrel or -fPIE (libc is the big fiddly bit here)
+	* implement elf binary format in kernel
+
+	* add a check_pending_signals() function to run after unblocking
+	* should the signal dispatcher somehow reschedule the process to run next, so that it handles it as soon as possible?
+	* should the timer stuff in proc be moved somewhere else?
 	* add a command to set memory locations
-	* add check to vfs_link() for loops
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
-	* could I use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
 
 	* make a PIE format that can be loaded and executed.  I think it'll have to be in elf format, but I'd like to be able to strip it down a lot
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
+	* when handling a syscall with interrupts on, if a timer interrupt occurs, the call to schedule() could instead of ignoring the switch, schedule the task switch for when
+	  the syscall exits (so it does a check when exiting to see if it should switch)
 
-
-	* add support for PATH variables
-	* add fifos (should be easy now)
-	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 
 	* make a device-independent tty subsystem
-	* add a check_pending_signals() function to run after unblocking
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 
@@ -36,8 +42,6 @@ Operating System:
 	  cannonical processing, from which a SIGINT can be dispatched to the process group recorded in the tty struct (as well as echo the char and such), and all that while the
 	  process that receives the sigint isn't doing i/o on the tty where the ^C originates....  This is all before the data is placed in a buffer, which wont be returned to the
 	  process that reads it until an entire line is entered
-	* If interrupts are enabled when handling a syscall, and if a timer interrupt occurs, the call to schedule() could instead of switching tasks, schedule a task switch for when it
-	  exits the syscall (so it does a check when exiting to see if it should switch)
 	* should there be a lighter weight task type, instead of processes, so that you can service interrupt processing without a bunch of wasted space for the signals and file
 	  descriptor tables...
 	* what paradigm should be used to communicated from the interrupts to the scheduled interrupt handling task/process?  Generic IPC messages? A custom event queue (how are event
@@ -49,8 +53,6 @@ Operating System:
 	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
 	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
 	* implement gmtime() and make the time command return a formatted time
-	* should the signal dispatcher somehow reschedule the process to run next, so that it handles it as soon as possible?
-	* should the timer stuff in proc be moved somewhere else?
 
 
 	* add commands: rmdir, pwd, dd, chown
@@ -58,12 +60,18 @@ Operating System:
 	* syscalls to implement: setuid
 	* implement login system
 
+	* add support for PATH variables
+	* add fifos (should be easy now)
+	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
+
 	* add pipe setup to command evaluation
 	* add network syscalls for local IPC (unix file, sockets, maybe even fifos?)
 	* should there be something that periodically syncs data to disk?
-	* should you refactor the header files in minix implementation into actual c files, with a common header to declare the functions?
 	* add environment variable substitution to echo command
+	* should you refactor the header files in minix implementation into actual c files, with a common header to declare the functions?
+	* could I use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
 
+	* add check to vfs_link() for loops
 	* implement symlinks in minixfs
 	* implement links for mallocfs
 	* minixfs, implement versions 2 and 3
@@ -126,6 +134,7 @@ Monitor:
 	(nothing atm)
 
 68k SMT:
+	(nothing atm)
 
 
 * should you move the Z80 project into it's own repo?

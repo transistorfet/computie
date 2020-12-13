@@ -6,8 +6,8 @@ A 68k-based computer, running a simple unix-like operating system.  68k-SBC is a
 a 68010 CPU, 1MB SRAM, 1MB Flash, and a 68681 Dual UART controller.  The OS is a simple monolithic kernel
 written in C, with preemptive multitasking via the 68681 timer interrupt.
 
-I'm hoping to make a few more hardware variants eventually, such as an SMT/PLCC version to test how practical
-it will be to hand-solder SMT parts in a non-trivial circuit.
+68k-SMT is a mostly identical design using SMT and PLCC components.  A CompactFlash card slot has been added
+to this version, but it is also possible to connect a simple breadboarded version to 68k-SBC.
 
 
 The Operating System
@@ -16,7 +16,8 @@ The Operating System
 Currently it doesn't have a name.  It's largely based on reading Operating Systems Design and Implementation 2ed by
 Andrew S. Tanenbaum, although I've gone with a monolithic design, at least for the time being, for the simplicity of
 it.  It can do preemptive multitasking using the 68681 timer.  It also has an implementation of the minix version 1
-filesystem, which uses RAM (through a device driver) to store the data.
+filesystem, which uses RAM (through a device driver) to store the data, or a Compact Flash card connected as an IDE
+device.
 
 The 68k Single Board Computer
 -----------------------------
@@ -44,6 +45,16 @@ unmapped address is accessed.
 
 It's currently clocked at 12MHz, although there seems to be an issue with the arduino's DTACK generation at that speed.
 It previously was working at 10MHz on the rev0 board.
+
+The SBC version uses all DIP packaged chips and through-hole parts.  The SMT version uses surface mount chips for the
+logic and ram, and PLCC packaged chips for the rest.  A CompactFlash socket and a 74HC32 to accommodate it has been
+added and the power supply has been removed, but it is otherwise the same design.
+
+SMT Revision 1
+--------------
+
+![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SMT-rev1/SMT.jpg "68k-SMT Rev. 1")
+![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SMT-rev1/SMT-running.jpg "68k-SMT Running")
 
 Revision 2
 ----------

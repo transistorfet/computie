@@ -746,6 +746,25 @@ void run_send_mem()
 	Serial.print("Sending complete\n");
 }
 
+void run_verify_mem()
+{
+	word i;
+	long addr;
+
+	for (i = 0, addr = FLASH_ADDR; i < mem_size; i += 2, addr += 2) {
+		word data = (mem[i] << 8) | mem[i + 1];
+		word actual_data = read_data(addr);
+		if (data != actual_data) {
+			Serial.print("Expected ");
+			Serial.print(data, HEX);
+			Serial.print(" but found ");
+			Serial.print(actual_data, HEX);
+			Serial.print("\n");
+		}
+	}
+
+	Serial.print("Verify complete\n");
+}
 
 
 void run_flash_test()
@@ -856,6 +875,9 @@ void do_command(String line)
 	}
 	else if (line.equals("send")) {
 		run_send_mem();
+	}
+	else if (line.equals("verify")) {
+		run_verify_mem();
 	}
 	else if (line.equals("erase")) {
 		run_erase_flash();

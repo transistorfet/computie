@@ -56,8 +56,8 @@ SMT Revision 1
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SMT-rev1/SMT.jpg "68k-SMT Rev. 1")
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SMT-rev1/SMT-running.jpg "68k-SMT Running")
 
-Revision 2
-----------
+SBC Revision 2
+--------------
 
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev2/SBC.jpg "68k-SBC Rev. 2")
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev2/ArduinoShield.jpg "Supervisor Arduino Shield")
@@ -65,8 +65,8 @@ Revision 2
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev2/PCBs.jpg "68k-SBC PCBs")
 
 
-Revision 0
-----------
+SBC Revision 0
+--------------
 
 This version has 64KB of EEPROM instead of Flash, and doesn't have onboard interrupt circuitry.  It started off with a
 68000 CPU, but that was later upgraded to a 68010 to allow for relocatable interrupt tables when using off-board

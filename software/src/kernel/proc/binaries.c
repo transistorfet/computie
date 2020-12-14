@@ -22,10 +22,8 @@ int load_binary(const char *path, struct mem_map *map)
 	if (vfs_access(current_proc->cwd, path, X_OK, current_proc->uid))
 		return EPERM;
 
-	if ((error = vfs_open(current_proc->cwd, path, O_RDONLY, 0, current_proc->uid, &file)) < 0) {
-		printk("Error opening %s: %d\n", path, error);
+	if ((error = vfs_open(current_proc->cwd, path, O_RDONLY, 0, current_proc->uid, &file)) < 0)
 		return error;
-	}
 
 	if ((file->vnode->mode & (S_IFDIR | S_IFCHR | S_IFIFO)) != 0) {
 		vfs_close(file);
@@ -33,10 +31,12 @@ int load_binary(const char *path, struct mem_map *map)
 	}
 
 	error = load_elf_binary(file, map);
+	// If the file was not a valid ELF binary, then execute it as a flat binary
 	if (error == ENOEXEC) {
-		if (!(error = vfs_seek(file, 0, SEEK_SET)))
-			return error;
-		error = load_flat_binary(file, map);
+		error = vfs_seek(file, 0, SEEK_SET);
+		if (!error) {
+			error = load_flat_binary(file, map);
+		}
 	}
 
 	vfs_close(file);
@@ -75,19 +75,14 @@ int load_elf_binary(struct vfile *file, struct mem_map *map)
 	if (!(error = vfs_read(file, (char *) &header, sizeof(Elf32_Ehdr))))
 		return error;
 
-	printk_safe("SIG\n");
 	// Look for the ELF signature, 32-bit Big Endian ELF Version 1
-	if (memcmp(header.e_ident, "\x7F\x45\x4C\x46\x01\x02\x01", 7)) {
-		printk_safe("ekiting\n");
+	if (memcmp(header.e_ident, "\x7F\x45\x4C\x46\x01\x02\x01", 7))
 		return ENOEXEC;
-	}
 
-	printk_safe("TYPE: %x\n", header.e_type);
 	// Make sure it's an executable for the 68k
 	if (header.e_type != ET_EXEC || header.e_machine != EM_68K || header.e_phentsize != sizeof(Elf32_Phdr))
 		return ENOEXEC;
 
-	printk_safe("PH: %x\n", header.e_phoff);
 	if (!(error = vfs_seek(file, header.e_phoff, SEEK_SET)))
 		return error;
 
@@ -95,14 +90,12 @@ int load_elf_binary(struct vfile *file, struct mem_map *map)
 		if (!(error = vfs_read(file, (char *) &prog_header, sizeof(Elf32_Phdr))))
 			return error;
 
-		printk_safe("SF: %x\n", prog_header.p_flags);
 		if (prog_header.p_flags & PF_X)
 			break;
 	}
 	if (i == header.e_phnum)
 		return ENOEXEC;
 
-	printk_safe("MEM: %x %x\n", prog_header.p_offset, prog_header.p_memsz);
 	int task_size = prog_header.p_memsz;
 	char *task_text = kmalloc(task_size);
 

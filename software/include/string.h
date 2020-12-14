@@ -19,5 +19,6 @@ char *strrchr(const char *, int);
 
 void *memcpy_s(void *dest, const void *src, size_t num);	// NOTE it seems if this is called "memcpy", it will always be optimized away
 void *memset_s(void *ptr, int value, size_t num);		// NOTE it seems if this is called "memset", it will always be optimized away
+int memcmp(const void *ptr1, const void *ptr2, size_t num);
 
 #endif

@@ -521,7 +521,7 @@ int do_exec(const char *path, char *const argv[], char *const envp[])
 {
 	int error;
 
-	error = load_flat_binary(path, &current_proc->map);
+	error = load_binary(path, &current_proc->map);
 	if (error)
 		return error;
 

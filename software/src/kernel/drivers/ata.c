@@ -138,8 +138,21 @@ void ata_test()
 }
 */
 
-#define ATA_DELAY(x)	{ for (int delay = 0; delay < (x); delay++) { asm volatile(""); } }
+#define ATA_DELAY(x)		{ for (int delay = 0; delay < (x); delay++) { asm volatile(""); } }
+#define ATA_WAIT()		{ while (*ATA_REG_STATUS & ATA_ST_BUSY) { } }
+#define ATA_WAIT_FOR_DATA()	{ while (!(*ATA_REG_STATUS) & ATA_ST_DATA_READY) { } }
 
+/*
+static inline void ATA_DELAY(short delay)
+{
+	for (; delay > 0; delay--) { asm volatile(""); }
+}
+
+static inline void ATA_WAIT()
+{
+	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
+}
+*/
 
 int ata_detect()
 {
@@ -189,12 +202,13 @@ int ata_read_sector(int sector, char *buffer)
 
 	LOCK(saved_status);
 
-	ATA_DELAY(100);
+	ATA_DELAY(4);
 
 	// Set 8-bit mode
 	(*ATA_REG_FEATURE) = 0x01;
 	(*ATA_REG_COMMAND) = ATA_CMD_SET_FEATURE;
-	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
+	ATA_DELAY(4);
+	ATA_WAIT();
 
 	// Read a sector
 	(*ATA_REG_DRIVE_HEAD) = 0xE0;
@@ -204,7 +218,8 @@ int ata_read_sector(int sector, char *buffer)
 	(*ATA_REG_SECTOR_NUM) = (uint8_t) sector;
 	(*ATA_REG_SECTOR_COUNT) = 1;
 	(*ATA_REG_COMMAND) = ATA_CMD_READ_SECTORS;
-	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
+	ATA_DELAY(4);
+	ATA_WAIT();
 
 	char status = (*ATA_REG_STATUS);
 	//printk_safe("IDE: %x\n", status);
@@ -214,13 +229,13 @@ int ata_read_sector(int sector, char *buffer)
 		return 0;
 	}
 
-	ATA_DELAY(100);
-	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
-	while (!(*ATA_REG_STATUS) & ATA_ST_DATA_READY) { }
+	ATA_DELAY(4);
+	ATA_WAIT();
+	ATA_WAIT_FOR_DATA();
 
 	for (int i = 0; i < 512; i++) {
-		ATA_DELAY(100);
-		while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
+		ATA_DELAY(10);
+		ATA_WAIT();
 		//while (((*ATA_REG_STATUS) & ATA_ST_BUSY) || !((*ATA_REG_STATUS) & ATA_ST_DATA_READY)) { }
 		ATA_DELAY(10);
 
@@ -229,7 +244,7 @@ int ata_read_sector(int sector, char *buffer)
 		buffer[i] = (*ATA_REG_DATA_BYTE);
 	}
 
-	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
+	ATA_WAIT();
 
 	printk_safe("Mem %x:\n", sector);
 	for (int i = 0; i < 512; i++) {
@@ -251,7 +266,7 @@ int ata_write_sector(int sector, char *buffer)
 	// Set 8-bit mode
 	(*ATA_REG_FEATURE) = 0x01;
 	(*ATA_REG_COMMAND) = ATA_CMD_SET_FEATURE;
-	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
+	ATA_WAIT();
 
 	// Read a sector
 	(*ATA_REG_DRIVE_HEAD) = 0xE0;
@@ -261,7 +276,7 @@ int ata_write_sector(int sector, char *buffer)
 	(*ATA_REG_SECTOR_NUM) = (uint8_t) sector;
 	(*ATA_REG_SECTOR_COUNT) = 1;
 	(*ATA_REG_COMMAND) = ATA_CMD_WRITE_SECTORS;
-	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
+	ATA_WAIT();
 
 	char status = (*ATA_REG_STATUS);
 	//printk_safe("IDE: %x\n", status);
@@ -272,11 +287,11 @@ int ata_write_sector(int sector, char *buffer)
 	}
 
 	ATA_DELAY(100);
-	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
-	while (!(*ATA_REG_STATUS) & ATA_ST_DATA_READY) { }
+	ATA_WAIT();
+	ATA_WAIT_FOR_DATA();
 
 	for (int i = 0; i < 512; i++) {
-		while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
+		ATA_WAIT();
 		//while (((*ATA_REG_STATUS) & ATA_ST_BUSY) || !((*ATA_REG_STATUS) & ATA_ST_DATA_READY)) { }
 
 		//((uint16_t *) buffer)[i] = (*ATA_REG_DATA);
@@ -284,7 +299,7 @@ int ata_write_sector(int sector, char *buffer)
 		(*ATA_REG_DATA_BYTE) = buffer[i];
 	}
 
-	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
+	ATA_WAIT();
 
 	if (*ATA_REG_STATUS & ATA_ST_ERROR) {
 		printk_safe("Error writing sector %d: %x\n", sector, *ATA_REG_ERROR);

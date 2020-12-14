@@ -33,6 +33,7 @@ struct vnode_ops pipe_vnode_ops = {
 	nop_create,
 	nop_mknod,
 	nop_lookup,
+	nop_link,
 	nop_unlink,
 	nop_rename,
 	nop_truncate,

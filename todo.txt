@@ -11,18 +11,18 @@ Operating System:
 	* there's an issue which seems to affect the shell program when run as a normal process, as opposed to the builtin copy the kernel is compiled with.  It seems
 	  to affect both the copy sent over serial and the copy transfered by compact flash.  When running commands inside the shell (that's running inside the shell
 	  started during boot), it will sometimes say "Command not found" or hang or crash.  Sometimes it'll work without an issue, but sometimes the second command you
-	  invoke will hang the system.  This doesn't seems to affect the builtin shell.  Could it be a stack overflow problem?
+	  invoke will hang the system.  This doesn't seems to affect the builtin shell.  Could it be a stack overflow problem? A stack check didn't seem to turn anything up.
+	  It seems to happen consistently after starting the shell first thing when booted, and running `ls`, followed by `echo hey`, which halts the system.  The command
+	  not found condition seems to be less predictable.  These could be different issues
+
 
 	* separate Makefiles so that the kernel can be compiled normally, and commands/libc-68k-os can be compiled with -mpcrel or -fPIE (libc is the big fiddly bit here)
-	* implement elf binary format in kernel
+	* make a PIE format that can be loaded and executed
 
-	* add a check_pending_signals() function to run after unblocking
-	* should the signal dispatcher somehow reschedule the process to run next, so that it handles it as soon as possible?
 	* should the timer stuff in proc be moved somewhere else?
 	* add a command to set memory locations
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 
-	* make a PIE format that can be loaded and executed.  I think it'll have to be in elf format, but I'd like to be able to strip it down a lot
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
 	* when handling a syscall with interrupts on, if a timer interrupt occurs, the call to schedule() could instead of ignoring the switch, schedule the task switch for when
 	  the syscall exits (so it does a check when exiting to see if it should switch)

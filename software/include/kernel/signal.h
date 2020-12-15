@@ -23,5 +23,6 @@ int send_signal(pid_t pid, int signum);
 int send_signal_process_group(pid_t pgid, int signum);
 int dispatch_signal(struct process *proc, int signum);
 void cleanup_signal_handler();
+void check_pending_signals();
 
 #endif

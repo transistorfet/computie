@@ -24,6 +24,7 @@ static inline void run_signal_handler(struct process *proc, int signum);
 static inline void run_signal_default_action(struct process *proc, int signum, sigset_t sigmask);
 static void sig_default_terminate(struct process *proc, int signum);
 static inline sigset_t signal_to_map(int signum);
+static inline int get_next_signum(sigset_t mask);
 
 void init_signal_data(struct process *proc)
 {
@@ -113,6 +114,7 @@ static inline void run_signal_handler(struct process *proc, int signum)
 	// TODO this is a hack to skip over the resuming state
 	resume_proc(proc);
 	proc->state = PS_RUNNING;
+	reschedule_proc_to_now(proc);
 }
 
 void cleanup_signal_handler()
@@ -124,10 +126,25 @@ void cleanup_signal_handler()
 	current_proc->signals.blocked = context->prev_mask;
 	current_proc->sp = (((struct sigcontext *) current_proc->sp) + 1);
 
+	check_pending_signals();
+
 	if (current_proc->bits & PB_PAUSED)
 		restart_current_syscall();
 	else if (current_proc->bits & PB_SYSCALL)
 		suspend_proc(current_proc, 0);
+}
+
+void check_pending_signals()
+{
+	int signum;
+
+	if (current_proc->signals.pending & ~current_proc->signals.blocked) {
+		signum = get_next_signum(current_proc->signals.pending);
+		if (signum < 0)
+			return;
+		current_proc->signals.pending &= ~signal_to_map(signum);
+		dispatch_signal(current_proc, signum);
+	}
 }
 
 static inline void run_signal_default_action(struct process *proc, int signum, sigset_t sigmask)
@@ -151,5 +168,14 @@ static inline sigset_t signal_to_map(int signum)
 	return 0x00000001 << (signum - 1);
 }
 
+static inline int get_next_signum(sigset_t mask)
+{
+	for (short i = 1; i < 31; i++) {
+		if (mask & 0x01)
+			return i;
+		mask >>= 1;
+	}
+	return -1;
+}
 
 

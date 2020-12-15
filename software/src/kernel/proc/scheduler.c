@@ -17,7 +17,7 @@ struct syscall_record *current_syscall;
 
 // TODO could this be used to calculate the offset of process_sp in syscall_entry??
 //const process_sp_offset = offsetof(struct process, sp);
-const int process_sp_offset = (int) &(((struct process *) NULL)->sp);
+//const int process_sp_offset = (int) &(((struct process *) NULL)->sp);
 
 static struct queue run_queue;
 static struct queue blocked_queue;

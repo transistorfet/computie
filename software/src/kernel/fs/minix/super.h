@@ -37,7 +37,7 @@ static struct minix_super *load_superblock(device_t dev)
 
 	// TODO this is a temporary hack for cold starting a ram disk
 	if (from_le16(super_v1->magic) != 0x137F) {
-		printk("Initializing disk\n");
+		printk_safe("MINIX: Initializing root disk\n");
 		if (minix_mkfs(dev))
 			return NULL;
 	}

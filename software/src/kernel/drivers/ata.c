@@ -35,7 +35,7 @@ struct driver ata_driver = {
 
 // Driver-specific data
 struct ata_geometry {
-	char *base;
+	int base;
 	size_t size;
 };
 
@@ -222,7 +222,6 @@ int ata_read_sector(int sector, char *buffer)
 	ATA_WAIT();
 
 	char status = (*ATA_REG_STATUS);
-	//printk_safe("IDE: %x\n", status);
 	if (status & 0x01) {
 		printk_safe("Error while reading ata: %x\n", (*ATA_REG_ERROR));
 		UNLOCK(saved_status);
@@ -246,18 +245,20 @@ int ata_read_sector(int sector, char *buffer)
 
 	ATA_WAIT();
 
+	/*
 	printk_safe("Mem %x:\n", sector);
 	for (int i = 0; i < 512; i++) {
 		printk_safe("%x ", 0xff & buffer[i]);
 		if ((i & 0x1F) == 0x1F)
 			printk_safe("\n");
 	}
+	*/
 
 	UNLOCK(saved_status);
 	return 512;
 }
 
-int ata_write_sector(int sector, char *buffer)
+int ata_write_sector(int sector, const char *buffer)
 {
 	short saved_status;
 
@@ -320,10 +321,27 @@ struct partition_entry {
 	uint32_t lba_sectors;
 };
 
+int load_partition_table()
+{
+	char buffer[512];
+	struct partition_entry *table;
+
+	ata_read_sector(0, buffer);
+	table = (struct partition_entry *) &buffer[0x1BE];
+
+	for (short i = 0; i < 4; i++) {
+		devices[i].base = from_le32(table[i].lba_start);
+		devices[i].size = from_le32(table[i].lba_sectors);
+		if (devices[i].size)
+			printk_safe("ATA: found partition %d with %d sectors\n", i, devices[i].size);
+	}
+
+	return 0;
+}
+
 
 int ata_init()
 {
-	struct partition_entry *table;
 
 	for (short i = 0; i < ATA_DEV_MAX; i++)
 		devices[i].base = 0;
@@ -334,22 +352,7 @@ int ata_init()
 		return 0;
 	}
 
-	//ata_test();
-
-	//printk_safe("Testing\n");
-	//char test[512];
-	//ata_read_sector(0x806, test);
-	//printk_safe("done\n");
-
-	char buffer[512];
-	ata_read_sector(0, buffer);
-	table = &buffer[0x1BE];
-
-	for (short i = 0; i < 4; i++) {
-		devices[i].base = from_le32(table[i].lba_start);
-		devices[i].size = from_le32(table[i].lba_sectors);
-		printk_safe("Partition %d: %x size %x\n", i, devices[i].base, devices[i].size);
-	}
+	load_partition_table();
 
 	return 0;
 }

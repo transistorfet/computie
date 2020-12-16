@@ -4,15 +4,6 @@
 
 #define NOP()			asm volatile("nop\n");
 
-#define ENDIAN_CONVERT_WORD(x)	asm volatile("rol.w	#8, %0\n" : "+g" ((x)));
-#define ENDIAN_CONVERT_LONG(x) { 	\
-	asm volatile(			\
-	"rol.w	#8, %0\n"		\
-	"swap	%0\n"			\
-	"rol.w	#8, %0\n"		\
-	: "+r" ((x))			\
-	);				\
-}
 
 static inline short endian_convert_word(short x)
 {

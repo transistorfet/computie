@@ -58,6 +58,7 @@ int link(const char *oldpath, const char *newpath);
 int symlink(const char *target, const char *linkpath);
 int unlink(const char *path);
 offset_t lseek(int fd, offset_t offset, int whence);
+void sync(void);
 
 int pipe(int pipefd[2]);
 int dup2(int oldfd, int newfd);

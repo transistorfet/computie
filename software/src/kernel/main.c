@@ -85,7 +85,6 @@ int main()
 	init_syscall();
 	init_proc();
 	init_scheduler();
-	//init_async();
 
 	// Initialize drivers
 	for (char i = 0; drivers[i]; i++) {

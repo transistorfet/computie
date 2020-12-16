@@ -1,4 +1,6 @@
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <errno.h>
@@ -208,7 +210,7 @@ static struct vnode *_find_vnode(pid_t pid, short filenum, mode_t mode, struct m
 {
 	for (short i = 0; i < MAX_VNODES; i++) {
 		if (vnode_table[i].vn.refcount > 0 && PROCFS_DATA(&vnode_table[i]).pid == pid && PROCFS_DATA(&vnode_table[i]).filenum == filenum)
-			return vfs_clone_vnode(&vnode_table[i]);
+			return vfs_clone_vnode(&vnode_table[i].vn);
 	}
 	return _alloc_vnode(pid, filenum, mode, mp);
 }
@@ -217,10 +219,10 @@ static struct vnode *_alloc_vnode(pid_t pid, short filenum, mode_t mode, struct 
 {
 	for (short i = 0; i < MAX_VNODES; i++) {
 		if (vnode_table[i].vn.refcount <= 0) {
-			vfs_init_vnode(&vnode_table[i], &procfs_vnode_ops, mp, mode, 1, 0, 0, 0, 0, 0, 0, 0);
+			vfs_init_vnode(&vnode_table[i].vn, &procfs_vnode_ops, mp, mode, 1, 0, 0, 0, 0, 0, 0, 0);
 			PROCFS_DATA(&vnode_table[i]).pid = pid;
 			PROCFS_DATA(&vnode_table[i]).filenum = filenum;
-			return &vnode_table[i];
+			return &vnode_table[i].vn;
 		}
 	}
 	return NULL;

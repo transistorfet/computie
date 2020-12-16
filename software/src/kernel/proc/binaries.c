@@ -13,6 +13,8 @@
 
 extern struct process *current_proc;
 
+int load_flat_binary(struct vfile *file, struct mem_map *map);
+int load_elf_binary(struct vfile *file, struct mem_map *map);
 
 int load_binary(const char *path, struct mem_map *map)
 {

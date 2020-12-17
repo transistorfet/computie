@@ -53,12 +53,12 @@
 typedef short lock_state_t;
 
 #define LOCK(saved) {					\
-	asm("move.w	%%sr, %0\n" : "=r" ((saved)));	\
+	asm("move.w	%%sr, %0\n" : "=dm" ((saved)));	\
 	DISABLE_INTS();					\
 }
 
 #define UNLOCK(saved) {						\
-	asm("move.w	%0, %%sr\n" : : "r" ((saved)) :);	\
+	asm("move.w	%0, %%sr\n" : : "dm" ((saved)) :);	\
 }
 
 typedef void (*bh_handler_t)(void *);

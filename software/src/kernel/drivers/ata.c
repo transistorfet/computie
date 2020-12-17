@@ -333,7 +333,7 @@ int load_partition_table()
 		devices[i].base = from_le32(table[i].lba_start);
 		devices[i].size = from_le32(table[i].lba_sectors);
 		if (devices[i].size)
-			printk_safe("ATA: found partition %d with %d sectors\n", i, devices[i].size);
+			printk_safe("ata%d: found partition with %d sectors\n", i, devices[i].size);
 	}
 
 	return 0;
@@ -347,6 +347,7 @@ int ata_init()
 		devices[i].base = 0;
 	register_driver(DEVMAJOR_ATA, &ata_driver);
 
+	// TODO this doesn't work very well
 	if (!ata_detect()) {
 		printk_safe("ATA device not detected\n");
 		return 0;

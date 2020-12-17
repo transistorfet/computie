@@ -8,6 +8,7 @@
 
 Operating System:
 
+	* make a command or procfs node to show the current kernel heap size to see if it's growing
 	* there's an issue which seems to affect the shell program when run as a normal process, as opposed to the builtin copy the kernel is compiled with.  It seems
 	  to affect both the copy sent over serial and the copy transfered by compact flash.  When running commands inside the shell (that's running inside the shell
 	  started during boot), it will sometimes say "Command not found" or hang or crash.  Sometimes it'll work without an issue, but sometimes the second command you
@@ -16,16 +17,32 @@ Operating System:
 	  not found condition seems to be less predictable.  These could be different issues
 
 
+	* I don't like the implementation of the sh and schedule checking in restore context
+	* having an explicit need_sched type flag would handle the timer case, but the syscall return case, as long as it's set by the scheduler's suspend functions
+	* when handling a syscall with interrupts on, if a timer interrupt occurs, the call to schedule() could instead of ignoring the switch, schedule the task switch for when
+	  the syscall exits (so it does a check when exiting to see if it should switch)
+	* look into bottom-half execution in linux, which seems to be run only when exiting a systemcall, but does that also apply to returning from an interrupt that interrupted
+	  a user process (as opposed to interrupting the kernel)
+
+
+	* look at implementation of break and memory stuff in minix. How much memory does it allocate to in the gap?
+
+	* figure out how to boot the system.  Could the flash/ram backed file system get mounted as /boot, with the memory card being mounted as root?  Can it be configurable
+	  so that I can boot systems without the flash card?
+	* refactor to allow commands to be individually compiled to elfs, and loaded onto the memory card, and executed like normal processes
+	* add info to procfs, and fix the cmdline file
+
+
+	* add a command to set memory locations
 	* separate Makefiles so that the kernel can be compiled normally, and commands/libc-68k-os can be compiled with -mpcrel or -fPIE (libc is the big fiddly bit here)
 	* make a PIE format that can be loaded and executed
 
+	* move as much inline assembly, from headers especially, into a redirectable asm directory
+	* should you make a lib subdir, and put unistd at the top?
 	* should the timer stuff in proc be moved somewhere else?
-	* add a command to set memory locations
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
-	* when handling a syscall with interrupts on, if a timer interrupt occurs, the call to schedule() could instead of ignoring the switch, schedule the task switch for when
-	  the syscall exits (so it does a check when exiting to see if it should switch)
 
 
 	* make a device-independent tty subsystem
@@ -51,6 +68,7 @@ Operating System:
 
 
 	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
+	  perhaps you could use the logic analyzer to look at the interrupt line to see how long it's asserted before the interrupt is handled, to debug the flow control issue
 	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
 	* implement gmtime() and make the time command return a formatted time
 
@@ -88,9 +106,7 @@ Operating System:
 	* re-evaluate file permissions checks to make sure they're correct according to posix
 	* move interrupt and syscall_entry code into proc??
 
-	* should you make a lib subdir, and put unistd at the top?
 	* move the math functions in libc to arch/68k
-	* move as much inline assembly, from headers especially, into a redirectable asm directory
 	* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
 	  (ie. store the last allocated fd, but it has to be in the process struct)
 

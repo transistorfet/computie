@@ -9,6 +9,8 @@ struct process;
 
 extern struct process *current_proc;
 
+void init_scheduler();
+void insert_proc(struct process *proc);
 void exit_proc(struct process *proc, int status);
 void stop_proc(struct process *proc);
 void suspend_proc(struct process *proc, int flags);
@@ -19,7 +21,10 @@ void resume_waiting_parent(struct process *proc);
 void reschedule_proc_to_now(struct process *proc);
 void restart_current_syscall();
 
-void schedule();
+void set_proc_return_value(struct process *proc, int ret);
+void return_to_current_proc(int ret);
+
+void request_reschedule();
 __attribute__((noreturn)) void begin_multitasking();
 
 #endif

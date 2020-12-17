@@ -86,9 +86,6 @@ struct process *find_exited_child(pid_t parent, pid_t child);
 void proc_iter_start(struct process_iter *iter);
 struct process *proc_iter_next(struct process_iter *iter);
 
-void set_proc_return_value(struct process *proc, int ret);
-void return_to_current_proc(int ret);
-
 int set_alarm(struct process *proc, uint32_t seconds);
 void check_timers();
 

@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/ioc_tty.h>
 
+#include <asm/macros.h>
 #include <kernel/vfs.h>
 #include <kernel/signal.h>
 #include <kernel/printk.h>
@@ -178,7 +179,7 @@ static inline void config_serial_channel(struct serial_channel *channel)
 
 	// Reset channel A serial port
 	*channel->ports->command = CMD_RESET_MR;
-	asm volatile("nop\n");
+	NOP()
 	*channel->ports->command = CMD_RESET_TX;
 
 	// Configure channel A serial port
@@ -257,6 +258,12 @@ static inline int putchar_buffered(struct serial_channel *channel, int ch)
 
 //int putchar(int ch) { return putchar_buffered(&channel_a, ch); }
 
+static void tty_68681_process_input(void *_unused)
+{
+	// TODO this is currently not used
+	//resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, 0));
+}
+
 static inline void handle_channel_io(register char isr, struct serial_channel *channel)
 {
 	register char status = *channel->ports->status;
@@ -292,6 +299,7 @@ static inline void handle_channel_io(register char isr, struct serial_channel *c
 			}
 		}
 
+		//request_bh_run(SH_TTY);
 		resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, channel == &channel_a ? 0 : 1));
 	}
 
@@ -333,10 +341,7 @@ void handle_serial_irq()
 		adjust_system_time(71111);
 		check_timers();
 
-		// Schedule a new process
-		extern int kernel_reentries;
-		if (kernel_reentries <= 1)
-			schedule();
+		request_reschedule();
 	}
 
 	if (isr & ISR_INPUT_CHANGE) {
@@ -497,6 +502,7 @@ int tty_68681_init()
 	tty_68681_normal_mode();
 
 	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
+	register_bh(SH_TTY, tty_68681_process_input, NULL);
 }
 
 int tty_68681_open(devminor_t minor, int access)

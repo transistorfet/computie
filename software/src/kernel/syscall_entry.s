@@ -1,4 +1,5 @@
 
+	| Definitions in this file
 	.global enter_syscall
 	.global enter_irq
 	.global create_context
@@ -8,12 +9,17 @@
 	.global _exit
 	.global _sigreturn
 
+	| Declarations defined outside of this file
 	.global	syscall_table
 	.global kernel_reentries
 	.global kernel_stack
 	.global current_proc
 	.global current_syscall
 	.global do_syscall
+	.global need_reschedule
+	.global schedule
+	.global bh_requested
+	.global run_bh_handlers
 
 	.equ	CONTEXT_SIZE, 60		| The size of the saved registers on the stack (not including the interrupt return)
 	.equ	PROC_SP_OFFSET, 8		| The offset into struct process where the stack pointer is located
@@ -187,9 +193,40 @@ save_context:
  * Switch to the current user stack, restore the context, and return from the interrupt
  */
 restore_context:
-	| Decrement the number of times we've entered the kernel, and if this is the last time, then switch the stack back
+	| If we aren't exiting to a user process, then skip the next few checks
+	cmp.l	#1, kernel_reentries
+	bne	L004
+
+    L002:
+
+	| Check if there are any back half handlers to be run
+	cmp.l	#0, bh_requested
+	beq	L003
+
+	| Enable interrupts while running the back half handlers
+	and.w	#0xF8FF, %sr
+	bsr	run_bh_handlers
+	or.w	#0x0700, %sr
+
+    L003:
+
+	| Check if there was a request to schedule a different process
+	cmp.l	#0, need_reschedule
+	beq	L004
+
+	| Enable interrupts while running the scheduler
+	and.w	#0xF8FF, %sr
+	bsr	schedule
+	or.w	#0x0700, %sr
+
+	| After a process has been scheduled and a syscall restarted, it might need to be suspended right away again, so loop over the checks
+	bra	L002
+
+    L004:
+
+	| Decrement the number of times we've entered the kernel, and if this is the last time, then switch to the user stack
 	sub.l	#1, kernel_reentries
-	beq	L002
+	beq	L005
 
 	| We'll still be on the kernel stack after returning, so just pop off the saved scratch register values and return
 	move.l	(%sp)+, %d0
@@ -198,7 +235,8 @@ restore_context:
 	move.l	(%sp)+, %a1
 	rte
 
-    L002:
+    L005:
+
 	| Switch back to the current process's stack
 	move.l	%sp, kernel_stack
 	move.l	current_proc, %a5

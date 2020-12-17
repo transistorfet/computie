@@ -9,8 +9,9 @@
 #include "../misc/queue.h"
 
 // Info for Current Running Process (accessed by syscall interface)
-int kernel_reentries;
 void *kernel_stack;
+int need_reschedule;
+int kernel_reentries;
 struct process *idle_proc;
 struct process *current_proc;
 struct syscall_record *current_syscall;
@@ -24,6 +25,7 @@ static struct queue blocked_queue;
 
 void init_scheduler()
 {
+	need_reschedule = 0;
 	kernel_reentries = 1;
 	current_proc = NULL;
 
@@ -58,6 +60,7 @@ void exit_proc(struct process *proc, int status)
 	proc->exitcode = status;
 
 	close_proc(proc);
+	need_reschedule = 1;
 	UNLOCK(saved_status);
 }
 
@@ -75,6 +78,7 @@ void stop_proc(struct process *proc)
 	else if (proc->state == PS_BLOCKED)
 		_queue_remove(&blocked_queue, &proc->node);
 	proc->state = PS_STOPPED;
+	need_reschedule = 1;
 	UNLOCK(saved_status);
 }
 
@@ -92,6 +96,7 @@ void suspend_proc(struct process *proc, int flags)
 	_queue_insert(&blocked_queue, &proc->node);
 	proc->state = PS_BLOCKED;
 	proc->bits |= (flags & 0x0F);
+	need_reschedule = 1;
 	UNLOCK(saved_status);
 }
 
@@ -178,12 +183,34 @@ void restart_current_syscall()
 	}
 }
 
+
+
+void set_proc_return_value(struct process *proc, int ret)
+{
+	*((uint32_t *) proc->sp) = ret;
+}
+
+void return_to_current_proc(int ret)
+{
+	if (current_proc->state == PS_RUNNING) {
+		// If the process is still in the ready state, then set the return value in the process's context
+		*((uint32_t *) current_proc->sp) = ret;
+	}
+}
+
+
+void request_reschedule()
+{
+	need_reschedule = 1;
+}
+
 void schedule()
 {
 	short saved_status;
 	struct process *next;
 
 	LOCK(saved_status);
+	need_reschedule = 0;
 	if (!current_proc || !PROC_IS_RUNNING(current_proc) || !current_proc->node.next)
 		next = (struct process *) run_queue.head;
 	else

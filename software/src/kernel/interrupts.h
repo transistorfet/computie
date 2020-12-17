@@ -36,6 +36,9 @@
 
 #define IV_USER_VECTORS		64
 
+#define SH_MAX			4
+#define SH_TTY			0
+
 /*** Macros ***/
 
 #define DISABLE_INTS()		asm volatile("or.w	#0x0700, %sr");
@@ -47,6 +50,8 @@
 #define ARDUINO_TRACE_ON()	asm volatile("movea.l	#0x2019, %%a0\n" "move.b	#1, (%%a0)" : : : "%a0");
 #define ARDUINO_TRACE_OFF()	asm volatile("movea.l	#0x2019, %%a0\n" "move.b	#0, (%%a0)" : : : "%a0");
 
+typedef short lock_state_t;
+
 #define LOCK(saved) {					\
 	asm("move.w	%%sr, %0\n" : "=r" ((saved)));	\
 	DISABLE_INTS();					\
@@ -56,12 +61,22 @@
 	asm("move.w	%0, %%sr\n" : : "r" ((saved)) :);	\
 }
 
+typedef void (*bh_handler_t)(void *);
+
+struct bh_handler {
+	bh_handler_t fn;
+	void *data;
+};
 
 typedef void (*interrupt_handler_t)();
 
 void init_interrupts();
 void set_interrupt(char iv_num, interrupt_handler_t handler);
 void panic(const char *fmt, ...);
+
+void register_bh(int bhnum, bh_handler_t fn, void *data);
+void request_bh_run(int bhnum);
+void run_bh_handlers();
 
 #endif
 

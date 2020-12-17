@@ -143,24 +143,6 @@ struct process *proc_iter_next(struct process_iter *iter)
 }
 
 
-void set_proc_return_value(struct process *proc, int ret)
-{
-	*((uint32_t *) proc->sp) = ret;
-}
-
-void return_to_current_proc(int ret)
-{
-	if (current_proc->state == PS_RUNNING) {
-		// If the process is still in the ready state, then set the return value in the process's context
-		*((uint32_t *) current_proc->sp) = ret;
-	}
-	else {
-		// If the process has been suspended, we wont return as normal but instead schedule another process
-		schedule();
-	}
-}
-
-
 int set_alarm(struct process *proc, uint32_t seconds)
 {
 	if (!seconds)

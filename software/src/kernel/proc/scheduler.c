@@ -1,4 +1,6 @@
 
+#include <asm/macros.h>
+
 #include <kernel/printk.h>
 #include <kernel/scheduler.h>
 
@@ -241,7 +243,7 @@ __attribute__((noreturn)) void begin_multitasking()
 	//volatile uint16_t value = *data;
 
 	// Start Multitasking
-	asm("bra restore_context\n");
+	GOTO_LABEL("restore_context");
 	__builtin_unreachable();
 }
 

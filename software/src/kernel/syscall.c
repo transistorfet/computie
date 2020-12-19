@@ -383,7 +383,6 @@ pid_t do_fork()
 		panic("Ran out of procs\n");
 	// TODO these should be somewhere else
 	proc->cwd = current_proc->cwd;
-	proc->cmdline = current_proc->cmdline;
 	dup_fd_table(proc->fd_table, current_proc->fd_table);
 
 	clone_stack(current_proc, proc);

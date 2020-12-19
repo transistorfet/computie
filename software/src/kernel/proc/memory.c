@@ -38,7 +38,7 @@ int copy_string_array(char **stack, int *count, char *const arr[])
 	return 0;
 }
 
-char *copy_exec_args(char *stack, char *const argv[], char *const envp[])
+char *copy_exec_args(char *stack, char *const argv[], char *const envp[], char **proc_args)
 {
 	int argc, envc;
 	char **stack_argv, **stack_envp;
@@ -55,19 +55,19 @@ char *copy_exec_args(char *stack, char *const argv[], char *const envp[])
 	stack -= sizeof(int);
 	*((int *) stack) = argc;
 
+	for (char j = 0; j < PROC_CMDLINE_ARGS; j++)
+		proc_args[j] = j < argc ? stack_argv[j] : NULL;
+
 	return stack;
 }
 
 int reset_stack(struct process *proc, void *entry, char *const argv[], char *const envp[])
 {
-	// Hackish: set the process's command to the first argument.  This is only used by procfs to show to the user
-	proc->cmdline = argv[0];
-
 	// Reset the stack to start our new process
 	char *task_stack_pointer = proc->map.segments[M_STACK].base + proc->map.segments[M_STACK].length;
 
 	// Setup new stack image
- 	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp);
+ 	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp, proc->cmdline);
  	task_stack_pointer = create_context(task_stack_pointer, entry, _exit);
 	proc->sp = task_stack_pointer;
 
@@ -90,6 +90,9 @@ int clone_stack(struct process *parent_proc, struct process *proc)
 	proc->map.segments[M_STACK].base = stack;
 	proc->map.segments[M_STACK].length = stack_size;
 	proc->sp = stack_pointer;
+
+	for (char j = 0; j < PROC_CMDLINE_ARGS; j++)
+		proc->cmdline[j] = proc->map.segments[M_STACK].base + (parent_proc->cmdline[j] - (char *) parent_proc->map.segments[M_STACK].base);
 
 	return 0;
 }

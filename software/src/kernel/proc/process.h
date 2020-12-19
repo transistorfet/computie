@@ -45,6 +45,8 @@ typedef enum {
 } proc_state_t;
 
 
+# define PROC_CMDLINE_ARGS		4
+
 struct vnode;
 
 struct process {
@@ -66,7 +68,7 @@ struct process {
 	struct signal_data signals;
 
 	uid_t uid;
-	char *cmdline;
+	char *cmdline[PROC_CMDLINE_ARGS];
 	device_t ctty;
 	struct vnode *cwd;
 	fd_table_t fd_table;

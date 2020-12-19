@@ -202,12 +202,12 @@ int ata_read_sector(int sector, char *buffer)
 
 	LOCK(saved_status);
 
-	ATA_DELAY(4);
+	ATA_DELAY(10);
 
 	// Set 8-bit mode
 	(*ATA_REG_FEATURE) = 0x01;
 	(*ATA_REG_COMMAND) = ATA_CMD_SET_FEATURE;
-	ATA_DELAY(4);
+	ATA_DELAY(10);
 	ATA_WAIT();
 
 	// Read a sector
@@ -218,7 +218,7 @@ int ata_read_sector(int sector, char *buffer)
 	(*ATA_REG_SECTOR_NUM) = (uint8_t) sector;
 	(*ATA_REG_SECTOR_COUNT) = 1;
 	(*ATA_REG_COMMAND) = ATA_CMD_READ_SECTORS;
-	ATA_DELAY(4);
+	ATA_DELAY(10);
 	ATA_WAIT();
 
 	char status = (*ATA_REG_STATUS);
@@ -228,7 +228,7 @@ int ata_read_sector(int sector, char *buffer)
 		return 0;
 	}
 
-	ATA_DELAY(4);
+	ATA_DELAY(10);
 	ATA_WAIT();
 	ATA_WAIT_FOR_DATA();
 
@@ -243,6 +243,7 @@ int ata_read_sector(int sector, char *buffer)
 		buffer[i] = (*ATA_REG_DATA_BYTE);
 	}
 
+	ATA_DELAY(10);
 	ATA_WAIT();
 
 	/*

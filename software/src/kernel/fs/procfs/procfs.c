@@ -45,9 +45,10 @@ struct mount_ops procfs_mount_ops = {
 };
 
 struct procfs_dir_entry proc_files[] = {
-	{ PFN_PROCDIR, "." },
-	{ PFN_ROOTDIR, ".." },
-	{ PFN_CMDLINE, "cmdline" },
+	{ PFN_PROCDIR,	"." },
+	{ PFN_ROOTDIR,	".." },
+	{ PFN_CMDLINE,	"cmdline" },
+	{ PFN_MEM,	"mem" },
 	{ 0, NULL },
 };
 
@@ -137,6 +138,7 @@ int procfs_read(struct vfile *file, char *buf, size_t nbytes)
 {
 	int limit;
 	char *data;
+	char buffer[64];
 	struct process *proc;
 
 	proc = get_proc(PROCFS_DATA(file->vnode).pid);
@@ -145,7 +147,12 @@ int procfs_read(struct vfile *file, char *buf, size_t nbytes)
 
 	switch (PROCFS_DATA(file->vnode).filenum) {
 	    case PFN_CMDLINE: {
-		data = proc->cmdline;
+		data = proc->cmdline[0];
+		break;
+	    }
+	    case PFN_MEM: {
+		data = buffer;
+		snprintf(buffer, 64, "%x %x %x %x %x\n", proc->map.segments[M_TEXT].base, proc->map.segments[M_TEXT].length, proc->map.segments[M_STACK].base, proc->map.segments[M_STACK].length, proc->sp);
 		break;
 	    }
 	    default:

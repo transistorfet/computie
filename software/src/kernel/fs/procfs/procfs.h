@@ -9,6 +9,7 @@
 #define PFN_ROOTDIR	0
 #define PFN_PROCDIR	1
 #define PFN_CMDLINE	2
+#define PFN_MEM		3
 
 struct procfs_dir_entry {
 	short filenum;

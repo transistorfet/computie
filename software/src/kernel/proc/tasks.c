@@ -28,7 +28,7 @@ struct process *create_init_task()
 	proc->map.segments[M_STACK].length = stack_size;
 
 	extern void init_task();
-	char *argv[1] = { NULL }, *envp[1] = { NULL };
+	char *argv[2] = { "init", NULL }, *envp[1] = { NULL };
 	reset_stack(proc, init_task, argv, envp);
 
 	return proc;

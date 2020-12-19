@@ -1,8 +1,8 @@
 
 #define SERIAL_SPEED	115200
 
-#define MEM_ADDR	0x100000
-#define MEM_SIZE	65536
+#define MEM_ADDR	0x000000
+#define MEM_SIZE	4096
 
 #define FLASH_ADDR	0x000000
 
@@ -327,7 +327,7 @@ char trace = 0;
 
 ISR (PCINT0_vect) {
 	// TODO this has been disabled
-	//bus_request = 1;
+	bus_request = 1;
 }
 
 void check_bus_cycle()

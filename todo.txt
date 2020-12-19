@@ -17,14 +17,6 @@ Operating System:
 	  not found condition seems to be less predictable.  These could be different issues
 
 
-	* I don't like the implementation of the sh and schedule checking in restore context
-	* having an explicit need_sched type flag would handle the timer case, but the syscall return case, as long as it's set by the scheduler's suspend functions
-	* when handling a syscall with interrupts on, if a timer interrupt occurs, the call to schedule() could instead of ignoring the switch, schedule the task switch for when
-	  the syscall exits (so it does a check when exiting to see if it should switch)
-	* look into bottom-half execution in linux, which seems to be run only when exiting a systemcall, but does that also apply to returning from an interrupt that interrupted
-	  a user process (as opposed to interrupting the kernel)
-
-
 	* look at implementation of break and memory stuff in minix. How much memory does it allocate to in the gap?
 
 	* figure out how to boot the system.  Could the flash/ram backed file system get mounted as /boot, with the memory card being mounted as root?  Can it be configurable
@@ -49,29 +41,15 @@ Operating System:
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 
-
-
+	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
+	  perhaps you could use the logic analyzer to look at the interrupt line to see how long it's asserted before the interrupt is handled, to debug the flow control issue
 	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
 	  that, the tty driver tries to resume procs, but since the state is changed, this doesn't have an affect and it's not until another character is entered that both the
 	  ^C and the other character are read (and the prompt is only then printed).
-	* it seems like in minix, an interrupt occurs, and a tty event message is placed on a queue, which is handled by a loop in the tty driver task which is its own process.
-	  that calls a hook in the tty device struct which points to one of the hardware driver's functions, which reads the character and then directly calls in_process() to do
-	  cannonical processing, from which a SIGINT can be dispatched to the process group recorded in the tty struct (as well as echo the char and such), and all that while the
-	  process that receives the sigint isn't doing i/o on the tty where the ^C originates....  This is all before the data is placed in a buffer, which wont be returned to the
-	  process that reads it until an entire line is entered
-	* should there be a lighter weight task type, instead of processes, so that you can service interrupt processing without a bunch of wasted space for the signals and file
-	  descriptor tables...
-	* what paradigm should be used to communicated from the interrupts to the scheduled interrupt handling task/process?  Generic IPC messages? A custom event queue (how are event
-	  records allocated)?, even just a counter of the number of times an interrupt has occurred.  There could be a burst of hardware interrupts that need to be processed to avoid
-	  losing data, but the post-processing takes a lot longer, and needs to queue up fully.  In that sense, just a counter or a bit to say an interrupt is available, and the
-	  post-processor can figure out how many events need to be processed, since it's tightly coupled to the hardware interrupt handler
 
 
-	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
-	  perhaps you could use the logic analyzer to look at the interrupt line to see how long it's asserted before the interrupt is handled, to debug the flow control issue
 	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
 	* implement gmtime() and make the time command return a formatted time
-
 
 	* add commands: rmdir, pwd, dd, chown
 	* implement getopt
@@ -105,6 +83,7 @@ Operating System:
 	* do you need to add variable sized buffers/blocks into bufcache? (yes)
 	* re-evaluate file permissions checks to make sure they're correct according to posix
 	* move interrupt and syscall_entry code into proc??
+	* should there be a lighter weight task type, instead of processes, so that you can service interrupt processing without a bunch of wasted memory
 
 	* move the math functions in libc to arch/68k
 	* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
@@ -124,6 +103,9 @@ Operating System:
 
 
 Monitor:
+
+	* failure vectors don't point to the correct addresses, from the looks of it
+
 	* add echoing of characters, backspace, etc
 	* add a help command to print out what commands are available
 	* maybe refactor it to use a list of function pointers and names for the command list, like how you've done in sh.c

@@ -71,7 +71,8 @@ struct process *new_proc(pid_t pid, uid_t uid)
 			init_signal_data(&table[i]);
 
 			table[i].uid = uid;
-			table[i].cmdline = "";
+			for (char j = 0; j < PROC_CMDLINE_ARGS; j++)
+				table[i].cmdline[j] = NULL;
 			table[i].cwd = NULL;
 			init_fd_table(table[i].fd_table);
 

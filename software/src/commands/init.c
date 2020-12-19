@@ -22,8 +22,8 @@ int init_task()
 	// TODO temporary, for testing
 	int test_files();
 	int test_dirs();
-	test_files();
-	test_dirs();
+	//test_files();
+	//test_dirs();
 
 
 	int pid, status;
@@ -37,6 +37,7 @@ int init_task()
 		ioctl(STDOUT_FILENO, TIOCSPGRP, &fgpid);
 
 		extern void sh_task();
+		argv[0] = "sh";
 		status = SYSCALL3(SYS_EXECBUILTIN, (int) sh_task, (int) argv, (int) envp);
 		// The exec() system call will only return if an error occurs
 		printf("Failed to execute %s: %d\n", argv[1], status);

@@ -23,6 +23,18 @@ const char hello_task[TASK_SIZE] = {
 extern struct process *current_proc;
 extern void *create_context(void *user_stack, void *entry, void *exit);
 
+void print_stack()
+{
+	uint32_t sp;
+
+	asm("move.l %%sp, %0\n" : "=r" (sp));
+
+	printf("SP: %x\n", sp);
+	dump((uint16_t *) sp, 64);
+	return;
+}
+
+
 /*
 int test_process()
 {

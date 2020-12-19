@@ -8,7 +8,10 @@
 
 Operating System:
 
+	* make procfs return all the command line arguments instead of just the first one
 	* make a command or procfs node to show the current kernel heap size to see if it's growing
+	* make stats and other procfs files
+
 	* there's an issue which seems to affect the shell program when run as a normal process, as opposed to the builtin copy the kernel is compiled with.  It seems
 	  to affect both the copy sent over serial and the copy transfered by compact flash.  When running commands inside the shell (that's running inside the shell
 	  started during boot), it will sometimes say "Command not found" or hang or crash.  Sometimes it'll work without an issue, but sometimes the second command you
@@ -18,29 +21,21 @@ Operating System:
 
 
 	* look at implementation of break and memory stuff in minix. How much memory does it allocate to in the gap?
-
 	* figure out how to boot the system.  Could the flash/ram backed file system get mounted as /boot, with the memory card being mounted as root?  Can it be configurable
 	  so that I can boot systems without the flash card?
-	* refactor to allow commands to be individually compiled to elfs, and loaded onto the memory card, and executed like normal processes
-	* add info to procfs, and fix the cmdline file
-
-
-	* add a command to set memory locations
 	* separate Makefiles so that the kernel can be compiled normally, and commands/libc-68k-os can be compiled with -mpcrel or -fPIE (libc is the big fiddly bit here)
+	* refactor to allow commands to be individually compiled to elfs, and loaded onto the memory card, and executed like normal processes
 	* make a PIE format that can be loaded and executed
 
 	* move as much inline assembly, from headers especially, into a redirectable asm directory
 	* should you make a lib subdir, and put unistd at the top?
 	* should the timer stuff in proc be moved somewhere else?
-	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 
+	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
 
-
-	* make a device-independent tty subsystem
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
-
 	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
 	  perhaps you could use the logic analyzer to look at the interrupt line to see how long it's asserted before the interrupt is handled, to debug the flow control issue
 	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
@@ -48,25 +43,24 @@ Operating System:
 	  ^C and the other character are read (and the prompt is only then printed).
 
 
-	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
-	* implement gmtime() and make the time command return a formatted time
 
-	* add commands: rmdir, pwd, dd, chown
-	* implement getopt
-	* syscalls to implement: setuid
+	* make a device-independent tty subsystem
 	* implement login system
-
 	* add support for PATH variables
 	* add fifos (should be easy now)
-	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
-
+	* add brk/sbrk/stack guard protection
 	* add pipe setup to command evaluation
 	* add network syscalls for local IPC (unix file, sockets, maybe even fifos?)
-	* should there be something that periodically syncs data to disk?
 	* add environment variable substitution to echo command
-	* should you refactor the header files in minix implementation into actual c files, with a common header to declare the functions?
-	* could I use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
+	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 
+	* add commands: rmdir, pwd, dd, chown, poke
+	* implement getopt
+	* syscalls to implement: setuid
+	* to stdlib, add: fprintf, fscanf, scanf, fopen, fclose, fgetpos, fseek, feof, fread, fwrite
+	* implement gmtime() and make the time command return a formatted time
+
+	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
 	* add check to vfs_link() for loops
 	* implement symlinks in minixfs
 	* implement links for mallocfs
@@ -74,25 +68,26 @@ Operating System:
 
 
 
-	* in user processes with pre-initialized global variables, if they contain any addresses, the addresses will be relative to 0, and thus not be correct (rather than being relative addresses)
-	* look for any bugs that might be caused by a function returning the same vnode as was passed in
+	* should there be something that periodically syncs data to disk?
+	* should you refactor the header files in minix implementation into actual c files, with a common header to declare the functions?
+	* could I use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
+	* should there be a lighter weight task type, instead of processes, so that you can service interrupt processing without a bunch of wasted memory
+	* move interrupt and syscall_entry code into proc??
+	* move the math functions in libc to arch/68k
+	* do you need to add variable sized buffers/blocks into bufcache? (yes)
+	* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
+	  (ie. store the last allocated fd, but it has to be in the process struct)
 	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)
+
+
+
+	* in user processes with pre-initialized global variables, if they contain any addresses, the addresses will be relative to 0, and thus not be correct (rather than being relative addresses)
 
 	* remove the execbuiltin syscall, which is temporary until all commands can be executable files
 
-	* do you need to add variable sized buffers/blocks into bufcache? (yes)
+	* look for any bugs that might be caused by a function returning the same vnode as was passed in
 	* re-evaluate file permissions checks to make sure they're correct according to posix
-	* move interrupt and syscall_entry code into proc??
-	* should there be a lighter weight task type, instead of processes, so that you can service interrupt processing without a bunch of wasted memory
-
-	* move the math functions in libc to arch/68k
-	* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
-	  (ie. store the last allocated fd, but it has to be in the process struct)
-
-	* add brk/sbrk/stack guard protection
 	* a slab allocator would maybe help, but I don't think it's as important at the moment
-	* a page allocator, to replace the use of malloc for allocating the program space??
-	* can you make the kernel relocatable again?
 	* rewrite the math functions to use fewer registers
 	* you need some tests, but ideally it would use a simple emulator.  Maybe easy68k or something could be used
 
@@ -128,8 +123,10 @@ Monitor:
 	  would you need a PIT 68230 to interface?  How complex are the interfaces of those graphic ones?
 	* can you connect an esp01 as a wifi device?  I suppose you could connect it to the other serial port, even though it would be slow
 
+
 68k Arduino Shield:
 	(nothing atm)
+
 
 68k SMT:
 	(nothing atm)

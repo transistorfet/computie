@@ -62,36 +62,6 @@ void dump(const uint16_t *addr, short len)
 	putchar('\n');
 }
 
-void print_stack()
-{
-	uint32_t sp;
-
-	asm("move.l %%sp, %0\n" : "=r" (sp));
-
-	printf("SP: %x\n", sp);
-	dump((uint16_t *) sp, 64);
-	return;
-}
-
-void info()
-{
-	uint32_t sp;
-	uint32_t sv1;
-	uint16_t flags;
-
-	asm(
-	"move.l	%%sp, %0\n"
-	"move.l	(%%sp), %1\n"
-	"move.w	%%sr, %2\n"
-	: "=r" (sp), "=r" (sv1), "=r" (flags)
-	);
-
-	printf("SP: %x\n", sp);
-	printf("TOP: %x\n", sv1);
-	printf("SR: %x\n", flags);
-	return;
-}
-
 
 /************
  * Commands *
@@ -477,32 +447,6 @@ int command_chmod(int argc, char **argv)
 }
 
 
-int command_exec(int argc, char **argv)
-{
-	int pid, status;
-	char *argv2[2] = { "an arg", NULL };
-	char *envp[2] = { NULL };
-
-	if (argc <= 1) {
-		puts("You need file name");
-		return -1;
-	}
-
- 	pid = fork();
-	if (pid) {
-		printf("The child's pid is %d\n", pid);
-		waitpid(pid, &status, 0);
-		printf("The child exited with %d\n", status);
-	}
-	else {
-		status = execve(argv[1], argv2, envp);
-		// The exec() system call will only return if an error occurs
-		printf("Failed to execute %s: %d\n", argv[1], status);
-		exit(-1);
-	}
-
-	return 0;
-}
 /*
 int command_time(int argc, char **argv)
 {
@@ -794,7 +738,6 @@ void init_commands()
 	add_command("ln", 	command_ln);
 	add_command("rm", 	command_rm);
 	add_command("chmod", 	command_chmod);
-	add_command("exec", 	command_exec);
 	//add_command("time", 	command_time);
 	add_command("ps", 	command_ps);
 	add_command("kill", 	command_kill);

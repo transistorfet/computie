@@ -48,12 +48,14 @@ struct procfs_dir_entry proc_files[] = {
 	{ PFN_PROCDIR,	"." },
 	{ PFN_ROOTDIR,	".." },
 	{ PFN_CMDLINE,	"cmdline" },
-	{ PFN_MEM,	"mem" },
+	{ PFN_STAT,	"stat" },
+	{ PFN_STATM,	"statm" },
 	{ 0, NULL },
 };
 
 
 #define MAX_VNODES	6
+#define MAX_BUFFER	256
 
 static struct procfs_vnode vnode_table[MAX_VNODES];
 
@@ -138,28 +140,32 @@ int procfs_read(struct vfile *file, char *buf, size_t nbytes)
 {
 	int limit;
 	char *data;
-	char buffer[64];
 	struct process *proc;
+	char buffer[MAX_BUFFER];
 
 	proc = get_proc(PROCFS_DATA(file->vnode).pid);
 	if (!proc)
 		return ENOENT;
 
+	data = buffer;
 	switch (PROCFS_DATA(file->vnode).filenum) {
 	    case PFN_CMDLINE: {
 		data = proc->cmdline[0];
 		break;
 	    }
-	    case PFN_MEM: {
-		data = buffer;
-		snprintf(buffer, 64, "%x %x %x %x %x\n", proc->map.segments[M_TEXT].base, proc->map.segments[M_TEXT].length, proc->map.segments[M_STACK].base, proc->map.segments[M_STACK].length, proc->sp);
+	    case PFN_STAT: {
+		snprintf(buffer, MAX_BUFFER, "%d %s %c %d %d %d %d\n", proc->pid, proc->cmdline[0], '?', proc->parent, proc->pgid, proc->session, proc->ctty);
+		break;
+	    }
+	    case PFN_STATM: {
+		snprintf(buffer, MAX_BUFFER, "%x %x %x %x %x\n", proc->map.segments[M_TEXT].base, proc->map.segments[M_TEXT].length, proc->map.segments[M_STACK].base, proc->map.segments[M_STACK].length, proc->sp);
 		break;
 	    }
 	    default:
 		return 0;
 	}
 
-	limit = strlen(data) + 1;
+	limit = strlen(data);
 	if (file->position + nbytes >= limit)
 		nbytes = limit - file->position;
 	if (nbytes)

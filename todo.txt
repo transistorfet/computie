@@ -28,7 +28,6 @@ Operating System:
 	* should you make a lib subdir, and put unistd at the top?
 	* should the timer stuff in proc be moved somewhere else?
 	* should filedesc be put into fs/?
-	* make procfs cmdline file return all the command line arguments instead of just the first one
 	* make it possible to have root procfs files instead of requiring all top level files to be process numbered files
 
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
@@ -50,7 +49,6 @@ Operating System:
 	* add brk/sbrk/stack guard protection
 	* add pipe setup to command evaluation
 	* add network syscalls for local IPC (unix file, sockets, maybe even fifos?)
-	* add environment variable substitution to echo command
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 
 	* add commands: rmdir, pwd, dd, chown, poke

@@ -150,7 +150,15 @@ int procfs_read(struct vfile *file, char *buf, size_t nbytes)
 	data = buffer;
 	switch (PROCFS_DATA(file->vnode).filenum) {
 	    case PFN_CMDLINE: {
-		data = proc->cmdline[0];
+		int i = 0;
+		for (char **arg = proc->cmdline; *arg; arg++) {
+			strncpy(&buffer[i], *arg, MAX_BUFFER - i);
+			i += strlen(*arg) + 1;
+			buffer[i - 1] = ' ';
+			if (i > MAX_BUFFER)
+				break;
+		}
+		buffer[i - 1] = '\0';
 		break;
 	    }
 	    case PFN_STAT: {

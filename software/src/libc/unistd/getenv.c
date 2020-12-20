@@ -1,7 +1,7 @@
 
 #include <stddef.h>
 
-char ***_penviron;
+char ***environ;
 
 char *getenv(const char *name)
 {

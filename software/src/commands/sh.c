@@ -518,6 +518,8 @@ int command_ps(int argc, char **argv, char **envp)
 				return error;
 			}
 
+			buffer[error] = '\0';
+
 			close(fd);
 
 			printf("%s\t%s\n", dir.name, buffer);

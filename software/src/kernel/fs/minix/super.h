@@ -48,7 +48,7 @@ static struct minix_super *load_superblock(device_t dev)
 	super->dev = dev;
 	super->max_filename = MINIX_V1_MAX_FILENAME;
 
-	// TODO this should actually modify the state value stored in the superblock and write it
+	// TODO this should actually modify the state value stored in the superblock and write it?
 	release_block(super_buf, 0);
 	return super;
 }

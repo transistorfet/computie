@@ -8,9 +8,6 @@
 
 Operating System:
 
-	* make procfs return all the command line arguments instead of just the first one
-	* make a command or procfs node to show the current kernel heap size to see if it's growing
-	* make stats and other procfs files
 
 	* there's an issue which seems to affect the shell program when run as a normal process, as opposed to the builtin copy the kernel is compiled with.  It seems
 	  to affect both the copy sent over serial and the copy transfered by compact flash.  When running commands inside the shell (that's running inside the shell
@@ -27,11 +24,13 @@ Operating System:
 	* refactor to allow commands to be individually compiled to elfs, and loaded onto the memory card, and executed like normal processes
 	* make a PIE format that can be loaded and executed
 
-	* move as much inline assembly, from headers especially, into a redirectable asm directory
+	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
 	* should you make a lib subdir, and put unistd at the top?
 	* should the timer stuff in proc be moved somewhere else?
+	* should filedesc be put into fs/?
+	* make procfs cmdline file return all the command line arguments instead of just the first one
+	* make it possible to have root procfs files instead of requiring all top level files to be process numbered files
 
-	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
 
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
@@ -61,6 +60,7 @@ Operating System:
 	* implement gmtime() and make the time command return a formatted time
 
 	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
+	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* add check to vfs_link() for loops
 	* implement symlinks in minixfs
 	* implement links for mallocfs

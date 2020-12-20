@@ -67,13 +67,13 @@ void dump(const uint16_t *addr, short len)
  * Commands *
  ************/
 
-int command_test(int argc, char **argv)
+int command_test(int argc, char **argv, char **envp)
 {
 	//puts("this is only a test");
 	return 0;
 }
 
-int command_dump(int argc, char **argv)
+int command_dump(int argc, char **argv, char **envp)
 {
 	if (argc <= 1)
 		puts("You need an address");
@@ -101,7 +101,7 @@ uint16_t fetch_word()
 }
 
 
-int command_send(int argc, char **argv)
+int command_send(int argc, char **argv, char **envp)
 {
 	int fd;
 	uint16_t size;
@@ -139,9 +139,14 @@ int command_send(int argc, char **argv)
 
 #define ECHO_BUF_SIZE	256
 
-int command_echo(int argc, char **argv)
+int command_echo(int argc, char **argv, char **envp)
 {
+	// TODO this would normally be in _start
+	environ = envp;
+
 	int k = 0;
+	char tmp;
+	char *value;
 	int open_quote = 0;
 	char buffer[ECHO_BUF_SIZE];
 
@@ -151,8 +156,17 @@ int command_echo(int argc, char **argv)
 				open_quote = !open_quote;
 			}
 			else if (argv[i][j] == '$') {
-				// TODO add variable expansion
-				//for (int l = 0; env[l]
+				int l;
+				for (l = ++j; argv[i][l] && isalnum(argv[i][l]); l++) { }
+				tmp = argv[i][l];
+				argv[i][l] = '\0';
+				value = getenv(&argv[i][j]);
+				if (value) {
+					strcpy(&buffer[k], value);
+					k += strlen(&buffer[k]);
+				}
+				argv[i][l] = tmp;
+				j = l - 1;
 			}
 			else
 				buffer[k++] = argv[i][j];
@@ -168,7 +182,7 @@ int command_echo(int argc, char **argv)
 
 #define DUMP_BUF_SIZE	0x10
 
-int command_hex(int argc, char **argv)
+int command_hex(int argc, char **argv, char **envp)
 {
 	int fd;
 	int result;
@@ -209,7 +223,7 @@ int command_hex(int argc, char **argv)
 	return 0;
 }
 
-int command_cat(int argc, char **argv)
+int command_cat(int argc, char **argv, char **envp)
 {
 	int fd;
 	int result;
@@ -261,7 +275,7 @@ void format_file_mode(mode_t mode, char *buffer)
 	}
 }
 
-int command_ls(int argc, char **argv)
+int command_ls(int argc, char **argv, char **envp)
 {
 	int fd;
 	int error;
@@ -311,7 +325,7 @@ int command_ls(int argc, char **argv)
 	return 0;
 }
 
-int command_mkdir(int argc, char **argv)
+int command_mkdir(int argc, char **argv, char **envp)
 {
 	if (argc <= 1) {
 		puts("You need file name");
@@ -328,7 +342,7 @@ int command_mkdir(int argc, char **argv)
 
 #define CP_BUF_SIZE	512
 
-int command_cp(int argc, char **argv)
+int command_cp(int argc, char **argv, char **envp)
 {
 	int result;
 	int src_fd, dest_fd;
@@ -374,7 +388,7 @@ int command_cp(int argc, char **argv)
 	return 0;
 }
 
-int command_mv(int argc, char **argv)
+int command_mv(int argc, char **argv, char **envp)
 {
 	if (argc <= 2) {
 		puts("You need two file names");
@@ -390,7 +404,7 @@ int command_mv(int argc, char **argv)
 	return 0;
 }
 
-int command_ln(int argc, char **argv)
+int command_ln(int argc, char **argv, char **envp)
 {
 	if (argc <= 2) {
 		puts("You need two file names");
@@ -406,7 +420,7 @@ int command_ln(int argc, char **argv)
 	return 0;
 }
 
-int command_rm(int argc, char **argv)
+int command_rm(int argc, char **argv, char **envp)
 {
 	if (argc <= 1) {
 		puts("You need file name");
@@ -421,7 +435,7 @@ int command_rm(int argc, char **argv)
 	return 0;
 }
 
-int command_chmod(int argc, char **argv)
+int command_chmod(int argc, char **argv, char **envp)
 {
 	if (argc <= 2) {
 		puts("Usage: chmod <mode> <file>");
@@ -448,7 +462,7 @@ int command_chmod(int argc, char **argv)
 
 
 /*
-int command_time(int argc, char **argv)
+int command_time(int argc, char **argv, char **envp)
 {
 	time_t t;
 	struct tm *current_time;
@@ -466,7 +480,7 @@ int command_time(int argc, char **argv)
 
 #define PS_BUFFER_SIZE	100
 
-int command_ps(int argc, char **argv)
+int command_ps(int argc, char **argv, char **envp)
 {
 	pid_t pid;
 	int error;
@@ -515,7 +529,7 @@ int command_ps(int argc, char **argv)
 	return 0;
 }
 
-int command_kill(int argc, char **argv)
+int command_kill(int argc, char **argv, char **envp)
 {
 	int error;
 	int i = 1;
@@ -548,12 +562,12 @@ int command_kill(int argc, char **argv)
 	return 0;
 }
 
-int command_sync(int argc, char **argv)
+int command_sync(int argc, char **argv, char **envp)
 {
 	sync();
 }
 
-int command_chdir(int argc, char **argv)
+int command_chdir(int argc, char **argv, char **envp)
 {
 	if (argc <= 1) {
 		puts("You need file name");
@@ -706,7 +720,7 @@ int parse_command_line(char *input, struct pipe_command *commands)
 	return 0;
 }
 
-typedef int (*main_t)(int argc, char **argv);
+typedef int (*main_t)(int argc, char **argv, char **envp);
 
 struct command {
 	char *name;
@@ -777,11 +791,10 @@ int resolve_file_location(char *filename, char *buffer, int max)
 
 }
 
-int execute_command(struct pipe_command *command, int argc, char **argv)
+int execute_command(struct pipe_command *command, int argc, char **argv, char **envp)
 {
 	int pid, status;
 	void *main = NULL;
-	char *envp[2] = { NULL };
 
 	if (access(argv[0], X_OK)) {
 		main = find_command(argv[0]);
@@ -834,6 +847,7 @@ void serial_read_loop()
 	char buffer[BUF_SIZE];
 	char *argv[ARG_SIZE];
 	struct pipe_command commands[PIPE_SIZE];
+	char *envp[2] = { "PATH=/bin:/sbin", NULL };
 
 	while (1) {
 		memset_s(commands, 0, sizeof(struct pipe_command) * PIPE_SIZE);
@@ -860,11 +874,11 @@ void serial_read_loop()
 		else if (!strcmp(argv[0], "exit"))
 			return;
 		else if (!strcmp(argv[0], "cd")) {
-			command_chdir(argc, argv);
+			command_chdir(argc, argv, envp);
 			continue;
 		}
 
-		execute_command(&commands[0], argc, argv);
+		execute_command(&commands[0], argc, argv, envp);
 	}
 }
 

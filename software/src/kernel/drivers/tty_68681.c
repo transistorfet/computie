@@ -122,8 +122,18 @@ void tty_68681_reset_leds(uint8_t bits);
 #define ISR_CH_A_RX_READY_FULL		0x02
 #define ISR_CH_A_TX_READY		0x01
 
+#define ISR_S_BREAK_CHANGE		0x04
+#define ISR_S_RX_READY_FULL		0x02
+#define ISR_S_TX_READY			0x01
+
 
 #define TTY_INT_VECTOR			IV_USER_VECTORS
+
+#define CH_A				0
+#define CH_B				1
+
+#define ASSERT_CTS(channel)		(*OUT_SET_ADDR = (channel)->ports->ctsbit)
+#define DEASSERT_CTS(channel)		(*OUT_RESET_ADDR = (channel)->ports->ctsbit)
 
 
 struct channel_ports {
@@ -162,20 +172,19 @@ struct serial_channel {
 	struct circular_buffer tx;
 	const struct channel_ports *ports;
 	int pgid;
+	char rx_ready;
 };
 
-static struct serial_channel channel_a;
-static struct serial_channel channel_b;
-
-
-// TODO remove after debugging
-char tick = 0;
+static char tick = 0;
+static char handle_timer = 0;
+static struct serial_channel channels[2];
 
 extern void enter_irq();
 
 static inline void config_serial_channel(struct serial_channel *channel)
 {
 	channel->pgid = 0;
+	channel->rx_ready = 0;
 
 	// Reset channel A serial port
 	*channel->ports->command = CMD_RESET_MR;
@@ -196,9 +205,9 @@ static inline struct serial_channel *from_minor_dev(device_t minor)
 {
 	switch (minor) {
 		case 0:
-			return &channel_a;
+			return &channels[CH_A];
 		case 1:
-			return &channel_b;
+			return &channels[CH_B];
 		default:
 			return NULL;
 	}
@@ -209,15 +218,15 @@ static inline int getchar_buffered(struct serial_channel *channel)
 	short saved_status;
 	LOCK(saved_status);
 
-	// Assert CTS
-	*OUT_SET_ADDR = channel->ports->ctsbit;
-
-	//putchar_direct('#');
+	// TODO maybe this should return some kind of error, like -1
 	while (_buf_is_empty(&channel->rx)) {
 		asm volatile("");
 		//putchar_buffered('^');
 	}
 	char ch = _buf_get_char(&channel->rx);
+
+	if (_buf_free_space(&channel->rx) > 100)
+		ASSERT_CTS(channel);
 
 	UNLOCK(saved_status);
 	return ch;
@@ -256,63 +265,65 @@ static inline int putchar_buffered(struct serial_channel *channel, int ch)
 	return ch;
 }
 
-//int putchar(int ch) { return putchar_buffered(&channel_a, ch); }
+//int putchar(int ch) { return putchar_buffered(&channels[CH_A], ch); }
 
 static void tty_68681_process_input(void *_unused)
 {
-	// TODO this is currently not used
-	//resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, 0));
+	if (handle_timer) {
+		handle_timer = 0;
+		check_timers();
+	}
+
+	for (char i = 0; i < 2; i++) {
+		if (channels[i].rx_ready) {
+			channels[i].rx_ready = 0;
+			resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, i));
+
+			// TODO this isn't needed now, since the assert in getchar handle this, but once we have the tty subsystem this might be needed
+			//if (_buf_is_empty(&channels[i].rx))
+			//	ASSERT_CTS(&channels[i]);
+		}
+	}
 }
 
-static inline void handle_channel_io(register char isr, struct serial_channel *channel)
+static inline void handle_channel_io(register char isr, register devminor_t minor)
 {
-	register char status = *channel->ports->status;
-	register char rx_ready = channel == &channel_a ? ISR_CH_A_RX_READY_FULL : ISR_CH_B_RX_READY_FULL;
-	register char tx_ready = channel == &channel_a ? ISR_CH_A_TX_READY : ISR_CH_B_TX_READY;
+	// The ISR bits for channel A and B are the same but separated by 4 bits in the same register
+	if (minor == CH_B)
+		isr >>= 4;
 
-	if (status & SR_RX_FULL) {
-		// De-Assert CTS
-		*OUT_RESET_ADDR = channel->ports->ctsbit;
-	}
-
-	if (isr & rx_ready) {
-		while (*channel->ports->status & SR_RX_READY) {
-			if (!_buf_is_full(&channel->rx)) {
-				char ch = *channel->ports->recv;
-				// TODO this is a temporary hack to get ^C -> SIGINT, but it's totally wrong on so many levels
-				if (ch == 0x03 && channel->pgid) {
-					send_signal_process_group(channel->pgid, SIGINT);
-				}
-				//if (ch == 0x04 && channel->pgid) {
-				//	send_signal(channel->pgid, SIGCONT);
-				//}
-				_buf_put_char(&channel->rx, ch);
-
-				// Assert CTS
-				*OUT_SET_ADDR = channel->ports->ctsbit;
-
-			}
-			else {
-				// De-Assert CTS
-				*OUT_RESET_ADDR = channel->ports->ctsbit;
+	if (isr & ISR_S_RX_READY_FULL) {
+		while (*channels[minor].ports->status & SR_RX_READY) {
+			if (_buf_is_full(&channels[minor].rx))
 				break;
+			char ch = *channels[minor].ports->recv;
+			// TODO this is a temporary hack to get ^C -> SIGINT, but it's totally wrong on so many levels
+			if (ch == 0x03 && channels[minor].pgid) {
+				send_signal_process_group(channels[minor].pgid, SIGINT);
 			}
+			//if (ch == 0x04 && channel->pgid) {
+			//	send_signal(channel->pgid, SIGCONT);
+			//}
+			_buf_put_char(&channels[minor].rx, ch);
 		}
 
-		//request_bh_run(SH_TTY);
-		resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, channel == &channel_a ? 0 : 1));
+		if (_buf_free_space(&channels[minor].rx) < 10)
+			DEASSERT_CTS(&channels[minor]);
+
+		channels[minor].rx_ready = 1;
+		request_bh_run(SH_TTY);
+		//resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, channel == &channels[CH_A] ? 0 : 1));
 	}
 
 
-	if (isr & tx_ready) {
-		int ch = _buf_get_char(&channel->tx);
-		if (ch != -1) {
-			*channel->ports->send = (char) ch;
-		}
+	if (isr & ISR_S_TX_READY) {
+		int ch = _buf_get_char(&channels[minor].tx);
+		if (ch != -1)
+			*channels[minor].ports->send = (char) ch;
 		else {
 			// Disable the channel A transmitter if empty
-			if (status & SR_TX_EMPTY)
-				*channel->ports->command = CMD_DISABLE_TX;
+			if (*channels[minor].ports->status & SR_TX_EMPTY)
+				*channels[minor].ports->command = CMD_DISABLE_TX;
 		}
 	}
 }
@@ -320,11 +331,14 @@ static inline void handle_channel_io(register char isr, struct serial_channel *c
 // NOTE the entry to this is in syscall_entry.s
 void handle_serial_irq()
 {
+	// TODO this is for debugging to tell me when the handler exits
+	*OUT_SET_ADDR = 0x08;
+
 	register char isr = *ISR_RD_ADDR;
 
-	handle_channel_io(isr, &channel_a);
+	for (char i = 0; i < 2; i++)
+		handle_channel_io(isr, i);
 
-	handle_channel_io(isr, &channel_b);
 
 	if (isr & ISR_TIMER_CHANGE) {
 		// Clear the interrupt bit by reading the stop address
@@ -337,13 +351,14 @@ void handle_serial_irq()
 			tick = 1;
 			*OUT_RESET_ADDR = 0x80;
 		}
-
 		adjust_system_time(71111);
-		check_timers();
-
 		request_reschedule();
+
+		handle_timer = 1;
+		request_bh_run(SH_TTY);
 	}
 
+	/*
 	if (isr & ISR_INPUT_CHANGE) {
 		// Reading from the IPCR register will clear the interrupt
 		uint8_t status = *IPCR_RD_ADDR;
@@ -364,7 +379,6 @@ void handle_serial_irq()
 		//	TRACE_OFF();
 		//}
 
-		/*
 		// TODO commenting out because with the context switch, this code doesn't work correctly
 		printk("%x\n", status);
 
@@ -378,8 +392,11 @@ void handle_serial_irq()
 		}
 		//TRACE_ON();
 
-		*/
 	}
+	*/
+
+	// TODO this is for debugging to tell me when the handler exits
+	*OUT_RESET_ADDR = 0x08;
 }
 
 
@@ -394,9 +411,9 @@ int vprintk(int direct, const char *fmt, va_list args)
 
 	vsnprintf(buffer, PRINTK_BUFFER, fmt, args);
 	for (i = 0; i < PRINTK_BUFFER && buffer[i]; i++)
-		//putchar_direct(&channel_a, buffer[i]);
-		//putchar_buffered(&channel_a, buffer[i]);
-		put(&channel_a, buffer[i]);
+		//putchar_direct(&channels[CH_A], buffer[i]);
+		//putchar_buffered(&channels[CH_A], buffer[i]);
+		put(&channels[CH_A], buffer[i]);
 	return i;
 }
 
@@ -444,8 +461,7 @@ void tty_68681_tx_safe_mode()
 	*OPCR_WR_ADDR = 0x00;
 	*OUT_SET_ADDR = 0xF0;
 
-	// Assert CTS
-	*OUT_SET_ADDR = 0x01;
+	ASSERT_CTS(&channels[CH_A]);
 
 	/*
 	// Enable interrupts
@@ -462,8 +478,8 @@ void tty_68681_normal_mode()
 	// Configure baud rate set and clock source
 	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
 
-	config_serial_channel(&channel_a);
-	config_serial_channel(&channel_b);
+	config_serial_channel(&channels[CH_A]);
+	config_serial_channel(&channels[CH_B]);
 
 	// Configure timer
 	*CTUR_WR_ADDR = 0x20;
@@ -479,20 +495,20 @@ void tty_68681_normal_mode()
 	*OUT_SET_ADDR = 0xF0;
 	*OUT_RESET_ADDR = 0xF0;
 
-	// Assert CTS on both channels
-	*OUT_SET_ADDR = 0x03;
+	ASSERT_CTS(&channels[CH_A]);
+	ASSERT_CTS(&channels[CH_B]);
 }
 
 
 void tty_68681_preinit()
 {
-	_buf_init(&channel_a.rx);
-	_buf_init(&channel_a.tx);
-	channel_a.ports = &channel_a_ports;
+	_buf_init(&channels[CH_A].rx);
+	_buf_init(&channels[CH_A].tx);
+	channels[CH_A].ports = &channel_a_ports;
 
-	_buf_init(&channel_b.rx);
-	_buf_init(&channel_b.tx);
-	channel_b.ports = &channel_b_ports;
+	_buf_init(&channels[CH_B].rx);
+	_buf_init(&channels[CH_B].tx);
+	channels[CH_B].ports = &channel_b_ports;
 
 	tty_68681_tx_safe_mode();
 }
@@ -557,9 +573,13 @@ int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_
 
 int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
 {
+	struct serial_channel *channel = from_minor_dev(minor);
+
+	if (!channel)
+		return ENODEV;
+
 	switch (request) {
 		case TIOCSPGRP: {
-			struct serial_channel *channel = from_minor_dev(minor);
 			channel->pgid = *((int *) argp);
 			return 0;
 		}

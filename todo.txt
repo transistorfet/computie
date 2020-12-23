@@ -9,6 +9,7 @@
 Operating System:
 
 
+	* add debugging/tracing support for debugging issues like below
 	* there's an issue which seems to affect the shell program when run as a normal process, as opposed to the builtin copy the kernel is compiled with.  It seems
 	  to affect both the copy sent over serial and the copy transfered by compact flash.  When running commands inside the shell (that's running inside the shell
 	  started during boot), it will sometimes say "Command not found" or hang or crash.  Sometimes it'll work without an issue, but sometimes the second command you
@@ -16,7 +17,7 @@ Operating System:
 	  It seems to happen consistently after starting the shell first thing when booted, and running `ls`, followed by `echo hey`, which halts the system.  The command
 	  not found condition seems to be less predictable.  These could be different issues
 
-
+	* need a way to compile manual multifile commands like sh standalone with commands in separate files
 	* look at implementation of break and memory stuff in minix. How much memory does it allocate to in the gap?
 	* figure out how to boot the system.  Could the flash/ram backed file system get mounted as /boot, with the memory card being mounted as root?  Can it be configurable
 	  so that I can boot systems without the flash card?
@@ -28,37 +29,41 @@ Operating System:
 	* should you make a lib subdir, and put unistd at the top?
 	* should the timer stuff in proc be moved somewhere else?
 	* should filedesc be put into fs/?
-	* make it possible to have root procfs files instead of requiring all top level files to be process numbered files
 
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
 
-	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
-	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	* get flow control working in the serial driver (might require allowing interrupts without task switching while processing syscalls)
+	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	  perhaps you could use the logic analyzer to look at the interrupt line to see how long it's asserted before the interrupt is handled, to debug the flow control issue
 	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
 	  that, the tty driver tries to resume procs, but since the state is changed, this doesn't have an affect and it's not until another character is entered that both the
 	  ^C and the other character are read (and the prompt is only then printed).
+	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
+	* the context switch at the start of an interrupt takes at least 70us.  It is more or less required if we might reschedule a process on exit, which is necessary for the timer
+	  interrupt, but if we had the timer and serial on different interrupts (different hardware), we could make the serial ints fast-ints, only saving the 4 scratch registers
+	  It *might* be possible to defer the context save until you're certain a reschedule is needed just before exiting, but it would require being very careful during the stack swap
 
 
 
-	* make a device-independent tty subsystem
-	* implement login system
-	* add support for PATH variables
-	* add fifos (should be easy now)
-	* add brk/sbrk/stack guard protection
-	* add pipe setup to command evaluation
 	* add network syscalls for local IPC (unix file, sockets, maybe even fifos?)
+	* make a device-independent tty subsystem
+	* add support for PATH variables
+	* add pipe setup to command evaluation
+	* implement getopt, and add flags to commands
+	* implement tar command and try transfering tars over serial
+	* add brk/sbrk/stack guard protection
+	* add fifos (should be easy now)
+	* implement login system
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 
 	* add commands: rmdir, pwd, dd, chown, poke
-	* implement getopt
 	* syscalls to implement: setuid
 	* to stdlib, add: fprintf, fscanf, scanf, fopen, fclose, fgetpos, fseek, feof, fread, fwrite
 	* implement gmtime() and make the time command return a formatted time
 
 	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
+	* make it possible to have root procfs files instead of requiring all top level files to be process numbered files
 	* add check to vfs_link() for loops
 	* implement symlinks in minixfs
 	* implement links for mallocfs

@@ -10,7 +10,7 @@ INCLUDE = ./include
 ASFLAGS = -m68010 --defsym __mc68010__=1
 CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -mpcrel -Os
 #-fanalyzer
-#CFLAGS += -z max-page-size=0x04	# reduce the elf output size by reducing the alignment
+CFLAGS += -z max-page-size=0x10 # reduce the elf output size by reducing the alignment
 
 ASLISTING = -alh
 
@@ -70,8 +70,8 @@ KERNEL_OBJS = \
 	src/kernel/drivers/ata.o \
 	src/commands/init.o \
 	src/commands/sh.o \
-	src/tests/kernel/tests.o \
 	libc-68k-os.a
+#	src/tests/kernel/tests.o \
 
 COMMANDS = \
 	src/commands/hello.send	\
@@ -115,6 +115,8 @@ monitor.bin: $(MONITOR_OBJS)
 	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1000 -o $@.elf $^
 	$(CC) $(CFLAGS) --entry=_start -Tmonitor.ld -o $@ $^
 	hexdump -v -e '/1 "0x%02X, "' $@ > output.txt
+
+kernel.bin: CFLAGS += -DBUILD_KERNEL
 
 kernel.bin: $(KERNEL_OBJS)
 	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@.elf $^

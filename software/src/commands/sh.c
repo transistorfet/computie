@@ -13,6 +13,8 @@
 #include <sys/ioc_tty.h>
 #include <kernel/syscall.h>
 
+#include "prototype.h"
+
 /*
 int sh_task();
 
@@ -786,19 +788,44 @@ int open_file(char *filename, int flags, int newfd)
 	return 0;
 }
 
-int resolve_file_location(char *filename, char *buffer, int max)
+char *resolve_file_location(char *filename, char *buffer)
 {
-	// TODO use the $PATH to find the command to execute
-	char *PATH = "/bin:/sbin";
+	// TODO replace with the environment variable
+	const char *PATH = "/bin:/sbin";
 
+	if (strchr(filename, '/')) {
+		if (!access(filename, X_OK))
+			return filename;
+		return NULL;
+	}
+
+	short i;
+	char *curpath = PATH;
+	while (*curpath != '\0') {
+		for (i = 0; *curpath && *curpath != ':'; curpath++, i++)
+			buffer[i] = *curpath;
+		if (*curpath == ':')
+			curpath++;
+		buffer[i++] = '/';
+		strcpy(&buffer[i], filename);
+
+		if (!access(buffer, X_OK))
+			return buffer;
+	}
+	return NULL;
 }
 
 int execute_command(struct pipe_command *command, int argc, char **argv, char **envp)
 {
 	int pid, status;
+	char *fullpath;
+	char buffer[100];
 	void *main = NULL;
 
-	if (access(argv[0], X_OK)) {
+	fullpath = resolve_file_location(argv[0], buffer);
+	if (fullpath)
+		argv[0] = fullpath;
+	else {
 		main = find_command(argv[0]);
 		if (!main) {
 			puts("Command not found");
@@ -897,7 +924,8 @@ void handle_test(int signum)
  * Main Entry *
  **************/
 
-int sh_task()
+//int sh_task()
+int MAIN(sh_task)()
 {
 	init_commands();
 

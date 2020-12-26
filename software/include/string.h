@@ -8,11 +8,12 @@ int strlen(const char *);
 char *strcpy(char *, const char *);
 char *strncpy(char *, const char *, int);
 int strcmp(const char *, const char *);
+int strncmp(const char *, const char *, int);
 const char *strchr(const char *, int);
 const char *strrchr(const char *, int);
+char *strcat(char *, const char *);
 
 /*
-int strncmp(const char *, const char *, int);
 int strcnt(const char *, const char);
 const char *strstr(const char *, const char *);
 */

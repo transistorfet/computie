@@ -149,7 +149,7 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 	if (!result)
 		return EINVAL;
 
-	cur = cwd ? cwd : root_fs->root_node;
+	cur = (cwd && path[0] != VFS_SEP) ? cwd : root_fs->root_node;
 	// We are always starting from the root node, so ignore a leading slash
 	if (path[0] == VFS_SEP) {
 		cur = root_fs->root_node;
@@ -576,6 +576,8 @@ int vfs_release_vnode(struct vnode *vnode)
 const char *path_last_component(const char *path)
 {
 	short i = strlen(path) - 1;
+	if (path[i] == VFS_SEP)
+		i--;
 	for (; i >= 0; i--) {
 		if (path[i] == VFS_SEP)
 			break;
@@ -586,6 +588,8 @@ const char *path_last_component(const char *path)
 
 int path_valid_component(const char *path)
 {
+	if (*path == '\0')
+		return 0;
 	for (; *path; path++) {
 		if (*path <= 0x20 || *path == '/')
 			return 0;

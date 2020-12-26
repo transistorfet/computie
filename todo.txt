@@ -21,11 +21,9 @@ Operating System:
 	* separate Makefiles so that the kernel can be compiled normally, and commands/libc-68k-os can be compiled with -mpcrel or -fPIE (libc is the big fiddly bit here)
 	* refactor to allow commands to be individually compiled to elfs, and loaded onto the memory card, and executed like normal processes
 	* need a way to compile manual multifile commands like sh standalone with commands in separate files
-	* look at implementation of break and memory stuff in minix. How much memory does it allocate to in the gap?
 	* figure out how to boot the system.  Could the flash/ram backed file system get mounted as /boot, with the memory card being mounted as root?  Can it be configurable
 	  so that I can boot systems without the flash card?
 	* make a PIE format that can be loaded and executed
-	* commands like mv and cp require the second arg to include the new filename, but if the arg is a dir, it should append the file's name
 
 	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
 	* should you make a lib subdir, and put unistd at the top?
@@ -33,6 +31,9 @@ Operating System:
 	* should filedesc be put into fs/?
 
 
+	* add support for umask, and add a mode filter somewhere: (mode & ~umask & 0777)
+	* when there's a trailing / to rm or mkdir, it will create something weird
+	* commands like mv and cp require the second arg to include the new filename, but if the arg is a dir, it should append the file's name
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
 	  that, the tty driver tries to resume procs, but since the state is changed, this doesn't have an affect and it's not until another character is entered that both the

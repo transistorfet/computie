@@ -1,0 +1,8 @@
+#!/bin/sh
+
+SRC=$1
+DEST="$1.send"
+
+echo "send $SRC" > $DEST
+wc -c $SRC | awk '{printf "%04X", $1}' >> $DEST
+hexdump -v -e '/1 "%02X"' $SRC >> $DEST

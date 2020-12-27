@@ -16,6 +16,9 @@ Operating System:
 	  invoke will hang the system.  This doesn't seems to affect the builtin shell.  Could it be a stack overflow problem? A stack check didn't seem to turn anything up.
 	  It seems to happen consistently after starting the shell first thing when booted, and running `ls`, followed by `echo hey`, which halts the system.  The command
 	  not found condition seems to be less predictable.  These could be different issues
+	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
+	  that, the tty driver tries to resume procs, but since the state is changed, this doesn't have an affect and it's not until another character is entered that both the
+	  ^C and the other character are read (and the prompt is only then printed).
 
 
 	* separate Makefiles so that the kernel can be compiled normally, and commands/libc-68k-os can be compiled with -mpcrel or -fPIE (libc is the big fiddly bit here)
@@ -24,6 +27,7 @@ Operating System:
 	* figure out how to boot the system.  Could the flash/ram backed file system get mounted as /boot, with the memory card being mounted as root?  Can it be configurable
 	  so that I can boot systems without the flash card?
 	* make a PIE format that can be loaded and executed
+
 
 	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
 	* should you make a lib subdir, and put unistd at the top?
@@ -35,14 +39,7 @@ Operating System:
 	* when there's a trailing / to rm or mkdir, it will create something weird
 	* commands like mv and cp require the second arg to include the new filename, but if the arg is a dir, it should append the file's name
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
-	* there is a problem with the user signal handlers on ^C such that the signal is dispatched right away, and the context and state of the proc changed, but then after
-	  that, the tty driver tries to resume procs, but since the state is changed, this doesn't have an affect and it's not until another character is entered that both the
-	  ^C and the other character are read (and the prompt is only then printed).
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
-	* the context switch at the start of an interrupt takes at least 70us.  It is more or less required if we might reschedule a process on exit, which is necessary for the timer
-	  interrupt, but if we had the timer and serial on different interrupts (different hardware), we could make the serial ints fast-ints, only saving the 4 scratch registers
-	  It *might* be possible to defer the context save until you're certain a reschedule is needed just before exiting, but it would require being very careful during the stack swap
-
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
 	* add checks for errors in the serial transfer? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 
@@ -52,7 +49,6 @@ Operating System:
 	* make a device-independent tty subsystem
 	* add pipe setup to command evaluation
 	* implement getopt, and add flags to commands
-	* implement tar command and try transfering tars over serial
 	* add brk/sbrk/stack guard protection
 	* add fifos (should be easy now)
 	* implement login system
@@ -83,6 +79,9 @@ Operating System:
 	* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
 	  (ie. store the last allocated fd, but it has to be in the process struct)
 	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)
+	* the context switch at the start of an interrupt takes at least 70us.  It is more or less required if we might reschedule a process on exit, which is necessary for the timer
+	  interrupt, but if we had the timer and serial on different interrupts (different hardware), we could make the serial ints fast-ints, only saving the 4 scratch registers
+	  It *might* be possible to defer the context save until you're certain a reschedule is needed just before exiting, but it would require being very careful during the stack swap
 
 
 

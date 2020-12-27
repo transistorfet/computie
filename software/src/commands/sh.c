@@ -15,14 +15,15 @@
 
 #include "prototype.h"
 
-/*
+#ifdef ADDMAIN
 int sh_task();
 
 int main()
 {
 	return sh_task();
 }
-*/
+#endif
+
 
 void delay(int count) {
 	while (--count > 0) { asm volatile(""); }
@@ -346,6 +347,7 @@ int command_mkdir(int argc, char **argv, char **envp)
 
 int command_cp(int argc, char **argv, char **envp)
 {
+/*
 	int result;
 	int src_fd, dest_fd;
 	char buffer[CP_BUF_SIZE];
@@ -386,7 +388,7 @@ int command_cp(int argc, char **argv, char **envp)
 
 	close(dest_fd);
 	close(src_fd);
-
+*/
 	return 0;
 }
 
@@ -480,58 +482,7 @@ int command_time(int argc, char **argv, char **envp)
 }
 */
 
-#define PS_BUFFER_SIZE	100
-
-int command_ps(int argc, char **argv, char **envp)
-{
-	pid_t pid;
-	int error;
-	int dd, fd;
-	struct dirent dir;
-	char buffer[PS_BUFFER_SIZE];
-
-	if ((dd = open("/proc", 0, 0)) < 0) {
-		printf("Error opening /proc\n");
-		return dd;
-	}
-
-	printf("PID\tCMD\n");
-	while (1) {
-		error = readdir(dd, &dir);
-		if (error < 0) {
-			printf("Error at readdir %d\n", error);
-			return error;
-		}
-
-		if (error == 0)
-			break;
-
-		pid = strtol(dir.name, NULL, 10);
-		if (pid > 0) {
-			snprintf(buffer, PS_BUFFER_SIZE, "/proc/%d/cmdline", pid);
-			if ((fd = open(buffer, 0, 0)) < 0) {
-				printf("Error opening %s\n", buffer);
-				return fd;
-			}
-
-			error = read(fd, buffer, PS_BUFFER_SIZE);
-			if (error < 0) {
-				printf("Error reading %s (%d)\n", buffer, error);
-				return error;
-			}
-
-			buffer[error] = '\0';
-
-			close(fd);
-
-			printf("%s\t%s\n", dir.name, buffer);
-		}
-	}
-
-	close(dd);
-
-	return 0;
-}
+#include "ps.c"
 
 int command_kill(int argc, char **argv, char **envp)
 {

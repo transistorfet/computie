@@ -4,41 +4,46 @@ ROOT = ../..
 AS = m68k-linux-gnu-as
 AR = m68k-linux-gnu-ar
 CC = m68k-linux-gnu-gcc
+STRIP = m68k-linux-gnu-strip
 OBJDUMP = m68k-linux-gnu-objdump
 OBJCOPY = m68k-linux-gnu-objcopy
 RANLIB = m68k-linux-gnu-ranlib
 INCLUDE = $(ROOT)/include
 ASFLAGS = -m68010 --defsym __mc68010__=1
-CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -fPIE -Os
-#-fanalyzer
-#CFLAGS += -z max-page-size=0x04	# reduce the elf output size by reducing the alignment
+CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -mpcrel -Os
+
+# reduce the elf output size by reducing the alignment
+CFLAGS += -z max-page-size=0x10
 
 
-COMMANDS = \
+COMMANDS = 		\
 	hello.send	\
-	sh.send \
+	sh.send 	\
+	ps.send		\
+	tar.send	\
 	daemontest.send \
 	test.send
 
-ARCH = 68k-os
+all: $(ROOT)/libc-68k-os.a $(COMMANDS)
+
+
+sh.bin: CFLAGS += -DONEBINARY -DADDMAIN
+#sh.bin: sh.o ps.o
 
 
 $(ROOT)/libc-68k-os.a:
-	make -C $(ROOT)/src/libc libc-68k-os.a
-
-
-commands: $(COMMANDS)
-
+	make -C $(ROOT)/src/libc clean $(ROOT)/libc-68k-os.a
 
 %.send: %.bin
-	echo "send $(notdir $(basename $@))" > $@
+	#$(ROOT)/tools/make-send-file $*
+	echo "send $*" > $@
 	wc -c $^ | awk '{printf "%04X", $$1}' >> $@
 	hexdump -v -e '/1 "%02X"' $^ >> $@
 
-
-%.bin: %.o $(ROOT)/libc-68k-os.a
-	$(CC) $(CFLAGS) --entry=main -Ttext=0 -o $@.elf $< $(ROOT)/libc-68k-os.a
-	$(OBJCOPY) -O binary -j .text -j .got -j .rodata -j .data $@.elf $@
+%.bin: %.o 
+	$(CC) $(CFLAGS) --entry=main -Ttext=0 -o $*.elf $^ $(ROOT)/libc-68k-os.a
+	$(STRIP) $*.elf -o $*
+	$(OBJCOPY) -O binary -j .text -j .got -j .rodata -j .data $*.elf $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -47,5 +52,5 @@ commands: $(COMMANDS)
 	$(AS) $(ASFLAGS) -c -o $@ $<
 
 clean:
-	find . \( -name "*.o" -or -name "*.o64" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" -or -name "*.load" \) -delete -print
+	@find . \( -name "*.o" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" -or -name "*.send" \) -delete -print
 

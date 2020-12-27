@@ -73,11 +73,6 @@ KERNEL_OBJS = \
 	libc-68k-os.a
 #	src/tests/kernel/tests.o \
 
-COMMANDS = \
-	src/commands/hello.send	\
-	src/commands/sh.send	\
-	src/commands/daemontest.send	\
-	src/commands/test.send
 
 LIBC_BASE_OBJS = $(filter-out src/libc/arch/*, \
 	$(patsubst %.c,%.o, $(wildcard src/libc/**/*.c)) \
@@ -104,7 +99,8 @@ libc-68k-os.a: $(LIBC_BASE_OBJS) $(LIBC_ARCH_OBJS)
 
 all: monitor.bin kernel.bin kernel.load
 
-commands: $(COMMANDS)
+commands:
+	make -C src/commands clean all
 
 
 welcome:
@@ -116,7 +112,7 @@ monitor.bin: $(MONITOR_OBJS)
 	$(CC) $(CFLAGS) --entry=_start -Tmonitor.ld -o $@ $^
 	hexdump -v -e '/1 "0x%02X, "' $@ > output.txt
 
-kernel.bin: CFLAGS += -DBUILD_KERNEL
+kernel.bin: CFLAGS += -DONEBINARY
 
 kernel.bin: $(KERNEL_OBJS)
 	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@.elf $^

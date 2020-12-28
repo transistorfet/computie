@@ -3,7 +3,7 @@
 
 const char *strrchr(const char *str, int ch)
 {
-	char *pos = NULL;
+	const char *pos = NULL;
 
 	for (; *str; str++) {
 		if (*str == ch)

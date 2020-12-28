@@ -8,11 +8,16 @@ OBJCOPY = m68k-linux-gnu-objcopy
 RANLIB = m68k-linux-gnu-ranlib
 INCLUDE = ./include
 ASFLAGS = -m68010 --defsym __mc68010__=1
-CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -mpcrel -Os
+CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -Os
 #-fanalyzer
 CFLAGS += -z max-page-size=0x10 # reduce the elf output size by reducing the alignment
 
 ASLISTING = -alh
+
+
+BOOT_OBJS = \
+	src/boot/boot.o \
+	libc-68k-none.a
 
 
 MONITOR_OBJS = \
@@ -21,6 +26,7 @@ MONITOR_OBJS = \
 	src/monitor/vectors.o \
 	src/monitor/tty_68681.o \
 	libc-68k-none.a
+
 
 DEVFS_OBJS = \
 	src/kernel/fs/devfs/devfs.o
@@ -77,27 +83,16 @@ KERNEL_OBJS = \
 #	src/tests/kernel/tests.o \
 
 
-LIBC_BASE_OBJS = $(filter-out src/libc/arch/*, \
-	$(patsubst %.c,%.o, $(wildcard src/libc/**/*.c)) \
-	$(patsubst %.s,%.o, $(wildcard src/libc/**/*.s)) \
-)
-
-ARCH = 68k-os
-
-LIBC_ARCH_OBJS = \
-	$(patsubst %.c,%.o, $(wildcard src/libc/arch/$(ARCH)/**/*.c)) \
-	$(patsubst %.s,%.o, $(wildcard src/libc/arch/$(ARCH)/**/*.s))
-
-
-libc-68k-none.a: $(LIBC_BASE_OBJS)
-libc-68k-os.a: $(LIBC_BASE_OBJS) $(LIBC_ARCH_OBJS)
-
-
 all: monitor.bin monitor.load kernel.bin kernel.load
 
 commands:
 	make -C src/commands clean all
 
+libc-68k-none.a libc-68k-os.a:
+	make -C src/libc ../../$@
+
+
+welcome monitor.bin boot.bin: CFLAGS += -mpcrel
 
 welcome:
 	$(AS) -m68000 -o welcome.elf welcome.s
@@ -110,7 +105,7 @@ monitor.bin: $(MONITOR_OBJS)
 	hexdump -v -e '/1 "0x%02X, "' $@ > output.txt
 
 
-boot.bin: src/boot/boot.o libc-68k-none.a
+boot.bin: $(BOOT_OBJS)
 	$(CC) $(CFLAGS) --entry=main -Ttext=0x0000 -Tdata=0x1000 -o $@.elf $^
 	$(CC) $(CFLAGS) --entry=main -Tmonitor.ld -o $@ $^
 
@@ -144,4 +139,24 @@ kernel.bin: $(KERNEL_OBJS)
 
 clean:
 	find . \( -name "*.o" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" -or -name "*.load" \) -delete -print
+
+
+BLOCKS = 128
+IMAGE = minix-test.img
+LOOPBACK = /dev/loop8
+MOUNTPOINT = build
+
+create-image:
+	dd if=/dev/zero of=$(IMAGE) bs=1K count=$(BLOCKS)
+	sudo losetup $(LOOPBACK) $(IMAGE)
+	sudo mkfs.minix -1 -n 14 $(LOOPBACK) $(BLOCKS)
+	sudo losetup -d $(LOOPBACK)
+
+mount-image:
+	sudo losetup $(LOOPBACK) $(IMAGE)
+	sudo mount -t minix $(LOOPBACK) $(MOUNTPOINT)
+
+umount-image:
+	sudo umount $(LOOPBACK)
+	sudo losetup -d $(LOOPBACK)
 

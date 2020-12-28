@@ -3,7 +3,7 @@
 
 char ***environ;
 
-char *getenv(const char *name)
+const char *getenv(const char *name)
 {
 	register const char *ech, *nch;
 	register char **envp = *environ;

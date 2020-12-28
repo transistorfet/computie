@@ -171,6 +171,7 @@ void command_poke(int argc, char **args)
 	}
 
 }
+
 void command_ramtest(int argc, char **args)
 {
 	uint16_t data;

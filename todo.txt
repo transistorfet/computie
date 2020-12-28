@@ -21,12 +21,14 @@ Operating System:
 	  ^C and the other character are read (and the prompt is only then printed).
 
 
-	* separate Makefiles so that the kernel can be compiled normally, and commands/libc-68k-os can be compiled with -mpcrel or -fPIE (libc is the big fiddly bit here)
-	* refactor to allow commands to be individually compiled to elfs, and loaded onto the memory card, and executed like normal processes
-	* need a way to compile manual multifile commands like sh standalone with commands in separate files
-	* make a PIE format that can be loaded and executed
+	* how can you pass arguments into the kernel from the boot loader?  Can you make it bootable from either a disk image in flash, or a disk image on the CF card?
 	* figure out how to boot the system.  Could the flash/ram backed file system get mounted as /boot, with the memory card being mounted as root?  Can it be configurable
 	  so that I can boot systems without the flash card?
+	* Can you somehow reload the kernel from within the kernel, such that you can load a file from disk which then calls a memcpy function that's copied out of the kernel space
+	  which then copies the kernel data to kernel space before jumping there...
+	* separate Makefiles so that the kernel can be compiled normally, and commands/libc-68k-os can be compiled with -mpcrel or -fPIE (libc is the big fiddly bit here)
+	* refactor to allow commands to be individually compiled to elfs, and loaded onto the memory card, and executed like normal processes
+	* make a PIE format that can be loaded and executed
 
 
 	* should filedesc be put into fs/?
@@ -35,6 +37,9 @@ Operating System:
 	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
 
 
+	* the binary loading and executing code is a bit sloppy; parts of it assume you're using the current proc, but current_proc isn't just passed into as an arg.  There isn't the best
+	  isolation between what is the syscall entry's responsibilty and what the internal interface's responsibility.  The stack reset should also maybe be done by the loader, so the elf
+	  entry point in the header can be used, in case it's not the start of the text segment
 	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
 	* add support for umask, and add a mode filter somewhere: (mode & ~umask & 0777)
 	* when there's a trailing / to rm or mkdir, it will create something weird
@@ -55,7 +60,7 @@ Operating System:
 	* implement login system (setuid)
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 
-	* add commands: rmdir, pwd, dd, chown, poke
+	* add commands: rmdir, pwd, dd, chown
 	* to stdlib, add: fprintf, fscanf, scanf, fopen, fclose, fgetpos, fseek, feof, fread, fwrite
 	* implement gmtime() and make the time command return a formatted time
 	* rewrite the math functions to use fewer registers, and cover the 32 bit divide by 32 bit number case

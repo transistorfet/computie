@@ -164,18 +164,14 @@ int ata_read_sector(int sector, char *buffer)
 	ATA_WAIT_FOR_DATA();
 
 	for (int i = 0; i < 512; i++) {
-		ATA_DELAY(10);
-		ATA_WAIT();
-		//while (((*ATA_REG_STATUS) & ATA_ST_BUSY) || !((*ATA_REG_STATUS) & ATA_ST_DATA_READY)) { }
-		ATA_DELAY(10);
-
 		//((uint16_t *) buffer)[i] = (*ATA_REG_DATA);
 		//asm volatile("rol.w	#8, %0\n" : "+g" (((uint16_t *) buffer)[i]));
 		buffer[i] = (*ATA_REG_DATA_BYTE);
-	}
 
-	ATA_DELAY(10);
-	ATA_WAIT();
+		ATA_DELAY(10);
+		ATA_WAIT();
+		ATA_DELAY(10);
+	}
 
 	/*
 	printk_safe("Mem %x:\n", sector);

@@ -4,30 +4,30 @@
 
 #include <stdint.h>
 
-#define MINIX_V1_ZONE_SIZE		1024
-#define MINIX_V1_LOG_ZONE_SIZE		__builtin_ctz(MINIX_V1_ZONE_SIZE)
-#define MINIX_V1_ZONENUMS_PER_ZONE	(MINIX_V1_ZONE_SIZE / sizeof(minix_v1_zone_t))
-#define MINIX_V1_LOG_ZONENUMS_PER_ZONE	__builtin_ctz(MINIX_V1_ZONENUMS_PER_ZONE)
-#define MINIX_V1_DIRENTS_PER_ZONE	(MINIX_V1_ZONE_SIZE / sizeof(struct minix_v1_dirent))
-#define MINIX_V1_LOG_DIRENTS_PER_ZONE	__builtin_ctz(MINIX_V1_DIRENTS_PER_ZONE)
-#define MINIX_V1_INODES_PER_ZONE	(MINIX_V1_ZONE_SIZE / sizeof(struct minix_v1_inode))
-#define MINIX_V1_LOG_INODES_PER_ZONE	__builtin_ctz(MINIX_V1_INODES_PER_ZONE)
+#define MINIX_V1_ZONE_SIZE			1024
+#define MINIX_V1_LOG_ZONE_SIZE			__builtin_ctz(MINIX_V1_ZONE_SIZE)
+#define MINIX_V1_ZONENUMS_PER_ZONE		(MINIX_V1_ZONE_SIZE / sizeof(minix_v1_zone_t))
+#define MINIX_V1_LOG_ZONENUMS_PER_ZONE		__builtin_ctz(MINIX_V1_ZONENUMS_PER_ZONE)
+#define MINIX_V1_DIRENTS_PER_ZONE		(MINIX_V1_ZONE_SIZE / sizeof(struct minix_v1_dirent))
+#define MINIX_V1_LOG_DIRENTS_PER_ZONE		__builtin_ctz(MINIX_V1_DIRENTS_PER_ZONE)
+#define MINIX_V1_INODES_PER_ZONE		(MINIX_V1_ZONE_SIZE / sizeof(struct minix_v1_inode))
+#define MINIX_V1_LOG_INODES_PER_ZONE		__builtin_ctz(MINIX_V1_INODES_PER_ZONE)
 
-#define	MINIX_V1_BITS_PER_ZONE		(MINIX_V1_ZONE_SIZE * 8)
+#define	MINIX_V1_BITS_PER_ZONE			(MINIX_V1_ZONE_SIZE * 8)
 
-#define MINIX_V1_MAX_FILENAME		14
+#define MINIX_V1_MAX_FILENAME			14
 
-#define MINIX_V1_INODE_ZONENUMS		9
-#define MINIX_V1_TIER1_ZONENUMS		7
-#define MINIX_V1_INDIRECT_TIERS		2
-#define MINIX_V1_TIERS			MINIX_V1_INDIRECT_TIERS + 1
-#define MINIX_V1_TOTAL_ZONENUMS		MINIX_V1_TIER1_ZONENUMS + MINIX_V1_INDIRECT_TIERS
+#define MINIX_V1_INODE_ZONENUMS			9
+#define MINIX_V1_TIER1_ZONENUMS			7
+#define MINIX_V1_INDIRECT_TIERS			2
+#define MINIX_V1_TIERS				MINIX_V1_INDIRECT_TIERS + 1
+#define MINIX_V1_TOTAL_ZONENUMS			MINIX_V1_TIER1_ZONENUMS + MINIX_V1_INDIRECT_TIERS
 
 #define MINIX_V1_INODE_BITMAP_START(super_v1)	(MINIX_BITMAP_ZONES)
 #define MINIX_V1_ZONE_BITMAP_START(super_v1)	(MINIX_BITMAP_ZONES + (super_v1)->imap_blocks)
 #define MINIX_V1_INODE_TABLE_START(super_v1)	(MINIX_BITMAP_ZONES + (super_v1)->imap_blocks + (super_v1)->zmap_blocks)
 
-#define MINIX_V1_ZONENUM_TABLE(block)	((minix_v1_zone_t *) (block))
+#define MINIX_V1_ZONENUM_TABLE(block)		((minix_v1_zone_t *) (block))
 
 /*
  V1: as belowe

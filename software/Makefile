@@ -40,6 +40,11 @@ FILESYSTEM_OBJS = \
 	$(PROCFS_OBJS) \
 	$(MINIXFS_OBJS)
 
+DRIVER_OBJS = \
+	src/kernel/drivers/tty_68681.o \
+	src/kernel/drivers/mem.o \
+	src/kernel/drivers/ata.o
+
 KERNEL_OBJS = \
 	include/kernel/syscall.h \
 	src/kernel/start.o \
@@ -65,9 +70,7 @@ KERNEL_OBJS = \
 	src/kernel/fs/fileptr.o \
 	src/kernel/fs/bufcache.o \
 	$(FILESYSTEM_OBJS) \
-	src/kernel/drivers/tty_68681.o \
-	src/kernel/drivers/mem.o \
-	src/kernel/drivers/ata.o \
+	$(DRIVER_OBJS) \
 	src/commands/init.o \
 	src/commands/sh.o \
 	libc-68k-os.a
@@ -89,13 +92,6 @@ LIBC_ARCH_OBJS = \
 libc-68k-none.a: $(LIBC_BASE_OBJS)
 libc-68k-os.a: $(LIBC_BASE_OBJS) $(LIBC_ARCH_OBJS)
 
-#monitor.bin: $(MONITOR_OBJS)
-#monitor.elf: $(MONITOR_OBJS)
-
-#kernel.bin: $(KERNEL_OBJS)
-#kernel.elf: $(KERNEL_OBJS)
-
-
 
 all: monitor.bin monitor.load kernel.bin kernel.load
 
@@ -107,18 +103,23 @@ welcome:
 	$(AS) -m68000 -o welcome.elf welcome.s
 	$(OBJCOPY) -O binary welcome.elf welcome.bin
 
+
 monitor.bin: $(MONITOR_OBJS)
 	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1000 -o $@.elf $^
 	$(CC) $(CFLAGS) --entry=_start -Tmonitor.ld -o $@ $^
 	hexdump -v -e '/1 "0x%02X, "' $@ > output.txt
 
-kernel.bin: CFLAGS += -DONEBINARY
 
+boot.bin: src/boot/boot.o libc-68k-none.a
+	$(CC) $(CFLAGS) --entry=main -Ttext=0x0000 -Tdata=0x1000 -o $@.elf $^
+	$(CC) $(CFLAGS) --entry=main -Tmonitor.ld -o $@ $^
+
+
+kernel.bin: CFLAGS += -DONEBINARY
 kernel.bin: $(KERNEL_OBJS)
 	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@.elf $^
 	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -Wl,--oformat=binary -o $@ $^
-	# TODO this works, but I'd like to get rid of all the special sections.  The old linker script worked fine
-	#$(OBJCOPY) -O binary  -j .text -j .text.startup -j .rodata -j .rodata.str1.1 -j .data -j .data.rel -j .data.rel.local -j .bss $@.elf $@
+
 
 %.load: %.bin
 	echo "load" > $@
@@ -131,34 +132,6 @@ kernel.bin: $(KERNEL_OBJS)
 	wc -c $^ | awk '{printf "%04X", $$1}' >> $@
 	hexdump -v -e '/1 "%02X"' $^ >> $@
 
-
-# TODO this was to test the optimization
-#optest: libc68k.a src/monitor/tty_68681.o  src/commands/tty.o src/commands/test.bin
-#	cat vectors.data src/commands/test.bin > test.bin
-#	hexdump -v -e '/1 "0x%02X, "' test.bin > output.txt
-
-
-# This is specifically for commands
-%.bin: %.o libc-68k-os.a
-	$(CC) $(CFLAGS) --entry=main -Ttext=0 -o $@.elf $< libc-68k-os.a
-	$(OBJCOPY) -O binary -j .text -j .rodata -j .data $@.elf $@
-
-#%.bin: %.elf
-#	#$(OBJCOPY) -O binary -j .text -j .data -j .rodata $^ $@
-#	#hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
-#	#$(OBJCOPY) -O binary -j .data $^ $@.data
-#	#hexdump -v -e '/1 "0x%02x, "' $@.data > output.data.txt
-#
-#	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@ $^
-#	hexdump -v -e '/1 "0x%02x, "' $@ > output.txt
-#	hexdump -v -e '/1 "%02x"' $@ > kernel.bin.txt
-#
-#%.elf: $^
-#	# Link into an elf file for inspection
-#	# With the new linker script, this output isn't used
-#	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1200 -o $@ $^
-
-
 %.a: $^
 	$(AR) rc $@ $^
 	$(RANLIB) $@
@@ -169,15 +142,6 @@ kernel.bin: $(KERNEL_OBJS)
 %.o: %.s
 	$(AS) $(ASFLAGS) -c -o $@ $<
 
-dump-main:
-	$(OBJDUMP) -D main.elf
-
 clean:
-	find . \( -name "*.o" -or -name "*.o64" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" -or -name "*.load" \) -delete -print
+	find . \( -name "*.o" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" -or -name "*.load" \) -delete -print
 
-
-test: test.o64 src/stdio.o64
-	gcc -o $@ $^
-
-%.o64: %.c
-	gcc -c -o $@ $^

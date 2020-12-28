@@ -104,10 +104,6 @@ Monitor:
 
 	* failure vectors don't point to the correct addresses, from the looks of it
 
-	* add echoing of characters, backspace, etc
-	* add a help command to print out what commands are available
-	* maybe refactor it to use a list of function pointers and names for the command list, like how you've done in sh.c
-
 	* there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
 
 	* can you have an debugger in the monitor software?  There are trap and breakpoint instructions in the processor for debugging, so if you define an interrupt handler

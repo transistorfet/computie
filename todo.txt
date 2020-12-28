@@ -9,6 +9,8 @@
 Operating System:
 
 
+	* when you send a file, and an error occurs when opening the file, it will fall back to the shell but the script will keep sending data, and that causes a fatal
+	  error that dumps back to the monitor....  It's an address error when accessing a completely incorrect address outside of 24bit space, so probably stack corruption from an overflow
 	* add debugging/tracing support for debugging issues like below
 	* there's an issue which seems to affect the shell program when run as a normal process, as opposed to the builtin copy the kernel is compiled with.  It seems
 	  to affect both the copy sent over serial and the copy transfered by compact flash.  When running commands inside the shell (that's running inside the shell

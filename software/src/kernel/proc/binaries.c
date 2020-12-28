@@ -13,18 +13,18 @@
 
 extern struct process *current_proc;
 
-int load_flat_binary(struct vfile *file, struct mem_map *map);
-int load_elf_binary(struct vfile *file, struct mem_map *map);
+int load_flat_binary(struct vfile *file, struct process *proc, void **entry);
+int load_elf_binary(struct vfile *file, struct process *proc, void **entry);
 
-int load_binary(const char *path, struct mem_map *map)
+int load_binary(const char *path, struct process *proc, void **entry)
 {
 	int error;
 	struct vfile *file;
 
-	if (vfs_access(current_proc->cwd, path, X_OK, current_proc->uid))
+	if (vfs_access(proc->cwd, path, X_OK, proc->uid))
 		return EPERM;
 
-	if ((error = vfs_open(current_proc->cwd, path, O_RDONLY, 0, current_proc->uid, &file)) < 0)
+	if ((error = vfs_open(proc->cwd, path, O_RDONLY, 0, proc->uid, &file)) < 0)
 		return error;
 
 	if ((file->vnode->mode & (S_IFDIR | S_IFCHR | S_IFIFO)) != 0) {
@@ -32,12 +32,12 @@ int load_binary(const char *path, struct mem_map *map)
 		return EISDIR;
 	}
 
-	error = load_elf_binary(file, map);
+	error = load_elf_binary(file, proc, entry);
 	// If the file was not a valid ELF binary, then execute it as a flat binary
 	if (error == ENOEXEC) {
 		error = vfs_seek(file, 0, SEEK_SET);
 		if (!error) {
-			error = load_flat_binary(file, map);
+			error = load_flat_binary(file, proc, entry);
 		}
 	}
 
@@ -46,7 +46,7 @@ int load_binary(const char *path, struct mem_map *map)
 	return error;
 }
 
-int load_flat_binary(struct vfile *file, struct mem_map *map)
+int load_flat_binary(struct vfile *file, struct process *proc, void **entry)
 {
 	int error;
 
@@ -58,16 +58,17 @@ int load_flat_binary(struct vfile *file, struct mem_map *map)
 		return error;
 
 	// TODO overwriting this could be a memory leak if it's not already NULL.  How do I refcount segments?
-	//if (current_proc->map.segments[M_TEXT].base)
-	//	kmfree(current_proc->map.segments[M_TEXT].base);
-	map->segments[M_TEXT].base = task_text;
-	map->segments[M_TEXT].length = task_size;
+	//if (proc->map.segments[M_TEXT].base)
+	//	kmfree(proc->map.segments[M_TEXT].base);
+	proc->map.segments[M_TEXT].base = task_text;
+	proc->map.segments[M_TEXT].length = task_size;
+	*entry = proc->map.segments[M_TEXT].base;
 
 	return 0;
 }
 
 
-int load_elf_binary(struct vfile *file, struct mem_map *map)
+int load_elf_binary(struct vfile *file, struct process *proc, void **entry)
 {
 	short i;
 	int error;
@@ -109,10 +110,11 @@ int load_elf_binary(struct vfile *file, struct mem_map *map)
 
 
 	// TODO overwriting this could be a memory leak if it's not already NULL.  How do I refcount segments?
-	//if (current_proc->map.segments[M_TEXT].base)
-	//	kmfree(current_proc->map.segments[M_TEXT].base);
-	map->segments[M_TEXT].base = task_text;
-	map->segments[M_TEXT].length = task_size;
+	//if (proc->map.segments[M_TEXT].base)
+	//	kmfree(proc->map.segments[M_TEXT].base);
+	proc->map.segments[M_TEXT].base = task_text;
+	proc->map.segments[M_TEXT].length = task_size;
+	*entry = proc->map.segments[M_TEXT].base + header.e_entry;
 
 	return 0;
 }

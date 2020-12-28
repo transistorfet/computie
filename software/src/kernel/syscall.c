@@ -519,12 +519,13 @@ int do_sigaction(int signum, const struct sigaction *act, struct sigaction *olda
 int do_exec(const char *path, char *const argv[], char *const envp[])
 {
 	int error;
+	void *entry;
 
-	error = load_binary(path, &current_proc->map);
+	error = load_binary(path, current_proc, &entry);
 	if (error)
 		return error;
 
-	reset_stack(current_proc, current_proc->map.segments[M_TEXT].base, argv, envp);
+	reset_stack(current_proc, entry, argv, envp);
 
 	return 0;
 }

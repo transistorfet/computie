@@ -543,6 +543,62 @@ int command_chdir(int argc, char **argv, char **envp)
  * Command Input And Parsing *
  *****************************/
 
+struct pipe_command {
+	char *cmd;
+	char *stdin_file;
+	char *stdout_file;
+	int append;
+};
+
+
+typedef int (*main_t)(int argc, char **argv, char **envp);
+
+struct command {
+	char *name;
+	main_t main;
+};
+
+int commands;
+struct command command_list[20];
+
+#define add_command(n, f)	{		\
+	command_list[commands].name = (n);	\
+	command_list[commands++].main = (f);	\
+}
+
+void init_commands()
+{
+	commands = 0;
+
+	//add_command("test", 	command_test);
+	add_command("dump", 	command_dump);
+	add_command("send", 	command_send);
+	add_command("echo", 	command_echo);
+	add_command("hex", 	command_hex);
+	add_command("cat", 	command_cat);
+	add_command("ls", 	command_ls);
+	add_command("mkdir", 	command_mkdir);
+	add_command("cp", 	command_cp);
+	add_command("mv", 	command_mv);
+	add_command("ln", 	command_ln);
+	add_command("rm", 	command_rm);
+	add_command("chmod", 	command_chmod);
+	//add_command("time", 	command_time);
+	add_command("ps", 	command_ps);
+	add_command("kill", 	command_kill);
+	add_command("sync", 	command_sync);
+	add_command("cd", 	command_chdir);
+	add_command(NULL, 	NULL);
+}
+
+main_t find_command(char *name)
+{
+	for (short i = 0; command_list[i].name; i++) {
+		if (!strcmp(name, command_list[i].name))
+			return command_list[i].main;
+	}
+	return NULL;
+}
 
 int readline(char *buffer, short max)
 {
@@ -610,13 +666,6 @@ int parseline(char *input, char **vargs)
 	return j;
 }
 
-struct pipe_command {
-	char *cmd;
-	char *stdin_file;
-	char *stdout_file;
-	int append;
-};
-
 static inline int is_whitespace(char ch)
 {
 	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r';
@@ -673,55 +722,6 @@ int parse_command_line(char *input, struct pipe_command *commands)
 	}
 
 	return 0;
-}
-
-typedef int (*main_t)(int argc, char **argv, char **envp);
-
-struct command {
-	char *name;
-	main_t main;
-};
-
-int commands;
-struct command command_list[20];
-
-#define add_command(n, f)	{		\
-	command_list[commands].name = (n);	\
-	command_list[commands++].main = (f);	\
-}
-
-void init_commands()
-{
-	commands = 0;
-
-	//add_command("test", 	command_test);
-	add_command("dump", 	command_dump);
-	add_command("send", 	command_send);
-	add_command("echo", 	command_echo);
-	add_command("hex", 	command_hex);
-	add_command("cat", 	command_cat);
-	add_command("ls", 	command_ls);
-	add_command("mkdir", 	command_mkdir);
-	add_command("cp", 	command_cp);
-	add_command("mv", 	command_mv);
-	add_command("ln", 	command_ln);
-	add_command("rm", 	command_rm);
-	add_command("chmod", 	command_chmod);
-	//add_command("time", 	command_time);
-	add_command("ps", 	command_ps);
-	add_command("kill", 	command_kill);
-	add_command("sync", 	command_sync);
-	add_command("cd", 	command_chdir);
-	add_command(NULL, 	NULL);
-}
-
-main_t find_command(char *name)
-{
-	for (short i = 0; command_list[i].name; i++) {
-		if (!strcmp(name, command_list[i].name))
-			return command_list[i].main;
-	}
-	return NULL;
 }
 
 int open_file(char *filename, int flags, int newfd)

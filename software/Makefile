@@ -97,7 +97,7 @@ libc-68k-os.a: $(LIBC_BASE_OBJS) $(LIBC_ARCH_OBJS)
 
 
 
-all: monitor.bin kernel.bin kernel.load
+all: monitor.bin monitor.load kernel.bin kernel.load
 
 commands:
 	make -C src/commands clean all

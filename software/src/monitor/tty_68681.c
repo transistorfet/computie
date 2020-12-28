@@ -89,6 +89,8 @@ static char tty_read_buffer[TTY_READ_BUFFER];
 
 int init_tty()
 {
+	asm volatile("or.w	#0x0700, %sr");
+
 	*CRA_WR_ADDR = CMD_RESET_MR;
 
 	*MR1A_MR2A_ADDR = MR1A_MODE_A_REG_1_CONFIG;

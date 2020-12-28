@@ -1,3 +1,6 @@
+/*
+ * Monitor - the program in onboard flash which initially boots the processor, and provides some basic serial transfer commands
+ */
 
 #include <stdint.h>
 #include <string.h>
@@ -9,20 +12,38 @@ extern void init_tty();
 char *led = (char *) 0x201c;
 
 
-void delay(short count) {
-	while (--count > 0) { }
+void delay(int count) {
+	while (--count > 0) { asm volatile (""); }
 }
 
 int readline(char *buffer, short max)
 {
-	for (short i = 0; i < max; i++) {
+	short i = 0;
+
+	while (i < max) {
 		buffer[i] = getchar();
-		if (buffer[i] == '\n') {
-			buffer[i] = '\0';
-			return i;
+		switch (buffer[i]) {
+			case 0x08: {
+				if (i >= 1) {
+					putchar(0x08);
+					putchar(' ');
+					putchar(0x08);
+					i--;
+				}
+				break;
+			}
+			case '\n': {
+				putchar(buffer[i]);
+				buffer[i] = '\0';
+				return i;
+			}
+			default: {
+				putchar(buffer[i++]);
+				break;
+			}
 		}
 	}
-	return 0;
+	return i;
 }
 
 int parseline(char *input, char **vargs)
@@ -33,7 +54,7 @@ int parseline(char *input, char **vargs)
 		input++;
 
 	vargs[j++] = input;
-	for (; *input != '\0' && *input != '\n' && *input != '\r'; input++) {
+	while (*input != '\0' && *input != '\n' && *input != '\r') {
 		if (*input == ' ') {
 			*input = '\0';
 			input++;
@@ -41,8 +62,14 @@ int parseline(char *input, char **vargs)
 				input++;
 			vargs[j++] = input;
 		}
+		else
+ 			input++;
 	}
+
 	*input = '\0';
+	if (*vargs[j - 1] == '\0')
+		j -= 1;
+	vargs[j] = NULL;
 
 	return j;
 }
@@ -76,6 +103,21 @@ void dump(const uint16_t *addr, short len)
 	putchar('\n');
 }
 
+
+
+/************
+ * Commands *
+ ************/
+
+#define ROM_ADDR	0x000000
+#define ROM_SIZE	0x1200
+
+#define RAM_ADDR	0x100000
+#define RAM_SIZE	1024
+
+#define SUPERVISOR_ADDR	0x200000
+
+
 void command_dump(int argc, char **args)
 {
 	if (argc <= 1)
@@ -89,8 +131,14 @@ void command_dump(int argc, char **args)
 	}
 }
 
-void info(void)
+void command_dumpram(int argc, char **args)
 {
+	dump((uint16_t *) RAM_ADDR, 0x1800);
+}
+
+void command_info(int argc, char **args)
+{
+	uint32_t pc;
 	uint32_t sp;
 	uint32_t sv1;
 	uint16_t flags;
@@ -99,26 +147,62 @@ void info(void)
 	"move.l	%%sp, %0\n"
 	"move.l	(%%sp), %1\n"
 	"move.w	%%sr, %2\n"
-	: "=r" (sp), "=r" (sv1), "=r" (flags)
+	"bsr	INFO\n"
+	"INFO:\t"
+	"move.l	(%%sp)+, %3\n"
+	: "=r" (sp), "=r" (sv1), "=r" (flags), "=r" (pc)
 	);
 
+	printf("PC: %x\n", pc);
+	printf("SR: %x\n", flags);
 	printf("SP: %x\n", sp);
 	printf("TOP: %x\n", sv1);
-	printf("SR: %x\n", flags);
 	return;
 }
 
-#define RAM_ADDR	0x100000
-#define RAM_SIZE	1024
+void command_poke(int argc, char **args)
+{
+	if (argc <= 2)
+		puts("You need an address and byte to poke");
+	else {
+		uint8_t *address = (uint8_t *) strtol(args[1], NULL, 16);
+		uint8_t data = (uint8_t) strtol(args[2], NULL, 16);
+		*(address) = data;
+	}
 
-#define ROM_ADDR	0x200000
-#define ROM_SIZE	0x1200
+}
+void command_ramtest(int argc, char **args)
+{
+	uint16_t data;
+	uint16_t errors = 0;
+
+	uint16_t *mem = (uint16_t *) RAM_ADDR;
+	for (int i = 0; i < RAM_SIZE; i++) {
+		mem[i] = (uint16_t) i;
+	}
+
+	//uint8_t *mem2 = (uint8_t *) RAM_ADDR;
+	//for (int i = 0; i < RAM_SIZE; i++) {
+	//	printf("%x ", (uint8_t) mem2[i]);
+	//}
 
 
+	for (int i = 0; i < RAM_SIZE; i++) {
+		data = (uint16_t) mem[i];
+		printf("%x ", data);
+		if (data != i)
+			errors++;
+	}
+
+	printf("\nErrors: %d", errors);
+}
+
+
+/*
 #define TEST_BUF_SIZE 	32
 uint16_t test_buffer[TEST_BUF_SIZE] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
 
-void ramtest()
+void command_ramduptest(int argc, char **args)
 {
 	uint16_t data;
 
@@ -145,36 +229,7 @@ void ramtest()
 }
 
 
-/*
-void ramtest(void)
-{
-	uint16_t data;
-	uint16_t errors = 0;
-
-	uint16_t *mem = (uint16_t *) RAM_ADDR;
-	for (int i = 0; i < RAM_SIZE; i++) {
-		mem[i] = (uint16_t) i;
-	}
-
-	
-	//uint8_t *mem2 = (uint8_t *) RAM_ADDR;
-	//for (int i = 0; i < RAM_SIZE; i++) {
-	//	printf("%x ", (uint8_t) mem2[i]);
-	//}
-
-
-	for (int i = 0; i < RAM_SIZE; i++) {
-		data = (uint16_t) mem[i];
-		printf("%x ", data);
-		if (data != i)
-			errors++;
-	}
-
-	printf("\nErrors: %d", errors);
-}
-
-
-void readrom(void)
+void command_readrom(int argc, char **args)
 {
 	uint16_t data;
 	uint16_t reference;
@@ -194,7 +249,7 @@ void readrom(void)
 }
 
 
-void run_rom_from_ram(void)
+void command_runtest(int argc, char **args)
 {
 	uint16_t *arduino = (uint16_t *) 0x000000;
 	uint16_t *mem = (uint16_t *) RAM_ADDR;
@@ -207,62 +262,94 @@ void run_rom_from_ram(void)
 }
 */
 
-void writerom(void)
+void erase_flash(int sector)
 {
-	uint16_t data;
-	uint16_t errors = 0;
+	sector <<= 18;
 
-	uint16_t *arduino = (uint16_t *) 0x000000;
-	uint16_t *rom = (uint16_t *) ROM_ADDR;
-	for (int i = 0; i < ROM_SIZE; i++) {
-		rom[i] = (uint16_t) arduino[i];
-		for (char j = 0; j < 100; j++) { asm volatile(""); }
-		printf("%x ", rom[i]);
-	}
-
-	puts("\nWrite complete");
+	puts("Erasing flash sector 0");
+	*((volatile uint16_t *) (0x555 << 1)) = 0xAAAA;
+	putchar('.');
+	*((volatile uint16_t *) (0x2AA << 1)) = 0x5555;
+	putchar('.');
+	*((volatile uint16_t *) (0x555 << 1)) = 0x8080;
+	putchar('.');
+	*((volatile uint16_t *) (0x555 << 1)) = 0xAAAA;
+	putchar('.');
+	*((volatile uint16_t *) (0x2AA << 1)) = 0x5555;
+	putchar('.');
+	*((volatile uint16_t *) sector) = 0x3030;
+	putchar('.');
 }
 
-void writerom2(void)
+void command_eraserom(int argc, char **args)
 {
 	uint16_t data;
-	uint16_t errors = 0;
+	uint16_t *dest = (uint16_t *) ROM_ADDR;
 
+	erase_flash(0);
+	delay(200000);
+	data = dest[0];
 
-	uint16_t *arduino = (uint16_t *) 0x000000;
-	uint16_t *rom = (uint16_t *) ROM_ADDR;
-	for (int i = 0; i < ROM_SIZE; i += 64) {
-		printf("\n%d\n", i);
-		int j;
-		for (j = 0; j < 63; j++)
-			rom[i + j] = (uint16_t) arduino[i + j];
-
-		// Poll until the page has been written
-		while (rom[i + j - 1] != (uint16_t) arduino[i + j - 1]) {
-			// Delay between checks so as not to overload the chip
-			//for (char k = 0; k < 100; k++) { asm volatile(""); }
-			printf("%x != %x\n", rom[i + j - 1], (uint16_t) arduino[i + j - 1]);
+	puts("\nVerifying erase\n");
+	for (int i = 0; i < ROM_SIZE; i++) {
+		data = dest[i];
+		if (data != 0xFFFF) {
+			printf("Flash not erased at %x (%x)\n", dest + i, data);
+			return;
 		}
+	}
 
-		for (j = 0; j < 63; j++)
-			printf("%04x ", rom[i + j]);
+	puts("Rom erased! Make sure to writerom before resetting\n");
+}
 
-		putchar('\n');
+
+void program_flash_data(uint16_t *addr, uint16_t data)
+{
+	*((volatile uint16_t *) (0x555 << 1)) = 0xAAAA;
+	*((volatile uint16_t *) (0x2AA << 1)) = 0x5555;
+	*((volatile uint16_t *) (0x555 << 1)) = 0xA0A0;
+	*((volatile uint16_t *) addr) = data;
+}
+
+void command_writerom(int argc, char **args)
+{
+	uint16_t data;
+	uint16_t errors = 0;
+
+	uint16_t *dest = (uint16_t *) ROM_ADDR;
+	uint16_t *source = (uint16_t *) RAM_ADDR;
+
+	for (int i = 0; i < ROM_SIZE; i++) {
+		data = dest[i];
+		if (data != 0xFFFF) {
+			printf("Flash not erased at %x (%x)\n", dest + i, data);
+			return;
+		}
+	}
+
+	for (int i = 0; i < ROM_SIZE; i++) {
+		program_flash_data(&dest[i], source[i]);
+		for (char j = 0; j < 100; j++) { asm volatile(""); }
+		printf("%x ", dest[i]);
 	}
 
 	puts("\nWrite complete");
 }
 
-void verifyrom(void)
+void command_verifyrom(int argc, char **args)
 {
 	uint16_t data;
 	uint16_t errors = 0;
 
-	uint16_t *arduino = (uint16_t *) 0x000000;
-	uint16_t *rom = (uint16_t *) ROM_ADDR;
+	uint16_t *source = (uint16_t *) RAM_ADDR;
+	uint16_t *dest = (uint16_t *) ROM_ADDR;
 	for (int i = 0; i < ROM_SIZE; i++) {
-		if (rom[i] != arduino[i]) {
-			printf("@%x expected %x but found %x\n", i, arduino[i], rom[i]);
+		if (dest[i] != source[i]) {
+			printf("@%x expected %x but found %x\n", &dest[i], source[i], dest[i]);
+			if (++errors > 100) {
+				puts("Bailing out\n");
+				break;
+			}
 		}
 	}
 
@@ -281,7 +368,7 @@ uint16_t fetch_word()
 	return (buffer[0] << 12) | (buffer[1] << 8) | (buffer[2] << 4) | buffer[3];
 }
 
-void load(void)
+void command_load(int argc, char **args)
 {
 	uint32_t size;
 	uint16_t data;
@@ -300,7 +387,7 @@ void load(void)
 	puts("Load complete");
 }
 
-void boot(void)
+void command_boot(int argc, char **args)
 {
 	//*led = 0x0;
 	void (*entry)() = (void (*)()) RAM_ADDR;
@@ -308,65 +395,77 @@ void boot(void)
 }
 
 
-/*
+/**************************
+ * Command Line Execution *
+ **************************/
+
 struct command {
 	char *name;
-	int (*func)(int, char **);
+	void (*func)(int, char **);
 };
-*/
+
+#define add_command(n, f)	{			\
+	command_list[num_commands].name = (n);		\
+	command_list[num_commands++].func = (f);	\
+}
+
+int load_commands(struct command *command_list)
+{
+	int num_commands = 0;
+
+	add_command("info", command_info);
+	add_command("load", command_load);
+	add_command("boot", command_boot);
+	add_command("dump", command_dump);
+	add_command("poke", command_poke);
+	add_command("dumpram", command_dumpram);
+	add_command("eraserom", command_eraserom);
+	add_command("writerom", command_writerom);
+	add_command("verifyrom", command_verifyrom);
+	add_command("ramtest", command_ramtest);
+	//add_command("ramduptest", command_ramtest);
+	//add_command("readrom", command_readrom);
+	//add_command("runtest", command_runtest);
+
+	return num_commands;
+}
 
 #define BUF_SIZE	100
 #define ARG_SIZE	10
 
 void serial_read_loop()
 {
-	int16_t argc;
+	int i;
+	short argc;
 	char buffer[BUF_SIZE];
 	char *args[ARG_SIZE];
+
+	struct command command_list[10];
+	int num_commands = load_commands(command_list);
 
 	while (1) {
 		putsn("> ");
 		readline(buffer, BUF_SIZE);
-		puts(buffer);
 		argc = parseline(buffer, args);
 
 		if (!strcmp(args[0], "test")) {
 			puts("this is only a test");
 		}
-		else if (!strcmp(args[0], "info")) {
-			info();
+		else if (!strcmp(args[0], "help")) {
+			for (int i = 0; i < num_commands; i++)
+				puts(command_list[i].name);
 		}
-		else if (!strcmp(args[0], "load")) {
-			load();
-		}
-		else if (!strcmp(args[0], "boot")) {
-			boot();
-		}
-		else if (!strcmp(args[0], "verifyrom")) {
-			verifyrom();
-		}
-		else if (!strcmp(args[0], "ramtest")) {
-			ramtest();
-		}
-		else if (!strcmp(args[0], "dumpram")) {
-			dump((uint16_t *) RAM_ADDR, 0x1800);
-		}
-/*
-		else if (!strcmp(args[0], "ramtest")) {
-			ramtest();
-		}
-		else if (!strcmp(args[0], "readrom")) {
-			readrom();
-		}
-		else if (!strcmp(args[0], "runtest")) {
-			run_rom_from_ram();
-		}
-*/
-		else if (!strcmp(args[0], "writerom")) {
-			writerom();
-		}
-		else if (!strcmp(args[0], "dump")) {
-			command_dump(argc, args);
+		else {
+			for (i = 0; i < num_commands; i++) {
+				if (!strcmp(args[0], command_list[i].name)) {
+					command_list[i].func(argc, args);
+					break;
+				}
+			}
+
+			if (i >= num_commands && args[0][0] != '\0') {
+				puts("Unknown command\n");
+			}
 		}
 	}
 }

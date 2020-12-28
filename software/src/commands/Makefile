@@ -1,5 +1,7 @@
 
 ROOT = ../..
+BUILD = $(ROOT)/build
+$(shell mkdir -p $(BUILD)/bin)
 
 AS = m68k-linux-gnu-as
 AR = m68k-linux-gnu-ar
@@ -32,7 +34,7 @@ sh.bin: CFLAGS += -DONEBINARY -DADDMAIN
 
 
 $(ROOT)/libc-68k-os.a:
-	make -C $(ROOT)/src/libc clean $(ROOT)/libc-68k-os.a
+	make -C $(ROOT)/src/libc clean $@
 
 %.send: %.bin
 	#$(ROOT)/tools/make-send-file $*
@@ -42,7 +44,7 @@ $(ROOT)/libc-68k-os.a:
 
 %.bin: %.o 
 	$(CC) $(CFLAGS) --entry=main -Ttext=0 -o $*.elf $^ $(ROOT)/libc-68k-os.a
-	$(STRIP) $*.elf -o $*
+	$(STRIP) $*.elf -o $(BUILD)/bin/$*
 	$(OBJCOPY) -O binary -j .text -j .got -j .rodata -j .data $*.elf $@
 
 %.o: %.c
@@ -52,5 +54,5 @@ $(ROOT)/libc-68k-os.a:
 	$(AS) $(ASFLAGS) -c -o $@ $<
 
 clean:
-	@find . \( -name "*.o" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" -or -name "*.send" \) -delete -print
+	@find . \( -name "*.o" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" -or -name "*.send" \) -delete
 

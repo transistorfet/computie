@@ -24,24 +24,25 @@ Operating System:
 	* separate Makefiles so that the kernel can be compiled normally, and commands/libc-68k-os can be compiled with -mpcrel or -fPIE (libc is the big fiddly bit here)
 	* refactor to allow commands to be individually compiled to elfs, and loaded onto the memory card, and executed like normal processes
 	* need a way to compile manual multifile commands like sh standalone with commands in separate files
+	* make a PIE format that can be loaded and executed
 	* figure out how to boot the system.  Could the flash/ram backed file system get mounted as /boot, with the memory card being mounted as root?  Can it be configurable
 	  so that I can boot systems without the flash card?
-	* make a PIE format that can be loaded and executed
 
 
-	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
-	* should you make a lib subdir, and put unistd at the top?
-	* should the timer stuff in proc be moved somewhere else?
 	* should filedesc be put into fs/?
+	* should the timer stuff in proc be moved somewhere else?
+	* should you make a lib subdir, and put unistd at the top?
+	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
 
 
+	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
 	* add support for umask, and add a mode filter somewhere: (mode & ~umask & 0777)
 	* when there's a trailing / to rm or mkdir, it will create something weird
 	* commands like mv and cp require the second arg to include the new filename, but if the arg is a dir, it should append the file's name
+	* add checks for errors in the serial transfer? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
-	* add checks for errors in the serial transfer? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 
 
 
@@ -51,15 +52,14 @@ Operating System:
 	* implement getopt, and add flags to commands
 	* add brk/sbrk/stack guard protection
 	* add fifos (should be easy now)
-	* implement login system
+	* implement login system (setuid)
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 
 	* add commands: rmdir, pwd, dd, chown, poke
-	* syscalls to implement: setuid
 	* to stdlib, add: fprintf, fscanf, scanf, fopen, fclose, fgetpos, fseek, feof, fread, fwrite
 	* implement gmtime() and make the time command return a formatted time
+	* rewrite the math functions to use fewer registers, and cover the 32 bit divide by 32 bit number case
 
-	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* make it possible to have root procfs files instead of requiring all top level files to be process numbered files
 	* add check to vfs_link() for loops
@@ -70,7 +70,7 @@ Operating System:
 
 
 	* should there be something that periodically syncs data to disk?
-	* should you refactor the header files in minix implementation into actual c files, with a common header to declare the functions?
+	* should you refactor the header files in minixfs implementation into actual c files, with a common header to declare the functions?
 	* could I use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
 	* should there be a lighter weight task type, instead of processes, so that you can service interrupt processing without a bunch of wasted memory
 	* move interrupt and syscall_entry code into proc??
@@ -92,7 +92,6 @@ Operating System:
 	* look for any bugs that might be caused by a function returning the same vnode as was passed in
 	* re-evaluate file permissions checks to make sure they're correct according to posix
 	* a slab allocator would maybe help, but I don't think it's as important at the moment
-	* rewrite the math functions to use fewer registers
 	* you need some tests, but ideally it would use a simple emulator.  Maybe easy68k or something could be used
 
 	* as a note about terminology for pseudoterminals, pts/ptm (slave/master);  it would make more sense for them to be named process-end and device-end, which implies

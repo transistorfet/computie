@@ -700,20 +700,20 @@ void run_write_test()
 void run_erase_flash()
 {
 	Serial.println("Erasing flash");
-	write_data(0x555 << 1, 0xAAAA);
-	write_data(0x2AA << 1, 0x5555);
-	write_data(0x555 << 1, 0x8080);
-	write_data(0x555 << 1, 0xAAAA);
-	write_data(0x2AA << 1, 0x5555);
-	write_data(0x00, 0x3030);
+	write_data(FLASH_ADDR + (0x555 << 1), 0xAAAA);
+	write_data(FLASH_ADDR + (0x2AA << 1), 0x5555);
+	write_data(FLASH_ADDR + (0x555 << 1), 0x8080);
+	write_data(FLASH_ADDR + (0x555 << 1), 0xAAAA);
+	write_data(FLASH_ADDR + (0x2AA << 1), 0x5555);
+	write_data(FLASH_ADDR + 0x00, 0x3030);
 }
 
 
 void program_flash_data(long addr, word data)
 {
-	write_data(0x555 << 1, 0xAAAA);
-	write_data(0x2AA << 1, 0x5555);
-	write_data(0x555 << 1, 0xA0A0);
+	write_data(FLASH_ADDR + (0x555 << 1), 0xAAAA);
+	write_data(FLASH_ADDR + (0x2AA << 1), 0x5555);
+	write_data(FLASH_ADDR + (0x555 << 1), 0xA0A0);
 	write_data(addr, data);
 }
 

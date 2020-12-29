@@ -62,7 +62,10 @@ int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_op
 		return EBUSY;
 	}
 
-	// TODO make sure not already mounted
+	for (short i = 0; i < VFS_MOUNT_MAX; i++) {
+		if (mountpoints[i].dev == dev)
+			return EBUSY;
+	}
 
 	for (short i = 0; i < VFS_MOUNT_MAX; i++) {
 		if (mountpoints[i].dev == 0) {
@@ -121,6 +124,7 @@ int vfs_unmount(device_t dev, uid_t uid)
 	else
 		root_fs = NULL;
 	mp->ops = NULL;
+	mp->dev = 0;
 	return 0;
 }
 
@@ -165,6 +169,7 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 			if (!mp)
 				return ENXIO;
 			cur = vfs_clone_vnode(mp->root_node);
+
 		}
 
 		// Return successfully with the result

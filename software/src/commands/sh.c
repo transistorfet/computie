@@ -1,5 +1,6 @@
 
 
+#include <ctype.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -10,6 +11,7 @@
 #include <signal.h>
 
 #include <sys/stat.h>
+#include <sys/mount.h>
 #include <sys/ioc_tty.h>
 #include <kernel/syscall.h>
 
@@ -90,6 +92,17 @@ int command_dump(int argc, char **argv, char **envp)
 	return 0;
 }
 
+int command_poke(int argc, char **args, char **envp)
+{
+	if (argc <= 2)
+		puts("You need an address and byte to poke");
+	else {
+		uint8_t *address = (uint8_t *) strtol(args[1], NULL, 16);
+		uint8_t data = (uint8_t) strtol(args[2], NULL, 16);
+		*(address) = data;
+	}
+	return 0;
+}
 
 uint16_t fetch_word()
 {
@@ -145,7 +158,7 @@ int command_send(int argc, char **argv, char **envp)
 int command_echo(int argc, char **argv, char **envp)
 {
 	// TODO this would normally be in _start
-	environ = envp;
+	*environ = envp;
 
 	int k = 0;
 	char tmp;
@@ -347,7 +360,6 @@ int command_mkdir(int argc, char **argv, char **envp)
 
 int command_cp(int argc, char **argv, char **envp)
 {
-/*
 	int result;
 	int src_fd, dest_fd;
 	char buffer[CP_BUF_SIZE];
@@ -388,7 +400,7 @@ int command_cp(int argc, char **argv, char **envp)
 
 	close(dest_fd);
 	close(src_fd);
-*/
+
 	return 0;
 }
 
@@ -517,6 +529,42 @@ int command_kill(int argc, char **argv, char **envp)
 	return 0;
 }
 
+int command_mount(int argc, char **argv, char **envp)
+{
+	int error;
+
+	if (argc <= 2) {
+		puts("Usage: mount <devfile> <mountpoint>");
+		return -1;
+	}
+
+	error = mount(argv[1], argv[2], NULL);
+	if (error < 0) {
+		printf("Error while mounting %d\n", error);
+		return -1;
+	}
+
+	return 0;
+}
+
+int command_umount(int argc, char **argv, char **envp)
+{
+	int error;
+
+	if (argc <= 1) {
+		puts("Usage: umount <devfile>");
+		return -1;
+	}
+
+	error = umount(argv[1]);
+	if (error < 0) {
+		printf("Error while unmounting %d\n", error);
+		return -1;
+	}
+
+	return 0;
+}
+
 int command_sync(int argc, char **argv, char **envp)
 {
 	sync();
@@ -572,6 +620,7 @@ void init_commands()
 
 	//add_command("test", 	command_test);
 	add_command("dump", 	command_dump);
+	add_command("poke", 	command_poke);
 	add_command("send", 	command_send);
 	add_command("echo", 	command_echo);
 	add_command("hex", 	command_hex);
@@ -586,6 +635,8 @@ void init_commands()
 	//add_command("time", 	command_time);
 	add_command("ps", 	command_ps);
 	add_command("kill", 	command_kill);
+	add_command("mount", 	command_mount);
+	add_command("umount", 	command_umount);
 	add_command("sync", 	command_sync);
 	add_command("cd", 	command_chdir);
 	add_command(NULL, 	NULL);
@@ -635,6 +686,7 @@ int readline(char *buffer, short max)
 			}
 		}
 	}
+	buffer[--i] = '\0';
 	return i;
 }
 
@@ -739,7 +791,7 @@ int open_file(char *filename, int flags, int newfd)
 	return 0;
 }
 
-char *resolve_file_location(char *filename, char *buffer)
+char *resolve_file_location(char *filename, char *buffer, int max)
 {
 	// TODO replace with the environment variable
 	const char *PATH = "/bin:/sbin";
@@ -751,14 +803,15 @@ char *resolve_file_location(char *filename, char *buffer)
 	}
 
 	short i;
-	char *curpath = PATH;
+	const char *curpath = PATH;
 	while (*curpath != '\0') {
-		for (i = 0; *curpath && *curpath != ':'; curpath++, i++)
+		for (i = 0; i < max - 1 && *curpath && *curpath != ':'; curpath++, i++)
 			buffer[i] = *curpath;
 		if (*curpath == ':')
 			curpath++;
 		buffer[i++] = '/';
-		strcpy(&buffer[i], filename);
+		strncpy(&buffer[i], filename, max - i);
+		buffer[max - 1] = '\0';
 
 		if (!access(buffer, X_OK))
 			return buffer;
@@ -766,14 +819,16 @@ char *resolve_file_location(char *filename, char *buffer)
 	return NULL;
 }
 
+#define NAME_SIZE	100
+
 int execute_command(struct pipe_command *command, int argc, char **argv, char **envp)
 {
 	int pid, status;
 	char *fullpath;
-	char buffer[100];
+	char buffer[NAME_SIZE];
 	void *main = NULL;
 
-	fullpath = resolve_file_location(argv[0], buffer);
+	fullpath = resolve_file_location(argv[0], buffer, NAME_SIZE);
 	if (fullpath)
 		argv[0] = fullpath;
 	else {

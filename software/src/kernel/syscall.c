@@ -112,8 +112,7 @@ int do_mount(const char *source, const char *target, struct mount_opts *opts)
 
 	// TODO use opts
 	extern struct mount_ops minix_mount_ops;
-	vfs_mount(current_proc->cwd, target, vnode->rdev, &minix_mount_ops, current_proc->uid);
-	return -1;
+	return vfs_mount(current_proc->cwd, target, vnode->rdev, &minix_mount_ops, current_proc->uid);
 }
 
 int do_umount(const char *source)

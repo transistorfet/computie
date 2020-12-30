@@ -91,8 +91,12 @@ int clone_stack(struct process *parent_proc, struct process *proc)
 	proc->map.segments[M_STACK].length = stack_size;
 	proc->sp = stack_pointer;
 
-	for (char j = 0; j < PROC_CMDLINE_ARGS; j++)
-		proc->cmdline[j] = proc->map.segments[M_STACK].base + (parent_proc->cmdline[j] - (char *) parent_proc->map.segments[M_STACK].base);
+	for (char j = 0; j < PROC_CMDLINE_ARGS; j++) {
+		if (parent_proc->cmdline[j])
+			proc->cmdline[j] = proc->map.segments[M_STACK].base + (parent_proc->cmdline[j] - (char *) parent_proc->map.segments[M_STACK].base);
+		else
+			proc->cmdline[j] = NULL;
+	}
 
 	return 0;
 }

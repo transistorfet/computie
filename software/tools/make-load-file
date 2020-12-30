@@ -1,8 +1,10 @@
 #!/bin/sh
 
 SRC=$1
-DEST=${2:-"$1.send"}
+DEST=${2-"$1.load"}
+ADDR=" $3"
 
-echo "send $SRC" > $DEST
+echo "load$ADDR" > $DEST
 wc -c $SRC | awk '{printf "%04X", $1}' >> $DEST
 hexdump -v -e '/1 "%02X"' $SRC >> $DEST
+echo "\nboot$ADDR" >> $DEST

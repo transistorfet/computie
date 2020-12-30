@@ -77,6 +77,7 @@ int main()
 	DISABLE_INTS();
 
 	tty_68681_preinit();
+	printk_safe("\n\n");
 
 	init_kernel_heap((void *) 0x110000, 0xD0000);
 

@@ -22,11 +22,17 @@ Operating System:
 	  ^C and the other character are read (and the prompt is only then printed).
 
 
+	* make the bootloader a bit smaller??
+	* add a make-load-file command, and make it possible to set the load/boot address when built
+	* make a /dev/flash0 device or /dev/rom0 device, even if it has to be written separately somehow, but at least it'll be mountable
+	* if you had an argument to the boot command in the monitor, for the location, and wrote the bootloader to rom such that it can boot from the CF...
+	  then you can send the kernel over serial while in the kernel, write it to flast as a file, and then reboot the system back to the monitor, where "boot <addr>" would reload the kernel
 	* how can you pass arguments into the kernel from the boot loader?  Can you make it bootable from either a disk image in flash, or a disk image on the CF card?
 	* figure out how to boot the system.  Could the flash/ram backed file system get mounted as /boot, with the memory card being mounted as root?  Can it be configurable
 	  so that I can boot systems without the flash card?
 	* Can you somehow reload the kernel from within the kernel, such that you can load a file from disk which then calls a memcpy function that's copied out of the kernel space
 	  which then copies the kernel data to kernel space before jumping there...
+
 	* separate Makefiles so that the kernel can be compiled normally, and commands/libc-68k-os can be compiled with -mpcrel or -fPIE (libc is the big fiddly bit here)
 	* refactor to allow commands to be individually compiled to elfs, and loaded onto the memory card, and executed like normal processes
 	* make a PIE format that can be loaded and executed

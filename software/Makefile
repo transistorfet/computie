@@ -83,7 +83,7 @@ KERNEL_OBJS = \
 #	src/tests/kernel/tests.o \
 
 
-all: monitor.bin monitor.load kernel.bin kernel.load
+all: monitor.bin monitor.load boot.bin boot.load kernel.bin kernel.load
 
 commands:
 	make -C src/commands clean all
@@ -105,9 +105,12 @@ monitor.bin: $(MONITOR_OBJS)
 	hexdump -v -e '/1 "0x%02X, "' $@ > output.txt
 
 
+boot.load: boot.bin
+	tools/make-load-file $^ $@ 180000
+
 boot.bin: $(BOOT_OBJS)
-	$(CC) $(CFLAGS) --entry=main -Ttext=0x0000 -Tdata=0x1000 -o $@.elf $^
-	$(CC) $(CFLAGS) --entry=main -Tmonitor.ld -o $@ $^
+	$(CC) $(CFLAGS) --entry=main -Ttext=0x0000 -o $@.elf $^
+	$(CC) $(CFLAGS) --entry=main -Ttext=0x0000 -Wl,--oformat=binary -o $@ $^
 
 
 kernel.bin: CFLAGS += -DONEBINARY
@@ -117,15 +120,10 @@ kernel.bin: $(KERNEL_OBJS)
 
 
 %.load: %.bin
-	echo "load" > $@
-	wc -c $^ | awk '{printf "%04X", $$1}' >> $@
-	hexdump -v -e '/1 "%02X"' $^ >> $@
-	echo "\nboot" >> $@
+	tools/make-load-file $^ $@
 
 %.send: %.bin
-	echo "send $(notdir $(basename $@))" > $@
-	wc -c $^ | awk '{printf "%04X", $$1}' >> $@
-	hexdump -v -e '/1 "%02X"' $^ >> $@
+	tools/make-send-file $^ $@
 
 %.a: $^
 	$(AR) rc $@ $^

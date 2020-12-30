@@ -379,6 +379,9 @@ void command_load(int argc, char **args)
 	size >>= 1;
 	//printf("Expecting %x\n", size);
 
+	if (argc >= 2)
+		mem = (uint16_t *) strtol(args[1], NULL, 16);
+
 	for (int i = 0; i < size; i++) {
 		data = fetch_word();
 		//printf("%x ", data);
@@ -392,6 +395,8 @@ void command_boot(int argc, char **args)
 {
 	//*led = 0x0;
 	void (*entry)() = (void (*)()) RAM_ADDR;
+	if (argc >= 2)
+		entry = (void (*)()) strtol(args[1], NULL, 16);
 	((void (*)()) entry)();
 }
 

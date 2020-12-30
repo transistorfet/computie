@@ -344,7 +344,7 @@ int command_ls(int argc, char **argv, char **envp)
 int command_mkdir(int argc, char **argv, char **envp)
 {
 	if (argc <= 1) {
-		puts("You need file name");
+		puts("Usage: mkdir <dir>");
 		return -1;
 	}
 
@@ -365,7 +365,7 @@ int command_cp(int argc, char **argv, char **envp)
 	char buffer[CP_BUF_SIZE];
 
 	if (argc <= 2) {
-		puts("You need two file names");
+		puts("Usage: cp <source> <dest>");
 		return -1;
 	}
 
@@ -407,7 +407,7 @@ int command_cp(int argc, char **argv, char **envp)
 int command_mv(int argc, char **argv, char **envp)
 {
 	if (argc <= 2) {
-		puts("You need two file names");
+		puts("Usage: mv <file> <dest>");
 		return -1;
 	}
 
@@ -423,7 +423,7 @@ int command_mv(int argc, char **argv, char **envp)
 int command_ln(int argc, char **argv, char **envp)
 {
 	if (argc <= 2) {
-		puts("You need two file names");
+		puts("Usage: ln <source> <target>");
 		return -1;
 	}
 
@@ -439,7 +439,7 @@ int command_ln(int argc, char **argv, char **envp)
 int command_rm(int argc, char **argv, char **envp)
 {
 	if (argc <= 1) {
-		puts("You need file name");
+		puts("Usage: rm <file>");
 		return -1;
 	}
 

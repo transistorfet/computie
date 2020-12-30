@@ -37,7 +37,8 @@
 #define IV_USER_VECTORS		64
 
 #define SH_MAX			4
-#define SH_TTY			0
+#define SH_TTY68681		0
+#define SH_TTY			1
 
 /*** Macros ***/
 

@@ -61,20 +61,19 @@ char *copy_exec_args(char *stack, char *const argv[], char *const envp[], char *
 	return stack;
 }
 
-int reset_stack(struct process *proc, void *entry, char *const argv[], char *const envp[])
+int create_process_memory(struct process *proc, size_t text_size)
 {
-	// Reset the stack to start our new process
-	char *task_stack_pointer = proc->map.segments[M_STACK].base + proc->map.segments[M_STACK].length;
+	char *text = kmalloc(text_size);
 
-	// Setup new stack image
- 	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp, proc->cmdline);
- 	task_stack_pointer = create_context(task_stack_pointer, entry, _exit);
-	proc->sp = task_stack_pointer;
-
+	// TODO overwriting this could be a memory leak if it's not already NULL.  How do I refcount segments?
+	//if (proc->map.segments[M_TEXT].base)
+	//	kmfree(proc->map.segments[M_TEXT].base);
+	proc->map.segments[M_TEXT].base = text;
+	proc->map.segments[M_TEXT].length = text_size;
 	return 0;
 }
 
-int clone_stack(struct process *parent_proc, struct process *proc)
+int clone_process_memory(struct process *parent_proc, struct process *proc)
 {
 	int stack_size = parent_proc->map.segments[M_STACK].length;
 	char *stack = kmalloc(stack_size);
@@ -82,14 +81,13 @@ int clone_stack(struct process *parent_proc, struct process *proc)
 
 	memcpy_s(stack, parent_proc->map.segments[M_STACK].base, parent_proc->map.segments[M_STACK].length);
 
-	//printk("Parent Stack Pointer: %x\n", parent_proc->sp);
-	//printk("Fork Stack: %x\n", stack);
-	//printk("Fork Stack Top: %x\n", stack + stack_size);
-	//printk("Fork Stack Pointer: %x\n", stack_pointer);
-
 	proc->map.segments[M_STACK].base = stack;
 	proc->map.segments[M_STACK].length = stack_size;
 	proc->sp = stack_pointer;
+
+	// Copy the relevant process data from the parent to child
+	proc->cwd = parent_proc->cwd;
+	dup_fd_table(proc->fd_table, parent_proc->fd_table);
 
 	for (char j = 0; j < PROC_CMDLINE_ARGS; j++) {
 		if (parent_proc->cmdline[j])
@@ -100,3 +98,17 @@ int clone_stack(struct process *parent_proc, struct process *proc)
 
 	return 0;
 }
+
+int reset_stack(struct process *proc, void *entry, char *const argv[], char *const envp[])
+{
+	// Reset the stack to start our new process
+	char *task_stack_pointer = proc->map.segments[M_STACK].base + proc->map.segments[M_STACK].length;
+
+	// Setup new stack image
+	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp, proc->cmdline);
+	task_stack_pointer = create_context(task_stack_pointer, entry, _exit);
+	proc->sp = task_stack_pointer;
+
+	return 0;
+}
+

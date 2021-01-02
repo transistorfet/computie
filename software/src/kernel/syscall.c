@@ -380,16 +380,11 @@ pid_t do_fork()
 	proc = new_proc(0, current_proc->uid);
 	if (!proc)
 		panic("Ran out of procs\n");
-	// TODO these should be somewhere else
-	proc->cwd = current_proc->cwd;
-	dup_fd_table(proc->fd_table, current_proc->fd_table);
 
-	clone_stack(current_proc, proc);
+	clone_process_memory(current_proc, proc);
 
-	// Apply return values to the context on the stack
+	// Apply return value to the stack context of the cloned proc, and return to the parent with the new pid
 	set_proc_return_value(proc, 0);
-	//set_proc_return_value(current_proc, proc->pid);
-
 	return proc->pid;
 }
 

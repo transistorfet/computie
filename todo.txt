@@ -8,7 +8,6 @@
 
 Operating System:
 
-
 	* add debugging/tracing support for debugging issues like below
 	* there's an issue which seems to affect the shell program when run as a normal process, as opposed to the builtin copy the kernel is compiled with.  It seems
 	  to affect both the copy sent over serial and the copy transfered by compact flash.  When running commands inside the shell (that's running inside the shell
@@ -21,21 +20,24 @@ Operating System:
 	  that, the tty driver tries to resume procs, but since the state is changed, this doesn't have an affect and it's not until another character is entered that both the
 	  ^C and the other character are read (and the prompt is only then printed).
 
-
-	* make the bootloader a bit smaller??
-	* add a make-load-file command, and make it possible to set the load/boot address when built
-	* make a /dev/flash0 device or /dev/rom0 device, even if it has to be written separately somehow, but at least it'll be mountable
-	* if you had an argument to the boot command in the monitor, for the location, and wrote the bootloader to rom such that it can boot from the CF...
-	  then you can send the kernel over serial while in the kernel, write it to flast as a file, and then reboot the system back to the monitor, where "boot <addr>" would reload the kernel
-	* how can you pass arguments into the kernel from the boot loader?  Can you make it bootable from either a disk image in flash, or a disk image on the CF card?
-	* figure out how to boot the system.  Could the flash/ram backed file system get mounted as /boot, with the memory card being mounted as root?  Can it be configurable
-	  so that I can boot systems without the flash card?
-	* Can you somehow reload the kernel from within the kernel, such that you can load a file from disk which then calls a memcpy function that's copied out of the kernel space
-	  which then copies the kernel data to kernel space before jumping there...
-
-	* separate Makefiles so that the kernel can be compiled normally, and commands/libc-68k-os can be compiled with -mpcrel or -fPIE (libc is the big fiddly bit here)
+	* for tty subsystem, you need a way for the tty driver to tell the serial driver that it's opened the serial driver and so the bottom half for the tty should be requested.
+	  and you need a way to prevent the current process suspension when the tty subsystem is processing the input, since it will handle that... but serial still needs to suspend
+	  procs that are reading directly... (How worth it is to have separate driver entries for tty/serial vs using the line discipline to read directly)
+	* add brk/sbrk/stack guard protection
+	* if you're going to use a unified process segment, then you should probably fix the allocator to merge freed blocks, and/or use a separate heap for the kernel vs process space?
+	* make user programs optionally initialize the heap in a default start routine, and make the heap able to grow (once you have brk/sbrk)
 	* refactor to allow commands to be individually compiled to elfs, and loaded onto the memory card, and executed like normal processes
 	* make a PIE format that can be loaded and executed
+	* try porting a simple command, and then something more complex, maybe awk or something as a big target
+
+	* make the bootloader a bit smaller??
+	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
+	* write the bootloader into rom somewhere, such that it can boot from rom or the compact flash
+	* how can you pass arguments into the kernel from the boot loader?  Can you make it bootable from either a disk image in flash, or a disk image on the CF card?
+	* make init be a separate file loaded from disk and executed
+	* make init relaunch shell if the initial one is killed
+	* make a recipe to create a tar file which can be sent and expanded into the ram disk after the kernel has been booted
+	* can you make it easily possible to boot the system only from a single file, or to boot using the compact flash, so I can have a more full system on the disk ready
 
 
 	* should filedesc be put into fs/?
@@ -44,15 +46,15 @@ Operating System:
 	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
 
 
+	* add more info to the ps command, which is now available in the stat file
+	* commands like mv and cp require the second arg to include the new filename, but if the arg is a dir, it should append the file's name
 	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
 	* add support for umask, and add a mode filter somewhere: (mode & ~umask & 0777)
 	* when there's a trailing / to rm or mkdir, it will create something weird
-	* commands like mv and cp require the second arg to include the new filename, but if the arg is a dir, it should append the file's name
 	* add checks for errors in the serial transfer? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
-	* if you're going to use a unified process segment, then you should probably fix the allocator to merge freed blocks, and/or use a separate heap for the kernel vs process space?
 
 
 
@@ -60,12 +62,14 @@ Operating System:
 	* make a device-independent tty subsystem
 	* add pipe setup to command evaluation
 	* implement getopt, and add flags to commands
-	* add brk/sbrk/stack guard protection
 	* add fifos (should be easy now)
 	* implement login system (setuid)
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 
 	* add commands: rmdir, pwd, dd, chown
+	* add the & (run in background) option to the shell
+	* implement fg/bg somehow... it would be builtin to the shell and would require job control stuff...
+	* add up/down arrow processing to the shell (easy without cooked input, but how would it be done with...)
 	* to stdlib, add: fprintf, fscanf, scanf, fopen, fclose, fgetpos, fseek, feof, fread, fwrite
 	* implement gmtime() and make the time command return a formatted time
 	* rewrite the math functions to use fewer registers, and cover the 32 bit divide by 32 bit number case

@@ -4,7 +4,8 @@
 
 struct process;
 
+int create_process_memory(struct process *proc, size_t text_size);
+int clone_process_memory(struct process *parent_proc, struct process *proc);
 int reset_stack(struct process *proc, void *entry, char *const argv[], char *const envp[]);
-int clone_stack(struct process *parent_proc, struct process *proc);
 
 #endif

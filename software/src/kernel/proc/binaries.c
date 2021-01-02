@@ -52,16 +52,11 @@ int load_flat_binary(struct vfile *file, struct process *proc, void **entry)
 
 	// The extra data is for the bss segment, which we don't know the proper size of
 	int task_size = file->vnode->size + 0x200;
-	char *task_text = kmalloc(task_size);
+	create_process_memory(proc, task_size);
 
-	if (!(error = vfs_read(file, task_text, task_size)))
+	if (!(error = vfs_read(file, proc->map.segments[M_TEXT].base, task_size)))
 		return error;
 
-	// TODO overwriting this could be a memory leak if it's not already NULL.  How do I refcount segments?
-	//if (proc->map.segments[M_TEXT].base)
-	//	kmfree(proc->map.segments[M_TEXT].base);
-	proc->map.segments[M_TEXT].base = task_text;
-	proc->map.segments[M_TEXT].length = task_size;
 	*entry = proc->map.segments[M_TEXT].base;
 
 	return 0;
@@ -99,21 +94,14 @@ int load_elf_binary(struct vfile *file, struct process *proc, void **entry)
 	if (i == header.e_phnum)
 		return ENOEXEC;
 
-	int task_size = prog_header.p_memsz;
-	char *task_text = kmalloc(task_size);
+	create_process_memory(proc, prog_header.p_memsz);
 
 	if (!(error = vfs_seek(file, prog_header.p_offset, SEEK_SET)))
 		return error;
 
-	if (!(error = vfs_read(file, task_text, prog_header.p_filesz)))
+	if (!(error = vfs_read(file, proc->map.segments[M_TEXT].base, prog_header.p_filesz)))
 		return error;
 
-
-	// TODO overwriting this could be a memory leak if it's not already NULL.  How do I refcount segments?
-	//if (proc->map.segments[M_TEXT].base)
-	//	kmfree(proc->map.segments[M_TEXT].base);
-	proc->map.segments[M_TEXT].base = task_text;
-	proc->map.segments[M_TEXT].length = task_size;
 	*entry = proc->map.segments[M_TEXT].base + header.e_entry;
 
 	return 0;

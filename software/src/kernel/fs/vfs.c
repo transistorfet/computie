@@ -519,7 +519,7 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 	if (vnode->mode & S_IFCHR)
 		(*file)->ops = &device_vfile_ops;
 
-	error = vnode->ops->fops->open(*file, flags);
+	error = (*file)->ops->open(*file, flags);
 	if (error)
 		free_fileptr(*file);
 	return error;
@@ -527,9 +527,10 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 
 int vfs_close(struct vfile *file)
 {
-	int error;
+	int error = 0;
 
-	error = file->ops->close(file);
+	if (file->refcount <= 1)
+		error = file->ops->close(file);
 	free_fileptr(file);
 	return error;
 }

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #include "prototype.h"
 
@@ -31,7 +32,7 @@ int MAIN(command_ps)(int argc, char **argv, char **envp)
 		if (error == 0)
 			break;
 
-		pid = strtol(dir.name, NULL, 10);
+		pid = strtol(dir.d_name, NULL, 10);
 		if (pid > 0) {
 			snprintf(buffer, PS_BUFFER_SIZE, "/proc/%d/cmdline", pid);
 			if ((fd = open(buffer, 0, 0)) < 0) {
@@ -49,7 +50,7 @@ int MAIN(command_ps)(int argc, char **argv, char **envp)
 
 			close(fd);
 
-			printf("%s\t%s\n", dir.name, buffer);
+			printf("%s\t%s\n", dir.d_name, buffer);
 		}
 	}
 

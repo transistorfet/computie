@@ -7,6 +7,18 @@
 #include <dirent.h>
 #include <sys/types.h>
 
+#ifndef F_OK
+#define F_OK		0	// Test if file exists
+#endif
+#ifndef X_OK
+#define X_OK		1	// Test if file is executable
+#endif
+#ifndef W_OK
+#define W_OK		2	// Test if file is writable
+#endif
+#ifndef R_OK
+#define R_OK		4	// Test if file is readable
+#endif
 
 #ifndef SEEK_SET
 #define SEEK_SET	0	// Seek relative to the beginning of file

@@ -6,6 +6,11 @@
 #include <dirent.h>
 #include <sys/types.h>
 
+#define F_OK		0	// Test if file exists
+#define X_OK		1	// Test if file is executable
+#define W_OK		2	// Test if file is writable
+#define R_OK		4	// Test if file is readable
+
 #define	STDIN_FILENO	0	// Standard input
 #define	STDOUT_FILENO	1	// Standard output
 #define	STDERR_FILENO	2	// Standard error

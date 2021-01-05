@@ -51,6 +51,7 @@ struct sigaction {
 #define SA_NOCLDSTOP	0x0040	// don't receive SIGCHLD when child stops
 
 int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
+int sigemptyset(sigset_t *set);
 
 #endif
 

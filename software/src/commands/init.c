@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioc_tty.h>
 #include <kernel/syscall.h>

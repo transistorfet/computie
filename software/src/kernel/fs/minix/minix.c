@@ -449,9 +449,9 @@ int minix_readdir(struct vfile *file, struct dirent *dir)
 
 	max = MINIX_V1_MAX_FILENAME < VFS_FILENAME_MAX ? MINIX_V1_MAX_FILENAME : VFS_FILENAME_MAX;
 
-	dir->ino = from_le16(entries[zpos].inode);
-	strncpy(dir->name, entries[zpos].filename, max);
-	dir->name[max - 1] = '\0';
+	dir->d_ino = from_le16(entries[zpos].inode);
+	strncpy(dir->d_name, entries[zpos].filename, max);
+	dir->d_name[max - 1] = '\0';
 	release_block(buf, BCF_DIRTY);
 
 	return 1;

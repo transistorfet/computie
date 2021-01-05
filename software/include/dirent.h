@@ -5,8 +5,8 @@
 #include <sys/types.h>
 
 struct dirent {
-	inode_t ino;
-	char name[14];
+	inode_t d_ino;
+	char d_name[14];
 };
 
 #endif

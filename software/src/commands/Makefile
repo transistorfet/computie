@@ -54,5 +54,16 @@ $(ROOT)/libc-68k-os.a:
 	$(AS) $(ASFLAGS) -c -o $@ $<
 
 clean:
-	@find . \( -name "*.o" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" -or -name "*.send" \) -delete
+	@find . \( -name "*.o" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" -or -name "*.send" -or -name "*.exe" -or -name "*.o64" \) -delete
+
+
+CFLAGS_X86 = -g
+sh.exe: CFLAGS_X86 += -DLINUXHOST -DONEBINARY -DADDMAIN
+
+%.exe: %.o64
+	gcc $(CFLAGS_X86) -o $*.exe $^
+
+%.o64: %.c
+	gcc $(CFLAGS_X86) -c -o $@ $<
+
 

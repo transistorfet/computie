@@ -9,13 +9,21 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
+#include <termios.h>
 
+#include <fcntl.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/ioc_tty.h>
 #include <kernel/syscall.h>
 
 #include "prototype.h"
+
+#ifdef LINUXHOST
+char ***environ;
+#define putsn(x) { fputs((x), stdout); fflush(stdout); }
+#endif
 
 #ifdef ADDMAIN
 int sh_task();
@@ -122,6 +130,8 @@ int command_send(int argc, char **argv, char **envp)
 	int fd;
 	uint16_t size;
 	uint16_t data;
+	tcflag_t lflag;
+	struct termios tio;
 
 	if (argc <= 1) {
 		puts("You need file name");
@@ -135,6 +145,12 @@ int command_send(int argc, char **argv, char **envp)
 		return fd;
 	}
 
+	ioctl(STDIN_FILENO, TCGETS, &tio);
+	lflag = tio.c_lflag;
+	tio.c_lflag = 0;
+	ioctl(STDIN_FILENO, TCSETS, &tio);
+	tio.c_lflag = lflag;
+
 	size = fetch_word();
 	size >>= 1;
 	//printf("Expecting %x\n", size);
@@ -145,6 +161,8 @@ int command_send(int argc, char **argv, char **envp)
 		//mem[i] = data;
 		write(fd, (char *) &data, 2);
 	}
+
+	ioctl(STDIN_FILENO, TCSETS, &tio);
 
 	close(fd);
 
@@ -323,8 +341,8 @@ int command_ls(int argc, char **argv, char **envp)
 		if (error == 0)
 			break;
 
-		if (dir.name[0] != '.') {
-			strcpy(&filename[start], dir.name);
+		if (dir.d_name[0] != '.') {
+			strcpy(&filename[start], dir.d_name);
 			error = stat(filename, &statbuf);
 			if (error < 0) {
 				printf("Error at stat %s (%d)\n", filename, error);
@@ -332,7 +350,7 @@ int command_ls(int argc, char **argv, char **envp)
 			}
 
 			format_file_mode(statbuf.st_mode, filemode);
-			printf("%s %6d %s\n", filemode, statbuf.st_size, dir.name);
+			printf("%s %6d %s\n", filemode, statbuf.st_size, dir.d_name);
 		}
 	}
 
@@ -826,7 +844,7 @@ int execute_command(struct pipe_command *command, int argc, char **argv, char **
 	int pid, status;
 	char *fullpath;
 	char buffer[NAME_SIZE];
-	void *main = NULL;
+	main_t main = NULL;
 
 	fullpath = resolve_file_location(argv[0], buffer, NAME_SIZE);
 	if (fullpath)
@@ -858,8 +876,13 @@ int execute_command(struct pipe_command *command, int argc, char **argv, char **
 				exit(-1);
 		}
 
-		if (main)
+		if (main) {
+			#ifndef LINUXHOST
 			status = SYSCALL3(SYS_EXECBUILTIN, (int) main, (int) argv, (int) envp);
+			#else
+			status = main(argc, argv, envp);
+			#endif
+		}
 		else
 			status = execve(argv[0], argv, envp);
 		// The exec() system call will only return if an error occurs
@@ -878,6 +901,7 @@ int execute_command(struct pipe_command *command, int argc, char **argv, char **
 void serial_read_loop()
 {
 	int argc;
+	int error;
 	main_t main;
 	char buffer[BUF_SIZE];
 	char *argv[ARG_SIZE];
@@ -885,10 +909,11 @@ void serial_read_loop()
 	char *envp[2] = { "PATH=/bin:/sbin", NULL };
 
 	while (1) {
-		memset_s(commands, 0, sizeof(struct pipe_command) * PIPE_SIZE);
+		memset(commands, 0, sizeof(struct pipe_command) * PIPE_SIZE);
 		putsn("% ");
-		if (!readline(buffer, BUF_SIZE)) {
-			putchar('\n');
+		if (!readline(buffer, BUF_SIZE))
+		//if ((error = read(0, buffer, BUF_SIZE) <= 0)) {
+			printf("Error: %d\n", error);
 			continue;
 		}
 		if (parse_command_line(buffer, commands))
@@ -904,7 +929,7 @@ void serial_read_loop()
 
 		argc = parseline(commands[0].cmd, argv);
 
-		if (*argv[0] == '\0')
+		if (argc <= 0 || !argv[0] || *argv[0] == '\0')
 			continue;
 		else if (!strcmp(argv[0], "exit"))
 			return;
@@ -939,6 +964,8 @@ int MAIN(sh_task)()
 
 	struct sigaction act;
 	act.sa_handler = handle_test;
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
 	sigaction(SIGINT, &act, NULL);
 	sigaction(SIGALRM, &act, NULL);
 

@@ -147,7 +147,7 @@ int command_send(int argc, char **argv, char **envp)
 
 	tcgetattr(STDIN_FILENO, &tio);
 	lflag = tio.c_lflag;
-	tio.c_lflag = ISIG;
+	tio.c_lflag = 0;
 	tcsetattr(STDIN_FILENO, TCSANOW, &tio);
 	tio.c_lflag = lflag;
 
@@ -914,7 +914,7 @@ void serial_read_loop()
 		memset(commands, 0, sizeof(struct pipe_command) * PIPE_SIZE);
 		putsn("% ");
 		//if (!readline(buffer, BUF_SIZE))
-		if ((error = read(0, buffer, BUF_SIZE) <= 0)) {
+		if ((error = read(0, buffer, BUF_SIZE)) <= 0) {
 			printf("Error: %d\n", error);
 			continue;
 		}

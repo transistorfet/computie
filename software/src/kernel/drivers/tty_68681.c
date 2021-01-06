@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 
 #include <sys/stat.h>
@@ -171,6 +172,7 @@ struct serial_channel {
 	struct circular_buffer rx;
 	struct circular_buffer tx;
 	const struct channel_ports *ports;
+	int mode;
 	int pgid;
 	char rx_ready;
 };
@@ -183,6 +185,7 @@ extern void enter_irq();
 
 static inline void config_serial_channel(struct serial_channel *channel)
 {
+	channel->mode = 0;
 	channel->pgid = 0;
 	channel->rx_ready = 0;
 
@@ -277,8 +280,9 @@ static void tty_68681_process_input(void *_unused)
 	for (char i = 0; i < 2; i++) {
 		if (channels[i].rx_ready) {
 			channels[i].rx_ready = 0;
-			resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, i));
+			resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY68681, i));
 
+			request_bh_run(SH_TTY);
 			// TODO this isn't needed now, since the assert in getchar handle this, but once we have the tty subsystem this might be needed
 			//if (_buf_is_empty(&channels[i].rx))
 			//	ASSERT_CTS(&channels[i]);
@@ -298,9 +302,9 @@ static inline void handle_channel_io(register char isr, register devminor_t mino
 				break;
 			char ch = *channels[minor].ports->recv;
 			// TODO this is a temporary hack to get ^C -> SIGINT, but it's totally wrong on so many levels
-			if (ch == 0x03 && channels[minor].pgid) {
-				send_signal_process_group(channels[minor].pgid, SIGINT);
-			}
+			//if (ch == 0x03 && channels[minor].pgid) {
+			//	send_signal_process_group(channels[minor].pgid, SIGINT);
+			//}
 			//if (ch == 0x04 && channel->pgid) {
 			//	send_signal(channel->pgid, SIGCONT);
 			//}
@@ -312,7 +316,7 @@ static inline void handle_channel_io(register char isr, register devminor_t mino
 
 		channels[minor].rx_ready = 1;
 		request_bh_run(SH_TTY68681);
-		//resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, channel == &channels[CH_A] ? 0 : 1));
+		//resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY68681, channel == &channels[CH_A] ? 0 : 1));
 	}
 
 
@@ -517,17 +521,29 @@ int tty_68681_init()
 {
 	tty_68681_normal_mode();
 
-	register_driver(DEVMAJOR_TTY, &tty_68681_driver);
+	register_driver(DEVMAJOR_TTY68681, &tty_68681_driver);
 	register_bh(SH_TTY68681, tty_68681_process_input, NULL);
 }
 
-int tty_68681_open(devminor_t minor, int access)
+int tty_68681_open(devminor_t minor, int mode)
 {
+	struct serial_channel *channel = from_minor_dev(minor);
+
+	if (!channel)
+		return ENODEV;
+	if (channel->mode || !mode)
+		return EBUSY;
+	channel->mode = mode;
 	return 0;
 }
 
 int tty_68681_close(devminor_t minor)
 {
+	struct serial_channel *channel = from_minor_dev(minor);
+
+	if (!channel)
+		return ENODEV;
+	channel->mode = 0;
 	return 0;
 }
 
@@ -542,7 +558,7 @@ int tty_68681_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 	for (; i > 0; i--, buffer++) {
 		if (_buf_is_empty(&channel->rx)) {
 			// Suspend the process only if we haven't read any data yet
-			if (size == i)
+			if (size == i && !(channel->mode & O_NONBLOCK))
 				suspend_current_proc();
 			return size - i;
 		}
@@ -561,7 +577,8 @@ int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_
 
 	// TODO with this method, each write's size must always be smaller than buffer size
 	if (_buf_free_space(&channel->tx) < size) {
-		suspend_current_proc();
+		if (!(channel->mode & O_NONBLOCK))
+			suspend_current_proc();
 		return 0;
 	}
 

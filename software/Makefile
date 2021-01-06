@@ -48,6 +48,7 @@ FILESYSTEM_OBJS = \
 
 DRIVER_OBJS = \
 	src/kernel/drivers/tty_68681.o \
+	src/kernel/drivers/tty.o \
 	src/kernel/drivers/mem.o \
 	src/kernel/drivers/ata.o
 

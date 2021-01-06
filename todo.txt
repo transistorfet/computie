@@ -20,6 +20,10 @@ Operating System:
 	  that, the tty driver tries to resume procs, but since the state is changed, this doesn't have an affect and it's not until another character is entered that both the
 	  ^C and the other character are read (and the prompt is only then printed).
 
+	* add the tcsetpgrp() and tcsetattr() functions
+	* add support for the SA_RESTART flag when a signal occurs (ie. support the non-restarting case)
+	* there is an issue running the shell on linux related to the setting the process group
+
 	* for tty subsystem, you need a way for the tty driver to tell the serial driver that it's opened the serial driver and so the bottom half for the tty should be requested.
 	  and you need a way to prevent the current process suspension when the tty subsystem is processing the input, since it will handle that... but serial still needs to suspend
 	  procs that are reading directly... (How worth it is to have separate driver entries for tty/serial vs using the line discipline to read directly)

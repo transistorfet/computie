@@ -5,9 +5,10 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#define DEVMAJOR_TTY	1
-#define DEVMAJOR_MEM	2
-#define DEVMAJOR_ATA	3
+#define DEVMAJOR_TTY68681	1
+#define DEVMAJOR_TTY		2
+#define DEVMAJOR_MEM		3
+#define DEVMAJOR_ATA		4
 
 #define DEVNUM(major, minor)	((major) << 8 | (minor))
 
@@ -16,7 +17,7 @@ typedef unsigned char devminor_t;
 
 struct driver {
 	int (*init)();
-	int (*open)(devminor_t minor, int access);
+	int (*open)(devminor_t minor, int mode);
 	int (*close)(devminor_t minor);
 	int (*read)(devminor_t minor, char *buffer, offset_t offset, size_t size);
 	int (*write)(devminor_t minor, const char *buffer, offset_t offset, size_t size);

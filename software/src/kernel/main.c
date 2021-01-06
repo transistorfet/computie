@@ -25,11 +25,13 @@
 extern void tty_68681_preinit();
 
 extern struct driver tty_68681_driver;
+extern struct driver tty_driver;
 extern struct driver mem_driver;
 extern struct driver ata_driver;
 
 struct driver *drivers[] = {
 	&tty_68681_driver,
+	&tty_driver,
 	&mem_driver,
 	&ata_driver,
 	NULL	// Null Termination of Drivers List

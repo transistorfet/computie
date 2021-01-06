@@ -15,7 +15,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include <sys/ioc_tty.h>
+#include <sys/ioctl.h>
 #include <kernel/syscall.h>
 
 #include "prototype.h"
@@ -145,15 +145,15 @@ int command_send(int argc, char **argv, char **envp)
 		return fd;
 	}
 
-	ioctl(STDIN_FILENO, TCGETS, &tio);
+	tcgetattr(STDIN_FILENO, &tio);
 	lflag = tio.c_lflag;
-	tio.c_lflag = 0;
-	ioctl(STDIN_FILENO, TCSETS, &tio);
+	tio.c_lflag = ISIG;
+	tcsetattr(STDIN_FILENO, TCSANOW, &tio);
 	tio.c_lflag = lflag;
 
 	size = fetch_word();
 	size >>= 1;
-	//printf("Expecting %x\n", size);
+	printf("Expecting %x\n", size);
 
 	for (short i = 0; i < size; i++) {
 		data = fetch_word();
@@ -162,7 +162,7 @@ int command_send(int argc, char **argv, char **envp)
 		write(fd, (char *) &data, 2);
 	}
 
-	ioctl(STDIN_FILENO, TCSETS, &tio);
+	tcsetattr(STDIN_FILENO, TCSANOW, &tio);
 
 	close(fd);
 
@@ -520,7 +520,7 @@ int command_kill(int argc, char **argv, char **envp)
 	int i = 1;
 	pid_t pid;
 	int signal = 6;
-	const char *endptr;
+	char *endptr;
 
 	if (argc <= 1) {
 		printf("Usage: kill -[\\d] <pid>\n");
@@ -669,6 +669,7 @@ main_t find_command(char *name)
 	return NULL;
 }
 
+/*
 int readline(char *buffer, short max)
 {
 	short i = 0;
@@ -707,6 +708,7 @@ int readline(char *buffer, short max)
 	buffer[--i] = '\0';
 	return i;
 }
+*/
 
 int parseline(char *input, char **vargs)
 {
@@ -861,13 +863,13 @@ int execute_command(struct pipe_command *command, int argc, char **argv, char **
 	if (pid) {
 		waitpid(pid, &status, 0);
 		pid_t fgpid = getpgid(0);
-		ioctl(STDOUT_FILENO, TIOCSPGRP, &fgpid);
+		tcsetpgrp(STDOUT_FILENO, fgpid);
 	}
 	else {
 		if (setpgid(0, 0))
 			exit(-1);
 		pid_t fgpid = getpgid(0);
-		ioctl(STDOUT_FILENO, TIOCSPGRP, &fgpid);
+		tcsetpgrp(STDOUT_FILENO, fgpid);
 
 		// TODO set the tty's process group to this one? how does it get set back when the process terminates?
 
@@ -911,8 +913,8 @@ void serial_read_loop()
 	while (1) {
 		memset(commands, 0, sizeof(struct pipe_command) * PIPE_SIZE);
 		putsn("% ");
-		if (!readline(buffer, BUF_SIZE))
-		//if ((error = read(0, buffer, BUF_SIZE) <= 0)) {
+		//if (!readline(buffer, BUF_SIZE))
+		if ((error = read(0, buffer, BUF_SIZE) <= 0)) {
 			printf("Error: %d\n", error);
 			continue;
 		}
@@ -946,7 +948,7 @@ void handle_test(int signum)
 {
 	//int a = 0xABAB;
 	// TODO this exact code and only this code just happens to trigger an optimization where it replaces the arg and jumps to puts instead of generating a proper function
-	puts("Hey\n");
+	puts("Hey");
 	//printf("Hey %d\n", signum);
 	//dump((uint16_t *) 0x1179EA, 48);
 }

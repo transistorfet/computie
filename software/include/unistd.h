@@ -27,6 +27,8 @@
 
 struct stat;
 
+// Syscalls
+
 pid_t fork();
 void exit(int status);
 int execve(const char *path, char *const argv[], char *const envp[]);
@@ -74,5 +76,8 @@ extern char ***environ;
 
 char *getenv(const char *name);
 int getopt(int argc, char * const argv[], const char *optstring);
+
+pid_t tcgetpgrp(int fd);
+int tcsetpgrp(int fd, pid_t pgrp);
 
 #endif

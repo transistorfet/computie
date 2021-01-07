@@ -20,6 +20,7 @@ void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev);
 void resume_waiting_parent(struct process *proc);
 void reschedule_proc_to_now(struct process *proc);
 void restart_current_syscall();
+void cancel_syscall(struct process *proc);
 
 void set_proc_return_value(struct process *proc, int ret);
 void return_to_current_proc(int ret);

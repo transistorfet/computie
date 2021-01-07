@@ -119,17 +119,22 @@ static inline void run_signal_handler(struct process *proc, int signum)
 
 void cleanup_signal_handler()
 {
+	int signum;
 	struct sigcontext *context;
 
 	current_proc->sp = drop_context(current_proc->sp);
 	context = (struct sigcontext *) current_proc->sp;
 	current_proc->signals.blocked = context->prev_mask;
+	signum = context->signum;
 	current_proc->sp = (((struct sigcontext *) current_proc->sp) + 1);
 
 	check_pending_signals();
 
-	if (current_proc->bits & PB_PAUSED)
-		restart_current_syscall();
+	// NOTE the signum range check here is defensive, in case the stack was corrupted during the signal handling
+	// 	This has occurred in the specific condition of a single handler that calls puts() and nothing else,
+	//	which gcc will generate as a tail-call optimized version that jumps directly to puts() with a modified stack
+	if ((current_proc->bits & PB_PAUSED) || signum >= SIG_HANDLERS_NUM || !(current_proc->signals.actions[signum - 1].sa_flags & SA_RESTART))
+		cancel_syscall(current_proc);
 	else if (current_proc->bits & PB_SYSCALL)
 		suspend_proc(current_proc, 0);
 }
@@ -155,6 +160,10 @@ static inline void run_signal_default_action(struct process *proc, int signum, s
 		stop_proc(proc);
 	else if (signum == SIGCONT)
 		resume_proc(proc);
+
+	// Since we don't execute the signal handler cleanup for a default action, we cancel the syscall here instead
+	if (!(current_proc->signals.actions[signum - 1].sa_flags & SA_RESTART))
+		cancel_syscall(current_proc);
 }
 
 static void sig_default_terminate(struct process *proc, int signum)

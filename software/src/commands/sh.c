@@ -1,5 +1,5 @@
 
-
+#include <errno.h>
 #include <ctype.h>
 #include <stdint.h>
 #include <string.h>
@@ -915,7 +915,8 @@ void serial_read_loop()
 		putsn("% ");
 		//if (!readline(buffer, BUF_SIZE))
 		if ((error = read(0, buffer, BUF_SIZE)) <= 0) {
-			printf("Error: %d\n", error);
+			if (error != EINTR)
+				printf("Error: %d\n", error);
 			continue;
 		}
 		if (parse_command_line(buffer, commands))
@@ -948,7 +949,7 @@ void handle_test(int signum)
 {
 	//int a = 0xABAB;
 	// TODO this exact code and only this code just happens to trigger an optimization where it replaces the arg and jumps to puts instead of generating a proper function
-	puts("Hey");
+	puts("^C");
 	//printf("Hey %d\n", signum);
 	//dump((uint16_t *) 0x1179EA, 48);
 }

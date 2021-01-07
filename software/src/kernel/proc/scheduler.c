@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <asm/macros.h>
 
 #include <kernel/printk.h>
@@ -185,6 +186,21 @@ void restart_current_syscall()
 	}
 }
 
+void cancel_syscall(struct process *proc)
+{
+	short saved_status;
+
+	LOCK(saved_status);
+	if (proc->state == PS_BLOCKED)
+		resume_proc(proc);
+	if (proc->state == PS_RESUMING)
+		proc->state = PS_RUNNING;
+	proc->bits &= ~(PB_SYSCALL | PB_WAITING | PB_PAUSED);
+	set_proc_return_value(proc, EINTR);
+	proc->bits |= PB_RETURN_SET;
+	UNLOCK(saved_status);
+}
+
 
 
 void set_proc_return_value(struct process *proc, int ret)
@@ -194,7 +210,9 @@ void set_proc_return_value(struct process *proc, int ret)
 
 void return_to_current_proc(int ret)
 {
-	if (current_proc->state == PS_RUNNING) {
+	if (current_proc->bits & PB_RETURN_SET)
+		current_proc->bits &= ~PB_RETURN_SET;
+	else if (current_proc->state == PS_RUNNING) {
 		// If the process is still in the ready state, then set the return value in the process's context
 		*((uint32_t *) current_proc->sp) = ret;
 	}

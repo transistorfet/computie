@@ -484,15 +484,9 @@ unsigned int do_alarm(unsigned int seconds)
 
 int do_pause()
 {
-	if (current_proc->bits & PB_PAUSED) {
-		current_proc->bits &= ~PB_PAUSED;
-		return -1;
-	}
-	else {
-		current_proc->bits |= PB_PAUSED;
-		suspend_current_proc();
-		return 0;
-	}
+	current_proc->bits |= PB_PAUSED;
+	suspend_current_proc();
+	return 0;
 }
 
 int do_sigreturn()

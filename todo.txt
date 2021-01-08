@@ -17,6 +17,7 @@ Operating System:
 	  not found condition seems to be less predictable.  These could be different issues
 	  I can't seem to reproduce this anymore, except with the sh.bin binary on the flash card from a long time ago
 
+	* need to clear unread data from tty buffer after the shell receives a ^C
 	* there is an issue running the shell on linux related to the setting the process group
 
 	* for tty subsystem, you need a way for the tty driver to tell the serial driver that it's opened the serial driver and so the bottom half for the tty should be requested.

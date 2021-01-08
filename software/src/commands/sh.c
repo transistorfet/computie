@@ -171,48 +171,6 @@ int command_send(int argc, char **argv, char **envp)
 	return 0;
 }
 
-#define ECHO_BUF_SIZE	256
-
-int command_echo(int argc, char **argv, char **envp)
-{
-	// TODO this would normally be in _start
-	*environ = envp;
-
-	int k = 0;
-	char tmp;
-	char *value;
-	int open_quote = 0;
-	char buffer[ECHO_BUF_SIZE];
-
-	for (int i = 1; i < argc; i++) {
-		for (int j = 0; argv[i][j]; j++) {
-			if (argv[i][j] == '\"') {
-				open_quote = !open_quote;
-			}
-			else if (argv[i][j] == '$') {
-				int l;
-				for (l = ++j; argv[i][l] && isalnum(argv[i][l]); l++) { }
-				tmp = argv[i][l];
-				argv[i][l] = '\0';
-				value = getenv(&argv[i][j]);
-				if (value) {
-					strcpy(&buffer[k], value);
-					k += strlen(&buffer[k]);
-				}
-				argv[i][l] = tmp;
-				j = l - 1;
-			}
-			else
-				buffer[k++] = argv[i][j];
-		}
-		buffer[k++] = ' ';
-	}
-	buffer[k] = '\0';
-
-	puts(buffer);
-	return 0;
-}
-
 
 #define DUMP_BUF_SIZE	0x10
 
@@ -257,336 +215,6 @@ int command_hex(int argc, char **argv, char **envp)
 	return 0;
 }
 
-int command_cat(int argc, char **argv, char **envp)
-{
-	int fd;
-	int result;
-	char buffer[DUMP_BUF_SIZE];
-
-	if (argc <= 1) {
-		puts("You need file name");
-		return -1;
-	}
-
-	if ((fd = open(argv[1], O_RDONLY, 0)) < 0) {
-		printf("Error opening %s: %d\n", argv[1], fd);
-		return fd;
-	}
-
-	while (1) {
-		result = read(fd, buffer, DUMP_BUF_SIZE);
-		if (result == 0)
-			break;
-
-		if (result < 0) {
-			printf("Error while reading: %d\n", result);
-			return result;
-		}
-
-		write(STDOUT_FILENO, buffer, result);
-	}
-
-	putchar('\n');
-
-	close(fd);
-
-	return 0;
-}
-
-void format_file_mode(mode_t mode, char *buffer)
-{
-	mode_t curbit = 0400;
-
-	strcpy(buffer, "-rwxrwxrwx");
-
-	if (mode & S_IFDIR)
-		buffer[0] = 'd';
-
-	for (char i = 1; i <= 10; i++) {
-		if (!(mode & curbit))
-			buffer[i] = '-';
-		curbit >>= 1;
-	}
-}
-
-int command_ls(int argc, char **argv, char **envp)
-{
-	int fd;
-	int error;
-	struct dirent dir;
-	struct stat statbuf;
-	char filename[100];
-	char filemode[10];
-
-	char *path = argc > 1 ? argv[1] : ".";
-
-	if ((fd = open(path, 0, 0)) < 0) {
-		printf("Error opening %s: %d\n", path, fd);
-		return fd;
-	}
-
-	int start = strlen(path) - 1;
-	strcpy(filename, path);
-	if (filename[start] != '/')
-		filename[++start] = '/';
-	start++;
-
-	while (1) {
-		error = readdir(fd, &dir);
-		if (error < 0) {
-			printf("Error at readdir %d\n", error);
-			return error;
-		}
-
-		if (error == 0)
-			break;
-
-		if (dir.d_name[0] != '.') {
-			strcpy(&filename[start], dir.d_name);
-			error = stat(filename, &statbuf);
-			if (error < 0) {
-				printf("Error at stat %s (%d)\n", filename, error);
-				return error;
-			}
-
-			format_file_mode(statbuf.st_mode, filemode);
-			printf("%s %6d %s\n", filemode, statbuf.st_size, dir.d_name);
-		}
-	}
-
-	close(fd);
-
-	return 0;
-}
-
-int command_mkdir(int argc, char **argv, char **envp)
-{
-	if (argc <= 1) {
-		puts("Usage: mkdir <dir>");
-		return -1;
-	}
-
-	int error = mkdir(argv[1], 0755);
-	if (error < 0) {
-		printf("Error while making directory %s: %d\n", argv[1], error);
-	}
-
-	return 0;
-}
-
-#define CP_BUF_SIZE	512
-
-int command_cp(int argc, char **argv, char **envp)
-{
-	int result;
-	int src_fd, dest_fd;
-	char buffer[CP_BUF_SIZE];
-
-	if (argc <= 2) {
-		puts("Usage: cp <source> <dest>");
-		return -1;
-	}
-
-
-	if (!(src_fd = open(argv[1], O_RDONLY, 0))) {
-		printf("Error when opening %s: %d\n", argv[1], src_fd);
-		return -1;
-	}
-
-	if (!(dest_fd = open(argv[2], O_WRONLY | O_CREAT, 0644))) {
-		printf("Error when opening %s: %d\n", argv[2], dest_fd);
-		return -1;
-	}
-
-	while (1) {
-		result = read(src_fd, buffer, CP_BUF_SIZE);
-		if (result == 0)
-			break;
-
-		if (result < 0) {
-			printf("Error while reading: %d\n", result);
-			return result;
-		}
-
-		result = write(dest_fd, buffer, result);
-
-		if (result < 0) {
-			printf("Error while writing: %d\n", result);
-			return result;
-		}
-	}
-
-	close(dest_fd);
-	close(src_fd);
-
-	return 0;
-}
-
-int command_mv(int argc, char **argv, char **envp)
-{
-	if (argc <= 2) {
-		puts("Usage: mv <file> <dest>");
-		return -1;
-	}
-
-	int error = rename(argv[1], argv[2]);
-	if (error < 0) {
-		printf("Error while renaming %s: %d\n", argv[1], error);
-		return error;
-	}
-
-	return 0;
-}
-
-int command_ln(int argc, char **argv, char **envp)
-{
-	if (argc <= 2) {
-		puts("Usage: ln <source> <target>");
-		return -1;
-	}
-
-	int error = link(argv[1], argv[2]);
-	if (error < 0) {
-		printf("Error while linking %s to %s: %d\n", argv[1], argv[2], error);
-		return error;
-	}
-
-	return 0;
-}
-
-int command_rm(int argc, char **argv, char **envp)
-{
-	if (argc <= 1) {
-		puts("Usage: rm <file>");
-		return -1;
-	}
-
-	int error = unlink(argv[1]);
-	if (error < 0) {
-		printf("Error while unlinking %s: %d\n", argv[1], error);
-	}
-
-	return 0;
-}
-
-int command_chmod(int argc, char **argv, char **envp)
-{
-	if (argc <= 2) {
-		puts("Usage: chmod <mode> <file>");
-		return -1;
-	}
-
-	for (int i = 0; argv[1][i]; i++) {
-		if (argv[1][i] < '0' || argv[1][i] > '7') {
-			puts("File mode must be an octal number");
-			return -1;
-		}
-	}
-
-	mode_t mode = strtol(argv[1], NULL, 8);
-
-	int error = chmod(argv[2], mode);
-	if (error < 0) {
-		printf("Error while renaming %s: %d\n", argv[1], error);
-		return error;
-	}
-
-	return 0;
-}
-
-
-/*
-int command_time(int argc, char **argv, char **envp)
-{
-	time_t t;
-	struct tm *current_time;
-
-	t = time(NULL);
-	t = 1604635268;
-	current_time = gmtime(&t);
-
-	printf("%d\n", t);
-	printf("%d/%02d/%02d %02d:%02d:%02d\n", current_time->tm_year, current_time->tm_mon + 1, current_time->tm_mday, current_time->tm_hour, current_time->tm_min, current_time->tm_sec);
-
-	return 0;
-}
-*/
-
-#include "ps.c"
-
-int command_kill(int argc, char **argv, char **envp)
-{
-	int error;
-	int i = 1;
-	pid_t pid;
-	int signal = 6;
-	char *endptr;
-
-	if (argc <= 1) {
-		printf("Usage: kill -[\\d] <pid>\n");
-		return 0;
-	}
-
-	if (argv[i][0] == '-') {
-		signal = strtol(&argv[i][1], &endptr, 10);
-		i += 1;
-	}
-
-	pid = strtol(argv[i], &endptr, 10);
-	if (pid < 0 || endptr[0] != '\0') {
-		printf("Invalid pid number\n");
-		return -1;
-	}
-
-	error = kill(pid, signal);
-	if (error < 0) {
-		printf("Error attempting to send signal %d to process %d, return %d\n", signal, pid, error);
-		return -1;
-	}
-
-	return 0;
-}
-
-int command_mount(int argc, char **argv, char **envp)
-{
-	int error;
-
-	if (argc <= 2) {
-		puts("Usage: mount <devfile> <mountpoint>");
-		return -1;
-	}
-
-	error = mount(argv[1], argv[2], NULL);
-	if (error < 0) {
-		printf("Error while mounting %d\n", error);
-		return -1;
-	}
-
-	return 0;
-}
-
-int command_umount(int argc, char **argv, char **envp)
-{
-	int error;
-
-	if (argc <= 1) {
-		puts("Usage: umount <devfile>");
-		return -1;
-	}
-
-	error = umount(argv[1]);
-	if (error < 0) {
-		printf("Error while unmounting %d\n", error);
-		return -1;
-	}
-
-	return 0;
-}
-
-int command_sync(int argc, char **argv, char **envp)
-{
-	sync();
-}
 
 int command_chdir(int argc, char **argv, char **envp)
 {
@@ -602,6 +230,25 @@ int command_chdir(int argc, char **argv, char **envp)
 
 	return 0;
 }
+
+
+#ifdef ONEBINARY
+#include "echo.c"
+#include "cat.c"
+#include "ls.c"
+#include "mkdir.c"
+#include "mv.c"
+#include "cp.c"
+#include "ln.c"
+#include "rm.c"
+#include "chmod.c"
+//#include "time.c"
+#include "ps.c"
+#include "kill.c"
+#include "mount.c"
+#include "umount.c"
+#include "sync.c"
+#endif
 
 
 
@@ -640,8 +287,11 @@ void init_commands()
 	add_command("dump", 	command_dump);
 	add_command("poke", 	command_poke);
 	add_command("send", 	command_send);
-	add_command("echo", 	command_echo);
 	add_command("hex", 	command_hex);
+	add_command("cd", 	command_chdir);
+
+	#ifdef ONEBINARY
+	add_command("echo", 	command_echo);
 	add_command("cat", 	command_cat);
 	add_command("ls", 	command_ls);
 	add_command("mkdir", 	command_mkdir);
@@ -656,7 +306,8 @@ void init_commands()
 	add_command("mount", 	command_mount);
 	add_command("umount", 	command_umount);
 	add_command("sync", 	command_sync);
-	add_command("cd", 	command_chdir);
+	#endif
+
 	add_command(NULL, 	NULL);
 }
 

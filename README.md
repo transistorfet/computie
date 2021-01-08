@@ -19,6 +19,9 @@ it.  It can do preemptive multitasking using the 68681 timer.  It also has an im
 filesystem, which uses RAM (through a device driver) to store the data, or a Compact Flash card connected as an IDE
 device.
 
+![alt text](https://github.com/transistorfet/computie/raw/master/images/OS-basic.gif "OS")
+
+
 The 68k Single Board Computer
 -----------------------------
 

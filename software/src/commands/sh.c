@@ -21,7 +21,6 @@
 #include "prototype.h"
 
 #ifdef LINUXHOST
-char ***environ;
 #define putsn(x) { fputs((x), stdout); fflush(stdout); }
 #endif
 
@@ -391,7 +390,6 @@ int parseline(char *input, char **vargs)
 	if (*vargs[j - 1] == '\0')
 		j -= 1;
 	vargs[j] = NULL;
-	printf("args: %d\n", j);
 
 	return j;
 }

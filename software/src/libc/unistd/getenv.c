@@ -1,12 +1,12 @@
 
 #include <stddef.h>
 
-char ***environ;
+char **environ;
 
 const char *getenv(const char *name)
 {
 	register const char *ech, *nch;
-	register char **envp = *environ;
+	register char **envp = environ;
 
 	if (!envp || !name)
 		return NULL;

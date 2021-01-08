@@ -8,12 +8,12 @@
 
 #define ECHO_BUF_SIZE	256
 
-extern char ***environ;
+extern char **environ;
 
 int MAIN(command_echo)(int argc, char **argv, char **envp)
 {
 	// TODO this would normally be in _start
-	//*environ = envp;
+	environ = envp;
 
 	int k = 0;
 	char tmp;

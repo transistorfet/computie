@@ -80,12 +80,6 @@ void dump(const uint16_t *addr, short len)
  * Commands *
  ************/
 
-int command_test(int argc, char **argv, char **envp)
-{
-	//puts("this is only a test");
-	return 0;
-}
-
 int command_dump(int argc, char **argv, char **envp)
 {
 	if (argc <= 1)
@@ -283,7 +277,6 @@ void init_commands()
 {
 	commands = 0;
 
-	//add_command("test", 	command_test);
 	add_command("dump", 	command_dump);
 	add_command("poke", 	command_poke);
 	add_command("send", 	command_send);
@@ -389,20 +382,15 @@ int parseline(char *input, char **vargs)
 	return j;
 }
 
-static inline int is_whitespace(char ch)
-{
-	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r';
-}
-
 char *parse_word(char **input)
 {
 	char *start;
 
-	for (; **input != '\0' && is_whitespace(**input); (*input)++) { }
+	for (; **input != '\0' && isspace(**input); (*input)++) { }
 
 	start = *input;
 
-	for (; **input != '\0' && !is_whitespace(**input); (*input)++) { }
+	for (; **input != '\0' && !isspace(**input); (*input)++) { }
 	**input = '\0';
 	*input++;
 

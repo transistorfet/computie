@@ -287,11 +287,12 @@ int do_stat(const char *path, struct stat *statbuf)
 	if ((error = vfs_lookup(current_proc->cwd, path, VLOOKUP_NORMAL, current_proc->uid, &vnode)))
 		return error;
 
-	statbuf->st_dev = 0;
+	statbuf->st_dev = vnode->mp->dev;
 	statbuf->st_mode = vnode->mode;
 	statbuf->st_nlinks = vnode->nlinks;
 	statbuf->st_uid = vnode->uid;
 	statbuf->st_gid = vnode->gid;
+	statbuf->st_rdev = vnode->rdev;
 	statbuf->st_size = vnode->size;
 	statbuf->st_atime = vnode->atime;
 	statbuf->st_mtime = vnode->mtime;

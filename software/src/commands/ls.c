@@ -14,8 +14,10 @@ void format_file_mode(mode_t mode, char *buffer)
 
 	if (mode & S_IFDIR)
 		buffer[0] = 'd';
+	if (mode & S_IFCHR)
+		buffer[0] = 'c';
 
-	for (char i = 1; i <= 10; i++) {
+	for (char i = 1; i < 10; i++) {
 		if (!(mode & curbit))
 			buffer[i] = '-';
 		curbit >>= 1;
@@ -63,7 +65,10 @@ int MAIN(command_ls)(int argc, char **argv, char **envp)
 			}
 
 			format_file_mode(statbuf.st_mode, filemode);
-			printf("%s %6d %s\n", filemode, statbuf.st_size, dir.d_name);
+			if (statbuf.st_mode & S_IFCHR)
+				printf("%s %2d, %2d %s\n", filemode, (statbuf.st_rdev >> 8) & 0x00ff, statbuf.st_rdev & 0x00ff, dir.d_name);
+			else
+				printf("%s %6d %s\n", filemode, statbuf.st_size, dir.d_name);
 		}
 	}
 

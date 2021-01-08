@@ -21,6 +21,10 @@ device.
 
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/OS-basic.gif "OS")
 
+The above video shows connecting over serial from a modern PC and resetting the hardware to run the monitor in ROM
+which displays the welcome message.  The kernel is already loaded in RAM, so running the boot command will boot
+the kernel which then starts the shell.  From the shell, some basic file operations and the ps command are shown.
+
 
 The 68k Single Board Computer
 -----------------------------

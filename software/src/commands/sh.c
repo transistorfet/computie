@@ -358,15 +358,28 @@ int parseline(char *input, char **vargs)
 {
 	short j = 0;
 
-	while (*input == ' ')
+	while (*input == ' ' || *input == '\t')
 		input++;
 
 	vargs[j++] = input;
 	while (*input != '\0' && *input != '\n' && *input != '\r') {
-		if (*input == ' ') {
-			*input = '\0';
+		if (*input == '\"') {
+			if (vargs[j - 1] != input) {
+				*input++ = '\0';
+				vargs[j++] = input;
+			}
 			input++;
-			while (*input == ' ')
+
+			while (!iscntrl(*input) && *input != '\"')
+				input++;
+			*input++ = '\0';
+			while (*input == ' ' || *input == '\t')
+				input++;
+			vargs[j++] = input;
+		}
+		else if (*input == ' ' || *input == '\t') {
+			*input++ = '\0';
+			while (*input == ' ' || *input == '\t')
 				input++;
 			vargs[j++] = input;
 		}
@@ -378,6 +391,7 @@ int parseline(char *input, char **vargs)
 	if (*vargs[j - 1] == '\0')
 		j -= 1;
 	vargs[j] = NULL;
+	printf("args: %d\n", j);
 
 	return j;
 }
@@ -535,7 +549,7 @@ int execute_command(struct pipe_command *command, int argc, char **argv, char **
 }
 
 
-#define BUF_SIZE	100
+#define BUF_SIZE	256
 #define ARG_SIZE	10
 #define PIPE_SIZE	5
 

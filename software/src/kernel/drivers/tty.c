@@ -1,12 +1,14 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 #include <termios.h>
 #include <sys/types.h>
 #include <sys/ioc_tty.h>
 #include <kernel/driver.h>
 #include <kernel/syscall.h>
 #include <kernel/signal.h>
+#include <kernel/scheduler.h>
 
 #include "../interrupts.h"
 
@@ -98,11 +100,11 @@ static inline void tty_read_input(device_t minor)
 				//tty->ready = 1;
 				//resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
 				send_signal_process_group(tty->pgid, SIGINT);
-				return 0;
+				return;
 			}
 			//else if (buffer[i] == tty->tio.c_cc[VSUSP]) {
 			//	send_signal_process_group(tty->pgid, SIGSTOP);
-			//	return 0;
+			//	return;
 			//}
 		}
 

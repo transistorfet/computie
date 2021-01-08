@@ -26,7 +26,7 @@ int vsnprintf(char *buffer, size_t n, const char *fmt, va_list args)
 
 			// Parse the width to pad the data to
 			if (fmt[j + 1] >= '0' && fmt[j + 1] <= '9') {
-				const char *endptr;
+				char *endptr;
 				width = strtol(&fmt[j + 1], &endptr, 10);
 				j += endptr - &fmt[j] - 1;
 			}

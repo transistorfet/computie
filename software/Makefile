@@ -1,5 +1,7 @@
 
 
+BUILD = build
+
 AS = m68k-linux-gnu-as
 AR = m68k-linux-gnu-ar
 CC = m68k-linux-gnu-gcc
@@ -9,8 +11,9 @@ RANLIB = m68k-linux-gnu-ranlib
 INCLUDE = ./include
 ASFLAGS = -m68010 --defsym __mc68010__=1
 CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -Os
-#-fanalyzer
-CFLAGS += -z max-page-size=0x10 # reduce the elf output size by reducing the alignment
+
+# reduce the elf output size by reducing the alignment
+CFLAGS += -z max-page-size=0x10
 
 ASLISTING = -alh
 
@@ -85,9 +88,14 @@ KERNEL_OBJS = \
 
 
 all: monitor.bin monitor.load boot.bin boot.load kernel.bin kernel.load
+build-system: kernel.bin commands devicefiles
 
 commands:
 	make -C src/commands clean all
+
+devicefiles:
+	mkdir $(BUILD)/dev
+	# TODO create the device files
 
 libc-68k-none.a libc-68k-os.a:
 	make -C src/libc ../../$@
@@ -118,6 +126,7 @@ kernel.bin: CFLAGS += -DONEBINARY
 kernel.bin: $(KERNEL_OBJS)
 	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@.elf $^
 	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -Wl,--oformat=binary -o $@ $^
+	cp $@ $(BUILD)
 
 
 %.load: %.bin

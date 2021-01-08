@@ -1,16 +1,19 @@
 
+#include <ctype.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "prototype.h"
 
 #define ECHO_BUF_SIZE	256
 
+extern char ***environ;
+
 int MAIN(command_echo)(int argc, char **argv, char **envp)
 {
 	// TODO this would normally be in _start
-	*environ = envp;
+	//*environ = envp;
 
 	int k = 0;
 	char tmp;

@@ -19,12 +19,25 @@ CFLAGS += -z max-page-size=0x10
 
 
 COMMANDS = 		\
-	hello.send	\
 	sh.send 	\
+	cat.send	\
+	cp.send		\
+	ls.send		\
+	ln.send		\
+	mv.send		\
+	rm.send		\
+	mkdir.send	\
+	echo.send	\
+	chmod.send	\
 	ps.send		\
+	kill.send	\
+	mount.send	\
+	umount.send	\
+	sync.send	\
 	tar.send	\
-	daemontest.send \
-	test.send
+	hello.send	\
+	test.send	\
+	daemontest.send
 
 all: $(ROOT)/libc-68k-os.a $(COMMANDS)
 
@@ -37,7 +50,7 @@ $(ROOT)/libc-68k-os.a:
 	make -C $(ROOT)/src/libc clean $@
 
 %.send: %.bin
-	#$(ROOT)/tools/make-send-file $*
+	#$(ROOT)/tools/make-send-file  $^ $@
 	echo "send $*" > $@
 	wc -c $^ | awk '{printf "%04X", $$1}' >> $@
 	hexdump -v -e '/1 "%02X"' $^ >> $@

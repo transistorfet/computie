@@ -1,15 +1,17 @@
 
+#include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 #include "prototype.h"
+
+#define CAT_BUF_SIZE	256
 
 int MAIN(command_cat)(int argc, char **argv, char **envp)
 {
 	int fd;
 	int result;
-	char buffer[DUMP_BUF_SIZE];
+	char buffer[CAT_BUF_SIZE];
 
 	if (argc <= 1) {
 		puts("You need file name");
@@ -22,7 +24,7 @@ int MAIN(command_cat)(int argc, char **argv, char **envp)
 	}
 
 	while (1) {
-		result = read(fd, buffer, DUMP_BUF_SIZE);
+		result = read(fd, buffer, CAT_BUF_SIZE);
 		if (result == 0)
 			break;
 

@@ -34,7 +34,7 @@ struct process *create_init_task()
 	return proc;
 }
 
-struct process *create_kernel_task(int (*task_start)())
+struct process *create_kernel_task(const char *name, int (*task_start)())
 {
 	int error = 0;
 
@@ -53,6 +53,9 @@ struct process *create_kernel_task(int (*task_start)())
 	proc->map.segments[M_STACK].base = stack;
 	proc->map.segments[M_STACK].length = stack_size;
 	proc->sp = stack_pointer;
+
+	proc->cmdline[0] = name;
+	proc->cmdline[1] = NULL;
 
 	return proc;
 }

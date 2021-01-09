@@ -27,6 +27,9 @@ int vprintf(const char *fmt, va_list args);
 int snprintf(char *buffer, size_t n, const char *fmt, ...);
 int vsnprintf(char *buffer, size_t n, const char *fmt, va_list args);
 
+int sscanf(const char *str, const char *fmt, ...);
+int vsscanf(const char *str, const char *fmt, va_list args);
+
 
 int fgetc(FILE *stream);
 int fgets(char *str, int num, FILE *stream);

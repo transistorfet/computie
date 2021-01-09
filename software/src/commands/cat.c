@@ -36,8 +36,6 @@ int MAIN(command_cat)(int argc, char **argv, char **envp)
 		write(STDOUT_FILENO, buffer, result);
 	}
 
-	putchar('\n');
-
 	close(fd);
 
 	return 0;

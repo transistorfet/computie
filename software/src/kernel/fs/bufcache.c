@@ -134,7 +134,7 @@ static inline struct buf *_find_free_entry()
 
 static inline int _read_entry(struct buf *entry)
 {
-	printk("READING %x: %x <- %x x %x\n", entry->dev, entry->block, (entry->num * BC_BLOCK_SIZE), BC_BLOCK_SIZE);
+	//printk("READING %x: %x <- %x x %x\n", entry->dev, entry->block, (entry->num * BC_BLOCK_SIZE), BC_BLOCK_SIZE);
 	int size = dev_read(entry->dev, entry->block, (entry->num * BC_BLOCK_SIZE), BC_BLOCK_SIZE);
 	if (size != BC_BLOCK_SIZE)
 		return -1;
@@ -145,7 +145,7 @@ static inline int _write_entry(struct buf *entry)
 {
 	if (!(entry->flags & BCF_DIRTY))
 		return 0;
-	printk("WRITING %x: %x <- %x x %x\n", entry->dev, (entry->num * BC_BLOCK_SIZE), entry->block, BC_BLOCK_SIZE);
+	//printk("WRITING %x: %x <- %x x %x\n", entry->dev, (entry->num * BC_BLOCK_SIZE), entry->block, BC_BLOCK_SIZE);
 	int size = dev_write(entry->dev, entry->block, (entry->num * BC_BLOCK_SIZE), BC_BLOCK_SIZE);
 	if (size != BC_BLOCK_SIZE)
 		return -1;

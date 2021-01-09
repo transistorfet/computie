@@ -33,6 +33,7 @@ int init_task()
 
  	pid = fork();
 	if (!pid) {
+		// TODO create a new session
 		setpgid(0, 0);
 		pid_t fgpid = getpgid(0);
 		ioctl(STDOUT_FILENO, TIOCSPGRP, &fgpid);

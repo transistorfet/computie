@@ -264,16 +264,22 @@ int tty_write(devminor_t minor, const char *buffer, offset_t offset, size_t size
 
 int tty_ioctl(devminor_t minor, unsigned int request, void *argp)
 {
+	short saved_status;
+
 	if (minor >= TTY_DEVICE_NUM)
 		return ENODEV;
 
 	switch (request) {
 		case TCGETS: {
+			LOCK(saved_status);
 			memcpy((struct termios *) argp, &devices[minor].tio, sizeof(struct termios));
+			UNLOCK(saved_status);
 			return 0;
 		}
 		case TCSETS: {
+			LOCK(saved_status);
 			memcpy(&devices[minor].tio, (struct termios *) argp, sizeof(struct termios));
+			UNLOCK(saved_status);
 			return 0;
 		}
 

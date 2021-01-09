@@ -131,18 +131,19 @@ int command_send(int argc, char **argv, char **envp)
 		return -1;
 	}
 
-	printf("Loading file %s\n", argv[1]);
-
-	if ((fd = open(argv[1], O_CREAT | O_WRONLY, 0755)) < 0) {
-		printf("Error opening %s: %d\n", argv[1], fd);
-		return fd;
-	}
-
 	tcgetattr(STDIN_FILENO, &tio);
 	lflag = tio.c_lflag;
 	tio.c_lflag = 0;
 	tcsetattr(STDIN_FILENO, TCSANOW, &tio);
 	tio.c_lflag = lflag;
+
+	printf("Loading file %s\n", argv[1]);
+
+	if ((fd = open(argv[1], O_CREAT | O_WRONLY, 0755)) < 0) {
+		printf("Error opening %s: %d\n", argv[1], fd);
+		tcsetattr(STDIN_FILENO, TCSANOW, &tio);
+		return fd;
+	}
 
 	size = fetch_word();
 	size >>= 1;
@@ -596,13 +597,10 @@ void serial_read_loop()
 	}
 }
 
-void handle_test(int signum)
+void handle_signal(int signum)
 {
-	//int a = 0xABAB;
-	// TODO this exact code and only this code just happens to trigger an optimization where it replaces the arg and jumps to puts instead of generating a proper function
-	puts("^C");
-	//printf("Hey %d\n", signum);
-	//dump((uint16_t *) 0x1179EA, 48);
+	if (signum == SIGINT)
+		puts("^C");
 }
 
 /**************
@@ -617,7 +615,7 @@ int MAIN(sh_task)()
 	puts("\n\nThe Pseudo Shell!\n");
 
 	struct sigaction act;
-	act.sa_handler = handle_test;
+	act.sa_handler = handle_signal;
 	act.sa_flags = 0;
 	sigemptyset(&act.sa_mask);
 	sigaction(SIGINT, &act, NULL);

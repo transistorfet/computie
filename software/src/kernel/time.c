@@ -12,6 +12,11 @@ void init_time()
 	system_useconds = 0;
 }
 
+void set_system_time(time_t t)
+{
+	system_seconds = t;
+}
+
 time_t get_system_time()
 {
 	return system_seconds;

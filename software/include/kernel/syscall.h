@@ -45,9 +45,10 @@
 #define SYS_PAUSE	39
 #define SYS_SIGRETURN	40
 #define SYS_SIGACTION	41
+#define SYS_STIME	42
 
 // TODO remove this after testing
-#define SYS_EXECBUILTIN	42
+#define SYS_EXECBUILTIN	43
 
 typedef int (*syscall_t)(int, int, int);
 

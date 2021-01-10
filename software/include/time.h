@@ -2,6 +2,7 @@
 #ifndef _TIME_H
 #define _TIME_H
 
+#include <stddef.h>
 #include <sys/types.h>
 
 struct tm {
@@ -19,7 +20,9 @@ struct tm {
 //extern char *tzname[];
 
 time_t time(time_t *t);
+int stime(const time_t *t);
 struct tm *gmtime(const time_t *t);
+size_t strftime (char* buffer, size_t max, const char *fmt, const struct tm *tp);
 
 #endif
 

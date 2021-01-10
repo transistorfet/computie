@@ -57,5 +57,6 @@ extern int do_sync();
 
 // Time
 extern time_t do_time(time_t *t);
+extern int do_stime(const time_t *t);
 
 #endif

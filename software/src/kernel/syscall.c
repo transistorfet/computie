@@ -70,6 +70,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_pause,
 	do_sigreturn,
 	do_sigaction,
+	do_stime,
 
 	do_execbuiltin,
 };
@@ -538,5 +539,13 @@ time_t do_time(time_t *t)
 	if (t)
 		*t = current;
 	return current;
+}
+
+int do_stime(const time_t *t)
+{
+	if (current_proc->uid != SU_UID)
+		return EPERM;
+	set_system_time(*t);
+	return 0;
 }
 

@@ -34,6 +34,7 @@ struct tm *gmtime(const time_t *t)
 		tp->tm_yday -= days;
 		tp->tm_year++;
 	}
+	tp->tm_year -= 1900;
 
 	tp->tm_mon = 0;
 	tp->tm_mday = tp->tm_yday + 1;

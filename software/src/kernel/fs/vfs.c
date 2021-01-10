@@ -74,6 +74,7 @@ int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_op
 			mountpoints[i].mount_node = vnode;
 			mountpoints[i].root_node = NULL;
 			mountpoints[i].dev = dev;
+			mountpoints[i].bits = 0;
 
 			error = ops->mount(&mountpoints[i], dev, vnode);
 			if (error) {

@@ -11,13 +11,13 @@
 
 #include <asm/macros.h>
 #include <kernel/vfs.h>
+#include <kernel/time.h>
 #include <kernel/signal.h>
 #include <kernel/printk.h>
 #include <kernel/driver.h>
 #include <kernel/syscall.h>
 #include <kernel/scheduler.h>
 
-#include "../time.h"
 #include "../interrupts.h"
 #include "../misc/circlebuf.h"
 

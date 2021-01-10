@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <kernel/vfs.h>
+#include <kernel/time.h>
 #include <asm/macros.h>
 
 #include "minix.h"
@@ -32,7 +33,7 @@ static inode_t alloc_inode(struct minix_super *super, mode_t mode, uid_t uid, gi
 	inode_table[inode_offset].size = 0;
 	inode_table[inode_offset].gid = (uint8_t) gid;
 	inode_table[inode_offset].nlinks = (uint8_t) 1;
-	// TODO add a/m/c time stamps
+	inode_table[inode_offset].mtime = get_system_time();
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		inode_table[inode_offset].zones[j] = NULL;
 	if (mode & S_IFCHR)

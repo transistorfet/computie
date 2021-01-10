@@ -1,4 +1,5 @@
 
+#include <time.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -30,8 +31,9 @@ int MAIN(command_ls)(int argc, char **argv, char **envp)
 	int error;
 	struct dirent dir;
 	struct stat statbuf;
-	char filename[100];
 	char filemode[10];
+	char filename[100];
+	char timestamp[100];
 
 	char *path = argc > 1 ? argv[1] : ".";
 
@@ -65,10 +67,11 @@ int MAIN(command_ls)(int argc, char **argv, char **envp)
 			}
 
 			format_file_mode(statbuf.st_mode, filemode);
+			strftime(timestamp, 100, "%Y-%m-%d %H:%M:%S", gmtime(&statbuf.st_mtime));
 			if (statbuf.st_mode & S_IFCHR)
-				printf("%s %2d, %2d %s\n", filemode, (statbuf.st_rdev >> 8) & 0x00ff, statbuf.st_rdev & 0x00ff, dir.d_name);
+				printf("%s %2d, %2d %s %s\n", filemode, (statbuf.st_rdev >> 8) & 0x00ff, statbuf.st_rdev & 0x00ff, timestamp, dir.d_name);
 			else
-				printf("%s %6d %s\n", filemode, statbuf.st_size, dir.d_name);
+				printf("%s %6d %s %s\n", filemode, statbuf.st_size, timestamp, dir.d_name);
 		}
 	}
 

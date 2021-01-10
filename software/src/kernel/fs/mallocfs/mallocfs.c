@@ -183,6 +183,8 @@ int mallocfs_rename(struct vnode *vnode, struct vnode *oldparent, const char *ol
 
 	newdir->vnode = vnode;
 	olddir->vnode = NULL;
+	vfs_update_time(oldparent, MTIME);
+	vfs_update_time(newparent, MTIME);
 	return 0;
 }
 
@@ -192,6 +194,7 @@ int mallocfs_truncate(struct vnode *vnode)
 		return EISDIR;
 	zone_free_all(vnode);
 	vnode->size = 0;
+	vfs_update_time(vnode, MTIME);
 	return 0;
 }
 
@@ -295,6 +298,9 @@ int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
 	if (file->position > file->vnode->size)
 		file->vnode->size = file->position;
 
+	if (offset)
+		vfs_update_time(file->vnode, MTIME);
+
 	if (error)
 		return error;
 	return offset;
@@ -359,9 +365,9 @@ int mallocfs_readdir(struct vfile *file, struct dirent *dir)
 
 	max = MALLOCFS_MAX_FILENAME < VFS_FILENAME_MAX ? MALLOCFS_MAX_FILENAME : VFS_FILENAME_MAX;
 
-	dir->ino = 0;	// TODO this should be something... zone->entries[zpos].vnode;
-	strncpy(dir->name, zone->entries[zpos].name, max);
-	dir->name[max - 1] = '\0';
+	dir->d_ino = 0;	// TODO this should be something... zone->entries[zpos].vnode;
+	strncpy(dir->d_name, zone->entries[zpos].name, max);
+	dir->d_name[max - 1] = '\0';
 
 	return 1;
 }

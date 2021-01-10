@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/ioc_tty.h>
 #include <kernel/vfs.h>
+#include <kernel/time.h>
 #include <kernel/signal.h>
 #include <kernel/printk.h>
 #include <kernel/driver.h>
@@ -15,7 +16,6 @@
 #include "proc/process.h"
 
 #include "api.h"
-#include "time.h"
 #include "filedesc.h"
 #include "interrupts.h"
 
@@ -316,6 +316,7 @@ int do_fstat(int fd, struct stat *statbuf)
 	statbuf->st_nlinks = file->vnode->nlinks;
 	statbuf->st_uid = file->vnode->uid;
 	statbuf->st_gid = file->vnode->gid;
+	statbuf->st_rdev = file->vnode->rdev;
 	statbuf->st_size = file->vnode->size;
 	statbuf->st_atime = file->vnode->atime;
 	statbuf->st_mtime = file->vnode->mtime;

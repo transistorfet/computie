@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <dirent.h>
 #include <sys/types.h>
+#include <kernel/time.h>
 
 #ifndef F_OK
 #define F_OK		0	// Test if file exists
@@ -30,11 +31,20 @@
 #define SEEK_END	2	// Seek relative to the end of file
 #endif
 
+
 #define VFS_SEP			'/'
 #define VFS_FILENAME_MAX	14
 
-#define VBF_MOUNTED	0x0001
-#define VBF_DIRTY	0x0002
+// Mount bitflags
+#define VFS_MBF_READ_ONLY	0x0001
+
+// Vnode bitflags
+#define VBF_MOUNTED		0x0001
+#define VBF_DIRTY		0x0002
+
+#define ATIME			0x01
+#define MTIME			0x02
+#define CTIME			0x04
 
 
 struct mount;
@@ -80,14 +90,15 @@ struct mount {
 	struct mount_ops *ops;
 	struct vnode *mount_node;	// The vnode this fs is mounted on
 	struct vnode *root_node;	// The root vnode of this fs
-	void *super;			// The fs-specific superblock
+	void *super;			// The fs-specific superblock data
 	device_t dev;			// The device that's mounted
+	uint16_t bits;			// Bitflags for this mountpoint
 };
 
 struct vnode {
 	struct vnode_ops *ops;
 	struct mount *mp;		// The mountpoint this vnode belongs to
-	short refcount;
+	short refcount;			// Number of references to this vnode currently in use
 
 	mode_t mode;
 	short nlinks;
@@ -182,6 +193,22 @@ static inline struct vnode *vfs_clone_vnode(struct vnode *vnode)
 }
 
 int vfs_release_vnode(struct vnode *vnode);
+
+static inline void vfs_update_time(struct vnode *vnode, char update)
+{
+	// Only update timestamps if the filesystem is not mounted read-only
+	if (vnode->mp->bits & VFS_MBF_READ_ONLY)
+		return;
+
+	time_t t = get_system_time();
+	if (update & ATIME)
+		vnode->atime = t;
+	if (update & MTIME)
+		vnode->mtime = t;
+	if (update & CTIME)
+		vnode->ctime = t;
+	vnode->bits |= VBF_DIRTY;
+}
 
 #endif
 

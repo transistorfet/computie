@@ -2,6 +2,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <kernel/vfs.h>
+#include <kernel/time.h>
 
 #include "mallocfs.h"
 #include "alloc.h"
@@ -22,8 +23,9 @@ struct vnode *new_mallocfs_vnode(struct mount *mp, device_t rdev, mode_t mode, u
 {
 	for (char i = 0; i < MAX_VNODES; i++) {
 		if (vnode_table[i].vn.refcount <= 0) {
-			// TODO add in proper uid/gid, mtime, etc arguments
-			vfs_init_vnode((struct vnode *) &vnode_table[i], &mallocfs_vnode_ops, mp, mode, 1, uid, 0, 0, rdev, 0, 0, 0);
+			time_t t = get_system_time();
+			// TODO add in proper uid/gid, etc arguments
+			vfs_init_vnode((struct vnode *) &vnode_table[i], &mallocfs_vnode_ops, mp, mode, 1, uid, 0, 0, rdev, t, t, t);
 
 			// NOTE we increment the refcount to represent the file link, otherwise the vnode will be freed when each file is not open
 			vfs_clone_vnode(&vnode_table[i].vn);

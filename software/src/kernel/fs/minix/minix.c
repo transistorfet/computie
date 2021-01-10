@@ -248,6 +248,8 @@ int minix_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldna
 	olddir->inode = to_le16(0);
 	release_block(newbuf, BCF_DIRTY);
 	release_block(oldbuf, BCF_DIRTY);
+	vfs_update_time(oldparent, MTIME);
+	vfs_update_time(newparent, MTIME);
 	return 0;
 }
 
@@ -257,6 +259,7 @@ int minix_truncate(struct vnode *vnode)
 		return EISDIR;
 	zone_free_all(vnode);
 	vnode->size = 0;
+	vfs_update_time(vnode, MTIME);
 	mark_vnode_dirty(vnode);
 	return 0;
 }
@@ -377,6 +380,9 @@ int minix_write(struct vfile *file, const char *buffer, size_t nbytes)
 		file->vnode->size = file->position;
 		mark_vnode_dirty(file->vnode);
 	}
+
+	if (offset)
+		vfs_update_time(file->vnode, MTIME);
 
 	if (error)
 		return error;

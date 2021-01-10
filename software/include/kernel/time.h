@@ -1,6 +1,6 @@
 
-#ifndef _SRC_KERNEL_TIME_H
-#define _SRC_KERNEL_TIME_H
+#ifndef _KERNEL_TIME_H
+#define _KERNEL_TIME_H
 
 #include <sys/types.h>
 

@@ -4,7 +4,7 @@
 #include <string.h>
 
 
-char *itoa_padded(int num, char *buffer, int radix, char width, char zeropad);
+extern char *itoa_padded(int num, char *buffer, int radix, char width, char zeropad);
 
 
 int vsnprintf(char *buffer, size_t n, const char *fmt, va_list args)

@@ -1,6 +1,7 @@
 
 #include <stddef.h>
 
+#include <kernel/time.h>
 #include <kernel/signal.h>
 #include <kernel/printk.h>
 #include <kernel/kmalloc.h>
@@ -70,10 +71,15 @@ struct process *new_proc(pid_t pid, uid_t uid)
 			table[i].next_alarm = 0;
 			init_signal_data(&table[i]);
 
+			table[i].start_time = get_system_time();
+			table[i].user_time = 0;
+			table[i].sys_time = 0;
+
 			table[i].uid = uid;
 			for (char j = 0; j < PROC_CMDLINE_ARGS; j++)
 				table[i].cmdline[j] = NULL;
 			table[i].cwd = NULL;
+			table[i].umask = PROC_DEFAULT_UMASK;
 			init_fd_table(table[i].fd_table);
 
 			insert_proc(&table[i]);

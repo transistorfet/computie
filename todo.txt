@@ -10,8 +10,7 @@ Operating System:
 
 	* need to clear unread data from tty buffer after the shell receives a ^C
 
-	* add datetime and cpu runtime to process struct
-	* add support for umask, and add a mode filter somewhere: (mode & ~umask & 0777)
+	* add calculating of cpu runtime
 	* commands like mv and cp require the second arg to include the new filename, but if the arg is a dir, it should append the file's name
 	* implement getopt, and add flags to commands
 
@@ -54,6 +53,7 @@ Operating System:
 	* add some kind of debugging or tracing support
 
 	* add commands: rmdir, pwd, dd, chown
+	* add umask syscall
 	* add the & (run in background) option to the shell
 	* implement fg/bg somehow... it would be builtin to the shell and would require job control stuff...
 	* add up/down arrow processing to the shell (easy without cooked input, but how would it be done with...)

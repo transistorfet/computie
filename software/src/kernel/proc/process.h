@@ -9,9 +9,9 @@
 #include "../filedesc.h"
 #include "../misc/queue.h"
 
-#define INIT_PID	1
+#define INIT_PID		1
 
-#define	NUM_SEGMENTS	2
+#define	NUM_SEGMENTS		2
 
 typedef enum {
 	M_TEXT,
@@ -46,7 +46,8 @@ typedef enum {
 } proc_state_t;
 
 
-# define PROC_CMDLINE_ARGS		4
+#define PROC_DEFAULT_UMASK	022
+#define PROC_CMDLINE_ARGS	4
 
 struct vnode;
 
@@ -68,9 +69,14 @@ struct process {
 	struct syscall_record blocked_call;
 	struct signal_data signals;
 
+	time_t start_time;
+	clock_t user_time;
+	clock_t sys_time;
+
 	uid_t uid;
-	char *cmdline[PROC_CMDLINE_ARGS];
+	mode_t umask;
 	device_t ctty;
+	char *cmdline[PROC_CMDLINE_ARGS];
 	struct vnode *cwd;
 	fd_table_t fd_table;
 };

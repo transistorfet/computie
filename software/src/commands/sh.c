@@ -451,7 +451,7 @@ int open_file(char *filename, int flags, int newfd)
 {
 	int fd;
 
-	fd = open(filename, flags, 0644);
+	fd = open(filename, flags, 0666);
 	if (fd < 0) {
 		printf("Error opening file %s: %d\n", filename, fd);
 		return -1;

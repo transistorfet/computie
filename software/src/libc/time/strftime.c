@@ -1,5 +1,11 @@
 
 #include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+extern char *itoa_padded(int num, char *buffer, int radix, char width, char zeropad);
+
 
 static char *_weeknames[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 static char *_monthnames[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };

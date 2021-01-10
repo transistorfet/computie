@@ -164,6 +164,7 @@ int do_mkdir(const char *path, mode_t mode)
 	int error;
 	struct vfile *file;
 
+	mode = mode & ~current_proc->umask & 0777;
 	error = vfs_open(current_proc->cwd, path, O_CREAT, S_IFDIR | mode, current_proc->uid, &file);
 	if (error < 0)
 		return error;
@@ -186,6 +187,7 @@ int do_open(const char *path, int oflags, mode_t mode)
 	if (fd < 0)
 		return fd;
 
+	mode = mode & ~current_proc->umask & 0777;
 	error = vfs_open(current_proc->cwd, path, oflags, mode, current_proc->uid, &file);
 	if (error)
 		return error;

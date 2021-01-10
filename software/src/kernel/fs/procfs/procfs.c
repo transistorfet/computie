@@ -61,6 +61,8 @@ static struct procfs_vnode vnode_table[MAX_VNODES];
 
 static struct vnode *_find_vnode(pid_t pid, short filenum, mode_t mode, struct mount *mp);
 static struct vnode *_alloc_vnode(pid_t pid, short filenum, mode_t mode, struct mount *mp);
+static inline char get_proc_state(struct process *proc);
+static inline size_t get_proc_size(struct process *proc);
 
 int procfs_init()
 {
@@ -162,11 +164,30 @@ int procfs_read(struct vfile *file, char *buf, size_t nbytes)
 		break;
 	    }
 	    case PFN_STAT: {
-		snprintf(buffer, MAX_BUFFER, "%d %s %c %d %d %d %d\n", proc->pid, proc->cmdline[0], '?', proc->parent, proc->pgid, proc->session, proc->ctty);
+		snprintf(buffer, MAX_BUFFER,
+			"%d %s %c %d %d %d %d %d %d\n",
+			proc->pid,
+			proc->cmdline[0],
+			get_proc_state(proc),
+			proc->parent,
+			proc->pgid,
+			proc->session,
+			proc->ctty,
+			proc->start_time,
+			get_proc_size(proc)
+		);
 		break;
 	    }
 	    case PFN_STATM: {
-		snprintf(buffer, MAX_BUFFER, "%x %x %x %x %x\n", proc->map.segments[M_TEXT].base, proc->map.segments[M_TEXT].length, proc->map.segments[M_STACK].base, proc->map.segments[M_STACK].length, proc->sp);
+		snprintf(buffer, MAX_BUFFER,
+			"%d %x %x %x %x %x\n",
+			get_proc_size(proc),
+			proc->map.segments[M_TEXT].base,
+			proc->map.segments[M_TEXT].length,
+			proc->map.segments[M_STACK].base,
+			proc->map.segments[M_STACK].length,
+			proc->sp
+		);
 		break;
 	    }
 	    default:
@@ -247,5 +268,30 @@ static struct vnode *_alloc_vnode(pid_t pid, short filenum, mode_t mode, struct 
 		}
 	}
 	return NULL;
+}
+
+static inline char get_proc_state(struct process *proc)
+{
+	switch (proc->state) {
+		case PS_RESUMING:
+		case PS_RUNNING:
+			return 'R';
+		case PS_BLOCKED:
+			return 'S';
+		case PS_STOPPED:
+			return 'D';
+		case PS_EXITED:
+			return 'Z';
+		default:
+			return '?';
+	}
+}
+
+static inline size_t get_proc_size(struct process *proc)
+{
+	size_t size = 0;
+	for (char i = 0; i < NUM_SEGMENTS; i++)
+		size += proc->map.segments[i].length;
+	return size;
 }
 

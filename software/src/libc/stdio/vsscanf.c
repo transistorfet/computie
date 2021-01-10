@@ -1,6 +1,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 int vsscanf(const char *str, const char *fmt, va_list args)
 {

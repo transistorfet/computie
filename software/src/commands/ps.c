@@ -14,17 +14,18 @@ int MAIN(command_ps)(int argc, char **argv, char **envp)
 	int error;
 	int dd, fd;
 	char state;
+	time_t start;
 	struct dirent dir;
 	char cmd[PS_BUFFER_SIZE];
 	char buffer[PS_BUFFER_SIZE];
-	int parent, pgid, session, ctty;
+	int parent, pgid, session, ctty, size;
 
 	if ((dd = open("/proc", 0, 0)) < 0) {
 		printf("Error opening /proc\n");
 		return dd;
 	}
 
-	printf("PID\tCMD\tSTATE\tPARENT\tPGID\n");
+	printf("PID\tSIZE\tSTATE\tPARENT\tPGID\tCMD\n");
 	while (1) {
 		error = readdir(dd, &dir);
 		if (error < 0) {
@@ -53,8 +54,8 @@ int MAIN(command_ps)(int argc, char **argv, char **envp)
 
 			close(fd);
 
-			sscanf(buffer, "%*d %s %c %d %d %d %d\n", cmd, &state, &parent, &pgid, &session, &ctty);
-			printf("%s\t%s\t%c\t%d\t%d\n", dir.d_name, cmd, state, parent, pgid);
+			sscanf(buffer, "%*d %s %c %d %d %d %d %d %d\n", cmd, &state, &parent, &pgid, &session, &ctty, &start, &size);
+			printf("%s\t%d\t%c\t%d\t%d\t%s\n", dir.d_name, size, state, parent, pgid, cmd);
 		}
 	}
 

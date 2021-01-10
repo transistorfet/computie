@@ -57,7 +57,7 @@ void create_dir_or_panic(const char *path)
 	if (!vfs_lookup(NULL, path, SU_UID, VLOOKUP_NORMAL, &vnode))
 		vfs_release_vnode(vnode);
 	else {
-		if (vfs_open(NULL, path, O_CREAT, S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO, SU_UID, &file))
+		if (vfs_open(NULL, path, O_CREAT, S_IFDIR | 0755, SU_UID, &file))
 			panic("Unable to create %s\n", path);
 		vfs_close(file);
 	}
@@ -68,7 +68,7 @@ void create_special_or_panic(const char *path, device_t rdev)
 	struct vnode *vnode;
 
 	if (vfs_lookup(NULL, path, SU_UID, VLOOKUP_NORMAL, &vnode))
-		if (vfs_mknod(NULL, path, S_IFCHR | S_IRWXU | S_IRWXG | S_IRWXO, rdev, SU_UID, &vnode))
+		if (vfs_mknod(NULL, path, S_IFCHR | 0755, rdev, SU_UID, &vnode))
 			panic("Unable to create special file %s\n", path);
 	vfs_release_vnode(vnode);
 }

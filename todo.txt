@@ -9,23 +9,26 @@
 Operating System:
 
 	* need to clear unread data from tty buffer after the shell receives a ^C
-	* there is an issue running the shell on linux related to the setting the process group
 
-	* add makefile rules to create device files and any other necessary files in the build directory, such that you can "make mount build-system unmount" to make a disk image
-	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?
-	* add brk/sbrk/stack guard protection
-	* if you're going to use a unified process segment, then you should probably fix the allocator to merge freed blocks, and/or use a separate heap for the kernel vs process space?
-	* make user programs optionally initialize the heap in a default start routine, and make the heap able to grow (once you have brk/sbrk)
-	* make a PIE format that can be loaded and executed
-	* try porting a simple command, and then something more complex, maybe awk or something as a big target
+	* add datetime and cpu runtime to process struct
+	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
+	* add support for umask, and add a mode filter somewhere: (mode & ~umask & 0777)
+	* commands like mv and cp require the second arg to include the new filename, but if the arg is a dir, it should append the file's name
+	* implement getopt, and add flags to commands
+
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
+	* add brk/sbrk/stack guard protection.  How do you track memory segment allocation?  Minix iterates over all memory segments and compares...
+	* fix the allocator to merge freed blocks, and/or use a separate heap for the kernel vs process space?
+	* make user programs optionally initialize the heap in a default start routine, and make the heap able to grow (once you have brk/sbrk)
+	* try porting a simple command, and then something more complex, maybe awk or something as a big target
 
-	* make the bootloader a bit smaller??
-	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
-	* write the bootloader into rom somewhere, such that it can boot from rom or the compact flash
-	* how can you pass arguments into the kernel from the boot loader?  Can you make it bootable from either a disk image in flash, or a disk image on the CF card?
 	* make init be a separate file loaded from disk and executed
 	* make init relaunch shell if the initial one is killed
+	* how can you pass arguments into the kernel from the boot loader?  Can you make it bootable from either a disk image in flash, or a disk image on the CF card?
+	* add makefile rules to create device files and any other necessary files in the build directory, such that you can "make mount build-system unmount" to make a disk image
+	* write the bootloader into rom somewhere, such that it can boot from rom or the compact flash
+	* make the bootloader a bit smaller??
+	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
 
 
 	* should filedesc be put into fs/?
@@ -35,9 +38,6 @@ Operating System:
 
 
 	* add more info to the ps command, which is now available in the stat file
-	* commands like mv and cp require the second arg to include the new filename, but if the arg is a dir, it should append the file's name
-	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
-	* add support for umask, and add a mode filter somewhere: (mode & ~umask & 0777)
 	* when there's a trailing / to rm or mkdir, it will create something weird
 	* add checks for errors in the serial transfer? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
@@ -46,10 +46,10 @@ Operating System:
 
 
 
+	* make a PIE format that can be loaded and executed
 	* add network syscalls for local IPC (unix file, sockets, maybe even fifos?)
-	* make a device-independent tty subsystem
+	* to stdlib, add: fprintf, fscanf, scanf, fopen, fclose, fgetpos, fseek, feof, fread, fwrite
 	* add pipe setup to command evaluation
-	* implement getopt, and add flags to commands
 	* add fifos (should be easy now)
 	* implement login system (setuid)
 	* add some kind of debugging or tracing support
@@ -58,10 +58,10 @@ Operating System:
 	* add the & (run in background) option to the shell
 	* implement fg/bg somehow... it would be builtin to the shell and would require job control stuff...
 	* add up/down arrow processing to the shell (easy without cooked input, but how would it be done with...)
-	* to stdlib, add: fprintf, fscanf, scanf, fopen, fclose, fgetpos, fseek, feof, fread, fwrite
-	* implement gmtime() and make the time command return a formatted time
 	* rewrite the math functions to use fewer registers, and cover the 32 bit divide by 32 bit number case
 
+	* there is an issue running the shell on linux related to the setting the process group
+	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* make it possible to have root procfs files instead of requiring all top level files to be process numbered files
 	* add check to vfs_link() for loops

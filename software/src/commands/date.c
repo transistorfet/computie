@@ -5,13 +5,13 @@
 
 #include "prototype.h"
 
-int MAIN(command_time)(int argc, char **argv, char **envp)
+int MAIN(command_date)(int argc, char **argv, char **envp)
 {
 	time_t t;
 	struct tm *current_time;
 
 	t = time(NULL);
-	t = 1604635268;
+	//t = 1604635268;
 	current_time = gmtime(&t);
 
 	printf("%d\n", t);

@@ -1,7 +1,7 @@
 
 
 #ifdef __m68k__
-// TODO this only supports positive integers atm
+// This implements the following C code: (((int16_t) (ah * bl) + (int16_t) (bh * al)) << 16) + (int16_t) (al * bl);
 int __mulsi3(int a, int b)
 {
 	int c;

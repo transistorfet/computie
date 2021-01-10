@@ -236,7 +236,7 @@ int command_chdir(int argc, char **argv, char **envp)
 #include "ln.c"
 #include "rm.c"
 #include "chmod.c"
-//#include "time.c"
+#include "date.c"
 #include "ps.c"
 #include "kill.c"
 #include "mount.c"
@@ -293,7 +293,7 @@ void init_commands()
 	add_command("ln", 	command_ln);
 	add_command("rm", 	command_rm);
 	add_command("chmod", 	command_chmod);
-	//add_command("time", 	command_time);
+	add_command("date", 	command_date);
 	add_command("ps", 	command_ps);
 	add_command("kill", 	command_kill);
 	add_command("mount", 	command_mount);
@@ -624,6 +624,8 @@ int MAIN(sh_task)()
 	//alarm(3);
 	//pause();
 	//puts("Hey!\n");
+
+	//test_math();
 
 	serial_read_loop();
 

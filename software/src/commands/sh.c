@@ -423,11 +423,10 @@ int parse_command_line(char *input, struct pipe_command *commands)
 			commands[j].cmd = input + 1;
 		}
 		else if (*input == '>') {
-			if (*(input + 1) == '>') {
+			if (*(input + 1) == '>')
 				commands[j].append = 1;
-				input++;
-			}
 			*input++ = '\0';
+			for (; *input == ' ' || *input == '>'; input++);
 
 			if (commands[j].stdout_file) {
 				printf("parse error: stdout is redirected more than once\n");

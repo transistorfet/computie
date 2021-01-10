@@ -10,9 +10,7 @@ Operating System:
 
 	* need to clear unread data from tty buffer after the shell receives a ^C
 
-	* ">" seems to work as append (or isn't parsed out properly), and or ">>" isn't supported
 	* add datetime and cpu runtime to process struct
-	* add updating of fs timestamps, should they be in vfs or inside individual implementations?
 	* add support for umask, and add a mode filter somewhere: (mode & ~umask & 0777)
 	* commands like mv and cp require the second arg to include the new filename, but if the arg is a dir, it should append the file's name
 	* implement getopt, and add flags to commands

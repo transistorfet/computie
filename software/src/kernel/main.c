@@ -90,17 +90,19 @@ int main()
 	init_proc();
 	init_scheduler();
 
-	// Initialize drivers
+	// Initialize drivers before VFS
 	for (char i = 0; drivers[i]; i++) {
 		drivers[i]->init();
 	}
 
 	init_vfs();
 
-	// Initialize drivers
+	// Initialize specific filesystems
 	for (char i = 0; filesystems[i]; i++) {
 		filesystems[i]->init();
 	}
+
+
 
 	// TODO this would be moved elsewhere
 	//vfs_mount(NULL, "/", 0, &mallocfs_mount_ops, SU_UID);
@@ -121,23 +123,6 @@ int main()
 
 	vfs_mount(NULL, "/media", DEVNUM(DEVMAJOR_ATA, 0), &minix_mount_ops, SU_UID);
 
-
-/*
-	{
-		int error;
-		struct vfile *file;
-		error = vfs_open(NULL, "/mnt", O_CREAT, S_IFDIR | 0755, SU_UID, &file);
-		if (error)
-			printk("Error: %d\n", error);
-		else
-			vfs_close(file);
-
-		struct mount *mp2;
-		error = vfs_mount(NULL, "/mnt", 1, &minix_mount_ops, SU_UID, &mp2);
-		if (error)
-			printk("Mount error: %d\n", error);
-	}
-*/
 
 	begin_multitasking();
 }

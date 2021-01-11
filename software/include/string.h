@@ -4,14 +4,15 @@
 
 #include <stddef.h>
 
-int strlen(const char *);
-char *strcpy(char *, const char *);
-char *strncpy(char *, const char *, int);
-int strcmp(const char *, const char *);
-int strncmp(const char *, const char *, int);
-const char *strchr(const char *, int);
-const char *strrchr(const char *, int);
-char *strcat(char *, const char *);
+int strlen(const char *str);
+char *strcpy(char *dest, const char *src);
+char *strncpy(char *dest, const char *src, int max);
+int strcmp(const char *str1, const char *str2);
+int strncmp(const char *str1, const char *str2, int max);
+const char *strchr(const char *str, int ch);
+const char *strrchr(const char *str, int ch);
+char *strcat(char *dest, const char *src);
+char *strncat(char *dest, const char *src, int max);
 
 /*
 int strcnt(const char *, const char);

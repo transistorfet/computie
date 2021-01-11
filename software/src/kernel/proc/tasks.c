@@ -20,6 +20,16 @@ struct process *create_init_task()
 	if (!proc)
 		panic("Ran out of procs\n");
 
+	/*
+	// TODO this would load and execute an actual binary from the mounted disk
+	void *entry;
+	error = load_binary("/bin/init", proc, &entry);
+	if (error)
+		return error;
+	reset_stack(proc, entry, argv, envp);
+	*/
+
+
 	// Setup memory segments
 	int stack_size = 0x2000;
 	proc->map.segments[M_TEXT].base = NULL;

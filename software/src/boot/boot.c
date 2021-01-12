@@ -15,8 +15,8 @@ static char *load_address = (char *) 0x100000;	// Address to load the kernel
 static char *mem_drive = (char *) 0x080000;	// The address in ROM of the start of the drive
 static int ata_drive = 0x800;			// The sector number of the start of the boot partition
 static char boot_device = 2;			// 1 = ROM, 2 = ATA
-static minix_v1_zone_t inode_zone = 6;		// Zone of the inode table where the kernel is stored
-static short inode_num = 4;			// Inode offset into zone of the kernel inode
+static minix_v1_zone_t inode_zone = 4;		// Zone of the inode table where the kernel is stored
+static short inode_num = 2;			// Inode offset into zone of the kernel inode
 
 int init_tty();
 int putchar(int ch);
@@ -27,7 +27,10 @@ int main()
 {
 	init_tty();
 	load_kernel(load_address);
-	asm volatile("jmp	(%0)\n" : : "a" (load_address));
+
+	__attribute__((noreturn)) void (*entry)(char *) = (void (*)(char *)) load_address;
+	entry("ata0\0");
+	__builtin_unreachable();
 }
 
 char *copy_zone_data(char *dest, minix_v1_zone_t zone)
@@ -66,14 +69,14 @@ void load_kernel(char *offset)
 
 	// Load our target inode and get the zone table in the inode
 	inode_table = (struct minix_v1_inode *) copy_zone_data(buffer, inode_zone);
-	inode_zones = inode_table[inode_num].zones;
+	inode_zones = inode_table[inode_num - 1].zones;
 
 	// Copy all the inode zones to RAM
 	offset = load_zones(inode_zones, MINIX_V1_TIER1_ZONENUMS, offset);
 
 	// If there are more zones, load the indirect zone table and copy all the zones to RAM
 	if (offset && inode_zones[MINIX_V1_TIER1_ZONENUMS]) {
-		zone_table = (minix_v1_zone_t *) copy_zone_data(buffer, from_le16(inode_table[inode_num].zones[MINIX_V1_TIER1_ZONENUMS]));
+		zone_table = (minix_v1_zone_t *) copy_zone_data(buffer, from_le16(inode_table[inode_num - 1].zones[MINIX_V1_TIER1_ZONENUMS]));
 		offset = load_zones(zone_table, MINIX_V1_ZONENUMS_PER_ZONE, offset);
 	}
 

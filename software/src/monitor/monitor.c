@@ -393,11 +393,14 @@ void command_load(int argc, char **args)
 
 void command_boot(int argc, char **args)
 {
-	//*led = 0x0;
-	void (*entry)() = (void (*)()) RAM_ADDR;
+	char *boot_args = "";
+	void (*entry)(char *) = (void (*)(char *)) RAM_ADDR;
+
 	if (argc >= 2)
-		entry = (void (*)()) strtol(args[1], NULL, 16);
-	((void (*)()) entry)();
+		entry = (void (*)(char *)) strtol(args[1], NULL, 16);
+	if (argc >= 3)
+		boot_args = args[2];
+	((void (*)()) entry)(boot_args);
 }
 
 

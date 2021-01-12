@@ -4,22 +4,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioc_tty.h>
-#include <sys/stat.h>
-#include <sys/mount.h>
 #include <kernel/syscall.h>
-
-void mount_and_initialize()
-{
-	int error = mount("/dev/ata0", "/media", "minixfs", MOUNT_RW, NULL);
-	if (error)
-		printf("Error mounting secondary: %d\n", error);
-}
 
 
 int init_task()
 {
-	mount_and_initialize();
-
 	// Open stdin
 	int fd = open("/dev/tty0", O_RDONLY, 0);
 	if (fd < 0) {

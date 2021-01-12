@@ -48,7 +48,8 @@ struct mount_ops *filesystems[] = {
 	NULL	// Null Termination of Filesystems List
 };
 
-static device_t root_dev = DEVNUM(DEVMAJOR_MEM, 0);
+char boot_args[32] = "mem0";
+device_t root_dev = DEVNUM(DEVMAJOR_MEM, 0);
 
 
 void create_dir_or_panic(const char *path)
@@ -75,12 +76,23 @@ void create_special_or_panic(const char *path, device_t rdev)
 	vfs_release_vnode(vnode);
 }
 
+void parse_boot_args()
+{
+	// TODO this is overly simplistic because there aren't many options yet
+	if (!strcmp(boot_args, "mem0"))
+		root_dev = DEVNUM(DEVMAJOR_MEM, 0);
+	else if (!strcmp(boot_args, "ata0"))
+		root_dev = DEVNUM(DEVMAJOR_ATA, 0);
+}
+
 int main()
 {
 	DISABLE_INTS();
 
 	tty_68681_preinit();
-	printk_safe("\n\n");
+
+	printk_safe("\nBooting with \"%s\"...\n\n", boot_args);
+	parse_boot_args();
 
 	init_kernel_heap((void *) 0x110000, 0xD0000);
 
@@ -104,6 +116,7 @@ int main()
 
 	// TODO this would be moved elsewhere
 	//vfs_mount(NULL, "/", 0, &mallocfs_mount_ops, SU_UID);
+	printk_safe("minixfs: mounting (%x) at %s\n", root_dev, "/");
 	vfs_mount(NULL, "/", root_dev, &minix_mount_ops, SU_UID);
 
 	create_dir_or_panic("/bin");
@@ -117,6 +130,7 @@ int main()
 	create_special_or_panic("/dev/ata0", DEVNUM(DEVMAJOR_ATA, 0));
 
 	// TODO device number here is an issue because 0 is used to indicated a mount slot is not used, which when mounting after this causes a /proc error
+	printk_safe("procfs: mounting at /proc\n");
 	vfs_mount(NULL, "/proc", 1, &procfs_mount_ops, SU_UID);
 
 	//vfs_mount(NULL, "/media", DEVNUM(DEVMAJOR_ATA, 0), &minix_mount_ops, SU_UID);

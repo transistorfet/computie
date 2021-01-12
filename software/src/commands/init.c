@@ -10,7 +10,7 @@
 int init_task()
 {
 	// Open stdin
-	int fd = open("/dev/tty0", O_RDONLY, 0);
+	int fd = open("/dev/tty0", O_RDWR, 0);
 	if (fd < 0) {
 		printf("Error opening file tty %d\n", fd);
 		return NULL;

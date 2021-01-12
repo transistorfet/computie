@@ -332,7 +332,7 @@ void command_writerom(int argc, char **args)
 	uint16_t *source = (uint16_t *) RAM_ADDR;
 
 	if (argc >= 2)
-		dest = strtol(args[1], NULL, 16);
+		dest = (uint16_t *) strtol(args[1], NULL, 16);
 
 	for (int i = 0; i < ROM_SIZE; i++) {
 		data = dest[i];
@@ -360,7 +360,7 @@ void command_verifyrom(int argc, char **args)
 	uint16_t *dest = (uint16_t *) ROM_ADDR;
 
 	if (argc >= 2)
-		dest = strtol(args[1], NULL, 16);
+		dest = (uint16_t *) strtol(args[1], NULL, 16);
 
 	for (int i = 0; i < ROM_SIZE; i++) {
 		if (dest[i] != source[i]) {

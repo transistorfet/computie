@@ -10,7 +10,8 @@
 #include <kernel/driver.h>
 
 #include "../../proc/process.h"
- 
+
+#include "data.h"
 #include "procfs.h"
 #include "../nop.h"
 
@@ -46,12 +47,12 @@ struct mount_ops procfs_mount_ops = {
 };
 
 struct procfs_dir_entry proc_files[] = {
-	{ PFN_PROCDIR,	"." },
-	{ PFN_ROOTDIR,	".." },
-	{ PFN_CMDLINE,	"cmdline" },
-	{ PFN_STAT,	"stat" },
-	{ PFN_STATM,	"statm" },
-	{ 0, NULL },
+	{ PFN_PROCDIR,	".",		NULL },
+	{ PFN_ROOTDIR,	"..",		NULL },
+	{ PFN_CMDLINE,	"cmdline",	get_data_cmdline },
+	{ PFN_STAT,	"stat", 	get_data_stat },
+	{ PFN_STATM,	"statm",	get_data_statm },
+	{ 0, NULL, NULL },
 };
 
 
@@ -62,8 +63,6 @@ static struct procfs_vnode vnode_table[MAX_VNODES];
 
 static struct vnode *_find_vnode(pid_t pid, short filenum, mode_t mode, struct mount *mp);
 static struct vnode *_alloc_vnode(pid_t pid, short filenum, mode_t mode, struct mount *mp);
-static inline char get_proc_state(struct process *proc);
-static inline size_t get_proc_size(struct process *proc);
 
 int procfs_init()
 {
@@ -142,64 +141,21 @@ int procfs_close(struct vfile *file)
 int procfs_read(struct vfile *file, char *buf, size_t nbytes)
 {
 	int limit;
-	char *data;
 	struct process *proc;
+	procfs_data_t getdata;
 	char buffer[MAX_BUFFER];
 
 	proc = get_proc(PROCFS_DATA(file->vnode).pid);
 	if (!proc)
 		return ENOENT;
 
-	data = buffer;
-	switch (PROCFS_DATA(file->vnode).filenum) {
-	    case PFN_CMDLINE: {
-		int i = 0;
-		for (char **arg = proc->cmdline; *arg; arg++) {
-			strncpy(&buffer[i], *arg, MAX_BUFFER - i);
-			i += strlen(*arg) + 1;
-			buffer[i - 1] = ' ';
-			if (i > MAX_BUFFER)
-				break;
-		}
-		buffer[i - 1] = '\0';
-		break;
-	    }
-	    case PFN_STAT: {
-		snprintf(buffer, MAX_BUFFER,
-			"%d %s %c %d %d %d %d %d %d\n",
-			proc->pid,
-			proc->cmdline[0],
-			get_proc_state(proc),
-			proc->parent,
-			proc->pgid,
-			proc->session,
-			proc->ctty,
-			proc->start_time,
-			get_proc_size(proc)
-		);
-		break;
-	    }
-	    case PFN_STATM: {
-		snprintf(buffer, MAX_BUFFER,
-			"%d %x %x %x %x %x\n",
-			get_proc_size(proc),
-			proc->map.segments[M_TEXT].base,
-			proc->map.segments[M_TEXT].length,
-			proc->map.segments[M_STACK].base,
-			proc->map.segments[M_STACK].length,
-			proc->sp
-		);
-		break;
-	    }
-	    default:
-		return 0;
-	}
+	getdata = proc_files[PROCFS_DATA(file->vnode).filenum].func;
+	limit = getdata(proc, buffer, MAX_BUFFER);
 
-	limit = strlen(data);
 	if (file->position + nbytes >= limit)
 		nbytes = limit - file->position;
 	if (nbytes)
-		strncpy(buf, &data[file->position], nbytes);
+		strncpy(buf, &buffer[file->position], nbytes);
 	file->position += nbytes;
 	return nbytes;
 }
@@ -269,30 +225,5 @@ static struct vnode *_alloc_vnode(pid_t pid, short filenum, mode_t mode, struct 
 		}
 	}
 	return NULL;
-}
-
-static inline char get_proc_state(struct process *proc)
-{
-	switch (proc->state) {
-		case PS_RESUMING:
-		case PS_RUNNING:
-			return 'R';
-		case PS_BLOCKED:
-			return 'S';
-		case PS_STOPPED:
-			return 'D';
-		case PS_EXITED:
-			return 'Z';
-		default:
-			return '?';
-	}
-}
-
-static inline size_t get_proc_size(struct process *proc)
-{
-	size_t size = 0;
-	for (char i = 0; i < NUM_SEGMENTS; i++)
-		size += proc->map.segments[i].length;
-	return size;
 }
 

@@ -35,6 +35,7 @@ DEVFS_OBJS = \
 	src/kernel/fs/devfs/devfs.o
 
 PROCFS_OBJS = \
+	src/kernel/fs/procfs/data.o \
 	src/kernel/fs/procfs/procfs.o
 
 MALLOCFS_OBJS = \

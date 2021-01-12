@@ -12,9 +12,12 @@
 #define PFN_STAT	3
 #define PFN_STATM	4
 
+typedef int (*procfs_data_t)(struct process *proc, char *buffer, int max);
+
 struct procfs_dir_entry {
 	short filenum;
 	char *filename;
+	procfs_data_t func;
 };
 
 struct procfs_data {

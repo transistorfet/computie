@@ -110,7 +110,7 @@ void dump(const uint16_t *addr, short len)
  ************/
 
 #define ROM_ADDR	0x000000
-#define ROM_SIZE	0x1200
+#define ROM_SIZE	0x1800
 
 #define RAM_ADDR	0x100000
 #define RAM_SIZE	1024
@@ -265,9 +265,9 @@ void command_runtest(int argc, char **args)
 
 void erase_flash(int sector)
 {
-	sector <<= 18;
+	sector <<= 17;
 
-	puts("Erasing flash sector 0");
+	printf("Erasing flash sector %d", sector);
 	*((volatile uint16_t *) (0x555 << 1)) = 0xAAAA;
 	putchar('.');
 	*((volatile uint16_t *) (0x2AA << 1)) = 0x5555;
@@ -285,9 +285,20 @@ void erase_flash(int sector)
 void command_eraserom(int argc, char **args)
 {
 	uint16_t data;
+	unsigned int sector = 0;
 	uint16_t *dest = (uint16_t *) ROM_ADDR;
 
-	erase_flash(0);
+	if (argc >= 2) {
+		sector = strtol(args[1], NULL, 16);
+		if ((sector & 0x01FFFF) || ((sector >> 18) > 8)) {
+			printf("Invalid sector address to erase (%x)\n", sector);
+			return;
+		}
+		dest = (uint16_t *) sector;
+		sector >>= 17;
+	}
+
+	erase_flash(sector);
 	delay(200000);
 	data = dest[0];
 
@@ -320,6 +331,9 @@ void command_writerom(int argc, char **args)
 	uint16_t *dest = (uint16_t *) ROM_ADDR;
 	uint16_t *source = (uint16_t *) RAM_ADDR;
 
+	if (argc >= 2)
+		dest = strtol(args[1], NULL, 16);
+
 	for (int i = 0; i < ROM_SIZE; i++) {
 		data = dest[i];
 		if (data != 0xFFFF) {
@@ -344,6 +358,10 @@ void command_verifyrom(int argc, char **args)
 
 	uint16_t *source = (uint16_t *) RAM_ADDR;
 	uint16_t *dest = (uint16_t *) ROM_ADDR;
+
+	if (argc >= 2)
+		dest = strtol(args[1], NULL, 16);
+
 	for (int i = 0; i < ROM_SIZE; i++) {
 		if (dest[i] != source[i]) {
 			printf("@%x expected %x but found %x\n", &dest[i], source[i], dest[i]);

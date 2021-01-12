@@ -545,7 +545,7 @@ int vfs_read(struct vfile *file, char *buffer, size_t size)
 int vfs_write(struct vfile *file, const char *buffer, size_t size)
 {
 	if ((file->flags & O_ACCMODE) != O_WRONLY)
-		return EACCES
+		return EACCES;
 	return file->ops->write(file, buffer, size);
 }
 

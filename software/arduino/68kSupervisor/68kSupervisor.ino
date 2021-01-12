@@ -286,7 +286,7 @@ byte send_mem[] = {
 
 };
 
-#define ROM_SIZE	0x1200
+#define ROM_SIZE	0x1800
 #define ROM_MEM_SIZE	0x1800
 word mem_size = ROM_MEM_SIZE;
 byte mem[ROM_MEM_SIZE] = {

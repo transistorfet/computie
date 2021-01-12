@@ -45,6 +45,7 @@ struct vnode_ops minix_vnode_ops = {
 };
 
 struct mount_ops minix_mount_ops = {
+	"minixfs",
 	minix_init,
 	minix_mount,
 	minix_unmount,

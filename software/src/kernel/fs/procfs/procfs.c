@@ -38,6 +38,7 @@ struct vnode_ops procfs_vnode_ops = {
 };
 
 struct mount_ops procfs_mount_ops = {
+	"procfs",
 	procfs_init,
 	procfs_mount,
 	procfs_unmount,

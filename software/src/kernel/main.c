@@ -48,6 +48,8 @@ struct mount_ops *filesystems[] = {
 	NULL	// Null Termination of Filesystems List
 };
 
+static device_t root_dev = DEVNUM(DEVMAJOR_MEM, 0);
+
 
 void create_dir_or_panic(const char *path)
 {
@@ -72,8 +74,6 @@ void create_special_or_panic(const char *path, device_t rdev)
 			panic("Unable to create special file %s\n", path);
 	vfs_release_vnode(vnode);
 }
-
-
 
 int main()
 {
@@ -102,11 +102,9 @@ int main()
 		filesystems[i]->init();
 	}
 
-
-
 	// TODO this would be moved elsewhere
 	//vfs_mount(NULL, "/", 0, &mallocfs_mount_ops, SU_UID);
-	vfs_mount(NULL, "/", DEVNUM(DEVMAJOR_MEM, 0), &minix_mount_ops, SU_UID);
+	vfs_mount(NULL, "/", root_dev, &minix_mount_ops, SU_UID);
 
 	create_dir_or_panic("/bin");
 	create_dir_or_panic("/dev");
@@ -121,8 +119,7 @@ int main()
 	// TODO device number here is an issue because 0 is used to indicated a mount slot is not used, which when mounting after this causes a /proc error
 	vfs_mount(NULL, "/proc", 1, &procfs_mount_ops, SU_UID);
 
-	vfs_mount(NULL, "/media", DEVNUM(DEVMAJOR_ATA, 0), &minix_mount_ops, SU_UID);
-
+	//vfs_mount(NULL, "/media", DEVNUM(DEVMAJOR_ATA, 0), &minix_mount_ops, SU_UID);
 
 	begin_multitasking();
 }

@@ -53,6 +53,7 @@ struct vfile;
 
 
 struct mount_ops {
+	char *fstype;								// Filesystem Type Name (used by mount syscall)
 	int (*init)();								// Initialize the filesystem at boot
 	int (*mount)(struct mount *mp, device_t dev, struct vnode *parent);	// Mount the filesystem using the pre-allocated struct mount
 	int (*unmount)(struct mount *mp);					// Unmount the filesystem

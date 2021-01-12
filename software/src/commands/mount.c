@@ -14,7 +14,7 @@ int MAIN(command_mount)(int argc, char **argv, char **envp)
 		return -1;
 	}
 
-	error = mount(argv[1], argv[2], NULL);
+	error = mount(argv[1], argv[2], "minixfs", MOUNT_RW, NULL);
 	if (error < 0) {
 		printf("Error while mounting %d\n", error);
 		return -1;

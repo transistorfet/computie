@@ -107,14 +107,28 @@ void do_syscall()
 
 int do_mount(const char *source, const char *target, struct mount_opts *opts)
 {
+	extern struct mount_ops **filesystems;
+	extern struct mount_ops minix_mount_ops;
+
 	struct vnode *vnode;
+	struct mount_ops *fsptr = NULL;
+
+	if (opts && opts->fstype) {
+		for (char i = 0; filesystems[i]; i++) {
+			if (!strcmp(filesystems[i]->fstype, opts->fstype)) {
+				fsptr = filesystems[i];
+				break;
+			}
+		}
+		if (!fsptr)
+			return EINVAL;
+	}
+	if (!fsptr)
+		fsptr = &minix_mount_ops;
 
 	if (vfs_lookup(current_proc->cwd, source, VLOOKUP_NORMAL, current_proc->uid, &vnode))
 		return ENOENT;
-
-	// TODO use opts
-	extern struct mount_ops minix_mount_ops;
-	return vfs_mount(current_proc->cwd, target, vnode->rdev, &minix_mount_ops, current_proc->uid);
+	return vfs_mount(current_proc->cwd, target, vnode->rdev, fsptr, current_proc->uid);
 }
 
 int do_umount(const char *source)

@@ -10,6 +10,8 @@ Operating System:
 
 	* need to clear unread data from tty buffer after the shell receives a ^C
 
+	* implement partitions as a separate device (look at minix and linux)
+
 	* add calculating of cpu runtime
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 	* add brk/sbrk/stack guard protection.  How do you track memory segment allocation?  Minix iterates over all memory segments and compares...
@@ -21,7 +23,6 @@ Operating System:
 	* make init be a separate file loaded from disk and executed
 	* make init relaunch shell if the initial one is killed
 	* how can you pass arguments into the kernel from the boot loader?  Can you make it bootable from either a disk image in flash, or a disk image on the CF card?
-	* add makefile rules to create device files and any other necessary files in the build directory, such that you can "make mount build-system unmount" to make a disk image
 	* write the bootloader into rom somewhere, such that it can boot from rom or the compact flash
 	* make the bootloader a bit smaller??
 	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only

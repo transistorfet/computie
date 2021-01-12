@@ -40,6 +40,7 @@ struct vnode_ops mallocfs_vnode_ops = {
 };
 
 struct mount_ops mallocfs_mount_ops = {
+	"mallocfs",
 	mallocfs_init,
 	mallocfs_mount,
 	mallocfs_unmount,

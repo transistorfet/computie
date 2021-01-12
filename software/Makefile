@@ -88,14 +88,22 @@ KERNEL_OBJS = \
 
 
 all: monitor.bin monitor.load boot.bin boot.load kernel.bin kernel.load
-build-system: kernel.bin commands devicefiles
+build-system: kernel.bin commands devicefiles otherfiles
 
 commands:
 	make -C src/commands clean all
 
 devicefiles:
-	mkdir $(BUILD)/dev
-	# TODO create the device files
+	sudo mkdir -p $(BUILD)/dev
+	sudo mknod $(BUILD)/dev/tty0 c 2 0
+	sudo mknod $(BUILD)/dev/tty1 c 2 1
+	sudo mknod $(BUILD)/dev/mem0 c 3 0
+	sudo mknod $(BUILD)/dev/ata0 c 4 0
+
+otherfiles:
+	sudo mkdir -p $(BUILD)/proc
+	sudo mkdir -p $(BUILD)/media
+
 
 libc-68k-none.a libc-68k-os.a:
 	make -C src/libc ../../$@
@@ -126,6 +134,7 @@ kernel.bin: CFLAGS += -DONEBINARY
 kernel.bin: $(KERNEL_OBJS)
 	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@.elf $^
 	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -Wl,--oformat=binary -o $@ $^
+	mkdir -p $(BUILD)
 	cp $@ $(BUILD)
 
 

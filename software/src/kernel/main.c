@@ -117,7 +117,7 @@ int main()
 	// TODO this would be moved elsewhere
 	//vfs_mount(NULL, "/", 0, &mallocfs_mount_ops, SU_UID);
 	printk_safe("minixfs: mounting (%x) at %s\n", root_dev, "/");
-	vfs_mount(NULL, "/", root_dev, &minix_mount_ops, SU_UID);
+	vfs_mount(NULL, "/", root_dev, &minix_mount_ops, 0, SU_UID);
 
 	create_dir_or_panic("/bin");
 	create_dir_or_panic("/dev");
@@ -131,7 +131,7 @@ int main()
 
 	// TODO device number here is an issue because 0 is used to indicated a mount slot is not used, which when mounting after this causes a /proc error
 	printk_safe("procfs: mounting at /proc\n");
-	vfs_mount(NULL, "/proc", 1, &procfs_mount_ops, SU_UID);
+	vfs_mount(NULL, "/proc", 1, &procfs_mount_ops, VFS_MBF_READ_ONLY, SU_UID);
 
 	//vfs_mount(NULL, "/media", DEVNUM(DEVMAJOR_ATA, 0), &minix_mount_ops, SU_UID);
 

@@ -129,7 +129,7 @@ struct vfile {
 
 int init_vfs();
 
-int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_ops *ops, uid_t uid);
+int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_ops *ops, int mountflags, uid_t uid);
 int vfs_unmount(device_t dev, uid_t uid);
 int vfs_sync(device_t dev);
 

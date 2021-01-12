@@ -128,7 +128,7 @@ int do_mount(const char *source, const char *target, struct mount_opts *opts)
 
 	if (vfs_lookup(current_proc->cwd, source, VLOOKUP_NORMAL, current_proc->uid, &vnode))
 		return ENOENT;
-	return vfs_mount(current_proc->cwd, target, vnode->rdev, fsptr, current_proc->uid);
+	return vfs_mount(current_proc->cwd, target, vnode->rdev, fsptr, opts ? opts->mountflags : 0, current_proc->uid);
 }
 
 int do_umount(const char *source)

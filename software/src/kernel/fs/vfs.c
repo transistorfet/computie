@@ -42,7 +42,7 @@ int init_vfs()
 }
 
 
-int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_ops *ops, uid_t uid)
+int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_ops *ops, int mountflags, uid_t uid)
 {
 	int error;
 	struct vnode *vnode;
@@ -544,6 +544,8 @@ int vfs_read(struct vfile *file, char *buffer, size_t size)
 
 int vfs_write(struct vfile *file, const char *buffer, size_t size)
 {
+	if ((file->flags & O_ACCMODE) != O_WRONLY)
+		return EACCES
 	return file->ops->write(file, buffer, size);
 }
 

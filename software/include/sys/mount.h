@@ -3,7 +3,7 @@
 #define _SYS_MOUNT_H
 
 #define MOUNT_RO	0x01
-#define MOUNT_RW	0x03
+#define MOUNT_RW	0x00
 
 struct mount_opts {
 	const char *fstype;

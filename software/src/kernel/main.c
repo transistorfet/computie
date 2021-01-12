@@ -79,7 +79,7 @@ void create_special_or_panic(const char *path, device_t rdev)
 void parse_boot_args()
 {
 	// TODO this is overly simplistic because there aren't many options yet
-	if (!strcmp(boot_args, "mem0"))
+	if (!*boot_args || !strcmp(boot_args, "mem0"))
 		root_dev = DEVNUM(DEVMAJOR_MEM, 0);
 	else if (!strcmp(boot_args, "ata0"))
 		root_dev = DEVNUM(DEVMAJOR_ATA, 0);

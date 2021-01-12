@@ -191,8 +191,9 @@ static inline void config_serial_channel(struct serial_channel *channel)
 
 	// Reset channel A serial port
 	*channel->ports->command = CMD_RESET_MR;
-	NOP()
+	NOP();
 	*channel->ports->command = CMD_RESET_TX;
+	NOP();
 
 	// Configure channel A serial port
 	*channel->ports->port_config = MR1A_MODE_A_REG_1_CONFIG;
@@ -465,6 +466,9 @@ void tty_68681_tx_safe_mode()
 	*OPCR_WR_ADDR = 0x00;
 	*OUT_SET_ADDR = 0xF0;
 
+	// This slight delay prevents garbled output being sent during the welcome message
+	inline_delay(10);
+
 	ASSERT_CTS(&channels[CH_A]);
 
 	/*
@@ -498,6 +502,9 @@ void tty_68681_normal_mode()
 	*OPCR_WR_ADDR = 0x00;
 	*OUT_SET_ADDR = 0xF0;
 	*OUT_RESET_ADDR = 0xF0;
+
+	// This slight delay prevents garbled output being sent during the welcome message
+	inline_delay(10);
 
 	ASSERT_CTS(&channels[CH_A]);
 	ASSERT_CTS(&channels[CH_B]);

@@ -102,6 +102,7 @@ devicefiles:
 
 otherfiles:
 	sudo mkdir -p $(BUILD)/proc
+	sudo mkdir -p $(BUILD)/home
 	sudo mkdir -p $(BUILD)/media
 
 
@@ -158,8 +159,10 @@ clean:
 	find . \( -name "*.o" -or -name "*.a" -or -name "*.bin" -or -name "*.elf" -or -name "*.load" \) -delete -print
 
 
-BLOCKS = 128
-IMAGE = minix-test.img
+# TODO 128 is just barely enough for 20 commands, kernel, devfiles
+#BLOCKS = 128
+BLOCKS = 20480
+IMAGE = minix-build.img
 LOOPBACK = /dev/loop8
 MOUNTPOINT = build
 

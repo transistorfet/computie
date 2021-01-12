@@ -70,7 +70,7 @@ static struct ata_geometry devices[ATA_DEV_MAX];
 
 
 #define ATA_DELAY(x)		{ for (int delay = 0; delay < (x); delay++) { asm volatile(""); } }
-#define ATA_WAIT()		{ while (*ATA_REG_STATUS & ATA_ST_BUSY) { } }
+#define ATA_WAIT()		{ ATA_DELAY(4); while (*ATA_REG_STATUS & ATA_ST_BUSY) { } }
 #define ATA_WAIT_FOR_DATA()	{ while (!(*ATA_REG_STATUS) & ATA_ST_DATA_READY) { } }
 
 /*
@@ -81,6 +81,7 @@ static inline void ATA_DELAY(short delay)
 
 static inline void ATA_WAIT()
 {
+	ATA_DELAY(4);
 	while (*ATA_REG_STATUS & ATA_ST_BUSY) { }
 }
 */
@@ -133,12 +134,9 @@ int ata_read_sector(int sector, char *buffer)
 
 	LOCK(saved_status);
 
-	ATA_DELAY(10);
-
 	// Set 8-bit mode
 	(*ATA_REG_FEATURE) = 0x01;
 	(*ATA_REG_COMMAND) = ATA_CMD_SET_FEATURE;
-	ATA_DELAY(10);
 	ATA_WAIT();
 
 	// Read a sector
@@ -149,7 +147,6 @@ int ata_read_sector(int sector, char *buffer)
 	(*ATA_REG_SECTOR_NUM) = (uint8_t) sector;
 	(*ATA_REG_SECTOR_COUNT) = 1;
 	(*ATA_REG_COMMAND) = ATA_CMD_READ_SECTORS;
-	ATA_DELAY(10);
 	ATA_WAIT();
 
 	char status = (*ATA_REG_STATUS);
@@ -159,7 +156,6 @@ int ata_read_sector(int sector, char *buffer)
 		return 0;
 	}
 
-	ATA_DELAY(10);
 	ATA_WAIT();
 	ATA_WAIT_FOR_DATA();
 
@@ -168,7 +164,6 @@ int ata_read_sector(int sector, char *buffer)
 		//asm volatile("rol.w	#8, %0\n" : "+g" (((uint16_t *) buffer)[i]));
 		buffer[i] = (*ATA_REG_DATA_BYTE);
 
-		ATA_DELAY(10);
 		ATA_WAIT();
 		ATA_DELAY(10);
 	}

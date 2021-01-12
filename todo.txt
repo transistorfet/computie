@@ -8,9 +8,21 @@
 
 Operating System:
 
-	* need to clear unread data from tty buffer after the shell receives a ^C
+	* try to fix the tty initialization/garbage output issue (after a fatal error, or after loading the monitor with the script).  It could be a timing issue
+	  and it could be related to the disk boot issue where the letters typed seem to be read double... and it freezes for some unknown reason (but that might be different)
 
+	* write the bootloader into rom somewhere, such that it can boot from rom or the compact flash (maybe mod eraserom/writerom to take an arg, so you can write to 0x20000)
+
+	* the send command is not working anymore (I booted to kernel.load and then sent kernel.bin.send, with the intention of copying to CF)
+	* when running sh from disk, running ls causes it to run ls over and over again without a way to interrupt it.  This seems to have gone away.... maybe it's related to tty issues???
+
+	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
 	* implement partitions as a separate device (look at minix and linux)
+	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
+	* how can you make a df command to list how many blocks are free??  That info would need to come from the minix fs-specific code
+	* make mount list the mountpoints... but how do you get that info from the kernel??? is it through a procfs file or something?
+
+
 
 	* add calculating of cpu runtime
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
@@ -22,11 +34,12 @@ Operating System:
 
 	* make init be a separate file loaded from disk and executed
 	* make init relaunch shell if the initial one is killed
-	* how can you pass arguments into the kernel from the boot loader?  Can you make it bootable from either a disk image in flash, or a disk image on the CF card?
-	* write the bootloader into rom somewhere, such that it can boot from rom or the compact flash
-	* make the bootloader a bit smaller??
-	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
 
+	* maybe add some parsing of params to the bootloader, rather than using the builtin defaults
+	* make the boot loader recognize the partition table
+	* split the boot loader up into multiple parts, so it can be stage loaded
+
+	* increase timer clock tick to 60Hz from ~14Hz??
 
 	* should filedesc be put into fs/?
 	* should the timer stuff in proc be moved somewhere else?

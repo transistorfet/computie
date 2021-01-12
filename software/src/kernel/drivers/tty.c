@@ -73,6 +73,13 @@ struct driver tty_driver = {
 
 static struct tty_device devices[TTY_DEVICE_NUM];
 
+static void tty_reset_input(device_t minor)
+{
+	devices[minor].ready = 0;
+	devices[minor].buf_read = 0;
+	devices[minor].buf_write = 0;
+}
+
 #define READ_BUF	256
 
 static inline void tty_read_input(device_t minor)
@@ -99,6 +106,7 @@ static inline void tty_read_input(device_t minor)
 			if (buffer[i] == tty->tio.c_cc[VINTR]) {
 				//tty->ready = 1;
 				//resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
+				tty_reset_input(minor);
 				send_signal_process_group(tty->pgid, SIGINT);
 				return;
 			}
@@ -238,9 +246,7 @@ int tty_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 
 		// If an entire line has been read, then reset the buffer and attempt to read more input from the raw device
 		if (devices[minor].buf_read >= devices[minor].buf_write) {
-			devices[minor].ready = 0;
-			devices[minor].buf_read = 0;
-			devices[minor].buf_write = 0;
+			tty_reset_input(minor);
 			request_bh_run(SH_TTY);
 		}
 		return max;

@@ -32,4 +32,10 @@ static inline int endian_convert_long(int x)
 #define from_be16(x)	((x))
 #define from_be32(x)	((x))
 
+
+static inline void inline_delay(int count)
+{
+	while (--count > 0) { asm volatile(""); }
+}
+
 #endif

@@ -41,6 +41,23 @@ int init_vfs()
 	init_fileptr_table();
 }
 
+void vfs_mount_iter_start(struct mount_iter *iter)
+{
+	iter->slot = 0;
+}
+
+struct mount *vfs_mount_iter_next(struct mount_iter *iter)
+{
+	struct mount *mp;
+
+	do {
+		if (iter->slot >= VFS_MOUNT_MAX)
+			return NULL;
+		mp = &mountpoints[iter->slot++];
+	} while (mp->dev == 0);
+	return mp;
+}
+
 
 int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_ops *ops, int mountflags, uid_t uid)
 {
@@ -74,7 +91,7 @@ int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_op
 			mountpoints[i].mount_node = vnode;
 			mountpoints[i].root_node = NULL;
 			mountpoints[i].dev = dev;
-			mountpoints[i].bits = 0;
+			mountpoints[i].bits = mountflags;
 
 			error = ops->mount(&mountpoints[i], dev, vnode);
 			if (error) {

@@ -86,6 +86,9 @@ struct vfile_ops {
 	int (*readdir)(struct vfile *file, struct dirent *dir);
 };
 
+struct mount_iter {
+	short slot;
+};
 
 struct mount {
 	struct mount_ops *ops;
@@ -129,6 +132,8 @@ struct vfile {
 
 int init_vfs();
 
+void vfs_mount_iter_start(struct mount_iter *iter);
+struct mount *vfs_mount_iter_next(struct mount_iter *iter);
 int vfs_mount(struct vnode *cwd, const char *path, device_t dev, struct mount_ops *ops, int mountflags, uid_t uid);
 int vfs_unmount(device_t dev, uid_t uid);
 int vfs_sync(device_t dev);

@@ -46,6 +46,11 @@ struct mount_ops procfs_mount_ops = {
 	nop_sync,
 };
 
+struct procfs_dir_entry root_files[] = {
+	{ PFN_MOUNTS,	"mounts",	get_data_mounts },
+	{ 0, NULL, NULL },
+};
+
 struct procfs_dir_entry proc_files[] = {
 	{ PFN_PROCDIR,	".",		NULL },
 	{ PFN_ROOTDIR,	"..",		NULL },
@@ -61,8 +66,10 @@ struct procfs_dir_entry proc_files[] = {
 
 static struct procfs_vnode vnode_table[MAX_VNODES];
 
-static struct vnode *_find_vnode(pid_t pid, short filenum, mode_t mode, struct mount *mp);
-static struct vnode *_alloc_vnode(pid_t pid, short filenum, mode_t mode, struct mount *mp);
+static procfs_filenum_t _find_filenum_by_name(struct procfs_dir_entry *entries, const char *filename);
+static struct procfs_dir_entry *_get_entry_by_num(struct procfs_dir_entry *entries, procfs_filenum_t filenum);
+static struct vnode *_find_vnode(pid_t pid, procfs_filenum_t filenum, mode_t mode, struct mount *mp);
+static struct vnode *_alloc_vnode(pid_t pid, procfs_filenum_t filenum, mode_t mode, struct mount *mp);
 
 int procfs_init()
 {
@@ -85,28 +92,29 @@ int procfs_unmount(struct mount *mp)
 
 int procfs_lookup(struct vnode *vnode, const char *filename, struct vnode **result)
 {
-	pid_t pid;
-	short filenum;
+	pid_t pid = 0;
+	procfs_filenum_t filenum;
 	struct process *proc;
 
-	if (PROCFS_DATA(vnode).pid == 0) {
-		pid = strtol(filename, NULL, 10);
-		filenum = PFN_PROCDIR;
+	if (PROCFS_DATA(vnode).filenum == PFN_ROOTDIR) {
+		if (*filename >= '0' && *filename <= '9') {
+			pid = strtol(filename, NULL, 10);
+			filenum = PFN_PROCDIR;
 
-		proc = get_proc(pid);
-		if (!proc)
-			return ENOENT;
+			proc = get_proc(pid);
+			if (!proc)
+				return ENOENT;
+		}
+		else {
+			filenum = _find_filenum_by_name(root_files, filename);
+			if (filenum < 0)
+				return ENOENT;
+		}
 	}
 	else if (PROCFS_DATA(vnode).filenum == PFN_PROCDIR) {
 		pid = PROCFS_DATA(vnode).pid;
 
-		filenum = -1;
-		for (short i = 0; proc_files[i].filename; i++) {
-			if (!strcmp(filename, proc_files[i].filename)) {
-				filenum = proc_files[i].filenum;
-				break;
-			}
-		}
+		filenum = _find_filenum_by_name(proc_files, filename);
 		if (filenum < 0)
 			return ENOENT;
 	}
@@ -126,9 +134,9 @@ int procfs_release(struct vnode *vnode)
 
 int procfs_open(struct vfile *file, int flags)
 {
-	if (PROCFS_DATA(file->vnode).pid == 0)
-		proc_iter_start((struct process_iter *) &file->position);
-	else if (PROCFS_DATA(file->vnode).filenum == 0)
+	if (PROCFS_DATA(file->vnode).filenum == PFN_ROOTDIR)
+		proc_iter_start(((struct process_iter *) &file->position) + 1);
+	else
 		file->position = 0;
 	return 0;
 }
@@ -140,17 +148,20 @@ int procfs_close(struct vfile *file)
 
 int procfs_read(struct vfile *file, char *buf, size_t nbytes)
 {
-	int limit;
+	int limit = 0;
 	struct process *proc;
-	procfs_data_t getdata;
 	char buffer[MAX_BUFFER];
+	struct procfs_dir_entry *entry;
 
 	proc = get_proc(PROCFS_DATA(file->vnode).pid);
-	if (!proc)
+	if (PROCFS_DATA(file->vnode).pid != 0 && !proc)
 		return ENOENT;
 
-	getdata = proc_files[PROCFS_DATA(file->vnode).filenum].func;
-	limit = getdata(proc, buffer, MAX_BUFFER);
+	entry = _get_entry_by_num(proc_files, PROCFS_DATA(file->vnode).filenum);
+	if (!entry)
+		entry = _get_entry_by_num(root_files, PROCFS_DATA(file->vnode).filenum);
+	if (entry)
+		limit = entry->func(proc, buffer, MAX_BUFFER);
 
 	if (file->position + nbytes >= limit)
 		nbytes = limit - file->position;
@@ -175,21 +186,36 @@ offset_t procfs_seek(struct vfile *file, offset_t position, int whence)
 	return -1;
 }
 
+#define PROCFS_MAX_PID		0x10000
+
 int procfs_readdir(struct vfile *file, struct dirent *dir)
 {
+	int i;
+	short slot;
 	struct process *proc;
 
 	if (!(file->vnode->mode & S_IFDIR))
 		return ENOTDIR;
 
-	if (PROCFS_DATA(file->vnode).pid == 0) {
-		proc = proc_iter_next((struct process_iter *) &file->position);
-		if (!proc)
-			return 0;
+	if (PROCFS_DATA(file->vnode).filenum == PFN_ROOTDIR) {
+		if ((file->position < PROCFS_MAX_PID) && (proc = proc_iter_next(((struct process_iter *) &file->position) + 1))) {
+			dir->d_ino = (proc->pid << 8) | 0;
+			snprintf(dir->d_name, VFS_FILENAME_MAX, "%d", proc->pid);
+			dir->d_name[VFS_FILENAME_MAX - 1] = '\0';
+		}
+		else {
+			slot = (file->position < PROCFS_MAX_PID) ? 0 : file->position & 0xFFFF;
+			file->position = PROCFS_MAX_PID | ++slot;
 
-		dir->d_ino = (proc->pid << 8) | 0;
-		snprintf(dir->d_name, VFS_FILENAME_MAX, "%d", proc->pid);
-		dir->d_name[VFS_FILENAME_MAX - 1] = '\0';
+			// Search sequentially to make sure we can't unintensionally access beyond the array (ie. corrupted file->position value)
+			for (i = 0; i < slot && root_files[i].filename; i++) { }
+			if (!root_files[i].filename)
+				return 0;
+
+			dir->d_ino = PROCFS_MAX_PID | slot;
+			strncpy(dir->d_name, root_files[i].filename, VFS_FILENAME_MAX);
+			dir->d_name[VFS_FILENAME_MAX - 1] = '\0';
+		}
 	}
 	else if (PROCFS_DATA(file->vnode).filenum == PFN_PROCDIR) {
 		if (!proc_files[file->position].filename)
@@ -205,7 +231,29 @@ int procfs_readdir(struct vfile *file, struct dirent *dir)
 }
 
 
-static struct vnode *_find_vnode(pid_t pid, short filenum, mode_t mode, struct mount *mp)
+static procfs_filenum_t _find_filenum_by_name(struct procfs_dir_entry *entries, const char *filename)
+{
+	procfs_filenum_t filenum;
+
+	for (short i = 0; entries[i].filename; i++) {
+		if (!strcmp(filename, entries[i].filename)) {
+			filenum = entries[i].filenum;
+			return filenum;
+		}
+	}
+	return ENOENT;
+}
+
+static struct procfs_dir_entry *_get_entry_by_num(struct procfs_dir_entry *entries, procfs_filenum_t filenum)
+{
+	for (short i = 0; entries[i].filename; i++) {
+		if (entries[i].filenum == filenum)
+			return &entries[i];
+	}
+	return NULL;
+}
+
+static struct vnode *_find_vnode(pid_t pid, procfs_filenum_t filenum, mode_t mode, struct mount *mp)
 {
 	for (short i = 0; i < MAX_VNODES; i++) {
 		if (vnode_table[i].vn.refcount > 0 && PROCFS_DATA(&vnode_table[i]).pid == pid && PROCFS_DATA(&vnode_table[i]).filenum == filenum)
@@ -214,7 +262,7 @@ static struct vnode *_find_vnode(pid_t pid, short filenum, mode_t mode, struct m
 	return _alloc_vnode(pid, filenum, mode, mp);
 }
 
-static struct vnode *_alloc_vnode(pid_t pid, short filenum, mode_t mode, struct mount *mp)
+static struct vnode *_alloc_vnode(pid_t pid, procfs_filenum_t filenum, mode_t mode, struct mount *mp)
 {
 	for (short i = 0; i < MAX_VNODES; i++) {
 		if (vnode_table[i].vn.refcount <= 0) {

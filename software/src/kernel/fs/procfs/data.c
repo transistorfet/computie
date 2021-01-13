@@ -80,3 +80,16 @@ static inline size_t get_proc_size(struct process *proc)
 	return size;
 }
 
+int get_data_mounts(struct process *proc, char *buffer, int max)
+{
+	size_t i = 0;
+	struct mount *mp;
+	struct mount_iter iter;
+
+	vfs_mount_iter_start(&iter);
+
+	while ((mp = vfs_mount_iter_next(&iter)))
+		i += snprintf(&buffer[i], max - i, "%x %s %s\n", mp->dev, mp->ops->fstype, (mp->bits & VFS_MBF_READ_ONLY) ? "ro" : "rw");
+	return i;
+}
+

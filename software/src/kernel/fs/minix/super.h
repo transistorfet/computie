@@ -30,7 +30,7 @@ static struct minix_super *load_superblock(device_t dev)
 	struct minix_super *super;
 	struct minix_v1_superblock *super_v1;
 
-	super_buf = get_block(dev, MINIX_SUPER_ZONE);
+	super_buf = get_block(dev, MINIX_V1_SUPER_ZONE);
 	if (!super_buf)
 		return NULL;
 	super_v1 = (struct minix_v1_superblock *) super_buf->block;

@@ -23,7 +23,7 @@ static int minix_mkfs(device_t dev)
 	super_v1->state = 0x0001;
 
 	// Write the superblock
-	super_buf = get_block(dev, MINIX_SUPER_ZONE);
+	super_buf = get_block(dev, MINIX_V1_SUPER_ZONE);
 	if (!super_buf)
 		return -1;
 	super_v1 = (struct minix_v1_superblock *) super_buf->block;

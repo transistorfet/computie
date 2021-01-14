@@ -265,7 +265,6 @@ int load_partition_table()
 
 int ata_init()
 {
-
 	for (short i = 0; i < ATA_DEV_MAX; i++)
 		devices[i].base = 0;
 	register_driver(DEVMAJOR_ATA, &ata_driver);

@@ -8,10 +8,6 @@
 #include "minix-v1.h"
 #include "../../misc/queue.h"
 
-#define MINIX_BOOT_ZONE		0
-#define MINIX_SUPER_ZONE	1
-#define MINIX_BITMAP_ZONES	2
-
 #define MINIX_SUPER(super)	((struct minix_super *) (super))
 #define MINIX_BLOCK(block)	((struct minix_block *) (block))
 #define MINIX_VNODE(vnode)	((struct minix_vnode *) (vnode))

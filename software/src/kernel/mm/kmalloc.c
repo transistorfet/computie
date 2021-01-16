@@ -22,7 +22,7 @@ void init_kernel_heap(void *addr, int size)
 {
 	struct block *space = (struct block *) addr;
 
-	space->size = size - sizeof(struct block);
+	space->size = size;
 	space->next = NULL;
 
 	main_heap.free_blocks = space;
@@ -39,12 +39,12 @@ void *kmalloc(int size)
 	int block_size = size + sizeof(struct block);
 
 	for (; cur; prev = cur, cur = cur->next) {
-		if (cur->size >= size) {
-			// If the block can be split with >4 bytes unallocated, then split it
-			if (cur->size >= block_size + 4) {
+		if (cur->size >= block_size) {
+			// If the block can be split with enough room for another block struct and more than 8 bytes left over, then split it
+			if (cur->size >= block_size + sizeof(struct block) + 8) {
 				nextfree = (struct block *) ((char *) cur + block_size);
 				nextfree->size = cur->size - block_size;
-				cur->size = size;
+				cur->size = block_size;
 
 				nextfree->next = cur->next;
 
@@ -63,24 +63,58 @@ void *kmalloc(int size)
 		}
 	}
 	// Out Of Memory
-	//panic("Kernel out of memory!  Halting...\n");
+	panic("Kernel out of memory!  Halting...\n");
 	return NULL;
 }
 
 void kmfree(void *ptr)
 {
+	struct block *prev = NULL;
 	struct block *block = ((struct block *) ptr) - 1;
 
-	for (struct block *cur = main_heap.free_blocks; cur; cur = cur->next) {
-		if (cur == block) {
+	for (struct block *cur = main_heap.free_blocks; cur; prev = cur, cur = cur->next) {
+		if (cur->next == block) {
 			panic("Double free detected at %x! Halting...\n", cur);
+		}
+
+		if ((struct block *) ((char *) cur + cur->size) == block) {
+			// Merge the free'd block with the previous block
+			cur->size += block->size;
+
+			// If this block is adjacent to the next free block, then merge them
+			if ((struct block *) ((char *) cur + cur->size) == cur->next) {
+				cur->size += cur->next->size;
+				cur->next = cur->next->next;
+			}
+			return;
+		}
+
+		if (cur >= block) {
+			// Insert the free'd block into the list
+			if (prev)
+				prev->next = block;
+			else
+				main_heap.free_blocks = block;
+			block->next = cur;
+
+			// If this block is adjacent to the next free block, then merge them
+			if ((struct block *) ((char *) block + block->size) == cur) {
+				block->size += cur->size;
+				block->next = cur->next;
+			}
+			return;
 		}
 	}
 
-	// TODO this doesn't keep the blocks in address order
-
-	// Insert into free list
-	block->next = main_heap.free_blocks;
-	main_heap.free_blocks = block;
 }
+
+/*
+void print_free()
+{
+	printk_safe("free list:\n");
+	for (struct block *cur = main_heap.free_blocks; cur; cur = cur->next) {
+		printk_safe("%x: %x\n", cur, cur->size);
+	}
+}
+*/
 

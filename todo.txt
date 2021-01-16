@@ -122,8 +122,6 @@ Monitor:
 
 	* failure vectors don't point to the correct addresses, from the looks of it
 
-	* there is an issue with load scripts that are an odd number of bytes, and the last byte wont be read/written because the loader operates on words
-
 	* can you have an debugger in the monitor software?  There are trap and breakpoint instructions in the processor for debugging, so if you define an interrupt handler
 	  for those, you could have it enter a debugger, that possibly allows single stepping?  I'm not sure how to implement that
 
@@ -153,5 +151,4 @@ Monitor:
 
 * it might be possible to do a 68030 single board computer, with 74LVC244/245 interfaces to an fpga chip, to provide the glue logic, but it would be a
   lot of surface mount chips, so you'd have to try a few smaller surface mount projects first
-* make a surface mount/PLCC version of the 68k-SBC board to test SMT, since the design should work, and some of the memory chips are available as SMT
 

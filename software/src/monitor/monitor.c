@@ -375,11 +375,11 @@ void command_verifyrom(int argc, char **args)
 	puts("\nVerification complete");
 }
 
-uint16_t fetch_word()
+uint16_t fetch_word(char max)
 {
 	char buffer[4];
 
-	for (char i = 0; i < 4; i++) {
+	for (char i = 0; i < max; i++) {
 		buffer[i] = getchar();
 		buffer[i] = buffer[i] <= '9' ? buffer[i] - 0x30 : buffer[i] - 0x37;
 	}
@@ -389,22 +389,28 @@ uint16_t fetch_word()
 
 void command_load(int argc, char **args)
 {
+	int i;
+	char odd_size;
 	uint32_t size;
 	uint16_t data;
 	uint16_t *mem = (uint16_t *) RAM_ADDR;
 
-	size = fetch_word();
+	size = fetch_word(4);
+	odd_size = size & 0x01;
 	size >>= 1;
 	//printf("Expecting %x\n", size);
 
 	if (argc >= 2)
 		mem = (uint16_t *) strtol(args[1], NULL, 16);
 
-	for (int i = 0; i < size; i++) {
-		data = fetch_word();
+	for (i = 0; i < size; i++) {
+		data = fetch_word(4);
 		//printf("%x ", data);
 		mem[i] = data;
 	}
+
+	if (odd_size)
+		mem[i] = fetch_word(2);
 
 	puts("Load complete");
 }

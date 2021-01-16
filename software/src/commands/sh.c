@@ -105,11 +105,11 @@ int command_poke(int argc, char **args, char **envp)
 	return 0;
 }
 
-uint16_t fetch_word()
+uint16_t fetch_word(char max)
 {
 	char buffer[4];
 
-	for (char i = 0; i < 4; i++) {
+	for (char i = 0; i < max; i++) {
 		buffer[i] = getchar();
 		buffer[i] = buffer[i] <= '9' ? buffer[i] - 0x30 : buffer[i] - 0x37;
 	}
@@ -121,6 +121,7 @@ uint16_t fetch_word()
 int command_send(int argc, char **argv, char **envp)
 {
 	int fd;
+	char odd_size;
 	uint16_t size;
 	uint16_t data;
 	tcflag_t lflag;
@@ -145,15 +146,21 @@ int command_send(int argc, char **argv, char **envp)
 		return fd;
 	}
 
-	size = fetch_word();
+	size = fetch_word(4);
+	odd_size = size & 0x01;
 	size >>= 1;
 	printf("Expecting %x\n", size);
 
 	for (short i = 0; i < size; i++) {
-		data = fetch_word();
+		data = fetch_word(4);
 		//printf("%x ", data);
 		//mem[i] = data;
 		write(fd, (char *) &data, 2);
+	}
+
+	if (odd_size) {
+		data = fetch_word(2);
+		write(fd, (char *) &data, 1);
 	}
 
 	tcsetattr(STDIN_FILENO, TCSANOW, &tio);

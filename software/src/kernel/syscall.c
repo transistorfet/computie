@@ -14,13 +14,14 @@
 #include <kernel/kmalloc.h>
 #include <kernel/scheduler.h>
 
+// TODO these should maybe be bundled into an interface in <kernel/processes.h>
 #include "proc/timer.h"
 #include "proc/memory.h"
 #include "proc/process.h"
 #include "proc/binaries.h"
+#include "proc/filedesc.h"
 
 #include "api.h"
-#include "filedesc.h"
 #include "interrupts.h"
 
 

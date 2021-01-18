@@ -6,11 +6,11 @@
 #include <kernel/scheduler.h>
 
 #include "../api.h"
-#include "../filedesc.h"
 #include "../interrupts.h"
 #include "../misc/queue.h"
 
 #include "process.h"
+#include "filedesc.h"
 
 
 // Process Table and Queues

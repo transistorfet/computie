@@ -6,7 +6,7 @@
 #include <kernel/signal.h>
 #include <kernel/syscall.h>
 
-#include "../filedesc.h"
+#include "filedesc.h"
 #include "../misc/queue.h"
 
 #define INIT_PID		1

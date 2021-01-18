@@ -63,7 +63,6 @@ KERNEL_OBJS = \
 	src/kernel/syscall_entry.o \
 	src/kernel/syscall.o \
 	src/kernel/interrupts.o \
-	src/kernel/filedesc.o \
 	src/kernel/time.o \
 	src/kernel/driver.o \
 	src/kernel/proc/scheduler.o \
@@ -72,6 +71,7 @@ KERNEL_OBJS = \
 	src/kernel/proc/tasks.o \
 	src/kernel/proc/memory.o \
 	src/kernel/proc/signal.o \
+	src/kernel/proc/filedesc.o \
 	src/kernel/proc/binaries.o \
 	src/kernel/mm/kmalloc.o \
 	src/kernel/fs/vfs.o \

@@ -68,6 +68,7 @@ KERNEL_OBJS = \
 	src/kernel/driver.o \
 	src/kernel/proc/scheduler.o \
 	src/kernel/proc/process.o \
+	src/kernel/proc/timer.o \
 	src/kernel/proc/tasks.o \
 	src/kernel/proc/memory.o \
 	src/kernel/proc/signal.o \

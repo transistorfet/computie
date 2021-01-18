@@ -10,6 +10,7 @@
 
 #include <elf.h>
 
+#include "memory.h"
 #include "process.h"
 
 extern struct process *current_proc;

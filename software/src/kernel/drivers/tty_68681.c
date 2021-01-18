@@ -19,6 +19,7 @@
 #include <kernel/scheduler.h>
 
 #include "../interrupts.h"
+#include "../proc/timer.h"
 #include "../misc/circlebuf.h"
 
 

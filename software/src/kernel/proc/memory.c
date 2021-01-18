@@ -38,7 +38,7 @@ int copy_string_array(char **stack, int *count, char *const arr[])
 	return 0;
 }
 
-char *copy_exec_args(char *stack, char *const argv[], char *const envp[], char **proc_args)
+char *copy_exec_args(char *stack, char *const argv[], char *const envp[], const char **proc_args)
 {
 	int argc, envc;
 	char **stack_argv, **stack_envp;

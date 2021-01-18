@@ -13,6 +13,7 @@ RANLIB = m68k-linux-gnu-ranlib
 INCLUDE = $(ROOT)/include
 ASFLAGS = -m68010 --defsym __mc68010__=1
 CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -mpcrel -Os
+LDFLAGS = -Wl,--build-id=none --entry=main -Ttext=0
 
 # reduce the elf output size by reducing the alignment
 CFLAGS += -z max-page-size=0x10
@@ -56,7 +57,7 @@ $(ROOT)/libc-68k-os.a:
 	hexdump -v -e '/1 "%02X"' $^ >> $@
 
 %.bin: %.o 
-	$(CC) $(CFLAGS) --entry=main -Ttext=0 -o $*.elf $^ $(ROOT)/libc-68k-os.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $*.elf $^ $(ROOT)/libc-68k-os.a
 	$(STRIP) $*.elf -o $(BUILD)/bin/$*
 	$(OBJCOPY) -O binary -j .text -j .got -j .rodata -j .data $*.elf $@
 

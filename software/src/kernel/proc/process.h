@@ -76,7 +76,7 @@ struct process {
 	uid_t uid;
 	mode_t umask;
 	device_t ctty;
-	char *cmdline[PROC_CMDLINE_ARGS];
+	const char *cmdline[PROC_CMDLINE_ARGS];
 	struct vnode *cwd;
 	fd_table_t fd_table;
 };
@@ -94,8 +94,5 @@ struct process *find_exited_child(pid_t parent, pid_t child);
 
 void proc_iter_start(struct process_iter *iter);
 struct process *proc_iter_next(struct process_iter *iter);
-
-int set_alarm(struct process *proc, uint32_t seconds);
-void check_timers();
 
 #endif

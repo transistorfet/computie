@@ -13,7 +13,7 @@ static inline size_t get_proc_size(struct process *proc);
 int get_data_cmdline(struct process *proc, char *buffer, int max)
 {
 	int i = 0;
-	for (char **arg = proc->cmdline; *arg; arg++) {
+	for (const char **arg = proc->cmdline; *arg; arg++) {
 		strncpy(&buffer[i], *arg, max - i);
 		i += strlen(*arg) + 1;
 		buffer[i - 1] = ' ';

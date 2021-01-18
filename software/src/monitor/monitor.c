@@ -12,7 +12,8 @@ extern void init_tty();
 char *led = (char *) 0x201c;
 
 
-void delay(int count) {
+void delay(int count)
+{
 	while (--count > 0) { asm volatile (""); }
 }
 

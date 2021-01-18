@@ -37,7 +37,6 @@ Operating System:
 
 	* add calculating of cpu runtime
 	* implement getopt, and add flags to commands
-	* fix the allocator to merge freed blocks, and/or use a separate heap for the kernel vs process space?
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 	* add brk/sbrk/stack guard protection.  How do you track memory segment allocation?  Minix iterates over all memory segments and compares...
 	* make user programs optionally initialize the heap in a default start routine, and make the heap able to grow (once you have brk/sbrk)
@@ -46,13 +45,11 @@ Operating System:
 	* make init be a separate file loaded from disk and executed
 	* make init relaunch shell if the initial one is killed
 
-	* should filedesc be put into fs/?
-	* should the timer stuff in proc be moved somewhere else?
+	* should filedesc be put into fs/?  It kinda belongs in proc more, oddly enough
 	* should you make a lib subdir, and put unistd at the top?
 	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
 
 
-	* add more info to the ps command, which is now available in the stat file
 	* when there's a trailing / to rm or mkdir, it will create something weird
 	* add checks for errors in the serial transfer? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
@@ -63,7 +60,7 @@ Operating System:
 
 
 	* make a PIE format that can be loaded and executed
-	* add network syscalls for local IPC (unix file, sockets, maybe even fifos?)
+	* add network syscalls for local IPC (unix file, sockets)
 	* to stdlib, add: fprintf, fscanf, scanf, fopen, fclose, fgetpos, fseek, feof, fread, fwrite
 	* add pipe setup to command evaluation
 	* add fifos (should be easy now)

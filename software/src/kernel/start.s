@@ -10,6 +10,7 @@
  */
 
 _start:
+	| Save boot args from the old stack before re-initializing
 	movea.l	(+4,%sp), %a0
 	lea	boot_args, %a1
     S1: move.b	(%a0)+, (%a1)+

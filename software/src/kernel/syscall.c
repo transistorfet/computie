@@ -14,8 +14,10 @@
 #include <kernel/kmalloc.h>
 #include <kernel/scheduler.h>
 
+#include "proc/timer.h"
 #include "proc/memory.h"
 #include "proc/process.h"
+#include "proc/binaries.h"
 
 #include "api.h"
 #include "filedesc.h"

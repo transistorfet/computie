@@ -22,7 +22,6 @@ struct sigcontext {
 
 static inline void run_signal_handler(struct process *proc, int signum);
 static inline void run_signal_default_action(struct process *proc, int signum, sigset_t sigmask);
-static void sig_default_terminate(struct process *proc, int signum);
 static inline sigset_t signal_to_map(int signum);
 static inline int get_next_signum(sigset_t mask);
 
@@ -154,8 +153,10 @@ void check_pending_signals()
 
 static inline void run_signal_default_action(struct process *proc, int signum, sigset_t sigmask)
 {
-	if (sigmask & SIG_MASK_DEFAULT_TERMINATE)
-		sig_default_terminate(proc, signum);
+	if (sigmask & SIG_MASK_DEFAULT_TERMINATE) {
+		exit_proc(proc, -1);
+		resume_waiting_parent(proc);
+	}
 	else if (sigmask & SIG_MASK_DEFAULT_STOP)
 		stop_proc(proc);
 	else if (signum == SIGCONT)
@@ -164,12 +165,6 @@ static inline void run_signal_default_action(struct process *proc, int signum, s
 	// Since we don't execute the signal handler cleanup for a default action, we cancel the syscall here instead
 	if (!(current_proc->signals.actions[signum - 1].sa_flags & SA_RESTART))
 		cancel_syscall(current_proc);
-}
-
-static void sig_default_terminate(struct process *proc, int signum)
-{
-	exit_proc(proc, -1);
-	resume_waiting_parent(proc);
 }
 
 static inline sigset_t signal_to_map(int signum)

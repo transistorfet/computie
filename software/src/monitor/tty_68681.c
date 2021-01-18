@@ -86,6 +86,7 @@ static char tty_read_buffer[TTY_READ_BUFFER];
 
 //static struct circular_buffer *tx = (struct circular_buffer *) 0x1d0000;
 
+extern void delay(int count);
 
 int init_tty()
 {

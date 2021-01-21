@@ -1,8 +1,7 @@
 
 #include <stddef.h>
+#include <kernel/printk.h>
 #include <kernel/kmalloc.h>
-
-#include "../interrupts.h"
 
 
 struct block {

@@ -5,43 +5,27 @@
 #include <stdio.h>
 #include <signal.h>
 
+#include <kernel/bh.h>
 #include <kernel/printk.h>
 #include <kernel/signal.h>
 
 #include "interrupts.h"
 
 
-// TODO this isn't actually used by anything, since a reset will always return to the eeprom's memory (VBR=0)
-// All data on the stack must be word-aligned, so the stack pointer must be an even
-// number, even though there is no memory at this address.  The stack will grow
-// downward starting with the word at address 0x1FFFFE
-#define STACK_POINTER_INIT	0x200000
-
 #define INTERRUPT_MAX		128
 
 extern void _start();
 extern void exception_entry();
-extern void tty_68681_tx_safe_mode();
 
 void fatal_error();
 void handle_trap_1();
 void handle_trace();
 
-static interrupt_handler_t vector_table[INTERRUPT_MAX] = {
-	(interrupt_handler_t) STACK_POINTER_INIT,
-	_start,
-};
-
-int bh_requested;
-static struct bh_handler bh_handlers[SH_MAX];
+static interrupt_handler_t vector_table[INTERRUPT_MAX];
 
 void init_interrupts()
 {
-	bh_requested = 0;
-	for (short i = 0; i < SH_MAX; i++) {
-		bh_handlers[i].fn = NULL;
-		bh_handlers[i].data = NULL;
-	}
+	init_bh();
 
 	extern void enter_handle_exception();
 	for (short i = 2; i < INTERRUPT_MAX; i++)
@@ -58,46 +42,6 @@ void set_interrupt(char iv_num, interrupt_handler_t handler)
 {
 	vector_table[iv_num] = handler;
 }
-
-__attribute__((noreturn)) void panic(const char *fmt, ...)
-{
-	va_list args;
-
-	tty_68681_tx_safe_mode();
-
-	va_start(args, fmt);
-	vprintk(1, fmt, args);
-	va_end(args);
-
-	asm("stop #0x2700\n");
-	__builtin_unreachable();
-}
-
-void register_bh(int bhnum, bh_handler_t fn, void *data)
-{
-	bh_handlers[bhnum].fn = fn;
-	bh_handlers[bhnum].data = data;
-}
-
-void request_bh_run(int bhnum)
-{
-	bh_requested |= (0x0001 << bhnum);
-}
-
-void run_bh_handlers()
-{
-	int bit = 0x0001;
-
-	for (short i = 0; i < SH_MAX; i++, bit <<= 1) {
-		if (bh_requested & bit) {
-			bh_requested &= ~bit;
-			if (!bh_handlers[i].fn)
-				continue;
-			bh_handlers[i].fn(bh_handlers[i].data);
-		}
-	}
-}
-
 
 
 
@@ -127,6 +71,8 @@ __attribute__((noreturn)) void enter_##name()		\
 
 void fatal_error(struct exception_stack_frame *frame)
 {
+	prepare_for_panic();
+
 	printk_safe("\n\nFatal Error at %x (status: %x, vector: %x). Halting...\n", frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
 
 	// Dump stack
@@ -165,8 +111,6 @@ __attribute__((interrupt)) void handle_exception()
 
 	GET_FRAME(frame);
 
-	tty_68681_tx_safe_mode();
-
 	extern void *kernel_stack;
 	extern struct process *current_proc;
 	if (kernel_stack) {
@@ -189,7 +133,6 @@ __attribute__((interrupt)) void handle_fatal_error()
 
 	GET_FRAME(frame);
 
-	tty_68681_tx_safe_mode();
 	fatal_error(frame);
 	asm volatile("stop #0x2700\n");
 }

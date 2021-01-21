@@ -5,6 +5,8 @@
 #include <termios.h>
 #include <sys/types.h>
 #include <sys/ioc_tty.h>
+
+#include <kernel/bh.h>
 #include <kernel/driver.h>
 #include <kernel/syscall.h>
 #include <kernel/signal.h>

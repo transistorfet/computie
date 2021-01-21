@@ -7,7 +7,6 @@
 #include <kernel/kmalloc.h>
 
 #include "bufcache.h"
-#include "../interrupts.h"
 #include "../misc/queue.h"
 
 

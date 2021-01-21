@@ -63,6 +63,7 @@ KERNEL_OBJS = \
 	src/kernel/syscall_entry.o \
 	src/kernel/syscall.o \
 	src/kernel/interrupts.o \
+	src/kernel/bh.o \
 	src/kernel/time.o \
 	src/kernel/driver.o \
 	src/kernel/proc/scheduler.o \

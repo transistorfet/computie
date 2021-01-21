@@ -8,14 +8,12 @@
 
 Operating System:
 
-	* try to fix the tty initialization/garbage output issue (after a fatal error, or after loading the monitor with the script).  It could be a timing issue
-	  and it could be related to the disk boot issue where the letters typed seem to be read double... and it freezes for some unknown reason (but that might be different)
+	* the issue is back of running sh, and then ls followed by echo hey causing a lockup, using an elf binary transferred over serial this time.  It might be related to ls, which
+	  is the only command with a .data.rel.ro segment.  Sometimes it causes the lockup (probably an out of bounds access), and sometimes it causes a fault (attempting to executing data).
+	  Perhaps a means of dumping core or at least giving info on the start of the process's memory, so I can know from the errors where it was in the code
 	* the send command is not working anymore (I booted to kernel.load and then sent kernel.bin.send, with the intention of copying to CF)
-	* when running sh from disk, running ls causes it to run ls over and over again without a way to interrupt it.  This seems to have gone away.... maybe it's related to tty issues???
-
-
-
-
+	* there is an issues on cold boot where either CTS is not asserted or typing causes double or repeat characters of some kind.  Resetting and booting again, or reloading a kernel
+	  makes the issue go away.  I'm guessing it has something to do with timing, or race condition of some kind.  It could also be related to initializing the tty somehow
 
 	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum)
 	* need a function to convert a vnode reference into a path.  (A reverse_lookup funcptr in vnodeops would be fastest (given vnode find and return name) but would require more code.
@@ -23,20 +21,20 @@ Operating System:
 	  Minix and linux and fbsd implement it as a library function, but that would mean a lot of code compiled into any binary that uses it.  But how many would use it?!  (also I kinda
 	  need it in the kernel for printing the mountpoints))
 	* need to add those to the /proc/mounts file
-	* how can you make a df command to list how many blocks are free??  That info would need to come from the minix fs-specific code
+
 	* maybe add some parsing of params to the bootloader, rather than using the builtin defaults
-
-	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
-	* implement partitions as a separate device (look at minix and linux)
-	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
-
-	* make the boot loader recognize the partition table
 	* split the boot loader up into multiple parts, so it can be stage loaded
 	* write the bootloader into rom somewhere, such that it can boot from rom or the compact flash (maybe mod eraserom/writerom to take an arg, so you can write to 0x20000)
+	* make the boot loader recognize the partition table
 
 
-	* add calculating of cpu runtime
+	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
+	* move partition code to its own module
+	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
+
+
 	* implement getopt, and add flags to commands
+	* add calculating of cpu runtime
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 	* add brk/sbrk/stack guard protection.  How do you track memory segment allocation?  Minix iterates over all memory segments and compares...
 	* make user programs optionally initialize the heap in a default start routine, and make the heap able to grow (once you have brk/sbrk)
@@ -49,6 +47,7 @@ Operating System:
 	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
 
 
+	* how can you make a df command to list how many blocks are free??  That info would need to come from the minix fs-specific code
 	* when there's a trailing / to rm or mkdir, it will create something weird
 	* add checks for errors in the serial transfer? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)

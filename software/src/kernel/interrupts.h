@@ -36,9 +36,6 @@
 
 #define IV_USER_VECTORS		64
 
-#define SH_MAX			4
-#define SH_TTY68681		0
-#define SH_TTY			1
 
 /*** Macros ***/
 
@@ -62,22 +59,10 @@ typedef short lock_state_t;
 	asm("move.w	%0, %%sr\n" : : "dm" ((saved)) :);	\
 }
 
-typedef void (*bh_handler_t)(void *);
-
-struct bh_handler {
-	bh_handler_t fn;
-	void *data;
-};
-
 typedef void (*interrupt_handler_t)();
 
 void init_interrupts();
 void set_interrupt(char iv_num, interrupt_handler_t handler);
-void panic(const char *fmt, ...);
-
-void register_bh(int bhnum, bh_handler_t fn, void *data);
-void request_bh_run(int bhnum);
-void run_bh_handlers();
 
 #endif
 

@@ -10,6 +10,7 @@
 #include <sys/ioc_tty.h>
 
 #include <asm/macros.h>
+#include <kernel/bh.h>
 #include <kernel/vfs.h>
 #include <kernel/time.h>
 #include <kernel/signal.h>
@@ -409,11 +410,11 @@ void handle_serial_irq()
 
 #define PRINTK_BUFFER	128
 
-int vprintk(int direct, const char *fmt, va_list args)
+int vprintk(int buffered, const char *fmt, va_list args)
 {
 	int i;
 	char buffer[PRINTK_BUFFER];
-	int (*put)(struct serial_channel *, int) = direct ? putchar_direct : putchar_buffered;
+	int (*put)(struct serial_channel *, int) = buffered ? putchar_buffered : putchar_direct;
 
 	vsnprintf(buffer, PRINTK_BUFFER, fmt, args);
 	for (i = 0; i < PRINTK_BUFFER && buffer[i]; i++)
@@ -429,7 +430,7 @@ int printk(const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	ret = vprintk(0, fmt, args);
+	ret = vprintk(1, fmt, args);
 	va_end(args);
 
 	return ret;
@@ -441,12 +442,30 @@ int printk_safe(const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	ret = vprintk(1, fmt, args);
+	ret = vprintk(0, fmt, args);
 	va_end(args);
 
 	return ret;
 }
 
+__attribute__((noreturn)) void panic(const char *fmt, ...)
+{
+	va_list args;
+
+	tty_68681_tx_safe_mode();
+
+	va_start(args, fmt);
+	vprintk(0, fmt, args);
+	va_end(args);
+
+	HALT();
+	__builtin_unreachable();
+}
+
+void prepare_for_panic()
+{
+	tty_68681_tx_safe_mode();
+}
 
 
 void tty_68681_tx_safe_mode()

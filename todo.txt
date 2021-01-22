@@ -10,10 +10,13 @@ Operating System:
 
 	* the issue is back of running sh, and then ls followed by echo hey causing a lockup, using an elf binary transferred over serial this time.  It might be related to ls, which
 	  is the only command with a .data.rel.ro segment.  Sometimes it causes the lockup (probably an out of bounds access), and sometimes it causes a fault (attempting to executing data).
-	  Perhaps a means of dumping core or at least giving info on the start of the process's memory, so I can know from the errors where it was in the code
+	* code is being overwritten by 168 bytes of addresses, which cause the fault
+
 	* the send command is not working anymore (I booted to kernel.load and then sent kernel.bin.send, with the intention of copying to CF)
 	* there is an issues on cold boot where either CTS is not asserted or typing causes double or repeat characters of some kind.  Resetting and booting again, or reloading a kernel
 	  makes the issue go away.  I'm guessing it has something to do with timing, or race condition of some kind.  It could also be related to initializing the tty somehow
+
+	* the kill during a user error doesn't seem to terminated the process
 
 	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum)
 	* need a function to convert a vnode reference into a path.  (A reverse_lookup funcptr in vnodeops would be fastest (given vnode find and return name) but would require more code.

@@ -10,11 +10,11 @@
 #include <kernel/signal.h>
 
 #include "interrupts.h"
+#include "proc/process.h"
 
 
 #define INTERRUPT_MAX		128
 
-extern void _start();
 extern void exception_entry();
 
 void fatal_error();
@@ -69,12 +69,8 @@ __attribute__((noreturn)) void enter_##name()		\
 	asm("move.l	%%a5, %0\n" : "=r" (frame_ptr))
 
 
-void fatal_error(struct exception_stack_frame *frame)
+void print_stack(struct exception_stack_frame *frame)
 {
-	prepare_for_panic();
-
-	printk_safe("\n\nFatal Error at %x (status: %x, vector: %x). Halting...\n", frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
-
 	// Dump stack
 	printk_safe("Stack: %x\n", frame);
 	for (char i = 0; i < 48; i++) {
@@ -90,6 +86,32 @@ void fatal_error(struct exception_stack_frame *frame)
 		if ((i & 0x7) == 0x7)
 			printk_safe("\n");
 	}
+}
+
+void user_error(struct exception_stack_frame *frame)
+{
+	extern struct process *current_proc;
+
+	printk_safe("\nError in pid %d at %x (status: %x, vector: %x)\n", current_proc->pid, frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
+	printk_safe("  Text: %x to %x, Stack: %x to %x\n",
+		current_proc->map.segments[M_TEXT].base,
+		current_proc->map.segments[M_TEXT].base + current_proc->map.segments[M_TEXT].length,
+		current_proc->map.segments[M_STACK].base,
+		current_proc->map.segments[M_STACK].base + current_proc->map.segments[M_STACK].length
+	);
+
+	print_stack(frame);
+
+	dispatch_signal(current_proc, SIGKILL);
+}
+
+void fatal_error(struct exception_stack_frame *frame)
+{
+	prepare_for_panic();
+
+	printk_safe("\n\nFatal Error at %x (status: %x, vector: %x). Halting...\n", frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
+
+	print_stack(frame);
 
 	// Jump to the monitor to allow debugging
 	asm volatile(
@@ -99,6 +121,8 @@ void fatal_error(struct exception_stack_frame *frame)
 	"move.l	#4, %a0\n"
 	"jmp	(%a0)\n"
 	);
+
+	__builtin_unreachable();
 }
 
 INTERRUPT_ENTRY(handle_exception);
@@ -111,16 +135,11 @@ __attribute__((interrupt)) void handle_exception()
 
 	GET_FRAME(frame);
 
-	extern void *kernel_stack;
-	extern struct process *current_proc;
-	if (kernel_stack) {
+	extern int kernel_reentries;
+	if (kernel_reentries < 1)
+		user_error(frame);
+	else
 		fatal_error(frame);
-		dispatch_signal(current_proc, SIGILL);
-	}
-	else {
-		fatal_error(frame);
-		asm volatile("stop #0x2700\n");
-	}
 }
 
 INTERRUPT_ENTRY(handle_fatal_error);

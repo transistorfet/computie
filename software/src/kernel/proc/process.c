@@ -9,6 +9,7 @@
 #include "../interrupts.h"
 #include "../misc/queue.h"
 
+#include "memory.h"
 #include "process.h"
 #include "filedesc.h"
 
@@ -101,10 +102,7 @@ struct process *get_proc(pid_t pid)
 void close_proc(struct process *proc)
 {
 	release_fd_table(proc->fd_table);
-	for (char j = 0; j < NUM_SEGMENTS; j++) {
-		if (proc->map.segments[j].base)
-			kmfree(proc->map.segments[j].base);
-	}
+	free_process_memory(proc);
 
 	// Reassign any child procs' parent to be 1 (init), since we can't be sure this proc's parent is waiting, and the zombie proc wont get recycled
 	for (short i = 0; i < PROCESS_MAX; i++) {

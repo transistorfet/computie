@@ -73,6 +73,37 @@ int create_process_memory(struct process *proc, size_t text_size)
 	return 0;
 }
 
+void free_process_memory(struct process *proc)
+{
+	struct process *cur;
+	struct process_iter iter;
+
+	// If another process is sharing the same text segment, then set it to NULL so we don't free it
+	proc_iter_start(&iter);
+	while ((cur = proc_iter_next(&iter))) {
+		if (cur != proc && cur->map.segments[M_TEXT].base == proc->map.segments[M_TEXT].base) {
+			proc->map.segments[M_TEXT].base = NULL;
+			break;
+		}
+	}
+
+	if (proc->map.segments[M_TEXT].base)
+		kmfree(proc->map.segments[M_TEXT].base);
+	if (proc->map.segments[M_STACK].base)
+		kmfree(proc->map.segments[M_STACK].base);
+
+	proc->map.segments[M_TEXT].base = NULL;
+	proc->map.segments[M_TEXT].length = 0;
+	proc->map.segments[M_STACK].base = NULL;
+	proc->map.segments[M_STACK].length = 0;
+	/*
+	for (char j = 0; j < NUM_SEGMENTS; j++) {
+		if (proc->map.segments[j].base)
+			kmfree(proc->map.segments[j].base);
+	}
+	*/
+}
+
 int clone_process_memory(struct process *parent_proc, struct process *proc)
 {
 	int stack_size = parent_proc->map.segments[M_STACK].length;
@@ -84,6 +115,9 @@ int clone_process_memory(struct process *parent_proc, struct process *proc)
 	proc->map.segments[M_STACK].base = stack;
 	proc->map.segments[M_STACK].length = stack_size;
 	proc->sp = stack_pointer;
+
+	proc->map.segments[M_TEXT].base = parent_proc->map.segments[M_TEXT].base;
+	proc->map.segments[M_TEXT].length = parent_proc->map.segments[M_TEXT].length;
 
 	// Copy the relevant process data from the parent to child
 	proc->cwd = parent_proc->cwd;

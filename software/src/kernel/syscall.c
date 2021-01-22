@@ -545,13 +545,8 @@ int do_exec(const char *path, char *const argv[], char *const envp[])
 
 int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
 {
-	//if (current_proc->map.segments[M_TEXT].base)
-	//	kmfree(current_proc->map.segments[M_TEXT].base);
-	current_proc->map.segments[M_TEXT].base = NULL;
-	current_proc->map.segments[M_TEXT].length = 0;
-
+	// NOTE no modification of the memory maps here, since the code should be in the same process
 	reset_stack(current_proc, addr, argv, envp);
-
 	return 0;
 }
 

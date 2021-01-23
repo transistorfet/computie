@@ -273,7 +273,7 @@ struct command {
 };
 
 int commands;
-struct command command_list[20];
+struct command command_list[30];
 
 #define add_command(n, f)	{		\
 	command_list[commands].name = (n);	\

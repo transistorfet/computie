@@ -15,8 +15,10 @@ ASFLAGS = -m68010 --defsym __mc68010__=1
 CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -mpcrel -Os
 LDFLAGS = -Wl,--build-id=none --entry=main -Ttext=0
 
-# reduce the elf output size by reducing the alignment
-CFLAGS += -z max-page-size=0x10
+# reduce the elf output size by reducing the alignment, since we don't need page alignment yet
+# alignment can be turned off with -Wl,-n
+LDFLAGS += -z max-page-size=0x10
+#LDFLAGS += -Wl,-z,norelro
 
 
 COMMANDS = 		\

@@ -9,6 +9,7 @@
 #include <kernel/printk.h>
 #include <kernel/driver.h>
 
+#include "partition.h"
 #include "../interrupts.h"
 
 
@@ -31,17 +32,6 @@ struct driver ata_driver = {
 	ata_ioctl,
 	ata_seek,
 };
-
-
-// Driver-specific data
-struct ata_geometry {
-	int base;
-	size_t size;
-};
-
-#define ATA_DEV_MAX		4
-
-static struct ata_geometry devices[ATA_DEV_MAX];
 
 
 #define ATA_REG_DEV_CONTROL	((volatile uint8_t *) 0x60001D)
@@ -234,39 +224,30 @@ int ata_write_sector(int sector, const char *buffer)
 }
 
 
-// TODO this should be moved into its own driver-independent place
-struct partition_entry {
-	uint8_t status;
-	uint8_t chs_start[3];
-	uint8_t fstype;
-	uint8_t chs_end[3];
-	uint32_t lba_start;
-	uint32_t lba_sectors;
+// Driver-specific data
+struct ata_drive {
+	struct partition parts[PARTITION_MAX];
 };
 
-int load_partition_table()
+#define ATA_MAX_DRIVES		1
+
+static struct ata_drive drives[ATA_MAX_DRIVES];
+
+static inline struct partition *ata_get_device(devminor_t minor)
 {
-	char buffer[512];
-	struct partition_entry *table;
+	char drive = minor >> 4;
+	minor &= 0xf;
 
-	ata_read_sector(0, buffer);
-	table = (struct partition_entry *) &buffer[0x1BE];
-
-	for (short i = 0; i < 4; i++) {
-		devices[i].base = from_le32(table[i].lba_start);
-		devices[i].size = from_le32(table[i].lba_sectors);
-		if (devices[i].size)
-			printk_safe("ata%d: found partition with %d sectors\n", i, devices[i].size);
-	}
-
-	return 0;
+	if (drive >= ATA_MAX_DRIVES || minor > PARTITION_MAX || drives[drive].parts[minor].base == 0)
+		return NULL;
+	return &drives[drive].parts[minor];
 }
 
 
 int ata_init()
 {
-	for (short i = 0; i < ATA_DEV_MAX; i++)
-		devices[i].base = 0;
+	for (short i = 0; i < PARTITION_MAX; i++)
+		drives[0].parts[i].base = 0;
 	register_driver(DEVMAJOR_ATA, &ata_driver);
 
 	// TODO this doesn't work very well
@@ -275,71 +256,80 @@ int ata_init()
 		return 0;
 	}
 
-	load_partition_table();
+	char buffer[512];
+
+	ata_read_sector(0, buffer);
+	read_partition_table(buffer, drives[0].parts);
+
+	for (short i = 0; i < PARTITION_MAX; i++) {
+		if (drives[0].parts[i].size)
+			printk_safe("ata%d: found partition with %d sectors\n", i, drives[0].parts[i].size);
+	}
 
 	return 0;
 }
 
 int ata_open(devminor_t minor, int access)
 {
-	if (minor >= ATA_DEV_MAX || devices[minor].base == 0)
+	if (!ata_get_device(minor))
 		return ENXIO;
 	return 0;
 }
 
 int ata_close(devminor_t minor)
 {
-	if (minor >= ATA_DEV_MAX)
+	if (!ata_get_device(minor))
 		return ENXIO;
 	return 0;
 }
 
 int ata_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 {
-	if (minor >= ATA_DEV_MAX || devices[minor].base == 0)
+	struct partition *device = ata_get_device(minor);
+	if (!device)
 		return ENXIO;
-	struct ata_geometry *geo = &devices[minor];
 
-	if (offset > (geo->size << 9))
+	if (offset > (device->size << 9))
 		return -1;
-	if (offset + size > (geo->size << 9))
-		size = (geo->size << 9) - offset;
+	if (offset + size > (device->size << 9))
+		size = (device->size << 9) - offset;
 
 	offset >>= 9;
 	for (int count = size >> 9; count > 0; count--, offset++, buffer = &buffer[512])
-		ata_read_sector(geo->base + offset, buffer);
+		ata_read_sector(device->base + offset, buffer);
 	return size;
 }
 
 int ata_write(devminor_t minor, const char *buffer, offset_t offset, size_t size)
 {
-	if (minor >= ATA_DEV_MAX || devices[minor].base == 0)
+	struct partition *device = ata_get_device(minor);
+	if (!device)
 		return ENXIO;
-	struct ata_geometry *geo = &devices[minor];
 
-	if (offset > (geo->size << 9))
+	if (offset > (device->size << 9))
 		return -1;
-	if (offset + size > (geo->size << 9))
-		size = (geo->size << 9) - offset;
+	if (offset + size > (device->size << 9))
+		size = (device->size << 9) - offset;
 
 	offset >>= 9;
 	for (int count = size >> 9; count > 0; count--, offset++, buffer = &buffer[512])
-		ata_write_sector(geo->base + offset, buffer);
+		ata_write_sector(device->base + offset, buffer);
 	return size;
 }
 
 int ata_ioctl(devminor_t minor, unsigned int request, void *argp)
 {
-	if (minor >= ATA_DEV_MAX || devices[minor].base == 0)
+	struct partition *device = ata_get_device(minor);
+	if (!device)
 		return ENXIO;
 	return -1;
 }
 
 offset_t ata_seek(devminor_t minor, offset_t position, int whence, offset_t offset)
 {
-	if (minor >= ATA_DEV_MAX || devices[minor].base == 0)
+	struct partition *device = ata_get_device(minor);
+	if (!device)
 		return ENXIO;
-	struct ata_geometry *geo = &devices[minor];
 
 	switch (whence) {
 	    case SEEK_SET:
@@ -348,14 +338,14 @@ offset_t ata_seek(devminor_t minor, offset_t position, int whence, offset_t offs
 		position = offset + position;
 		break;
 	    case SEEK_END:
-		position = geo->size + position;
+		position = device->size + position;
 		break;
 	    default:
 		return EINVAL;
 	}
 
-	if (position > geo->size)
-		position = geo->size;
+	if (position > device->size)
+		position = device->size;
 	return position;
 
 }

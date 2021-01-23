@@ -42,4 +42,6 @@
 #define	ENOSYS		-38	/* Invalid system call number */
 #define	ENOTEMPTY	-39	/* Directory not empty */
 
+#define	EKILL		-1000	/* Fatal error, kill the current running process */
+
 #endif

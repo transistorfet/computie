@@ -535,7 +535,14 @@ int do_exec(const char *path, char *const argv[], char *const envp[])
 	void *entry;
 
 	error = load_binary(path, current_proc, &entry);
-	if (error)
+	if (error == EKILL) {
+		// An error occurred past the point of no return.  The memory maps have been irrepairably damaged, so kill the process
+		printk_safe("Process terminated\n");
+		exit_proc(current_proc, -1);
+		resume_waiting_parent(current_proc);
+		return error;
+	}
+	else if (error)
 		return error;
 
 	reset_stack(current_proc, entry, argv, envp);

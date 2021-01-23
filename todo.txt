@@ -8,6 +8,10 @@
 
 Operating System:
 
+	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
+	* there is still this weird gap between the end of the text segment and the start of the data.rel.ro segment... no idea why.  Getting rid of the initialized data still results in
+	  two LOAD segments, but at least they're closer together
+
 	* the issue is back of running sh, and then ls followed by echo hey causing a lockup, using an elf binary transferred over serial this time.  It might be related to ls, which
 	  is the only command with a .data.rel.ro segment.  Sometimes it causes the lockup (probably an out of bounds access), and sometimes it causes a fault (attempting to executing data).
 	* code is being overwritten by 168 bytes of addresses, which cause the fault

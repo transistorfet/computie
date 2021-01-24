@@ -285,7 +285,7 @@ static void tty_68681_process_input(void *_unused)
 			channels[i].rx_ready = 0;
 			resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY68681, i));
 
-			request_bh_run(SH_TTY);
+			request_bh_run(BH_TTY);
 			// TODO this isn't needed now, since the assert in getchar handle this, but once we have the tty subsystem this might be needed
 			//if (_buf_is_empty(&channels[i].rx))
 			//	ASSERT_CTS(&channels[i]);
@@ -318,7 +318,7 @@ static inline void handle_channel_io(register char isr, register devminor_t mino
 			DEASSERT_CTS(&channels[minor]);
 
 		channels[minor].rx_ready = 1;
-		request_bh_run(SH_TTY68681);
+		request_bh_run(BH_TTY68681);
 		//resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY68681, channel == &channels[CH_A] ? 0 : 1));
 	}
 
@@ -362,7 +362,7 @@ void handle_serial_irq()
 		request_reschedule();
 
 		handle_timer = 1;
-		request_bh_run(SH_TTY68681);
+		request_bh_run(BH_TTY68681);
 	}
 
 	/*
@@ -549,7 +549,7 @@ int tty_68681_init()
 	tty_68681_normal_mode();
 
 	register_driver(DEVMAJOR_TTY68681, &tty_68681_driver);
-	register_bh(SH_TTY68681, tty_68681_process_input, NULL);
+	register_bh(BH_TTY68681, tty_68681_process_input, NULL);
 }
 
 int tty_68681_open(devminor_t minor, int mode)

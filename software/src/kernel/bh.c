@@ -4,12 +4,12 @@
 
 
 int bh_requested;
-static struct bh_handler bh_handlers[SH_MAX];
+static struct bh_handler bh_handlers[BH_MAX];
 
 void init_bh()
 {
 	bh_requested = 0;
-	for (short i = 0; i < SH_MAX; i++) {
+	for (short i = 0; i < BH_MAX; i++) {
 		bh_handlers[i].fn = NULL;
 		bh_handlers[i].data = NULL;
 	}
@@ -30,7 +30,7 @@ void run_bh_handlers()
 {
 	int bit = 0x0001;
 
-	for (short i = 0; i < SH_MAX; i++, bit <<= 1) {
+	for (short i = 0; i < BH_MAX; i++, bit <<= 1) {
 		if (bh_requested & bit) {
 			bh_requested &= ~bit;
 			if (!bh_handlers[i].fn)

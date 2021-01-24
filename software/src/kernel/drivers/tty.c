@@ -179,7 +179,7 @@ int tty_init()
 	}
 
 	register_driver(DEVMAJOR_TTY, &tty_driver);
-	register_bh(SH_TTY, tty_process_input, NULL);
+	register_bh(BH_TTY, tty_process_input, NULL);
 }
 
 int tty_open(devminor_t minor, int mode)
@@ -249,7 +249,7 @@ int tty_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 		// If an entire line has been read, then reset the buffer and attempt to read more input from the raw device
 		if (devices[minor].buf_read >= devices[minor].buf_write) {
 			tty_reset_input(minor);
-			request_bh_run(SH_TTY);
+			request_bh_run(BH_TTY);
 		}
 		return max;
 	}

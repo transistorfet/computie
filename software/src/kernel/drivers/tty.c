@@ -82,54 +82,53 @@ static void tty_reset_input(device_t minor)
 	devices[minor].buf_write = 0;
 }
 
-#define READ_BUF	256
 
 static inline void tty_read_input(device_t minor)
 {
-	int read;
-	char buffer[READ_BUF];
+	char ch;
+	int error;
 	struct tty_device *tty = &devices[minor];
 
-	// If the buffer is full, then consider the line to be terminated and resume the waiting proc
-	if (tty->buf_write >= MAX_CANNON) {
-		tty->ready = 1;
-		resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
-		return;
-	}
+	while (1) {
+		// If the buffer is full, then consider the line to be terminated and resume the waiting proc
+		if (tty->buf_write >= MAX_CANNON) {
+			tty->ready = 1;
+			resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
+			return;
+		}
 
-	read = dev_read(tty->rdev, buffer, 0, READ_BUF - tty->buf_write);
-	if (read < 0) {
-		tty->error = read;
-		return;
-	}
+		error = dev_read(tty->rdev, &ch, 0, 1);
+		if (error <= 0) {
+			tty->error = error;
+			return;
+		}
 
-	for (int i = 0; i < read; i++) {
 		if ((tty->tio.c_lflag & ISIG)) {
-			if (buffer[i] == tty->tio.c_cc[VINTR]) {
+			if (ch == tty->tio.c_cc[VINTR]) {
 				//tty->ready = 1;
 				//resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
 				tty_reset_input(minor);
 				send_signal_process_group(tty->pgid, SIGINT);
 				return;
 			}
-			//else if (buffer[i] == tty->tio.c_cc[VSUSP]) {
+			//else if (ch == tty->tio.c_cc[VSUSP]) {
 			//	send_signal_process_group(tty->pgid, SIGSTOP);
 			//	return;
 			//}
 		}
 
 
-		if (buffer[i] == '\x1B') {
+		if (ch == '\x1B') {
 			tty->escape = 1;
 		}
 		else if (tty->escape == 1) {
-			tty->escape = (buffer[i] == '[') ? 2 : 0;
+			tty->escape = (ch == '[') ? 2 : 0;
 		}
 		else if (tty->escape == 2) {
 			// TODO intepret the next character (or buffer somewhere if not a letter
 			tty->escape = 0;
 		}
-		else if (buffer[i] == tty->tio.c_cc[VERASE]) {
+		else if (ch == tty->tio.c_cc[VERASE]) {
 			if (tty->buf_write >= 1) {
 				tty->buf_write--;
 				if ((tty->tio.c_lflag & ECHOE)) {
@@ -141,16 +140,17 @@ static inline void tty_read_input(device_t minor)
 			}
 			break;
 		}
-		else if (buffer[i] == '\r') {
+		else if (ch == '\r') {
 			// Ignore
 		}
 		else {
-			tty->buffer[tty->buf_write++] = buffer[i];
+			tty->buffer[tty->buf_write++] = ch;
 			if ((tty->tio.c_lflag & ECHO))
-				dev_write(tty->rdev, &buffer[i], 0, 1);
-			if (buffer[i] == '\n') {
+				dev_write(tty->rdev, &ch, 0, 1);
+			if (ch == '\n') {
 				tty->ready = 1;
 				resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
+				break;
 			}
 		}
 	}
@@ -222,6 +222,8 @@ int tty_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 				max = size;
 			memcpy(buffer, &devices[minor].buffer[devices[minor].buf_read], max);
 			devices[minor].buf_read += max;
+			if (devices[minor].buf_read >= devices[minor].buf_write)
+				tty_reset_input(minor);
 			return max;
 		}
 

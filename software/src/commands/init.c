@@ -39,13 +39,17 @@ int init_task()
 		pid_t fgpid = getpgid(0);
 		ioctl(STDOUT_FILENO, TIOCSPGRP, &fgpid);
 
-		// TODO you either need a compile time flag here or optional fallback, since it's still useful to optionally update both the kernel and shell for a simple test
-		//argv[0] = "/bin/sh";
-		//status = execve(argv[0], argv, envp);
+		argv[0] = "/bin/sh";
+		status = execve(argv[0], argv, envp);
 
-		extern void sh_task();
-		argv[0] = "sh";
-		status = SYSCALL3(SYS_EXECBUILTIN, (int) sh_task, (int) argv, (int) envp);
+		#ifdef ONEBINARY
+		// This will only run if the sh binary is not found on disk
+		if (status < 0) {
+			extern void sh_task();
+			argv[0] = "sh";
+			status = SYSCALL3(SYS_EXECBUILTIN, (int) sh_task, (int) argv, (int) envp);
+		}
+		#endif
 
 		// The exec() system call will only return if an error occurs
 		printf("Failed to execute %s: %d\n", argv[1], status);
@@ -53,7 +57,7 @@ int init_task()
 	}
 
 	while (1) {
-		wait(&status);
+		pid = wait(&status);
 		printf("Process %d exited with %d\n", pid, status);
 	}
 }

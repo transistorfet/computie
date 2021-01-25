@@ -8,16 +8,23 @@
 
 Operating System:
 
+	* the send command is not working anymore (I booted to kernel.load and then sent kernel.bin.send, with the intention of copying to CF)
+	* there is an issues on cold boot where either CTS is not asserted or typing causes double or repeat characters of some kind.  Resetting and booting again, or reloading a kernel
+	  makes the issue go away.  I'm guessing it has something to do with timing, or race condition of some kind.  It could also be related to initializing the tty somehow
+
+
+	* the issue with the send command is because we're reading in as many bytes from the serial driver as we can, and after we read in the \n, the first one or two characters after
+	  that will be processed in the same loop, and put into the line buffer.  Reading from the tty will give you the whole line including the two characters after the \n!, and then
+	  the buffer is cleared.  Either there needs to be a check in the read to adjust the write pointer accordingly, or perhaps a way to unread characters from the serial driver... or
+	  we just fetch them one at a time...
+
+
+
 	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
 	* there is still this weird gap between the end of the text segment and the start of the data.rel.ro segment... no idea why.  Getting rid of the initialized data still results in
 	  two LOAD segments, but at least they're closer together
 	* the gap occurs when certain sections are included, and might be due to the default linker script.  It looks like the .got isn't easily discoverable either, which might be fixable
 	  using a custom linker script to make a separate segment for it, but that might also be tricky...
-
-
-	* the send command is not working anymore (I booted to kernel.load and then sent kernel.bin.send, with the intention of copying to CF)
-	* there is an issues on cold boot where either CTS is not asserted or typing causes double or repeat characters of some kind.  Resetting and booting again, or reloading a kernel
-	  makes the issue go away.  I'm guessing it has something to do with timing, or race condition of some kind.  It could also be related to initializing the tty somehow
 
 	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum)
 	* need a function to convert a vnode reference into a path.  (A reverse_lookup funcptr in vnodeops would be fastest (given vnode find and return name) but would require more code.
@@ -33,7 +40,6 @@ Operating System:
 
 
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
-	* move partition code to its own module
 	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
 
 
@@ -42,13 +48,17 @@ Operating System:
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 	* add brk/sbrk/stack guard protection.  How do you track memory segment allocation?  Minix iterates over all memory segments and compares...
 	* make user programs optionally initialize the heap in a default start routine, and make the heap able to grow (once you have brk/sbrk)
-	* try porting a simple command, and then something more complex, maybe awk or something as a big target
+	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
+	* add check to vfs_link() for loops
 
 	* make init be a separate file loaded from disk and executed
 	* make init relaunch shell if the initial one is killed
 
 	* should you make a lib subdir, and put unistd at the top?
 	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
+	* move the math functions in libc to arch/68k
+	* move interrupt and syscall_entry code into proc??
+
 
 
 	* how can you make a df command to list how many blocks are free??  That info would need to come from the minix fs-specific code
@@ -56,42 +66,37 @@ Operating System:
 	* add checks for errors in the serial transfer? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
-	* make it possible to sync disk data to flash (possibly even to write new monitor roms to flash as well)
+	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?
 	* increase timer clock tick to 60Hz from ~14Hz??
 
 
-
-	* make a PIE format that can be loaded and executed
 	* add network syscalls for local IPC (unix file, sockets)
 	* to stdlib, add: fprintf, fscanf, scanf, fopen, fclose, fgetpos, fseek, feof, fread, fwrite
 	* add pipe setup to command evaluation
 	* add fifos (should be easy now)
 	* implement login system (setuid)
-	* add some kind of debugging or tracing support
+	* try porting a simple command, and then something more complex, maybe awk or something as a big target
 
 	* add commands: rmdir, pwd, dd, chown
 	* add umask syscall
 	* add the & (run in background) option to the shell
 	* implement fg/bg somehow... it would be builtin to the shell and would require job control stuff...
 	* add up/down arrow processing to the shell (easy without cooked input, but how would it be done with...)
-	* rewrite the math functions to use fewer registers, and cover the 32 bit divide by 32 bit number case
+	* add some kind of debugging or tracing support
+	* make a PIE format that can be loaded and executed (lower priority now that we have .data.rel.ro relocation working)
 
-	* there is an issue running the shell on linux related to the setting the process group
-	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?
-	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
-	* add check to vfs_link() for loops
+
+
+
+	* rewrite the math functions to use fewer registers, and cover the 32 bit divide by 32 bit number case
+	* should you refactor the header files in minixfs implementation into actual c files, with a common header to declare the functions?
 	* implement symlinks in minixfs
 	* implement links for mallocfs
 	* minixfs, implement versions 2 and 3
 
-
-
-	* should there be something that periodically syncs data to disk?
-	* should you refactor the header files in minixfs implementation into actual c files, with a common header to declare the functions?
-	* could I use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
 	* should there be a lighter weight task type, instead of processes, so that you can service interrupt processing without a bunch of wasted memory
-	* move interrupt and syscall_entry code into proc??
-	* move the math functions in libc to arch/68k
+	* should there be something that periodically syncs data to disk?
+	* there is an issue running the shell on linux related to the setting the process group
 	* do you need to add variable sized buffers/blocks into bufcache? (yes)
 	* can you change the fd allocator, such that calling it twice will return 2 different fds, even though they aren't reserved until set
 	  (ie. store the last allocated fd, but it has to be in the process struct)
@@ -101,14 +106,12 @@ Operating System:
 	  It *might* be possible to defer the context save until you're certain a reschedule is needed just before exiting, but it would require being very careful during the stack swap
 
 
-
-	* in user processes with pre-initialized global variables, if they contain any addresses, the addresses will be relative to 0, and thus not be correct (rather than being relative addresses)
-
 	* remove the execbuiltin syscall, which is temporary until all commands can be executable files
 
+
+	* could you use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
 	* look for any bugs that might be caused by a function returning the same vnode as was passed in
 	* re-evaluate file permissions checks to make sure they're correct according to posix
-	* a slab allocator would maybe help, but I don't think it's as important at the moment
 	* you need some tests, but ideally it would use a simple emulator.  Maybe easy68k or something could be used
 
 	* as a note about terminology for pseudoterminals, pts/ptm (slave/master);  it would make more sense for them to be named process-end and device-end, which implies
@@ -147,7 +150,4 @@ Monitor:
 
 
 * should you move the Z80 project into it's own repo?
-
-* it might be possible to do a 68030 single board computer, with 74LVC244/245 interfaces to an fpga chip, to provide the glue logic, but it would be a
-  lot of surface mount chips, so you'd have to try a few smaller surface mount projects first
 

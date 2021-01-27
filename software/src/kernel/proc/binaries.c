@@ -28,7 +28,7 @@ int load_binary(const char *path, struct process *proc, void **entry)
 	if ((error = vfs_open(proc->cwd, path, O_RDONLY, 0, proc->uid, &file)) < 0)
 		return error;
 
-	if ((file->vnode->mode & (S_IFDIR | S_IFCHR | S_IFIFO)) != 0) {
+	if (S_ISREG(file->vnode->mode)) {
 		vfs_close(file);
 		return EISDIR;
 	}

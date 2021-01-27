@@ -198,7 +198,7 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 		}
 
 		// This is not the last component, so it must be directory
-		if (!(cur->mode & S_IFDIR)) {
+		if (!S_ISDIR(cur->mode)) {
 			vfs_release_vnode(cur);
 			return ENOTDIR;
 		}
@@ -529,13 +529,13 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 	if (!*file)
 		return EMFILE;
 
-	if (flags & O_TRUNC && !(vnode->mode & S_IFDIR))
+	if (flags & O_TRUNC && S_ISREG(vnode->mode))
 		vnode->ops->truncate(vnode);
 
-	if (flags & O_APPEND && !(vnode->mode & S_IFDIR))
+	if (flags & O_APPEND && S_ISREG(vnode->mode))
 		(*file)->position = (*file)->vnode->size;
 
-	if (vnode->mode & S_IFCHR)
+	if (S_ISDEV(vnode->mode))
 		(*file)->ops = &device_vfile_ops;
 
 	error = (*file)->ops->open(*file, flags);

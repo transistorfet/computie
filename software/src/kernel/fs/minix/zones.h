@@ -115,7 +115,7 @@ static void zone_free_all(struct vnode *vnode)
 	// NOTE this can only be used with files or empty directories
 
 	// If this is a device file, then the zone is the device number, so just return
-	if (vnode->mode & S_IFCHR)
+	if (S_ISDEV(vnode->mode))
 		return;
 
 	// Traverse all zones and free each

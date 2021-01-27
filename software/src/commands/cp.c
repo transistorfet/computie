@@ -28,7 +28,7 @@ int MAIN(command_cp)(int argc, char **argv, char **envp)
 	destfile = argv[2];
 
 	result = stat(destfile, &statbuf);
-	if (!result && statbuf.st_mode & S_IFDIR) {
+	if (!result && S_ISDIR(statbuf.st_mode)) {
 		int end = strlen(destfile) - 1;
 		strncpy(buffer, destfile, CP_BUF_SIZE);
 		if (buffer[end] != '/')

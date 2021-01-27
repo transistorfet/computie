@@ -27,7 +27,7 @@ int MAIN(command_mv)(int argc, char **argv, char **envp)
 	destfile = argv[2];
 
 	error = stat(destfile, &statbuf);
-	if (!error && statbuf.st_mode & S_IFDIR) {
+	if (!error && S_ISDIR(statbuf.st_mode)) {
 		int end = strlen(destfile) - 1;
 		strncpy(buffer, destfile, MV_BUF_SIZE);
 		if (buffer[end] != '/')

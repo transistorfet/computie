@@ -92,7 +92,7 @@ int mallocfs_create(struct vnode *vnode, const char *filename, mode_t mode, uid_
 	if (!newnode)
 		return ENOMEM;
 
-	if (mode & S_IFDIR && !dir_setup(newnode, vnode)) {
+	if (S_ISDIR(mode) && !dir_setup(newnode, vnode)) {
 		vfs_release_vnode(newnode);
 		return ENOMEM;
 	}
@@ -152,7 +152,7 @@ int mallocfs_unlink(struct vnode *parent, struct vnode *vnode, const char *filen
 {
 	struct mallocfs_dirent *dir;
 
-	if (vnode->mode & S_IFDIR && !dir_is_empty(vnode))
+	if (S_ISDIR(vnode->mode) && !dir_is_empty(vnode))
 		return ENOTEMPTY;
 
 	dir = dir_find_entry_by_name(parent, filename, MFS_LOOKUP_ZONE);
@@ -191,7 +191,7 @@ int mallocfs_rename(struct vnode *vnode, struct vnode *oldparent, const char *ol
 
 int mallocfs_truncate(struct vnode *vnode)
 {
-	if (vnode->mode & S_IFDIR)
+	if (S_ISDIR(vnode->mode))
 		return EISDIR;
 	zone_free_all(vnode);
 	vnode->size = 0;
@@ -225,7 +225,7 @@ int mallocfs_close(struct vfile *file)
 
 int mallocfs_read(struct vfile *file, char *buf, size_t nbytes)
 {
-	if (file->vnode->mode & S_IFDIR)
+	if (S_ISDIR(file->vnode->mode))
 		return EISDIR;
 
 	char *zone;
@@ -263,7 +263,7 @@ int mallocfs_read(struct vfile *file, char *buf, size_t nbytes)
 
 int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
 {
-	if (file->vnode->mode & S_IFDIR)
+	if (S_ISDIR(file->vnode->mode))
 		return EISDIR;
 
 	char *zone;
@@ -342,7 +342,7 @@ int mallocfs_readdir(struct vfile *file, struct dirent *dir)
 	zone_t znum;
 	struct mallocfs_block *zone;
 
-	if (!(file->vnode->mode & S_IFDIR))
+	if (!S_ISDIR(file->vnode->mode))
 		return ENOTDIR;
 
 	znum = file->position >> MALLOCFS_LOG_DIRENTS;

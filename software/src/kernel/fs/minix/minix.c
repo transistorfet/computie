@@ -115,7 +115,7 @@ int minix_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t u
 		return ENOMEM;
 	}
 
-	if (mode & S_IFDIR && !dir_setup(newnode, vnode)) {
+	if (S_ISDIR(mode) && !dir_setup(newnode, vnode)) {
 		vfs_release_vnode(newnode);
 		release_block(buf, 0);
 		return ENOMEM;
@@ -202,7 +202,7 @@ int minix_unlink(struct vnode *parent, struct vnode *vnode, const char *filename
 	struct buf *buf;
 	struct minix_v1_dirent *dir;
 
-	if (vnode->mode & S_IFDIR && !dir_is_empty(vnode))
+	if (S_ISDIR(vnode->mode) && !dir_is_empty(vnode))
 		return ENOTEMPTY;
 
 	dir = dir_find_entry_by_name(parent, filename, MFS_LOOKUP_ZONE, &buf);
@@ -256,7 +256,7 @@ int minix_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldna
 
 int minix_truncate(struct vnode *vnode)
 {
-	if (vnode->mode & S_IFDIR)
+	if (S_ISDIR(vnode->mode))
 		return EISDIR;
 	zone_free_all(vnode);
 	vnode->size = 0;
@@ -294,7 +294,7 @@ int minix_close(struct vfile *file)
 
 int minix_read(struct vfile *file, char *buffer, size_t nbytes)
 {
-	if (file->vnode->mode & S_IFDIR)
+	if (S_ISDIR(file->vnode->mode))
 		return EISDIR;
 
 	short zpos;
@@ -337,7 +337,7 @@ int minix_read(struct vfile *file, char *buffer, size_t nbytes)
 
 int minix_write(struct vfile *file, const char *buffer, size_t nbytes)
 {
-	if (file->vnode->mode & S_IFDIR)
+	if (S_ISDIR(file->vnode->mode))
 		return EISDIR;
 
 	short zpos;
@@ -427,7 +427,7 @@ int minix_readdir(struct vfile *file, struct dirent *dir)
 	struct buf *buf;
 	struct minix_v1_dirent *entries;
 
-	if (!(file->vnode->mode & S_IFDIR))
+	if (!S_ISDIR(file->vnode->mode))
 		return ENOTDIR;
 
 	znum = file->position >> MINIX_V1_LOG_DIRENTS_PER_ZONE;

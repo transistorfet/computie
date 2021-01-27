@@ -8,16 +8,8 @@
 
 Operating System:
 
-	* the send command is not working anymore (I booted to kernel.load and then sent kernel.bin.send, with the intention of copying to CF)
 	* there is an issues on cold boot where either CTS is not asserted or typing causes double or repeat characters of some kind.  Resetting and booting again, or reloading a kernel
 	  makes the issue go away.  I'm guessing it has something to do with timing, or race condition of some kind.  It could also be related to initializing the tty somehow
-
-
-	* the issue with the send command is because we're reading in as many bytes from the serial driver as we can, and after we read in the \n, the first one or two characters after
-	  that will be processed in the same loop, and put into the line buffer.  Reading from the tty will give you the whole line including the two characters after the \n!, and then
-	  the buffer is cleared.  Either there needs to be a check in the read to adjust the write pointer accordingly, or perhaps a way to unread characters from the serial driver... or
-	  we just fetch them one at a time...
-
 
 
 	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded

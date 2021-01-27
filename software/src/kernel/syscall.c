@@ -279,7 +279,7 @@ int do_chdir(const char *path)
 	if ((error = vfs_lookup(current_proc->cwd, path, VLOOKUP_NORMAL, current_proc->uid, &vnode)))
 		return error;
 
-	if (!(vnode->mode & S_IFDIR))
+	if (!S_ISDIR(vnode->mode))
 		return ENOTDIR;
 
 	current_proc->cwd = vfs_clone_vnode(vnode);

@@ -13,9 +13,9 @@ void format_file_mode(mode_t mode, char *buffer)
 
 	strcpy(buffer, "-rwxrwxrwx");
 
-	if (mode & S_IFDIR)
+	if (S_ISDIR(mode))
 		buffer[0] = 'd';
-	if (mode & S_IFCHR)
+	if (S_ISCHR(mode))
 		buffer[0] = 'c';
 
 	for (char i = 1; i < 10; i++) {
@@ -68,7 +68,7 @@ int MAIN(command_ls)(int argc, char **argv, char **envp)
 
 			format_file_mode(statbuf.st_mode, filemode);
 			strftime(timestamp, 100, "%Y-%m-%d %H:%M:%S", gmtime(&statbuf.st_mtime));
-			if (statbuf.st_mode & S_IFCHR)
+			if (S_ISDEV(statbuf.st_mode))
 				printf("%s %2d, %2d %s %s\n", filemode, (statbuf.st_rdev >> 8) & 0x00ff, statbuf.st_rdev & 0x00ff, timestamp, dir.d_name);
 			else
 				printf("%s %6d %s %s\n", filemode, statbuf.st_size, timestamp, dir.d_name);

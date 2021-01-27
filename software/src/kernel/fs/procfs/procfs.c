@@ -194,7 +194,7 @@ int procfs_readdir(struct vfile *file, struct dirent *dir)
 	short slot;
 	struct process *proc;
 
-	if (!(file->vnode->mode & S_IFDIR))
+	if (!S_ISDIR(file->vnode->mode))
 		return ENOTDIR;
 
 	if (PROCFS_DATA(file->vnode).filenum == PFN_ROOTDIR) {

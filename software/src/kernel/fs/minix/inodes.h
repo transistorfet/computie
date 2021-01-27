@@ -36,7 +36,7 @@ static inode_t alloc_inode(struct minix_super *super, mode_t mode, uid_t uid, gi
 	inode_table[inode_offset].mtime = to_le32(get_system_time());
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		inode_table[inode_offset].zones[j] = NULL;
-	if (mode & S_IFCHR)
+	if (S_ISCHR(mode))
 		inode_table[inode_offset].zones[0] = to_le16(rdev);
 
 	release_block(inode_buf, BCF_DIRTY);
@@ -73,7 +73,7 @@ static int read_inode(struct vnode *vnode, inode_t ino)
 	vnode->ctime = 0;
 	vnode->gid = (gid_t) inode_table[inode_offset].gid;
 	vnode->nlinks = (uint8_t) inode_table[inode_offset].nlinks;
-	vnode->rdev = from_le16((inode_table[inode_offset].mode & S_IFCHR) ? inode_table[inode_offset].zones[0] : 0);
+	vnode->rdev = from_le16(S_ISDEV(vnode->mode) ? inode_table[inode_offset].zones[0] : 0);
 	// NOTE: the zone numbers are stored in little endian in the vnode to make zone lookups easier
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		MINIX_DATA(vnode).zones[j] = inode_table[inode_offset].zones[j];
@@ -104,7 +104,7 @@ static int write_inode(struct vnode *vnode, inode_t ino)
 	inode_table[inode_offset].mtime = to_le32(vnode->mtime);
 	inode_table[inode_offset].gid = (uint8_t) vnode->gid;
 	inode_table[inode_offset].nlinks = (uint8_t) vnode->nlinks;
-	if (vnode->mode & S_IFCHR)
+	if (S_ISCHR(vnode->mode))
 		MINIX_DATA(vnode).zones[0] = to_le16(vnode->rdev);
 	// NOTE: the zone numbers are stored in little endian in the vnode to make zone lookups easier
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)

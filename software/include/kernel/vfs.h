@@ -116,7 +116,7 @@ struct vnode {
 	time_t mtime;
 	time_t ctime;
 
-	union {} data;
+	union {} data;			// Filesystem-specific data follows the vnode
 };
 
 struct vfile {

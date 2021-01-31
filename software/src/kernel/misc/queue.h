@@ -40,13 +40,26 @@ static inline void _queue_insert(struct queue *queue, struct queue_node *node)
 
 static inline void _queue_insert_after(struct queue *queue, struct queue_node *node, struct queue_node *after)
 {
-	node->next = after->next;
-	if (after->next)
-		after->next->prev = node;
+	struct queue_node *tail;
+
+	// If `after` is NULL then insert at the start of the list (ie. queue->head)
+	if (after)
+		tail = after->next;
+	else
+		tail = queue->head;
+
+	// Connect the tail of the list to the node
+	if (tail)
+		tail->prev = node;
 	else
 		queue->tail = node;
+	node->next = tail;
 
-	after->next = node;
+	// Connect the list up to and including `after` to the node
+	if (after)
+		after->next = node;
+	else
+		queue->head = node;
 	node->prev = after;
 }
 

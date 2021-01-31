@@ -15,7 +15,7 @@ static char *load_address = (char *) 0x100000;	// Address to load the kernel
 static char *mem_drive = (char *) 0x080000;	// The address in ROM of the start of the drive
 static int ata_drive = 0x800;			// The sector number of the start of the boot partition
 static char boot_device = 2;			// 1 = ROM, 2 = ATA
-static minix_v1_zone_t inode_zone = 4;		// Zone of the inode table where the kernel is stored
+static minix_v1_zone_t inode_zone = 5;		// Zone of the inode table where the kernel is stored
 static short inode_num = 2;			// Inode offset into zone of the kernel inode
 
 int init_tty();
@@ -23,13 +23,14 @@ int putchar(int ch);
 void load_kernel(char *offset);
 int ata_read_sector(int sector, char *buffer);
 
-int main()
+int main(char *boot_args)
 {
 	init_tty();
 	load_kernel(load_address);
 
 	__attribute__((noreturn)) void (*entry)(char *) = (void (*)(char *)) load_address;
-	entry("ata0\0");
+	//entry(boot_args);
+	entry("ata0");
 	__builtin_unreachable();
 }
 
@@ -64,8 +65,14 @@ void load_kernel(char *offset)
 {
 	minix_v1_zone_t *zone_table;
 	minix_v1_zone_t *inode_zones;
+	struct minix_v1_superblock *super;
 	struct minix_v1_inode *inode_table;
 	char buffer[MINIX_V1_ZONE_SIZE];
+
+	// Load our target inode and get the zone table in the inode
+	//super = (struct minix_v1_superblock *) copy_zone_data(buffer, MINIX_V1_SUPER_ZONE);
+	//MINIX_V1_INODE_TABLE_START(super);
+	//inode_zone = MINIX_V1_BITMAP_ZONES + from_le16((super)->imap_blocks) + from_le16((super)->zmap_blocks);
 
 	// Load our target inode and get the zone table in the inode
 	inode_table = (struct minix_v1_inode *) copy_zone_data(buffer, inode_zone);
@@ -123,8 +130,6 @@ void ata_wait()
 
 int ata_read_sector(int sector, char *buffer)
 {
-	ata_wait();
-
 	// Set 8-bit mode
 	(*ATA_REG_FEATURE) = 0x01;
 	(*ATA_REG_COMMAND) = ATA_CMD_SET_FEATURE;
@@ -141,9 +146,8 @@ int ata_read_sector(int sector, char *buffer)
 	ata_wait();
 
 	char status = (*ATA_REG_STATUS);
-	if (status & 0x01) {
+	if (status & 0x01)
 		return 0;
-	}
 
 	ata_wait();
 	ATA_WAIT_FOR_DATA();

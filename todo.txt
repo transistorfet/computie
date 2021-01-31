@@ -8,8 +8,10 @@
 
 Operating System:
 
-	* there is an issues on cold boot where either CTS is not asserted or typing causes double or repeat characters of some kind.  Resetting and booting again, or reloading a kernel
-	  makes the issue go away.  I'm guessing it has something to do with timing, or race condition of some kind.  It could also be related to initializing the tty somehow
+	* the return from syscalls is sometimes generating a move %d0, %d1; move %d1, %d0
+	* should you increase the number of arguments to 5 (which would still mean the sendto/recvfrom would need to pack the last two args).  There are only 6 or 7 syscalls out
+	  of 55 or so that need more than 3 arguments =/
+	* there is a bug with queue_insert_after where it assumes the after arg is not NULL, and also doesn't patch up the head (as if the queue is not empty)
 
 
 	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
@@ -53,6 +55,7 @@ Operating System:
 
 
 
+	* use the O_EXCL flag in device drivers to cause an error when more than one thing opens that device
 	* how can you make a df command to list how many blocks are free??  That info would need to come from the minix fs-specific code
 	* when there's a trailing / to rm or mkdir, it will create something weird
 	* add checks for errors in the serial transfer? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)

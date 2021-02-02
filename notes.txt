@@ -18,3 +18,10 @@ Send a command:
 
 python3 tools/load.py -l src/commands/daemontest.send
 (the -l limits the speed because flow control doesn't work)
+
+
+Enable SLIP on linux:
+
+sudo slattach -s 38400 -p slip /dev/ttyUSB1 &
+sudo ifconfig sl0 192.168.1.200 pointopoint 192.168.1.201 up
+

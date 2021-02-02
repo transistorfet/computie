@@ -5,6 +5,8 @@
 #define BH_MAX			4
 #define BH_TTY68681		0
 #define BH_TTY			1
+#define BH_SLIP			2
+#define BH_NET			3
 
 typedef void (*bh_handler_t)(void *);
 

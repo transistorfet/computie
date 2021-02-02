@@ -42,6 +42,15 @@
 #define	ENOSYS		-38	/* Invalid system call number */
 #define	ENOTEMPTY	-39	/* Directory not empty */
 
+#define EAFNOSUPPORT	-40
+#define EWOULDBLOCK	-41
+#define EISCONN		-42	/* Already connected */
+#define EADDRINUSE	-43	/* Address in use */
+#define ECONNREFUSED	-44	/* Connection refused */
+#define ECONNRESET	-45	/* Connection reset */
+#define ETIMEDOUT	-46	/* Connection timed out */
+#define ENOTCONN	-47	/* No connection */
+
 #define	EKILL		-1000	/* Fatal error, kill the current running process */
 
 #endif

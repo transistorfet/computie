@@ -42,7 +42,7 @@ static inline short _buf_free_space(struct circular_buffer *cb)
 
 static inline int _buf_get_char(struct circular_buffer *cb)
 {
-	register char ch;
+	register unsigned char ch;
 
 	if (cb->out == cb->in)
 		return -1;
@@ -52,7 +52,7 @@ static inline int _buf_get_char(struct circular_buffer *cb)
 	return ch;
 }
 
-static inline int _buf_put_char(struct circular_buffer *cb, char ch)
+static inline int _buf_put_char(struct circular_buffer *cb, unsigned char ch)
 {
 	register short next;
 
@@ -65,7 +65,7 @@ static inline int _buf_put_char(struct circular_buffer *cb, char ch)
 }
 
 
-static inline short _buf_get(struct circular_buffer *cb, char *data, short size)
+static inline short _buf_get(struct circular_buffer *cb, unsigned char *data, short size)
 {
 	short i;
 
@@ -79,7 +79,7 @@ static inline short _buf_get(struct circular_buffer *cb, char *data, short size)
 	return i;
 }
 
-static inline short _buf_put(struct circular_buffer *cb, const char *data, short size)
+static inline short _buf_put(struct circular_buffer *cb, const unsigned char *data, short size)
 {
 	short i;
 	register short next;

@@ -177,6 +177,7 @@ struct serial_channel {
 	int mode;
 	int pgid;
 	char rx_ready;
+	char bh_num;
 };
 
 static char tick = 0;
@@ -190,6 +191,7 @@ static inline void config_serial_channel(struct serial_channel *channel)
 	channel->mode = 0;
 	channel->pgid = 0;
 	channel->rx_ready = 0;
+	channel->bh_num = BH_TTY;
 
 	// Reset channel A serial port
 	*channel->ports->command = CMD_RESET_MR;
@@ -197,12 +199,12 @@ static inline void config_serial_channel(struct serial_channel *channel)
 	*channel->ports->command = CMD_RESET_TX;
 	NOP();
 
-	// Configure channel A serial port
+	// Configure serial port
 	*channel->ports->port_config = MR1A_MODE_A_REG_1_CONFIG;
 	*channel->ports->port_config = MR2A_MODE_A_REG_2_CONFIG;
 	*channel->ports->clock_config = CSRA_CLK_SELECT_REG_A_CONFIG;
 
-	// Enable the channel A serial port
+	// Enable the serial port
 	*channel->ports->command = CMD_ENABLE_TX_RX;
 }
 
@@ -229,7 +231,7 @@ static inline int getchar_buffered(struct serial_channel *channel)
 		asm volatile("");
 		//putchar_buffered('^');
 	}
-	char ch = _buf_get_char(&channel->rx);
+	unsigned char ch = _buf_get_char(&channel->rx);
 
 	if (_buf_free_space(&channel->rx) > 100)
 		ASSERT_CTS(channel);
@@ -246,7 +248,7 @@ static inline int putchar_direct(struct serial_channel *channel, int ch)
 
 	*channel->ports->command = CMD_ENABLE_TX;
 	while (!(*channel->ports->status & SR_TX_READY)) { }
-	*channel->ports->send = (char) ch;
+	*channel->ports->send = (unsigned char) ch;
 
 	UNLOCK(saved_status);
 	return ch;
@@ -285,7 +287,9 @@ static void tty_68681_process_input(void *_unused)
 			channels[i].rx_ready = 0;
 			resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY68681, i));
 
-			request_bh_run(BH_TTY);
+			//request_bh_run(BH_TTY);
+			request_bh_run(channels[i].bh_num);
+
 			// TODO this isn't needed now, since the assert in getchar handle this, but once we have the tty subsystem this might be needed
 			//if (_buf_is_empty(&channels[i].rx))
 			//	ASSERT_CTS(&channels[i]);
@@ -303,7 +307,7 @@ static inline void handle_channel_io(register char isr, register devminor_t mino
 		while (*channels[minor].ports->status & SR_RX_READY) {
 			if (_buf_is_full(&channels[minor].rx))
 				break;
-			char ch = *channels[minor].ports->recv;
+			unsigned char ch = *channels[minor].ports->recv;
 			// TODO this is a temporary hack to get ^C -> SIGINT, but it's totally wrong on so many levels
 			//if (ch == 0x03 && channels[minor].pgid) {
 			//	send_signal_process_group(channels[minor].pgid, SIGINT);
@@ -326,7 +330,7 @@ static inline void handle_channel_io(register char isr, register devminor_t mino
 	if (isr & ISR_S_TX_READY) {
 		int ch = _buf_get_char(&channels[minor].tx);
 		if (ch != -1)
-			*channels[minor].ports->send = (char) ch;
+			*channels[minor].ports->send = (unsigned char) ch;
 		else {
 			// Disable the channel A transmitter if empty
 			if (*channels[minor].ports->status & SR_TX_EMPTY)
@@ -508,6 +512,7 @@ void tty_68681_normal_mode()
 
 	config_serial_channel(&channels[CH_A]);
 	config_serial_channel(&channels[CH_B]);
+	channels[CH_B].bh_num = BH_SLIP;
 
 	// Configure timer
 	*CTUR_WR_ADDR = 0x20;
@@ -516,7 +521,7 @@ void tty_68681_normal_mode()
 	// Enable interrupts
 	set_interrupt(TTY_INT_VECTOR, enter_irq);
 	*IVR_WR_ADDR = TTY_INT_VECTOR;
-	*IMR_WR_ADDR = ISR_TIMER_CHANGE | ISR_INPUT_CHANGE | ISR_CH_A_RX_READY_FULL | ISR_CH_A_TX_READY;
+	*IMR_WR_ADDR = ISR_TIMER_CHANGE | ISR_INPUT_CHANGE | ISR_CH_A_RX_READY_FULL | ISR_CH_A_TX_READY | ISR_CH_B_RX_READY_FULL | ISR_CH_B_TX_READY;
 
 	// Flash LEDs briefly at boot
 	*OPCR_WR_ADDR = 0x00;

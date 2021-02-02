@@ -76,6 +76,13 @@ KERNEL_OBJS = \
 	src/kernel/proc/filedesc.o \
 	src/kernel/proc/binaries.o \
 	src/kernel/mm/kmalloc.o \
+	src/kernel/net/packet.o \
+	src/kernel/net/socket.o \
+	src/kernel/net/protocol.o \
+	src/kernel/net/protocol/ipv4.o \
+	src/kernel/net/protocol/udp.o \
+	src/kernel/net/if.o \
+	src/kernel/net/if/slip.o \
 	src/kernel/fs/vfs.o \
 	src/kernel/fs/nop.o \
 	src/kernel/fs/pipe.o \

@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mount.h>
+#include <sys/socket.h>
 
 void init_syscall();
 void do_syscall();
@@ -58,5 +59,20 @@ extern int do_sync();
 // Time
 extern time_t do_time(time_t *t);
 extern int do_stime(const time_t *t);
+
+// Sockets
+extern int do_socket(int domain, int type, int protocol);
+extern int do_socketpair(int domain, int type, int protocol, int fds[2]);
+extern int do_connect(int fd, const struct sockaddr *addr, socklen_t len);
+extern int do_bind(int fd, const struct sockaddr *addr, socklen_t len);
+extern int do_listen(int fd, int n);
+extern int do_accept(int fd, struct sockaddr *addr, socklen_t *addr_len);
+extern int do_shutdown(int fd, int how);
+extern ssize_t do_send(int fd, const void *buf, unsigned int opts[2]);
+extern ssize_t do_sendto(int fd, const void *buf, unsigned int opts[4]);
+extern ssize_t do_sendmsg(int fd, const struct msghdr *message, int flags);
+extern ssize_t do_recv(int fd, void *buf, unsigned int opts[2]);
+extern ssize_t do_recvfrom(int fd, void *buf, unsigned int opts[4]);
+extern ssize_t do_recvmsg(int fd, struct msghdr *message, int flags);
 
 #endif

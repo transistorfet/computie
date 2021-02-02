@@ -40,6 +40,7 @@ COMMANDS = 		\
 	tar.send	\
 	hello.send	\
 	test.send	\
+	nettest.send	\
 	daemontest.send
 
 all: $(ROOT)/libc-68k-os.a $(COMMANDS)

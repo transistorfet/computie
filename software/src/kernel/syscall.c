@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/ioc_tty.h>
+#include <sys/socket.h>
 #include <kernel/vfs.h>
 #include <kernel/time.h>
 #include <kernel/signal.h>
@@ -21,11 +22,14 @@
 #include "proc/binaries.h"
 #include "proc/filedesc.h"
 
+// TODO these should maybe be bundled into an interface in <kernel/net.h>
+#include "net/socket.h"
+
 #include "api.h"
 #include "interrupts.h"
 
 
-#define SYSCALL_MAX	48
+#define SYSCALL_MAX	64
 
 void test() { printk("It's a test!\n"); }
 
@@ -76,6 +80,20 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_sigreturn,
 	do_sigaction,
 	do_stime,
+
+	do_socket,
+	do_socketpair,
+	do_connect,
+	do_bind,
+	do_listen,
+	do_accept,
+	do_shutdown,
+	do_send,
+	do_sendto,
+	do_sendmsg,
+	do_recv,
+	do_recvfrom,
+	do_recvmsg,
 
 	do_execbuiltin,
 };
@@ -572,4 +590,111 @@ int do_stime(const time_t *t)
 	set_system_time(*t);
 	return 0;
 }
+
+
+int do_socket(int domain, int type, int protocol)
+{
+	int fd;
+	int error;
+	struct vfile *file;
+
+	fd = find_unused_fd(current_proc->fd_table);
+	if (fd < 0)
+		return fd;
+
+	error = net_socket_create(domain, type, protocol, current_proc->uid, &file);
+	if (error)
+		return error;
+
+	set_fd(current_proc->fd_table, fd, file);
+
+	return fd;
+}
+
+int do_socketpair(int domain, int type, int protocol, int fds[2])
+{
+	// TODO implement
+	return -1;
+}
+
+int do_connect(int fd, const struct sockaddr *addr, socklen_t len)
+{
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file || !S_ISSOCK(file->vnode->mode))
+		return EBADF;
+	return net_socket_connect(file, addr, len);
+}
+
+int do_bind(int fd, const struct sockaddr *addr, socklen_t len)
+{
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file || !S_ISSOCK(file->vnode->mode))
+		return EBADF;
+	return net_socket_bind(file, addr, len);
+}
+
+int do_listen(int fd, int n)
+{
+	// TODO implement
+	return -1;
+}
+
+int do_accept(int fd, struct sockaddr *addr, socklen_t *addr_len)
+{
+	// TODO implement
+	return -1;
+}
+
+int do_shutdown(int fd, int how)
+{
+	// TODO implement
+	return -1;
+}
+
+
+//ssize_t do_send(int fd, const void *buf, size_t n, int flags)
+ssize_t do_send(int fd, const void *buf, unsigned int opts[2])
+{
+	// TODO implement
+	return -1;
+}
+
+//ssize_t do_sendto(int fd, const void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t addr_len)
+ssize_t do_sendto(int fd, const void *buf, unsigned int opts[4])
+{
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file || !S_ISSOCK(file->vnode->mode))
+		return EBADF;
+	return net_socket_sendto(file, buf, (size_t) opts[0], (int) opts[1], (const struct sockaddr *) opts[2], (socklen_t) opts[3]);
+}
+
+ssize_t do_sendmsg(int fd, const struct msghdr *message, int flags)
+{
+	// TODO implement
+	return -1;
+}
+
+
+//ssize_t do_recv(int fd, void *buf, size_t n, int flags)
+ssize_t do_recv(int fd, void *buf, unsigned int opts[2])
+{
+	// TODO implement
+	return -1;
+}
+
+//ssize_t do_recvfrom(int fd, void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t *addr_len)
+ssize_t do_recvfrom(int fd, void *buf, unsigned int opts[4])
+{
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file || !S_ISSOCK(file->vnode->mode))
+		return EBADF;
+	return net_socket_recvfrom(file, buf, (size_t) opts[0], (int) opts[1], (const struct sockaddr *) opts[2], (socklen_t *) opts[3]);
+}
+
+ssize_t do_recvmsg(int fd, struct msghdr *message, int flags)
+{
+	// TODO implement
+	return -1;
+}
+
 

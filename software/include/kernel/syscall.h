@@ -47,8 +47,22 @@
 #define SYS_SIGACTION	41
 #define SYS_STIME	42
 
+#define SYS_SOCKET	43
+#define SYS_SOCKETPAIR	44
+#define SYS_CONNECT	45
+#define SYS_BIND	46
+#define SYS_LISTEN	47
+#define SYS_ACCEPT	48
+#define SYS_SHUTDOWN	49
+#define SYS_SEND	50
+#define SYS_SENDTO	51
+#define SYS_SENDMSG	52
+#define SYS_RECV	53
+#define SYS_RECVFROM	54
+#define SYS_RECVMSG	55
+
 // TODO remove this after testing
-#define SYS_EXECBUILTIN	43
+#define SYS_EXECBUILTIN	56
 
 typedef int (*syscall_t)(int, int, int);
 

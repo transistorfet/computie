@@ -18,6 +18,9 @@
 #include "proc/tasks.h"
 #include "proc/process.h"
 
+#include "net/if.h"
+#include "net/protocol.h"
+
 #include "api.h"
 #include "interrupts.h"
 
@@ -47,6 +50,10 @@ struct mount_ops *filesystems[] = {
 	&procfs_mount_ops,
 	NULL	// Null Termination of Filesystems List
 };
+
+extern struct if_ops slip_if_ops;
+extern struct protocol_ops ipv4_protocol_ops;
+extern struct protocol_ops udp_protocol_ops;
 
 char boot_args[32] = "mem0";
 device_t root_dev = DEVNUM(DEVMAJOR_MEM, 0);
@@ -113,6 +120,14 @@ int main()
 	for (char i = 0; filesystems[i]; i++) {
 		filesystems[i]->init();
 	}
+
+	init_net_if();
+	init_net_protocol();
+	slip_if_ops.init();
+	ipv4_protocol_ops.init();
+	udp_protocol_ops.init();
+	// TODO this is a temporary hack.  The ifup should be done later
+	net_if_up("slip0");
 
 	// TODO this would be moved elsewhere
 	//vfs_mount(NULL, "/", 0, &mallocfs_mount_ops, SU_UID);

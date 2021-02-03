@@ -15,8 +15,6 @@
 #define UDP_ADDRESS(x)		((struct udp_address *) (x))
 #define UDP_ENDPOINT(x)		((struct udp_endpoint *) (x))
 
-extern struct protocol ipv4_protocol;
-
 
 int udp_init();
 int udp_encode_header(struct protocol *proto, struct packet *pack, const struct address *src, const struct address *dest, const unsigned char *data, int length);

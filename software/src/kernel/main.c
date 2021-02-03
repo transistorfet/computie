@@ -54,6 +54,7 @@ struct mount_ops *filesystems[] = {
 extern struct if_ops slip_if_ops;
 extern struct protocol_ops ipv4_protocol_ops;
 extern struct protocol_ops udp_protocol_ops;
+extern struct protocol_ops icmp_protocol_ops;
 
 char boot_args[32] = "mem0";
 device_t root_dev = DEVNUM(DEVMAJOR_MEM, 0);
@@ -126,6 +127,7 @@ int main()
 	slip_if_ops.init();
 	ipv4_protocol_ops.init();
 	udp_protocol_ops.init();
+	icmp_protocol_ops.init();
 	// TODO this is a temporary hack.  The ifup should be done later
 	net_if_up("slip0");
 

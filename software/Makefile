@@ -81,6 +81,7 @@ KERNEL_OBJS = \
 	src/kernel/net/protocol.o \
 	src/kernel/net/protocol/ipv4.o \
 	src/kernel/net/protocol/udp.o \
+	src/kernel/net/protocol/icmp.o \
 	src/kernel/net/if.o \
 	src/kernel/net/if/slip.o \
 	src/kernel/fs/vfs.o \

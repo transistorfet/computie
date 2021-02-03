@@ -25,3 +25,6 @@ session.vim
 *.bck
 fp-info-cache
 
+# Binary files
+*.img
+

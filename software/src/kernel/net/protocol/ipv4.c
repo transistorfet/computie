@@ -50,24 +50,6 @@ struct ipv4_header {
 	uint32_t dest;
 };
 
-static uint16_t calculate_checksum(struct ipv4_header *hdr)
-{
-	uint16_t carry;
-	uint32_t checksum = 0;
-	uint16_t *hdr_words = (uint16_t *) hdr;
-
-	for (short i = 0; i < (sizeof(struct ipv4_header) >> 1); i++)
-		checksum += hdr_words[i];
-
-	carry = checksum >> 16;
-	checksum &= 0xFFFF;
-	checksum += carry;
-	if (checksum >> 16)
-		checksum += 1;
-	checksum = ~checksum & 0xFFFF;
-	return checksum;
-}
-
 int ipv4_init()
 {
 	net_register_protocol(&ipv4_protocol);
@@ -91,7 +73,7 @@ int ipv4_encode_header(struct protocol *proto, struct packet *pack, const struct
 	hdr.src = to_be32(((struct ipv4_address *) src)->addr);
 	hdr.dest = to_be32(((struct ipv4_address *) dest)->addr);
 
-	hdr.checksum = calculate_checksum(&hdr);
+	hdr.checksum = ipv4_calculate_checksum(&hdr, sizeof(struct ipv4_header));
 
 	pack->network_offset = pack->length;
 	return packet_append(pack, &hdr, sizeof(struct ipv4_header));
@@ -146,4 +128,22 @@ int ipv4_forward_packet(struct protocol *proto, struct packet *pack)
 		return PACKET_DROPPED;
 	return next->ops->forward_packet(next, pack);
 }
+
+uint16_t ipv4_calculate_checksum(void *data, int len)
+{
+	uint16_t carry;
+	uint32_t checksum = 0;
+
+	for (short i = 0; i < (len >> 1); i++)
+		checksum += ((uint16_t *) data)[i];
+
+	carry = checksum >> 16;
+	checksum &= 0xFFFF;
+	checksum += carry;
+	if (checksum >> 16)
+		checksum += 1;
+	checksum = ~checksum & 0xFFFF;
+	return checksum;
+}
+
 

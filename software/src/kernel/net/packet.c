@@ -13,7 +13,7 @@ struct packet *packet_alloc(struct if_device *ifdev, size_t capacity)
 
 	pack = kmalloc(sizeof(struct packet) + capacity);
 	if (!pack)
-		return pack;
+		return NULL;
 	memset(pack, '\0', sizeof(struct packet) + capacity);
 
 	_queue_node_init(&pack->node);

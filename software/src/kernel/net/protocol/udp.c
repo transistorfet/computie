@@ -11,6 +11,7 @@
 #include "../protocol.h"
 
 #include "ipv4.h"
+#include "inet_af.h"
 
 #define UDP_ADDRESS(x)		((struct udp_address *) (x))
 #define UDP_ENDPOINT(x)		((struct udp_endpoint *) (x))
@@ -27,11 +28,6 @@ int udp_destroy_endpoint(struct endpoint *ep);
 int udp_endpoint_send_to(struct endpoint *ep, const char *buf, int nbytes, const struct sockaddr *sockaddr, socklen_t len);
 int udp_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct sockaddr *sockaddr, socklen_t *len);
 
-
-struct udp_address {
-	struct ipv4_address addr;
-	uint16_t port;
-};
 
 struct protocol_ops udp_protocol_ops = {
 	udp_init,
@@ -59,15 +55,10 @@ struct endpoint_ops udp_endpoint_ops = {
 
 struct udp_endpoint {
 	struct endpoint ep;
-	struct udp_address src;
-	struct udp_address dest;
+	struct ipv4_address src;
+	struct ipv4_address dest;
 };
 
-struct udp_custom_data {
-	struct ipv4_custom_data ipv4;
-	uint16_t src_port;
-	uint16_t dest_port;
-};
 
 struct udp_header {
 	uint16_t src;
@@ -93,8 +84,8 @@ int udp_encode_header(struct protocol *proto, struct packet *pack, const struct 
 	if (error)
 		return error;
 
-	hdr.src = to_be16(((struct udp_address *) src)->port);
-	hdr.dest = to_be16(((struct udp_address *) dest)->port);
+	hdr.src = to_be16(((struct ipv4_address *) src)->port);
+	hdr.dest = to_be16(((struct ipv4_address *) dest)->port);
 	hdr.length = to_be16(sizeof(struct udp_header) + length);
 	// TODO calculate checksum
 	hdr.checksum = to_be16(0);
@@ -110,7 +101,7 @@ int udp_encode_header(struct protocol *proto, struct packet *pack, const struct 
 int udp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset)
 {
 	struct udp_header *hdr;
-	struct udp_custom_data *custom;
+	struct ipv4_custom_data *custom;
 
 	if (pack->length - offset < sizeof(struct udp_header))
 		return -1;
@@ -128,9 +119,9 @@ int udp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offs
 
 	// TODO validate checksum
 
-	custom = (struct udp_custom_data *) &pack->custom_data;
-	custom->src_port = hdr->src;
-	custom->dest_port = hdr->dest;
+	custom = (struct ipv4_custom_data *) &pack->custom_data;
+	custom->src.port = hdr->src;
+	custom->dest.port = hdr->dest;
 
 	return 0;
 }
@@ -138,10 +129,10 @@ int udp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offs
 int udp_forward_packet(struct protocol *proto, struct packet *pack)
 {
 	struct endpoint *ep;
-	struct udp_custom_data *custom = (struct udp_custom_data *) pack->custom_data;
+	struct ipv4_custom_data *custom = (struct ipv4_custom_data *) pack->custom_data;
 
-	printk("forwarding %x:%d\n", custom->ipv4.dest.addr, custom->dest_port);
-	ep = lookup_endpoint(proto, custom->ipv4.dest.addr, custom->dest_port);
+	printk("forwarding %x:%d\n", custom->dest.addr, custom->dest.port);
+	ep = lookup_endpoint(proto, custom->dest.addr, custom->dest.port);
 	if (!ep)
 		return PACKET_DROPPED;
 
@@ -163,39 +154,21 @@ static struct endpoint *lookup_endpoint(struct protocol *proto, uint32_t addr, u
 
 int udp_create_endpoint(struct protocol *proto, struct socket *sock, const struct sockaddr *sockaddr, socklen_t len, struct endpoint **result)
 {
-	struct udp_address src;
-	struct udp_endpoint *ep;
+	int error;
 	struct if_device *ifdev;
-	struct sockaddr_in *sa = (struct sockaddr_in *) sockaddr;
+	struct ipv4_address src;
+	struct udp_endpoint *ep;
 
 	// TODO this is a hack for now
 	ifdev = net_if_find("slip0");
 
-	// Validate the sockaddr and initialize the src address
-	if (sockaddr) {
-		if (len != sizeof(struct sockaddr_in))
-			return EINVAL;
-		if (sa->sin_addr.s_addr != INADDR_ANY && sa->sin_addr.s_addr != ((struct sockaddr_in *) &ifdev->address)->sin_addr.s_addr)
-			return EINVAL;
-		src.addr.addr = sa->sin_addr.s_addr;
-		src.port = sa->sin_port;
-	}
-	else {
-		src.addr.addr = INADDR_ANY;
-		src.port = 0;
-	}
+	// Get the real IP and port number to send from
+	error = inet_resolve_address(sockaddr, len, (const struct sockaddr *) &ifdev->address, &src);
+	if (error)
+		return error;
 
-	// Get the real IP and port to send from
-	if (src.addr.addr == INADDR_ANY)
-		src.addr.addr = ((struct sockaddr_in *) &ifdev->address)->sin_addr.s_addr;
-	if (src.port == 0)
-		// TODO this should be an ephemeral port.  This is a temporary hack
-		src.port = 1284;
-
-	printk_safe("%x %d\n", src.addr.addr, src.port);
-
-	// Make sure this address and port aren't already in use
-	if (lookup_endpoint(proto, src.addr.addr, src.port))
+	// Make sure the address and port aren't already in use
+	if (lookup_endpoint(proto, src.addr, src.port))
 		return EADDRINUSE;
 
 	ep = kmalloc(sizeof(struct udp_endpoint));
@@ -206,7 +179,7 @@ int udp_create_endpoint(struct protocol *proto, struct socket *sock, const struc
 	ep->ep.sock = sock;
 	ep->ep.ifdev = ifdev;
 	ep->src = src;
-	ep->dest.addr.addr = 0;
+	ep->dest.addr = 0;
 	ep->dest.port = 0;
 	*result = (struct endpoint *) ep;
 
@@ -232,7 +205,7 @@ int udp_connect_endpoint(struct endpoint *ep, const struct sockaddr *sockaddr, s
 {
 	struct sockaddr_in *addr = (struct sockaddr_in *) sockaddr;
 
-	UDP_ENDPOINT(ep)->dest.addr.addr = addr->sin_addr.s_addr;
+	UDP_ENDPOINT(ep)->dest.addr = addr->sin_addr.s_addr;
 	UDP_ENDPOINT(ep)->dest.port = addr->sin_port;
 	return NULL;
 }
@@ -240,13 +213,13 @@ int udp_connect_endpoint(struct endpoint *ep, const struct sockaddr *sockaddr, s
 int udp_endpoint_send_to(struct endpoint *ep, const char *buf, int nbytes, const struct sockaddr *sockaddr, socklen_t len)
 {
 	struct packet *pack;
-	struct udp_address dest;
+	struct ipv4_address dest;
 
 	if (!sockaddr && !(UDP_ENDPOINT(ep)->dest.port))
 		return ENOTCONN;
 
 	if (sockaddr) {
-		dest.addr.addr = ((struct sockaddr_in *) sockaddr)->sin_addr.s_addr;
+		dest.addr = ((struct sockaddr_in *) sockaddr)->sin_addr.s_addr;
 		dest.port = ((struct sockaddr_in *) sockaddr)->sin_port;
 	}
 	else
@@ -260,7 +233,7 @@ int udp_endpoint_send_to(struct endpoint *ep, const char *buf, int nbytes, const
 int udp_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct sockaddr *sockaddr, socklen_t *len)
 {
 	struct packet *pack;
-	struct udp_custom_data *custom = (struct udp_custom_data *) pack->custom_data;
+	struct ipv4_custom_data *custom = (struct ipv4_custom_data *) pack->custom_data;
 
 	pack = _queue_head(&ep->recv_queue);
 	if (!pack)
@@ -272,13 +245,8 @@ int udp_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct so
 		nbytes = pack->length - pack->data_offset;
 	memcpy(buf, &pack->data[pack->data_offset], nbytes);
 
-	if (sockaddr) {
-		struct sockaddr_in *addr = (struct sockaddr_in *) sockaddr;
-		memset(addr, '\0', *len);
-		addr->sin_family = AF_INET;
-		addr->sin_port = custom->src_port;
-		addr->sin_addr.s_addr = custom->ipv4.src.addr;
-	}
+	if (sockaddr)
+		inet_load_sockaddr(sockaddr, len, &custom->src);
 
 	packet_free(pack);
 	return nbytes;

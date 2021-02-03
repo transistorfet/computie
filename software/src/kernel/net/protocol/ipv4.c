@@ -104,7 +104,9 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 
 	custom = (struct ipv4_custom_data *) &pack->custom_data;
 	custom->src.addr = hdr->src;
+	custom->src.port = 0;
 	custom->dest.addr = hdr->dest;
+	custom->dest.port = 0;
 
 	pack->protocol = hdr->protocol;
 	next = net_get_protocol(PF_INET, 0, hdr->protocol);

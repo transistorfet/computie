@@ -79,6 +79,7 @@ KERNEL_OBJS = \
 	src/kernel/net/packet.o \
 	src/kernel/net/socket.o \
 	src/kernel/net/protocol.o \
+	src/kernel/net/protocol/inet_af.o \
 	src/kernel/net/protocol/ipv4.o \
 	src/kernel/net/protocol/udp.o \
 	src/kernel/net/protocol/icmp.o \

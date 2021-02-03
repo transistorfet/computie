@@ -9,14 +9,12 @@
 
 
 int ipv4_init();
-int ipv4_encode_header(struct protocol *proto, struct packet *pack, const struct address *src, const struct address *dest, const unsigned char *data, int length);
 int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset);
 int ipv4_forward_packet(struct protocol *proto, struct packet *pack);
 
 
 struct protocol_ops ipv4_protocol_ops = {
 	ipv4_init,
-	ipv4_encode_header,
 	ipv4_decode_header,
 	ipv4_forward_packet,
 	NULL,
@@ -55,9 +53,12 @@ int ipv4_init()
 	net_register_protocol(&ipv4_protocol);
 }
 
-int ipv4_encode_header(struct protocol *proto, struct packet *pack, const struct address *src, const struct address *dest, const unsigned char *data, int length)
+int ipv4_encode_header(struct packet *pack, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *data, int length)
 {
 	struct ipv4_header hdr;
+
+	if (!pack->proto)
+		return -1;
 
 	hdr.version = 4;
 	hdr.ihl = 5;
@@ -68,14 +69,15 @@ int ipv4_encode_header(struct protocol *proto, struct packet *pack, const struct
 	hdr.flags = 2;
 	hdr.frag_offset = to_be16(0);
 	hdr.ttl = 0x40;
-	hdr.protocol = pack->protocol;
+	hdr.protocol = pack->proto->protocol;
 	hdr.checksum = to_be16(0);
-	hdr.src = to_be32(((struct ipv4_address *) src)->addr);
-	hdr.dest = to_be32(((struct ipv4_address *) dest)->addr);
+	hdr.src = to_be32(src->addr);
+	hdr.dest = to_be32(dest->addr);
 
 	hdr.checksum = ipv4_calculate_checksum(&hdr, sizeof(struct ipv4_header));
 
 	pack->network_offset = pack->length;
+	pack->transport_offset = pack->length + sizeof(struct ipv4_header);
 	return packet_append(pack, &hdr, sizeof(struct ipv4_header));
 }
 
@@ -108,10 +110,10 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 	custom->dest.addr = hdr->dest;
 	custom->dest.port = 0;
 
-	pack->protocol = hdr->protocol;
 	next = net_get_protocol(PF_INET, 0, hdr->protocol);
 	if (!next)
 		return -2;
+	pack->proto = next;
 
 	error = next->ops->decode_header(next, pack, offset + (((uint16_t) hdr->ihl) << 2));
 	if (error)
@@ -123,12 +125,9 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 
 int ipv4_forward_packet(struct protocol *proto, struct packet *pack)
 {
-	struct protocol *next;
-
-	next = net_get_protocol(PF_INET, 0, pack->protocol);
-	if (!next)
+	if (!pack->proto || pack->proto == proto)
 		return PACKET_DROPPED;
-	return next->ops->forward_packet(next, pack);
+	return pack->proto->ops->forward_packet(pack->proto, pack);
 }
 
 uint16_t ipv4_calculate_checksum(void *data, int len)

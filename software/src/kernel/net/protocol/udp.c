@@ -18,7 +18,6 @@
 
 
 int udp_init();
-int udp_encode_header(struct protocol *proto, struct packet *pack, const struct address *src, const struct address *dest, const unsigned char *data, int length);
 int udp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset);
 int udp_forward_packet(struct protocol *proto, struct packet *pack);
 int udp_create_endpoint(struct protocol *proto, struct socket *sock, const struct sockaddr *sockaddr, socklen_t len, struct endpoint **result);
@@ -31,7 +30,6 @@ int udp_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct so
 
 struct protocol_ops udp_protocol_ops = {
 	udp_init,
-	udp_encode_header,
 	udp_decode_header,
 	udp_forward_packet,
 	udp_create_endpoint,
@@ -75,28 +73,48 @@ int udp_init()
 	net_register_protocol(&udp_protocol);
 }
 
-int udp_encode_header(struct protocol *proto, struct packet *pack, const struct address *src, const struct address *dest, const unsigned char *data, int length)
+int udp_encode_packet(struct packet *pack, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *data, int length)
 {
 	int error;
 	struct udp_header hdr;
 
-	error = proto->next->ops->encode_header(proto->next, pack, src, dest, data, sizeof(struct udp_header) + length);
+	error = ipv4_encode_header(pack, src, dest, data, sizeof(struct udp_header) + length);
 	if (error)
 		return error;
 
-	hdr.src = to_be16(((struct ipv4_address *) src)->port);
-	hdr.dest = to_be16(((struct ipv4_address *) dest)->port);
+	hdr.src = to_be16(src->port);
+	hdr.dest = to_be16(dest->port);
 	hdr.length = to_be16(sizeof(struct udp_header) + length);
 	// TODO calculate checksum
 	hdr.checksum = to_be16(0);
 
-	pack->transport_offset = pack->length;
 	error = packet_append(pack, &hdr, sizeof(struct udp_header));
 	if (error)
 		return error;
 
+	pack->data_offset = pack->length;
+	if (packet_append(pack, data, length)) {
+		packet_free(pack);
+		return NULL;
+	}
+
 	return 0;
 }
+
+static struct packet *udp_create_packet(struct protocol *proto, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *buf, int nbytes)
+{
+	struct packet *pack;
+
+	pack = packet_alloc(NULL, proto, nbytes + 100);
+
+	if (udp_encode_packet(pack, src, dest, buf, nbytes)) {
+		packet_free(pack);
+		return NULL;
+	}
+
+	return pack;
+}
+
 
 int udp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset)
 {
@@ -225,7 +243,7 @@ int udp_endpoint_send_to(struct endpoint *ep, const char *buf, int nbytes, const
 	else
 		dest = UDP_ENDPOINT(ep)->dest;
 
-	pack = net_create_packet(ep->proto, (struct address *) &UDP_ENDPOINT(ep)->src, (struct address *) &dest, buf, nbytes);
+	pack = udp_create_packet(ep->proto, &UDP_ENDPOINT(ep)->src, &dest, buf, nbytes);
 	net_if_send_packet(ep->ifdev, pack);
 	return nbytes;
 }

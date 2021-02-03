@@ -134,7 +134,7 @@ static void slip_decode_packet(struct slip_if_device *ifdev, short length)
 	short i, j;
 	struct packet *pack;
 
-	pack = packet_alloc(&ifdev->ifdev, length);
+	pack = packet_alloc(&ifdev->ifdev, ifdev->ifdev.incoming_proto, length);
 	if (!pack) {
 		// TODO what do you do if there's an error here
 		return;

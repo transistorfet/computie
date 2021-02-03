@@ -4,9 +4,6 @@
 #include <string.h>
 #include <sys/socket.h>
 
-// TODO this should be removed because it's domain-specific
-#include <netinet/in.h>
-
 #include "socket.h"
 #include "protocol.h"
 
@@ -44,37 +41,10 @@ struct protocol *net_get_protocol(int domain, int type, int protocol)
 	return NULL;
 }
 
-struct packet *net_create_packet(struct protocol *proto, const struct address *src, const struct address *dest, const unsigned char *buf, uint16_t nbytes)
-{
-	int error;
-	struct packet *pack;
-
-	// TODO maybe you should instead pass in a buffer for the packet header, and then assemble the packet here?  instead of allocating more memory than needed
-	pack = packet_alloc(NULL, nbytes + 100);
-	pack->domain = proto->domain;
-	pack->protocol = proto->protocol;
-
-	error = proto->ops->encode_header(proto, pack, src, dest, buf, nbytes);
-	if (error) {
-		packet_free(pack);
-		return NULL;
-	}
-
-	pack->data_offset = pack->length;
-	error = packet_append(pack, buf, nbytes);
-	if (error) {
-		packet_free(pack);
-		return NULL;
-	}
-
-	return pack;
-}
-
 int net_incoming_packet(struct protocol *proto, struct packet *pack)
 {
 	int error;
 
-	pack->domain = proto->domain;
 	error = proto->ops->decode_header(proto, pack, 0);
 	if (error) {
 		packet_free(pack);

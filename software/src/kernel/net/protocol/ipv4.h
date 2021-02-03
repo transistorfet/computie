@@ -14,5 +14,7 @@ struct ipv4_custom_data {
 
 uint16_t ipv4_calculate_checksum(void *data, int len);
 
+int ipv4_encode_header(struct packet *pack, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *data, int length);
+
 #endif
 

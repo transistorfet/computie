@@ -7,7 +7,7 @@
 #include "../misc/queue.h"
 
 
-struct packet *packet_alloc(struct if_device *ifdev, size_t capacity)
+struct packet *packet_alloc(struct if_device *ifdev, struct protocol *proto, size_t capacity)
 {
 	struct packet *pack;
 
@@ -17,7 +17,7 @@ struct packet *packet_alloc(struct if_device *ifdev, size_t capacity)
 	memset(pack, '\0', sizeof(struct packet) + capacity);
 
 	_queue_node_init(&pack->node);
-	pack->sock = NULL;
+	pack->proto = proto;
 	pack->ifdev = ifdev;
 	pack->capacity = capacity;
 

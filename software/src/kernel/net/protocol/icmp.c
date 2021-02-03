@@ -1,3 +1,4 @@
+
 #include <asm/macros.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -11,14 +12,12 @@
 
 
 int icmp_init();
-int icmp_encode_header(struct protocol *proto, struct packet *pack, const struct address *src, const struct address *dest, const unsigned char *data, int length);
 int icmp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset);
 int icmp_forward_packet(struct protocol *proto, struct packet *pack);
 
 
 struct protocol_ops icmp_protocol_ops = {
 	icmp_init,
-	icmp_encode_header,
 	icmp_decode_header,
 	icmp_forward_packet,
 	NULL,
@@ -47,15 +46,39 @@ int icmp_init()
 	net_register_protocol(&icmp_protocol);
 }
 
-int icmp_encode_header(struct protocol *proto, struct packet *pack, const struct address *src, const struct address *dest, const unsigned char *data, int length)
+static int icmp_encode_packet(struct packet *pack, uint8_t type, uint8_t code, struct ipv4_address *src, struct ipv4_address *dest, char *data, int length)
 {
 	int error;
-	struct icmp_header hdr;
+	struct icmp_header *hdr;
 
-	error = proto->next->ops->encode_header(proto->next, pack, src, dest, data, length);
+	error = ipv4_encode_header(pack, src, dest, data, length);
 	if (error)
 		return error;
+
+	hdr = (struct icmp_header *) data;
+	hdr->type = type;
+	hdr->code = code;
+	hdr->checksum = 0;
+	hdr->checksum = to_be16(ipv4_calculate_checksum(&hdr, sizeof(struct icmp_header)));
+
+	pack->data_offset = pack->length;
+	if (packet_append(pack, data, length))
+		return -1;
 	return 0;
+}
+
+static struct packet *icmp_create_packet(struct protocol *proto, uint8_t type, uint8_t code, struct ipv4_address *src, struct ipv4_address *dest, char *data, int length)
+{
+	struct packet *pack;
+
+	pack = packet_alloc(NULL, proto, length + 100);
+
+	if (icmp_encode_packet(pack, type, code, src, dest, data, length)) {
+		packet_free(pack);
+		return NULL;
+	}
+
+	return pack;
 }
 
 int icmp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset)
@@ -77,26 +100,25 @@ int icmp_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 	return 0;
 }
 
-
 int icmp_forward_packet(struct protocol *proto, struct packet *pack)
 {
-	struct icmp_header *hdr = (struct icmp_header *) &pack->data[pack->transport_offset];
 	struct ipv4_custom_data *custom = (struct ipv4_custom_data *) pack->custom_data;
+	struct icmp_header *hdr = (struct icmp_header *) &pack->data[pack->transport_offset];
 
 	printk_safe("ICMP recevied: %d %d\n", hdr->type, hdr->code);
 
 	switch (hdr->type) {
 		case ICMP_TYPE_ECHO: {
 			struct packet *reply;
-			reply = net_create_packet(proto, (struct address *) &custom->dest, (struct address *) &custom->src, &pack->data[pack->transport_offset], pack->length - pack->transport_offset);
 
-			hdr = (struct icmp_header *) &reply->data[pack->transport_offset];
-			hdr->type = 0;
-			hdr->code = 0;
-			hdr->checksum = 0;
-			hdr->checksum = ipv4_calculate_checksum(&hdr, sizeof(struct icmp_header));
+			reply = icmp_create_packet(proto, 0, 0, &custom->dest, &custom->src, &pack->data[pack->transport_offset], pack->length - pack->transport_offset);
+			if (!reply)
+				return PACKET_DROPPED;
 
-			net_if_send_packet(pack->ifdev, reply);
+			reply->ifdev = pack->ifdev;
+			packet_free(pack);
+
+			net_if_send_packet(reply->ifdev, reply);
 			return PACKET_DELIVERED;
 		}
 		default:

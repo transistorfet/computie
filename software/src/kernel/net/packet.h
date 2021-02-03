@@ -8,15 +8,13 @@
 #define PACKET_CUSTOM_DATA	16
 
 struct socket;
+struct protocol;
 struct if_device;
 
 struct packet {
 	struct queue_node node;
-	struct socket *sock;
+	struct protocol *proto;
 	struct if_device *ifdev;
-
-	uint8_t domain;
-	uint8_t protocol;
 
 	uint16_t network_offset;
 	uint16_t transport_offset;
@@ -29,7 +27,7 @@ struct packet {
 	unsigned char data[0];
 };
 
-struct packet *packet_alloc(struct if_device *dev, size_t capacity);
+struct packet *packet_alloc(struct if_device *ifdev, struct protocol *proto, size_t capacity);
 void packet_free(struct packet *pack);
 int packet_append(struct packet *pack, const void *buf, int nbytes);
 

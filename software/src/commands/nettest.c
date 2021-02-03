@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
@@ -21,7 +20,7 @@ int MAIN(command_nettest)()
 
 	pid = fork();
 	if (pid) {
-		printf("Detaching\n");
+		printf("Detaching\n\0");
 		return 0;
 	}
 	else {

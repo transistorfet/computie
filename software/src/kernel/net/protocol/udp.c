@@ -170,18 +170,24 @@ int udp_create_endpoint(struct protocol *proto, struct socket *sock, const struc
 	struct if_device *ifdev;
 	struct sockaddr_in *sa = (struct sockaddr_in *) sockaddr;
 
-	if (len != sizeof(struct sockaddr_in))
-		return EINVAL;
-
 	// TODO this is a hack for now
 	ifdev = net_if_find("slip0");
 
-	if (sa->sin_addr.s_addr != INADDR_ANY && sa->sin_addr.s_addr != ((struct sockaddr_in *) &ifdev->address)->sin_addr.s_addr)
-		return EINVAL;
+	// Validate the sockaddr and initialize the src address
+	if (sockaddr) {
+		if (len != sizeof(struct sockaddr_in))
+			return EINVAL;
+		if (sa->sin_addr.s_addr != INADDR_ANY && sa->sin_addr.s_addr != ((struct sockaddr_in *) &ifdev->address)->sin_addr.s_addr)
+			return EINVAL;
+		src.addr.addr = sa->sin_addr.s_addr;
+		src.port = sa->sin_port;
+	}
+	else {
+		src.addr.addr = INADDR_ANY;
+		src.port = 0;
+	}
 
-	// Get the actual IP and port to send from
-	src.addr.addr = sa->sin_addr.s_addr;
-	src.port = sa->sin_port;
+	// Get the real IP and port to send from
 	if (src.addr.addr == INADDR_ANY)
 		src.addr.addr = ((struct sockaddr_in *) &ifdev->address)->sin_addr.s_addr;
 	if (src.port == 0)

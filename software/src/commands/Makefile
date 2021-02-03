@@ -41,6 +41,7 @@ COMMANDS = 		\
 	hello.send	\
 	test.send	\
 	nettest.send	\
+	ns.send	\
 	daemontest.send
 
 all: $(ROOT)/libc-68k-os.a $(COMMANDS)

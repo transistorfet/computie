@@ -40,7 +40,7 @@ int net_if_up(const char *name)
 			active_ifdevs[i]->incoming_proto = &ipv4_protocol;
 
 			((struct sockaddr_in *) &active_ifdevs[i]->address)->sin_family = AF_INET;
-			((struct sockaddr_in *) &active_ifdevs[i]->address)->sin_addr.s_addr = 0xC0A802C8;
+			((struct sockaddr_in *) &active_ifdevs[i]->address)->sin_addr.s_addr = 0xC0A801C8;
 			((struct sockaddr_in *) &active_ifdevs[i]->address)->sin_port = 0;
 
 			printk_safe("%s: bringing up interface\n", active_ifdevs[i]->name);

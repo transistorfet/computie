@@ -152,8 +152,14 @@ ssize_t net_socket_sendto(struct vfile *file, const void *buf, size_t n, int fla
 
 	if (addr->sa_family != sock->domain)
 		return EINVAL;
-	if (!sock->ep)
-		return ENOTCONN;
+
+	// If no endpoint is open, then create an ephemeral endpoint
+	if (!sock->ep) {
+		int error = net_create_endpoint(sock->proto, sock, NULL, 0, &sock->ep);
+		if (error)
+			return error;
+	}
+
 	return net_endpoint_send_to(sock->ep, buf, n, addr, addr_len);
 }
 

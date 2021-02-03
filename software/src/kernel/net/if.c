@@ -3,6 +3,9 @@
 #include <kernel/bh.h>
 #include <kernel/driver.h>
 
+// TODO this is temporary until a proper solution for ifup/ip addresses is found
+#include <netinet/in.h>
+
 #include "if.h"
 #include "packet.h"
 #include "protocol.h"
@@ -35,6 +38,10 @@ int net_if_up(const char *name)
 			// TODO a lot more needs to be done here
 			extern struct protocol ipv4_protocol;
 			active_ifdevs[i]->incoming_proto = &ipv4_protocol;
+
+			((struct sockaddr_in *) &active_ifdevs[i]->address)->sin_family = AF_INET;
+			((struct sockaddr_in *) &active_ifdevs[i]->address)->sin_addr.s_addr = 0xC0A802C8;
+			((struct sockaddr_in *) &active_ifdevs[i]->address)->sin_port = 0;
 
 			printk_safe("%s: bringing up interface\n", active_ifdevs[i]->name);
 			return active_ifdevs[i]->ops->up(active_ifdevs[i]);
@@ -79,7 +86,7 @@ static void net_if_process_bh(void *_unused)
 					continue;
 				}
 
-				error = forward_protocol_packet(active_ifdevs[i]->incoming_proto, pack);
+				error = net_incoming_packet(active_ifdevs[i]->incoming_proto, pack);
 				if (error == PACKET_DROPPED) {
 					printk_safe("packet dropped\n");
 					active_ifdevs[i]->rx_stats.dropped += 1;

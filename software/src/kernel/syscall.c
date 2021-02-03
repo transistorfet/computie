@@ -688,7 +688,7 @@ ssize_t do_recvfrom(int fd, void *buf, unsigned int opts[4])
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file || !S_ISSOCK(file->vnode->mode))
 		return EBADF;
-	return net_socket_recvfrom(file, buf, (size_t) opts[0], (int) opts[1], (const struct sockaddr *) opts[2], (socklen_t *) opts[3]);
+	return net_socket_recvfrom(file, buf, (size_t) opts[0], (int) opts[1], (struct sockaddr *) opts[2], (socklen_t *) opts[3]);
 }
 
 ssize_t do_recvmsg(int fd, struct msghdr *message, int flags)

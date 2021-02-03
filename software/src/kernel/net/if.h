@@ -3,6 +3,7 @@
 #define _SRC_KERNEL_NET_IF_H
 
 #include <stdint.h>
+#include "socket.h"
 #include "packet.h"
 
 struct if_device;
@@ -27,7 +28,7 @@ struct if_device {
 	uint16_t mtu;
 	uint16_t flags;
 
-	//struct sockaddr_storage sockaddr;
+	struct sockaddr_storage address;
 	struct protocol *incoming_proto;
 
 	struct queue rx_queue;

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <sys/socket.h>
 
+#include "if.h"
 #include "packet.h"
 
 #include "../misc/queue.h"
@@ -13,19 +14,17 @@
 #define PACKET_DROPPED		0
 #define PACKET_ERROR		-1
 
-#define SAT_SRC			1
-#define SAT_DEST		2
-
 struct socket;
+struct address;
 struct protocol;
+struct endpoint;
 
 struct protocol_ops {
 	int (*init)();
-	int (*encode_header)(struct protocol *proto, struct packet *pack, const struct sockaddr *src, const struct sockaddr *dest, const unsigned char *data, int length);
+	int (*encode_header)(struct protocol *proto, struct packet *pack, const struct address *src, const struct address *dest, const unsigned char *data, int length);
 	int (*decode_header)(struct protocol *proto, struct packet *pack, uint16_t offset);
-
 	int (*forward_packet)(struct protocol *proto, struct packet *pack);
-	int (*fetch_sockaddr)(struct protocol *proto, struct packet *pack, int type, struct sockaddr *sockaddr, socklen_t len);
+	int (*create_endpoint)(struct protocol *proto, struct socket *sock, const struct sockaddr *sockaddr, socklen_t len, struct endpoint **result);
 };
 
 struct protocol {
@@ -34,21 +33,40 @@ struct protocol {
 	uint8_t domain;
 	uint8_t type;
 	uint8_t protocol;
-
-	struct queue connected_sockets;
+	struct queue endpoints;
 };
 
+struct endpoint_ops {
+	int (*connect)(struct endpoint *ep, const struct sockaddr *sockaddr, socklen_t len);
+	int (*destroy)(struct endpoint *ep);
+	//int (*send)(struct endpoint *ep, const char *buf, int nbytes);
+	//int (*recv)(struct endpoint *ep, char *buf, int max);
+	int (*send_to)(struct endpoint *ep, const char *buf, int nbytes, const struct sockaddr *sockaddr, socklen_t len);
+	int (*recv_from)(struct endpoint *ep, char *buf, int max, struct sockaddr *sockaddr, socklen_t *len);
+};
+
+struct endpoint {
+	struct queue_node node;
+	struct endpoint_ops *ops;
+	struct protocol *proto;
+	struct socket *sock;
+	struct if_device *ifdev;
+	struct queue recv_queue;
+};
+
+
 int init_net_protocol();
-int register_protocol(struct protocol *proto);
-struct protocol *get_protocol(int domain, int type, int protocol);
+int net_register_protocol(struct protocol *proto);
+struct protocol *net_get_protocol(int domain, int type, int protocol);
 
-int add_protocol_listener(struct protocol *proto, struct socket *sock);
-int remove_protocol_listener(struct protocol *proto, struct socket *sock);
-struct socket *find_protocol_listener(struct protocol *proto, struct sockaddr *addr, socklen_t len);
+struct packet *net_create_packet(struct protocol *proto, const struct address *src, const struct address *dest, const unsigned char *buf, uint16_t nbytes);
+int net_incoming_packet(struct protocol *proto, struct packet *pack);
 
-struct packet *create_protocol_packet(struct protocol *proto, const struct sockaddr *src, const struct sockaddr *dest, const unsigned char *buf, uint16_t nbytes);
-int parse_protocol_packet(struct protocol *proto, struct packet *pack);
-int forward_protocol_packet(struct protocol *proto, struct packet *pack);
+int net_create_endpoint(struct protocol *proto, struct socket *sock, const struct sockaddr *sockaddr, socklen_t len, struct endpoint **result);
+int net_destroy_endpoint(struct endpoint *ep);
+int net_connect_endpoint(struct endpoint *ep, const struct sockaddr *sockaddr, socklen_t len);
+int net_endpoint_send_to(struct endpoint *ep, const char *buf, int nbytes, const struct sockaddr *sockaddr, socklen_t len);
+int net_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct sockaddr *sockaddr, socklen_t *len);
 
 #endif
 

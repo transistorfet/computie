@@ -106,6 +106,7 @@ static void slip_encode_packet(struct slip_if_device *ifdev)
 	printk_safe("\n");
 
 
+	ifdev->tx_buffer[j++] = SLIP_FRAME_END;
 	for (short i = 0; i < pack->length; i++) {
 		switch (pack->data[i]) {
 			case SLIP_FRAME_END:

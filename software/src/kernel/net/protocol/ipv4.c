@@ -5,12 +5,13 @@
 
 #include "../protocol.h"
 
+#include "ipv4.h"
+
 
 int ipv4_init();
-int ipv4_encode_header(struct protocol *proto, struct packet *pack, const struct sockaddr *src, const struct sockaddr *dest, const unsigned char *data, int length);
+int ipv4_encode_header(struct protocol *proto, struct packet *pack, const struct address *src, const struct address *dest, const unsigned char *data, int length);
 int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset);
 int ipv4_forward_packet(struct protocol *proto, struct packet *pack);
-int ipv4_fetch_sockaddr(struct protocol *proto, struct packet *pack, int type, struct sockaddr *sockaddr, socklen_t len);
 
 
 struct protocol_ops ipv4_protocol_ops = {
@@ -18,7 +19,7 @@ struct protocol_ops ipv4_protocol_ops = {
 	ipv4_encode_header,
 	ipv4_decode_header,
 	ipv4_forward_packet,
-	ipv4_fetch_sockaddr,
+	NULL,
 };
 
 struct protocol ipv4_protocol = {
@@ -49,12 +50,30 @@ struct ipv4_header {
 	uint32_t dest;
 };
 
-int ipv4_init()
+static uint16_t calculate_checksum(struct ipv4_header *hdr)
 {
-	register_protocol(&ipv4_protocol);
+	uint16_t carry;
+	uint32_t checksum = 0;
+	uint16_t *hdr_words = (uint16_t *) hdr;
+
+	for (short i = 0; i < (sizeof(struct ipv4_header) >> 1); i++)
+		checksum += hdr_words[i];
+
+	carry = checksum >> 16;
+	checksum &= 0xFFFF;
+	checksum += carry;
+	if (checksum >> 16)
+		checksum += 1;
+	checksum = ~checksum & 0xFFFF;
+	return checksum;
 }
 
-int ipv4_encode_header(struct protocol *proto, struct packet *pack, const struct sockaddr *src, const struct sockaddr *dest, const unsigned char *data, int length)
+int ipv4_init()
+{
+	net_register_protocol(&ipv4_protocol);
+}
+
+int ipv4_encode_header(struct protocol *proto, struct packet *pack, const struct address *src, const struct address *dest, const unsigned char *data, int length)
 {
 	struct ipv4_header hdr;
 
@@ -68,9 +87,11 @@ int ipv4_encode_header(struct protocol *proto, struct packet *pack, const struct
 	hdr.frag_offset = to_be16(0);
 	hdr.ttl = 0x40;
 	hdr.protocol = pack->protocol;
-	hdr.checksum = to_be16(0xFFFF);
-	hdr.src = to_be32(((struct sockaddr_in *) src)->sin_addr.s_addr);
-	hdr.dest = to_be32(((struct sockaddr_in *) dest)->sin_addr.s_addr);
+	hdr.checksum = to_be16(0);
+	hdr.src = to_be32(((struct ipv4_address *) src)->addr);
+	hdr.dest = to_be32(((struct ipv4_address *) dest)->addr);
+
+	hdr.checksum = calculate_checksum(&hdr);
 
 	pack->network_offset = pack->length;
 	return packet_append(pack, &hdr, sizeof(struct ipv4_header));
@@ -81,6 +102,7 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 	int error;
 	struct protocol *next;
 	struct ipv4_header *hdr;
+	struct ipv4_custom_data *custom;
 
 	pack->network_offset = offset;
 	hdr = (struct ipv4_header *) &pack->data[offset];
@@ -98,8 +120,12 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 
 	// TODO validate checksum
 
+	custom = (struct ipv4_custom_data *) &pack->custom_data;
+	custom->src.addr = hdr->src;
+	custom->dest.addr = hdr->dest;
+
 	pack->protocol = hdr->protocol;
-	next = get_protocol(PF_INET, 0, hdr->protocol);
+	next = net_get_protocol(PF_INET, 0, hdr->protocol);
 	if (!next)
 		return -2;
 
@@ -115,24 +141,9 @@ int ipv4_forward_packet(struct protocol *proto, struct packet *pack)
 {
 	struct protocol *next;
 
-	next = get_protocol(PF_INET, 0, pack->protocol);
+	next = net_get_protocol(PF_INET, 0, pack->protocol);
 	if (!next)
 		return PACKET_DROPPED;
 	return next->ops->forward_packet(next, pack);
-}
-
-int ipv4_fetch_sockaddr(struct protocol *proto, struct packet *pack, int type, struct sockaddr *sockaddr, socklen_t len)
-{
-	struct ipv4_header *hdr;
-
-	hdr = (struct ipv4_header *) &pack->data[pack->network_offset];
-	if (type == SAT_SRC)
-		((struct sockaddr_in *) sockaddr)->sin_addr.s_addr = hdr->src;
-	else if (type == SAT_DEST)
-		((struct sockaddr_in *) sockaddr)->sin_addr.s_addr = hdr->dest;
-	else
-		return -1;
-
-	return 0;
 }
 

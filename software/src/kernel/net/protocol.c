@@ -24,7 +24,7 @@ int init_net_protocol()
 		proto_list[i] = NULL;
 }
 
-int register_protocol(struct protocol *proto)
+int net_register_protocol(struct protocol *proto)
 {
 	for (short i = 0; i < PROTOCOLS_MAX; i++) {
 		if (!proto_list[i]) {
@@ -35,7 +35,7 @@ int register_protocol(struct protocol *proto)
 	return -1;
 }
 
-struct protocol *get_protocol(int domain, int type, int protocol)
+struct protocol *net_get_protocol(int domain, int type, int protocol)
 {
 	for (short i = 0; i < PROTOCOLS_MAX; i++) {
 		if (proto_list[i] && proto_list[i]->domain == domain && (!protocol || proto_list[i]->protocol == protocol) && (!type || proto_list[i]->type == type))
@@ -44,48 +44,7 @@ struct protocol *get_protocol(int domain, int type, int protocol)
 	return NULL;
 }
 
-int add_protocol_listener(struct protocol *proto, struct socket *sock)
-{
-	struct sockaddr *addr;
-
-	// TODO this needs to be protocol agnostic somehow, possibly by making protocol-specific implementations
-	for (struct queue_node *cur = proto->connected_sockets.head; cur; cur = cur->next) {
-		addr = (struct sockaddr *) &((struct socket *) cur)->local;
-		if (((struct sockaddr_in *) addr)->sin_port == ((struct sockaddr_in *) &sock->local)->sin_port)
-		// TODO the 16 here for the sockaddr len is a hack to remember to fix this later
-		//if (!memcmp(addr, &sock->local, 16))
-			return EADDRINUSE;
-	}
-
-	_queue_insert_after(&proto->connected_sockets, &sock->node, proto->connected_sockets.tail);
-	return 0;
-}
-
-int remove_protocol_listener(struct protocol *proto, struct socket *sock)
-{
-	for (struct queue_node *cur = proto->connected_sockets.head; cur; cur = cur->next) {
-		if (cur == &sock->node) {
-			_queue_remove(&proto->connected_sockets, &sock->node);
-			return 0;
-		}
-	}
-	return -1;
-} 
-
-struct socket *find_protocol_listener(struct protocol *proto, struct sockaddr *addr, socklen_t len)
-{
-	struct sockaddr *sockaddr;
-
-	for (struct queue_node *cur = proto->connected_sockets.head; cur; cur = cur->next) {
-		sockaddr = (struct sockaddr *) &((struct socket *) cur)->local;
-		if (((struct sockaddr_in *) addr)->sin_port == ((struct sockaddr_in *) sockaddr)->sin_port)
-		//if (!memcmp(sockaddr, addr, len))
-			return (struct socket *) cur;
-	}
-	return NULL;
-}
-
-struct packet *create_protocol_packet(struct protocol *proto, const struct sockaddr *src, const struct sockaddr *dest, const unsigned char *buf, uint16_t nbytes)
+struct packet *net_create_packet(struct protocol *proto, const struct address *src, const struct address *dest, const unsigned char *buf, uint16_t nbytes)
 {
 	int error;
 	struct packet *pack;
@@ -111,24 +70,12 @@ struct packet *create_protocol_packet(struct protocol *proto, const struct socka
 	return pack;
 }
 
-int parse_protocol_packet(struct protocol *proto, struct packet *pack)
+int net_incoming_packet(struct protocol *proto, struct packet *pack)
 {
 	int error;
-	int offset = 0;
 
 	pack->domain = proto->domain;
-	error = proto->ops->decode_header(proto, pack, offset);
-	if (error)
-		return error;
-
-	return 0;
-}
-
-int forward_protocol_packet(struct protocol *proto, struct packet *pack)
-{
-	int error;
-
-	error = parse_protocol_packet(proto, pack);
+	error = proto->ops->decode_header(proto, pack, 0);
 	if (error) {
 		packet_free(pack);
 		return PACKET_ERROR;
@@ -141,4 +88,32 @@ int forward_protocol_packet(struct protocol *proto, struct packet *pack)
 	packet_free(pack);
 	return PACKET_DROPPED;
 }
+
+
+int net_create_endpoint(struct protocol *proto, struct socket *sock, const struct sockaddr *sockaddr, socklen_t len, struct endpoint **result)
+{
+	return proto->ops->create_endpoint(proto, sock, sockaddr, len, result);
+}
+
+int net_destroy_endpoint(struct endpoint *ep)
+{
+	return ep->ops->destroy(ep);
+}
+
+int net_connect_endpoint(struct endpoint *ep, const struct sockaddr *sockaddr, socklen_t len)
+{
+	return ep->ops->connect(ep, sockaddr, len);
+}
+
+int net_endpoint_send_to(struct endpoint *ep, const char *buf, int nbytes, const struct sockaddr *sockaddr, socklen_t len)
+{
+	return ep->ops->send_to(ep, buf, nbytes, sockaddr, len);
+}
+
+int net_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct sockaddr *sockaddr, socklen_t *len)
+{
+	return ep->ops->recv_from(ep, buf, nbytes, sockaddr, len);
+}
+
+
 

@@ -55,7 +55,7 @@ int net_socket_create(int domain, int type, int protocol, uid_t uid, struct vfil
 	struct protocol *proto;
 	struct sock_vnode *vnode;
 
-	proto = get_protocol(domain, type, protocol);
+	proto = net_get_protocol(domain, type, protocol);
 	if (!proto)
 		return EAFNOSUPPORT;
 
@@ -70,28 +70,24 @@ int net_socket_create(int domain, int type, int protocol, uid_t uid, struct vfil
 		return EMFILE;
 	}
 
-	_queue_node_init(&vnode->sock.node);
 	vnode->sock.domain = domain;
 	vnode->sock.type = type;
 	vnode->sock.state = 0;
-	_queue_init(&vnode->sock.recv_queue);
-
-	memset(&vnode->sock.local, '\0', sizeof(struct sockaddr_storage));
-	memset(&vnode->sock.remote, '\0', sizeof(struct sockaddr_storage));
+	vnode->sock.syscall = 0;
 
 	vnode->sock.proto = proto;
+	vnode->sock.ep = NULL;
 
 	return 0;
 }
 
 int net_socket_release_vnode(struct vnode *vnode)
 {
-	remove_protocol_listener(SOCKET(vnode)->proto, SOCKET(vnode));
+	struct socket *sock = SOCKET(vnode);
 
-	// TODO should this go in close instead?
-	for (struct queue_node *next, *cur = SOCKET(vnode)->recv_queue.head; cur; cur = next) {
-		next = cur->next;
-		packet_free((struct packet *) cur);
+	if (sock->ep) {
+		net_destroy_endpoint(sock->ep);
+		sock->ep = NULL;
 	}
 
 	kmfree(vnode);
@@ -100,7 +96,13 @@ int net_socket_release_vnode(struct vnode *vnode)
 
 int net_socket_close(struct vfile *file)
 {
-	// TODO close connection
+	struct socket *sock = SOCKET(file->vnode);
+
+	if (sock->ep) {
+		net_destroy_endpoint(sock->ep);
+		sock->ep = NULL;
+	}
+
 	return 0;
 }
 
@@ -108,18 +110,21 @@ int net_socket_bind(struct vfile *file, const struct sockaddr *addr, socklen_t l
 {
 	struct socket *sock = SOCKET(file->vnode);
 
-	// TODO how do you replace the sockaddr_in sizeof ref here?
-	if (!addr || addr->sa_family != sock->domain || len != sizeof(struct sockaddr_in))
+	if (!addr || addr->sa_family != sock->domain)
 		return EAFNOSUPPORT;
+	if (sock->ep)
+		return EISCONN;
 
-	memcpy(&sock->local, addr, len);
-
-	return add_protocol_listener(sock->proto, sock);
+	return net_create_endpoint(sock->proto, sock, addr, len, &sock->ep);
 }
 
 int net_socket_connect(struct vfile *file, const struct sockaddr *addr, socklen_t len)
 {
+	struct socket *sock = SOCKET(file->vnode);
 
+	if (!sock->ep)
+		return ENOTCONN;
+	return net_connect_endpoint(sock->ep, addr, len);
 }
 
 int net_socket_read(struct vfile *file, char *buf, size_t nbytes)
@@ -143,19 +148,13 @@ ssize_t net_socket_send(struct vfile *file, const void *buf, size_t n, int flags
 
 ssize_t net_socket_sendto(struct vfile *file, const void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t addr_len)
 {
-	struct packet *pack;
-	struct if_device *ifdev;
 	struct socket *sock = SOCKET(file->vnode);
 
 	if (addr->sa_family != sock->domain)
 		return EINVAL;
-
-	// TODO this is a temporary hack
-	ifdev = net_if_find("slip0");
-
-	pack = create_protocol_packet(sock->proto, (struct sockaddr *) &sock->local, addr, buf, n);
-	net_if_send_packet(ifdev, pack);
-	return n;
+	if (!sock->ep)
+		return ENOTCONN;
+	return net_endpoint_send_to(sock->ep, buf, n, addr, addr_len);
 }
 
 ssize_t net_socket_recv(struct vfile *file, void *buf, size_t n, int flags)
@@ -163,37 +162,29 @@ ssize_t net_socket_recv(struct vfile *file, void *buf, size_t n, int flags)
 
 }
 
-ssize_t net_socket_recvfrom(struct vfile *file, void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t *addr_len)
+ssize_t net_socket_recvfrom(struct vfile *file, void *buf, size_t n, int flags, struct sockaddr *addr, socklen_t *addr_len)
 {
-	struct packet *pack;
+	int error;
 	struct socket *sock = SOCKET(file->vnode);
 
-	if (!sock->recv_queue.head) {
+	if (!sock->ep)
+		return ENOTCONN;
+
+	error = net_endpoint_recv_from(sock->ep, buf, n, addr, addr_len);
+	if (error == EWOULDBLOCK) {
 		sock->syscall = SYS_RECVFROM;
 		suspend_current_proc();
 		return 0;
 	}
 
-	pack = (struct packet *) sock->recv_queue.head;
-	_queue_remove(&sock->recv_queue, sock->recv_queue.head);
-
-	if (pack->length - pack->data_offset < n)
-		n = pack->length - pack->data_offset;
-	memcpy(buf, &pack->data[pack->data_offset], n);
-
-	if (addr) {
-		// TODO copy address
-		
-	}
-
-	packet_free(pack);
-	return n;
+	return error;
 }
 
 int net_socket_wakeup(struct socket *sock)
 {
 	struct vnode *vnode = (struct vnode *) (((char *) sock) - sizeof(struct vnode));
 	resume_blocked_procs(sock->syscall, vnode, 0);
+	sock->syscall = 0;
 	return 0;
 }
 

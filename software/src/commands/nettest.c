@@ -53,7 +53,11 @@ int serverloop()
 	addr.sin_port = to_be16(3904);
 	addr.sin_addr.s_addr = INADDR_ANY;
 
-	bind(sockfd, (struct sockaddr *) &addr, sizeof(struct sockaddr_in));
+	error = bind(sockfd, (struct sockaddr *) &addr, sizeof(struct sockaddr_in));
+	if (error) {
+		printf("Error binding socket %d\n", error);
+		return -1;
+	}
 
 	//inet_aton("63.161.169.137", &myaddr.sin_addr.s_addr);
 	addr.sin_addr.s_addr = 0xC0A80166;

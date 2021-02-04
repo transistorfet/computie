@@ -73,6 +73,8 @@ int dup2(int oldfd, int newfd);
 //// Library Functions ////
 
 extern char **environ;
+extern char *optarg;
+extern int optind, opterr, optopt;
 
 char *getenv(const char *name);
 int getopt(int argc, char * const argv[], const char *optstring);

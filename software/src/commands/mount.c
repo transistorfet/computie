@@ -7,14 +7,32 @@
 
 int MAIN(command_mount)(int argc, char **argv, char **envp)
 {
+	int opt;
 	int error;
+	const char *fstype = "minixfs";
+	const char *usage = "Usage: mount [-t <fstype>] <devfile> <mountpoint>";
 
-	if (argc <= 2) {
-		puts("Usage: mount <devfile> <mountpoint>");
+	optind = 1;
+	while ((opt = getopt(argc, argv, "t:")) != -1) {
+		switch (opt) {
+		    case '?':
+			puts(usage);
+			return -1;
+		    case 't':
+			fstype = optarg;
+			break;
+		    default:
+			printf(">> %c\n", opt);
+			break;
+		}
+	}
+
+	if (argc - optind != 2) {
+		puts(usage);
 		return -1;
 	}
 
-	error = mount(argv[1], argv[2], "minixfs", MOUNT_RW, NULL);
+	error = mount(argv[optind], argv[optind + 1], fstype, MOUNT_RW, NULL);
 	if (error < 0) {
 		printf("Error while mounting %d\n", error);
 		return -1;

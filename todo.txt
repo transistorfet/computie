@@ -8,6 +8,8 @@
 
 Operating System:
 
+	* copying and using chmod on an exec results in a unrunable binary...
+
 	* fix the ICMP checksum calculation
 	* add IP checksum verification, as well as UDP checksum calculating
 
@@ -41,7 +43,6 @@ Operating System:
 	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
 
 
-	* implement getopt, and add flags to commands
 	* add calculating of cpu runtime
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 	* add brk/sbrk/stack guard protection.  How do you track memory segment allocation?  Minix iterates over all memory segments and compares...

@@ -10,9 +10,7 @@ Operating System:
 
 	* fix the ICMP checksum calculation
 	* add IP checksum verification, as well as UDP checksum calculating
-	* switch the "send" scripts to use the stripped elf binary and not the flat binary
 
-	* the return from syscalls is sometimes generating a move %d0, %d1; move %d1, %d0
 	* should you increase the number of arguments to 5 (which would still mean the sendto/recvfrom would need to pack the last two args).  There are only 6 or 7 syscalls out
 	  of 55 or so that need more than 3 arguments =/
 
@@ -61,7 +59,6 @@ Operating System:
 
 
 
-	* use the O_EXCL flag in device drivers to cause an error when more than one thing opens that device
 	* how can you make a df command to list how many blocks are free??  That info would need to come from the minix fs-specific code
 	* when there's a trailing / to rm or mkdir, it will create something weird
 	* add checks for errors in the serial transfer? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
@@ -111,6 +108,7 @@ Operating System:
 
 
 	* could you use the queue node to add procs to a free list, instead of iterating over all the procs when creating a new one
+	* the return from syscalls is sometimes generating a move %d0, %d1; move %d1, %d0
 	* look for any bugs that might be caused by a function returning the same vnode as was passed in
 	* re-evaluate file permissions checks to make sure they're correct according to posix
 	* you need some tests, but ideally it would use a simple emulator.  Maybe easy68k or something could be used

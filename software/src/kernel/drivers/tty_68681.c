@@ -174,8 +174,8 @@ struct serial_channel {
 	struct circular_buffer rx;
 	struct circular_buffer tx;
 	const struct channel_ports *ports;
-	int mode;
-	int pgid;
+	int opens;
+	int open_mode;
 	char rx_ready;
 	char bh_num;
 };
@@ -188,8 +188,8 @@ extern void enter_irq();
 
 static inline void config_serial_channel(struct serial_channel *channel)
 {
-	channel->mode = 0;
-	channel->pgid = 0;
+	channel->opens = 0;
+	channel->open_mode = 0;
 	channel->rx_ready = 0;
 	channel->bh_num = BH_TTY;
 
@@ -307,15 +307,7 @@ static inline void handle_channel_io(register char isr, register devminor_t mino
 		while (*channels[minor].ports->status & SR_RX_READY) {
 			if (_buf_is_full(&channels[minor].rx))
 				break;
-			unsigned char ch = *channels[minor].ports->recv;
-			// TODO this is a temporary hack to get ^C -> SIGINT, but it's totally wrong on so many levels
-			//if (ch == 0x03 && channels[minor].pgid) {
-			//	send_signal_process_group(channels[minor].pgid, SIGINT);
-			//}
-			//if (ch == 0x04 && channel->pgid) {
-			//	send_signal(channel->pgid, SIGCONT);
-			//}
-			_buf_put_char(&channels[minor].rx, ch);
+			_buf_put_char(&channels[minor].rx, *channels[minor].ports->recv);
 		}
 
 		if (_buf_free_space(&channels[minor].rx) < 10)
@@ -494,15 +486,6 @@ void tty_68681_tx_safe_mode()
 	inline_delay(10);
 
 	ASSERT_CTS(&channels[CH_A]);
-
-	/*
-	// Enable interrupts
-	set_interrupt(TTY_INT_VECTOR, enter_irq);
-	*IVR_WR_ADDR = TTY_INT_VECTOR;
-	*IMR_WR_ADDR = ISR_CH_A_RX_READY_FULL | ISR_CH_A_TX_READY;
-
-	ENABLE_INTS();
-	*/
 }
 
 void tty_68681_normal_mode()
@@ -563,9 +546,12 @@ int tty_68681_open(devminor_t minor, int mode)
 
 	if (!channel)
 		return ENODEV;
-	if (channel->mode || !mode)
+	if (!mode)
 		return EBUSY;
-	channel->mode = mode;
+	if (channel->opens != 0 && ((channel->open_mode & O_EXCL) || (mode & O_EXCL)))
+		return EBUSY;
+	channel->opens++;
+	channel->open_mode = mode;
 	return 0;
 }
 
@@ -575,7 +561,8 @@ int tty_68681_close(devminor_t minor)
 
 	if (!channel)
 		return ENODEV;
-	channel->mode = 0;
+	channel->opens--;
+	channel->open_mode = 0;
 	return 0;
 }
 
@@ -590,7 +577,7 @@ int tty_68681_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 	for (; i > 0; i--, buffer++) {
 		if (_buf_is_empty(&channel->rx)) {
 			// Suspend the process only if we haven't read any data yet
-			if (size == i && !(channel->mode & O_NONBLOCK))
+			if (size == i && !(channel->open_mode & O_NONBLOCK))
 				suspend_current_proc();
 			return size - i;
 		}
@@ -609,7 +596,7 @@ int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_
 
 	// TODO with this method, each write's size must always be smaller than buffer size
 	if (_buf_free_space(&channel->tx) < size) {
-		if (!(channel->mode & O_NONBLOCK))
+		if (!(channel->open_mode & O_NONBLOCK))
 			suspend_current_proc();
 		return 0;
 	}
@@ -628,10 +615,6 @@ int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
 		return ENODEV;
 
 	switch (request) {
-		case TIOCSPGRP: {
-			channel->pgid = *((int *) argp);
-			return 0;
-		}
 		default:
 			break;
 	}

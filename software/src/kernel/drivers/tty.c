@@ -188,7 +188,7 @@ int tty_open(devminor_t minor, int mode)
 		return ENODEV;
 	// TODO you need to notify the serial driver to request the tty bottom half run after any input
 	if (devices[minor].opens++ == 0)
-		return dev_open(devices[minor].rdev, mode | O_NONBLOCK);
+		return dev_open(devices[minor].rdev, mode | O_NONBLOCK | O_EXCL);
 	return 0;
 }
 

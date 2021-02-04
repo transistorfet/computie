@@ -265,7 +265,7 @@ int vfs_chmod(struct vnode *cwd, const char *path, int mode, uid_t uid)
 	if (!verify_mode_access(uid, W_OK, vnode->uid, vnode->gid, vnode->mode))
 		return EPERM;
 
-	vnode->mode = mode & 07777;
+	vnode->mode = (vnode->mode & ~07777) | (mode & 07777);
 	error = vnode->ops->update(vnode);
 	vfs_release_vnode(vnode);
 	return error;

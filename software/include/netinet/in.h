@@ -31,5 +31,8 @@ struct sockaddr_in {
 	unsigned char sin_zero[8];
 };
 
+int inet_aton(const char *str, struct in_addr *ptr);
+char *inet_ntoa(struct in_addr in);
+
 #endif
 

@@ -154,7 +154,6 @@ int udp_forward_packet(struct protocol *proto, struct packet *pack)
 	if (!ep)
 		return PACKET_DROPPED;
 
-	printk("found endpoint\n");
 	_queue_insert_after(&ep->recv_queue, &pack->node, ep->recv_queue.tail);
 	net_socket_wakeup(ep->sock);
 	return PACKET_DELIVERED;
@@ -207,7 +206,6 @@ int udp_create_endpoint(struct protocol *proto, struct socket *sock, const struc
 
 int udp_destroy_endpoint(struct endpoint *ep)
 {
-	printk("destroying endpoint\n");
 	for (struct packet *next, *cur = _queue_head(&ep->recv_queue); cur; cur = next) {
 		next = _queue_next(&cur->node);
 		packet_free(cur);
@@ -251,7 +249,7 @@ int udp_endpoint_send_to(struct endpoint *ep, const char *buf, int nbytes, const
 int udp_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct sockaddr *sockaddr, socklen_t *len)
 {
 	struct packet *pack;
-	struct ipv4_custom_data *custom = (struct ipv4_custom_data *) pack->custom_data;
+	struct ipv4_custom_data *custom;
 
 	pack = _queue_head(&ep->recv_queue);
 	if (!pack)
@@ -263,8 +261,10 @@ int udp_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct so
 		nbytes = pack->length - pack->data_offset;
 	memcpy(buf, &pack->data[pack->data_offset], nbytes);
 
-	if (sockaddr)
+	if (sockaddr) {
+		custom = (struct ipv4_custom_data *) &pack->custom_data;
 		inet_load_sockaddr(sockaddr, len, &custom->src);
+	}
 
 	packet_free(pack);
 	return nbytes;

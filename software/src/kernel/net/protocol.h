@@ -15,7 +15,6 @@
 #define PACKET_ERROR		-1
 
 struct socket;
-struct address;
 struct protocol;
 struct endpoint;
 
@@ -59,7 +58,6 @@ int init_net_protocol();
 int net_register_protocol(struct protocol *proto);
 struct protocol *net_get_protocol(int domain, int type, int protocol);
 
-struct packet *net_create_packet(struct protocol *proto, const struct address *src, const struct address *dest, const unsigned char *buf, uint16_t nbytes);
 int net_incoming_packet(struct protocol *proto, struct packet *pack);
 
 int net_create_endpoint(struct protocol *proto, struct socket *sock, const struct sockaddr *sockaddr, socklen_t len, struct endpoint **result);

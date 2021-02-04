@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include "../misc/queue.h"
 
-#define PACKET_CUSTOM_DATA	16
+#define PACKET_CUSTOM_DATA	32
 
 struct socket;
 struct protocol;
@@ -20,7 +20,7 @@ struct packet {
 	uint16_t transport_offset;
 	uint16_t data_offset;
 
-	char *custom_data[PACKET_CUSTOM_DATA];
+	char custom_data[PACKET_CUSTOM_DATA];
 
 	uint16_t length;
 	uint16_t capacity;

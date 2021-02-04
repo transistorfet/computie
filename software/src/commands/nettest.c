@@ -70,7 +70,7 @@ int serverloop()
 		sa_len = sizeof(struct sockaddr_in);
 		i = recvfrom(sockfd, buffer, MAX_INPUT, 0, (struct sockaddr *) &addr, &sa_len);
 		buffer[i] = '\0';
-		printf("%d: %s\n", i, buffer);
+		printf("%s:%d >> %d: %s\n", inet_ntoa(addr.sin_addr), addr.sin_port, i, buffer);
 	}
 
 	close(sockfd);

@@ -63,6 +63,7 @@ int net_if_send_packet(struct if_device *ifdev, struct packet *pack)
 {
 	_queue_insert_after(&ifdev->tx_queue, &pack->node, ifdev->tx_queue.tail);
 	ifdev->tx_stats.packets += 1;
+	// TODO should you prevent calling this if currently processing the net bottom half
 	ifdev->ops->poll(ifdev);
 	return 0;
 }

@@ -20,6 +20,10 @@ int MAIN(command_ns)(int argc, char **argv)
 	int sa_len;
 	char buffer[MAX_INPUT];
 	struct sockaddr_in addr;
+	char *address = "192.168.1.102";
+
+	if (argc >= 2)
+		address = argv[1];
 
 	sockfd = socket(PF_INET, SOCK_DGRAM, 0);
 	if (sockfd < 0) {
@@ -30,8 +34,8 @@ int MAIN(command_ns)(int argc, char **argv)
 	memset(&addr, '\0', sizeof(struct sockaddr_in));
 	addr.sin_family = AF_INET;
 	addr.sin_port = to_be16(3904);
-	//inet_aton("63.161.169.137", &myaddr.sin_addr.s_addr);
-	addr.sin_addr.s_addr = 0xC0A80166;
+	inet_aton(address, &addr.sin_addr);
+	//addr.sin_addr.s_addr = 0xC0A80166;
 
 	while (1) {
 		nbytes = read(STDIN_FILENO, buffer, MAX_INPUT);

@@ -17,7 +17,7 @@ python3 tools/load.py kernel.load
 Send a command:
 
 python3 tools/load.py -l src/commands/daemontest.send
-(the -l limits the speed because flow control doesn't work)
+(the -l optionally limits the speed, but flow control works, so it shouldn't be necessary anymore)
 
 
 Enable SLIP on linux:

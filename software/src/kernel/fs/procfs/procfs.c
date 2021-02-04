@@ -15,6 +15,8 @@
 #include "procfs.h"
 #include "../nop.h"
 
+#define PROCFS_POSITION(x)	((struct procfs_position *) &(x))
+
 struct vfile_ops procfs_vfile_ops = {
 	procfs_open,
 	procfs_close,
@@ -58,6 +60,11 @@ struct procfs_dir_entry proc_files[] = {
 	{ PFN_STAT,	"stat", 	get_data_stat },
 	{ PFN_STATM,	"statm",	get_data_statm },
 	{ 0, NULL, NULL },
+};
+
+struct procfs_position {
+	uint16_t slot;
+	struct process_iter iter;
 };
 
 
@@ -134,8 +141,10 @@ int procfs_release(struct vnode *vnode)
 
 int procfs_open(struct vfile *file, int flags)
 {
-	if (PROCFS_DATA(file->vnode).filenum == PFN_ROOTDIR)
-		proc_iter_start(((struct process_iter *) &file->position) + 1);
+	if (PROCFS_DATA(file->vnode).filenum == PFN_ROOTDIR) {
+		PROCFS_POSITION(file->position)->slot = 0;
+		proc_iter_start(&PROCFS_POSITION(file->position)->iter);
+	}
 	else
 		file->position = 0;
 	return 0;
@@ -198,22 +207,19 @@ int procfs_readdir(struct vfile *file, struct dirent *dir)
 		return ENOTDIR;
 
 	if (PROCFS_DATA(file->vnode).filenum == PFN_ROOTDIR) {
-		if ((file->position < PROCFS_MAX_PID) && (proc = proc_iter_next(((struct process_iter *) &file->position) + 1))) {
-			dir->d_ino = (proc->pid << 8) | 0;
+		if (PROCFS_POSITION(file->position)->slot == 0 && (proc = proc_iter_next(&PROCFS_POSITION(file->position)->iter))) {
+			dir->d_ino = file->position;
 			snprintf(dir->d_name, VFS_FILENAME_MAX, "%d", proc->pid);
 			dir->d_name[VFS_FILENAME_MAX - 1] = '\0';
 		}
 		else {
-			slot = (file->position < PROCFS_MAX_PID) ? 0 : file->position & 0xFFFF;
-			file->position = PROCFS_MAX_PID | ++slot;
+			slot = ++PROCFS_POSITION(file->position)->slot;
 
-			// Search sequentially to make sure we can't unintensionally access beyond the array (ie. corrupted file->position value)
-			for (i = 0; i < slot && root_files[i].filename; i++) { }
-			if (!root_files[i].filename)
+			if (!root_files[slot - 1].filename)
 				return 0;
 
-			dir->d_ino = PROCFS_MAX_PID | slot;
-			strncpy(dir->d_name, root_files[i].filename, VFS_FILENAME_MAX);
+			dir->d_ino = file->position;
+			strncpy(dir->d_name, root_files[slot - 1].filename, VFS_FILENAME_MAX);
 			dir->d_name[VFS_FILENAME_MAX - 1] = '\0';
 		}
 	}

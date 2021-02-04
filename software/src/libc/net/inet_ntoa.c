@@ -1,5 +1,5 @@
 
-#include <stdlib.h>
+#include <stdio.h>
 #include <netinet/in.h>
 
 char *inet_ntoa(struct in_addr in)

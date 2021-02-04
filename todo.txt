@@ -10,7 +10,6 @@ Operating System:
 
 	* fix the ICMP checksum calculation
 	* add IP checksum verification, as well as UDP checksum calculating
-	* the /proc/mounts file is not showing in the directory listing
 	* switch the "send" scripts to use the stripped elf binary and not the flat binary
 
 	* the return from syscalls is sometimes generating a move %d0, %d1; move %d1, %d0

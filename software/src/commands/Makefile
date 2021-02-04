@@ -55,10 +55,7 @@ $(ROOT)/libc-68k-os.a:
 	make -C $(ROOT)/src/libc clean $@
 
 %.send: %.bin
-	#$(ROOT)/tools/make-send-file  $^ $@
-	echo "send $*" > $@
-	wc -c $^ | awk '{printf "%04X", $$1}' >> $@
-	hexdump -v -e '/1 "%02X"' $^ >> $@
+	$(ROOT)/tools/make-send-file $(BUILD)/bin/$* $@ $*
 
 %.bin: %.o 
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $*.elf $^ $(ROOT)/libc-68k-os.a

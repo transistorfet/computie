@@ -17,31 +17,33 @@ LDFLAGS = -Wl,--build-id=none --entry=main -Ttext=0
 
 # reduce the elf output size by reducing the alignment, since we don't need page alignment yet
 # alignment can be turned off with -Wl,-n
-LDFLAGS += -z max-page-size=0x10
+LDFLAGS += -z common-page-size=0x10 -z max-page-size=0x10
 #LDFLAGS += -Wl,-z,norelro
 
 
 COMMANDS = 		\
-	sh.send 	\
 	cat.send	\
-	cp.send		\
-	ls.send		\
-	ln.send		\
-	mv.send		\
-	rm.send		\
-	mkdir.send	\
-	echo.send	\
 	chmod.send	\
-	ps.send		\
+	cp.send		\
+	date.send	\
+	echo.send	\
+	hello.send	\
+	init.send	\
 	kill.send	\
+	ln.send		\
+	ls.send		\
+	mkdir.send	\
 	mount.send	\
-	umount.send	\
+	mv.send		\
+	ns.send		\
+	ps.send		\
+	rm.send		\
+	sh.send		\
 	sync.send	\
 	tar.send	\
-	hello.send	\
+	umount.send	\
 	test.send	\
 	nettest.send	\
-	ns.send	\
 	daemontest.send
 
 all: $(ROOT)/libc-68k-os.a $(COMMANDS)

@@ -22,6 +22,7 @@ python3 tools/load.py -l src/commands/daemontest.send
 
 Enable SLIP on linux:
 
-sudo slattach -s 38400 -p slip /dev/ttyUSB1 &
+sudo slattach -s 38400 -p slip /dev/ttyUSB1
 sudo ifconfig sl0 192.168.2.1 pointopoint 192.168.2.200 up
+sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
 

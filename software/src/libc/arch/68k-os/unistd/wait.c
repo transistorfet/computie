@@ -2,9 +2,8 @@
 #include <unistd.h>
 #include <kernel/syscall.h>
 
-
 pid_t wait(int *status)
 {
-	return SYSCALL1(SYS_WAIT, (int) status);
+	return SYSCALL3(SYS_WAITPID, -1, (int) status, 0);
 }
 

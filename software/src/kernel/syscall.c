@@ -29,7 +29,7 @@
 #include "interrupts.h"
 
 
-#define SYSCALL_MAX	64
+#define SYSCALL_MAX	80
 
 void test() { printk("It's a test!\n"); }
 
@@ -44,44 +44,51 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_write,
 	do_open,
 	do_close,
-	do_wait,
+	do_waitpid,
 	do_creat,
 	do_link,
 	do_unlink,
-	do_waitpid,
+	do_exec,
 	do_chdir,
 	do_time,
 	do_mknod,
 	do_chmod,
 	do_chown,
+	do_brk,
 	do_stat,
 	do_lseek,
 	do_getpid,
 	do_mount,
 	do_umount,
+	do_setuid,
 	do_getuid,
+	do_stime,
+	test,		// 26 = ptrace, not yet implemented
+	do_alarm,
 	do_fstat,
+	do_pause,
+	do_sigreturn,
+	do_sigaction,
 	do_access,
 	do_sync,
 	do_kill,
 	do_rename,
 	do_mkdir,
+	test,		// 37 = rmdir, not yet implemented
 	do_dup2,
 	do_pipe,
 	do_ioctl,
-	do_exec,
+	do_fcntl,
 	do_readdir,
 	do_getppid,
-	test,		// 35 = symlink, not yet implemented
+	test,		// 44 = symlink, not yet implemented
 	do_getpgid,
 	do_setpgid,
-	do_alarm,
-	do_pause,
-	do_sigreturn,
-	do_sigaction,
-	do_stime,
-	do_brk,
+	do_getsid,
+	do_setsid,
+	do_umask,
 	do_sbrk,
+	test,		//do_select,
 
 	do_socket,
 	do_socketpair,
@@ -290,6 +297,11 @@ int do_ioctl(int fd, unsigned int request, void *argp)
 	return vfs_ioctl(file, request, argp);
 }
 
+extern int do_fcntl(int fd, int cmd, void *argp)
+{
+	// TODO what are the arguments it can take?
+	return -1;
+}
 
 int do_chdir(const char *path)
 {
@@ -417,6 +429,28 @@ int do_dup2(int oldfd, int newfd)
 	return 0;
 }
 
+mode_t do_umask(mode_t mask)
+{
+	mode_t previous;
+
+	previous = current_proc->umask;
+	current_proc->umask = mask & 0777;
+	return previous;
+}
+
+/*
+int do_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout)
+{
+
+}
+*/
+
+
+void do_exit(int exitcode)
+{
+	exit_proc(current_proc, exitcode);
+	resume_waiting_parent(current_proc);
+}
 
 pid_t do_fork()
 {
@@ -433,16 +467,34 @@ pid_t do_fork()
 	return proc->pid;
 }
 
-void do_exit(int exitcode)
+int do_exec(const char *path, char *const argv[], char *const envp[])
 {
-	exit_proc(current_proc, exitcode);
-	resume_waiting_parent(current_proc);
+	int error;
+	void *entry;
+
+	error = load_binary(path, current_proc, &entry);
+	if (error == EKILL) {
+		// An error occurred past the point of no return.  The memory maps have been irrepairably damaged, so kill the process
+		printk_safe("Process terminated\n");
+		exit_proc(current_proc, -1);
+		resume_waiting_parent(current_proc);
+		return error;
+	}
+	else if (error)
+		return error;
+
+	reset_stack(current_proc, entry, argv, envp);
+
+	return 0;
 }
 
-pid_t do_wait(int *status)
+int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
 {
-	return do_waitpid(-1, status, 0);
+	// NOTE no modification of the memory maps here, since the code should be in the same process
+	reset_stack(current_proc, addr, argv, envp);
+	return 0;
 }
+
 
 pid_t do_waitpid(pid_t pid, int *status, int options)
 {
@@ -465,6 +517,57 @@ pid_t do_waitpid(pid_t pid, int *status, int options)
 		cleanup_proc(proc);
 		return pid;
 	}
+}
+
+int do_kill(pid_t pid, int sig)
+{
+	if (pid < 0)
+		return send_signal_process_group(-pid, sig);
+	else
+		return send_signal(pid, sig);
+}
+
+int do_sigreturn()
+{
+	cleanup_signal_handler();
+	return 0;
+}
+
+int do_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
+{
+	if (oldact)
+		get_signal_action(current_proc, signum, oldact);
+
+	if (act)
+		return set_signal_action(current_proc, signum, act);
+	return 0;
+}
+
+unsigned int do_alarm(unsigned int seconds)
+{
+	return set_alarm(current_proc, seconds);
+}
+
+int do_pause()
+{
+	current_proc->bits |= PB_PAUSED;
+	suspend_current_proc();
+	return 0;
+}
+
+int do_brk(void *addr)
+{
+	int diff = addr - current_proc->map.segments[M_DATA].base;
+	return increase_data_segment(current_proc, diff);
+}
+
+void *do_sbrk(intptr_t increment)
+{
+	if (increment) {
+		if (increase_data_segment(current_proc, increment))
+			return NULL;
+	}
+	return current_proc->map.segments[M_DATA].base + current_proc->map.segments[M_DATA].length;
 }
 
 pid_t do_getpid()
@@ -508,89 +611,43 @@ int do_setpgid(pid_t pid, pid_t pgid)
 	return 0;
 }
 
+pid_t do_getsid(pid_t pid)
+{
+	struct process *proc = pid ? get_proc(pid) : current_proc;
+
+	if (!proc)
+		return ESRCH;
+	return current_proc->session;
+}
+
+pid_t do_setsid(void)
+{
+	struct process *proc;
+	struct process_iter iter;
+
+	proc_iter_start(&iter);
+	while ((proc = proc_iter_next(&iter))) {
+		if (proc != current_proc && proc->pgid == current_proc->pid)
+			return EPERM;
+	}
+
+	current_proc->session = current_proc->pid;
+	current_proc->pgid = current_proc->pid;
+	return current_proc->session;
+}
+
 uid_t do_getuid()
 {
 	return current_proc->uid;
 }
 
-int do_kill(pid_t pid, int sig)
+int do_setuid(uid_t uid)
 {
-	if (pid < 0)
-		return send_signal_process_group(-pid, sig);
-	else
-		return send_signal(pid, sig);
-}
-
-unsigned int do_alarm(unsigned int seconds)
-{
-	return set_alarm(current_proc, seconds);
-}
-
-int do_pause()
-{
-	current_proc->bits |= PB_PAUSED;
-	suspend_current_proc();
+	// TODO this isn't entirely accurate according to the standards
+	if (current_proc->uid != SU_UID)
+		return EPERM;
+	current_proc->uid = uid;
 	return 0;
-}
-
-int do_sigreturn()
-{
-	cleanup_signal_handler();
-	return 0;
-}
-
-int do_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
-{
-	if (oldact)
-		get_signal_action(current_proc, signum, oldact);
-
-	if (act)
-		return set_signal_action(current_proc, signum, act);
-	return 0;
-}
-
-int do_exec(const char *path, char *const argv[], char *const envp[])
-{
-	int error;
-	void *entry;
-
-	error = load_binary(path, current_proc, &entry);
-	if (error == EKILL) {
-		// An error occurred past the point of no return.  The memory maps have been irrepairably damaged, so kill the process
-		printk_safe("Process terminated\n");
-		exit_proc(current_proc, -1);
-		resume_waiting_parent(current_proc);
-		return error;
-	}
-	else if (error)
-		return error;
-
-	reset_stack(current_proc, entry, argv, envp);
-
-	return 0;
-}
-
-int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
-{
-	// NOTE no modification of the memory maps here, since the code should be in the same process
-	reset_stack(current_proc, addr, argv, envp);
-	return 0;
-}
-
-
-int do_brk(void *addr)
-{
-	int diff = addr - current_proc->map.segments[M_DATA].base;
-	return increase_data_segment(current_proc, diff);
-}
-
-void *do_sbrk(intptr_t increment)
-{
-	if (increment) {
-		if (increase_data_segment(current_proc, increment))
-			return NULL;
-	}
-	return current_proc->map.segments[M_DATA].base + current_proc->map.segments[M_DATA].length;
 }
 
 
@@ -671,14 +728,14 @@ int do_shutdown(int fd, int how)
 }
 
 
-//ssize_t do_send(int fd, const void *buf, size_t n, int flags)
+// Unistd Declaration: ssize_t do_send(int fd, const void *buf, size_t n, int flags)
 ssize_t do_send(int fd, const void *buf, unsigned int opts[2])
 {
 	// TODO implement
 	return -1;
 }
 
-//ssize_t do_sendto(int fd, const void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t addr_len)
+// Unistd Declaration:ssize_t do_sendto(int fd, const void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t addr_len)
 ssize_t do_sendto(int fd, const void *buf, unsigned int opts[4])
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
@@ -694,14 +751,14 @@ ssize_t do_sendmsg(int fd, const struct msghdr *message, int flags)
 }
 
 
-//ssize_t do_recv(int fd, void *buf, size_t n, int flags)
+// Unistd Declaration:ssize_t do_recv(int fd, void *buf, size_t n, int flags)
 ssize_t do_recv(int fd, void *buf, unsigned int opts[2])
 {
 	// TODO implement
 	return -1;
 }
 
-//ssize_t do_recvfrom(int fd, void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t *addr_len)
+// Unistd Declaration:ssize_t do_recvfrom(int fd, void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t *addr_len)
 ssize_t do_recvfrom(int fd, void *buf, unsigned int opts[4])
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);

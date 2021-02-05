@@ -8,7 +8,13 @@
 
 Operating System:
 
-	* send doesn't work when booting from ata0
+	* implement getcwd() external to the kernel for now
+
+	* implement select()
+	* change the hardcoded search for slip0 in protocol and such to be more generic
+	* implement ifup/ifdown somehow (I'm not sure if there's a syscall, or if it uses procfs or something to configure)
+	* do you need to implement some internal routing?
+	* packets aren't being routed between networks on linux... configuration issue of some kind
 	* fix the ICMP checksum calculation
 	* add IP checksum verification, as well as UDP checksum calculating
 
@@ -16,8 +22,7 @@ Operating System:
 	  of 55 or so that need more than 3 arguments =/
 
 
-	* you could possibly make an abstracted packet construction thing using an ioctl-like function defined for each protocol, which can intercept parts of
-	  the requests to fill in data in the packet headers (set src address, set dest address, add id, etc)
+
 
 	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
 
@@ -28,6 +33,8 @@ Operating System:
 	  need it in the kernel for printing the mountpoints))
 	* need to add those to the /proc/mounts file
 
+
+
 	* maybe add some parsing of params to the bootloader, rather than using the builtin defaults
 	* split the boot loader up into multiple parts, so it can be stage loaded
 	* write the bootloader into rom somewhere, such that it can boot from rom or the compact flash (maybe mod eraserom/writerom to take an arg, so you can write to 0x20000)
@@ -35,8 +42,11 @@ Operating System:
 
 
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
-	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
 
+	* you could possibly make an abstracted packet construction thing using an ioctl-like function defined for each protocol, which can intercept parts of
+	  the requests to fill in data in the packet headers (set src address, set dest address, add id, etc)
+	* implement an ntp client
+	* how hard would it be to implement dns?
 
 	* add calculating of cpu runtime
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
@@ -44,7 +54,6 @@ Operating System:
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* add check to vfs_link() for loops
 
-	* make init be a separate file loaded from disk and executed
 	* make init relaunch shell if the initial one is killed
 
 	* should you make a lib subdir, and put unistd at the top?
@@ -56,11 +65,11 @@ Operating System:
 
 	* how can you make a df command to list how many blocks are free??  That info would need to come from the minix fs-specific code
 	* when there's a trailing / to rm or mkdir, it will create something weird
-	* add checks for errors in the serial transfer? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
+	* add checks for errors in the serial driver? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?
-	* increase timer clock tick to 60Hz from ~14Hz??
+	* modify the kernel's init task creation to optionally load init from disk instead of being builtin (for kernel images written to the flash card)
 
 
 	* add network syscalls for local IPC (unix file, sockets)
@@ -69,10 +78,13 @@ Operating System:
 	* add fifos (should be easy now)
 	* add stack guard protection
 	* implement login system (setuid)
+	* can you implement some kind of terminal switching, like alt-F* keys... I don't think it's as possible with a serial port
+	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
 	* try porting a simple command, and then something more complex, maybe awk or something as a big target
 
 	* add commands: rmdir, pwd, dd, chown
-	* add umask syscall
+	* implement fcntl
+	* implement shell scripting?
 	* add the & (run in background) option to the shell
 	* implement fg/bg somehow... it would be builtin to the shell and would require job control stuff...
 	* add up/down arrow processing to the shell (easy without cooked input, but how would it be done with...)

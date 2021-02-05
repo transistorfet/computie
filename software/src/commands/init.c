@@ -6,8 +6,9 @@
 #include <sys/ioc_tty.h>
 #include <kernel/syscall.h>
 
+#include "prototype.h"
 
-int init_task()
+int MAIN(init_task)()
 {
 	// Open stdin
 	int fd = open("/dev/tty0", O_RDWR, 0);

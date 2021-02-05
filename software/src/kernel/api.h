@@ -29,6 +29,8 @@ extern unsigned int do_alarm(unsigned int seconds);
 extern int do_pause();
 extern int do_sigreturn();
 extern int do_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
+extern int do_brk(void *addr);
+extern void *do_sbrk(intptr_t increment);
 
 // Files & Directories
 extern size_t do_read(int fd, char *buf, size_t nbytes);

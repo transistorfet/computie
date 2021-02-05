@@ -11,11 +11,11 @@
 
 #define INIT_PID		1
 
-#define	NUM_SEGMENTS		2
+#define	NUM_SEGMENTS		3
 
 typedef enum {
 	M_TEXT,
-	//M_DATA,
+	M_DATA,
 	M_STACK
 } proc_seg_t;
 

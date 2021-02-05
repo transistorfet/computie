@@ -8,8 +8,8 @@
 
 Operating System:
 
-	* copying and using chmod on an exec results in a unrunable binary...
-
+	* add stack guard protection
+	* send doesn't work when booting from ata0
 	* fix the ICMP checksum calculation
 	* add IP checksum verification, as well as UDP checksum calculating
 
@@ -45,7 +45,6 @@ Operating System:
 
 	* add calculating of cpu runtime
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
-	* add brk/sbrk/stack guard protection.  How do you track memory segment allocation?  Minix iterates over all memory segments and compares...
 	* make user programs optionally initialize the heap in a default start routine, and make the heap able to grow (once you have brk/sbrk)
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* add check to vfs_link() for loops

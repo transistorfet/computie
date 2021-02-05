@@ -80,6 +80,8 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_sigreturn,
 	do_sigaction,
 	do_stime,
+	do_brk,
+	do_sbrk,
 
 	do_socket,
 	do_socketpair,
@@ -574,6 +576,23 @@ int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
 	reset_stack(current_proc, addr, argv, envp);
 	return 0;
 }
+
+
+int do_brk(void *addr)
+{
+	int diff = addr - current_proc->map.segments[M_DATA].base;
+	return increase_data_segment(current_proc, diff);
+}
+
+void *do_sbrk(intptr_t increment)
+{
+	if (increment) {
+		if (increase_data_segment(current_proc, increment))
+			return NULL;
+	}
+	return current_proc->map.segments[M_DATA].base + current_proc->map.segments[M_DATA].length;
+}
+
 
 time_t do_time(time_t *t)
 {

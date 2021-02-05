@@ -93,9 +93,11 @@ void user_error(struct exception_stack_frame *frame)
 	extern struct process *current_proc;
 
 	printk_safe("\nError in pid %d at %x (status: %x, vector: %x)\n", current_proc->pid, frame->pc, frame->status, (frame->vector & 0xFFF) >> 2);
-	printk_safe("  Text: %x to %x, Stack: %x to %x\n",
+	printk_safe("  Text: %x to %x, Data: %x to %x, Stack: %x to %x\n",
 		current_proc->map.segments[M_TEXT].base,
 		current_proc->map.segments[M_TEXT].base + current_proc->map.segments[M_TEXT].length,
+		current_proc->map.segments[M_DATA].base,
+		current_proc->map.segments[M_DATA].base + current_proc->map.segments[M_DATA].length,
 		current_proc->map.segments[M_STACK].base,
 		current_proc->map.segments[M_STACK].base + current_proc->map.segments[M_STACK].length
 	);

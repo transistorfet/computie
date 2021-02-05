@@ -44,10 +44,12 @@ int get_data_stat(struct process *proc, char *buffer, int max)
 int get_data_statm(struct process *proc, char *buffer, int max)
 {
 	return snprintf(buffer, max,
-		"%d %x %x %x %x %x\n",
+		"%d %x %x %x %x %x %x %x\n",
 		get_proc_size(proc),
 		proc->map.segments[M_TEXT].base,
 		proc->map.segments[M_TEXT].length,
+		proc->map.segments[M_DATA].base,
+		proc->map.segments[M_DATA].length,
 		proc->map.segments[M_STACK].base,
 		proc->map.segments[M_STACK].length,
 		proc->sp

@@ -103,6 +103,9 @@ int load_elf_binary(struct vfile *file, struct process *proc, void **entry)
 	if (!mem_size)
 		return ENOEXEC;
 
+	// TODO this should probably be called before calling create_process, or it should be inside create_process_memory
+	//free_process_memory(proc);
+
 	// Allocate the process memory and initialize the memory maps
 	create_process_memory(proc, mem_size);
 

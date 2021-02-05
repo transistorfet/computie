@@ -34,7 +34,9 @@ struct process *create_init_task()
 	int stack_size = 0x2000;
 	proc->map.segments[M_TEXT].base = NULL;
 	proc->map.segments[M_TEXT].length = 0x10000;
-	proc->map.segments[M_STACK].base = kmalloc(stack_size);
+	proc->map.segments[M_DATA].base = kmalloc(stack_size);
+	proc->map.segments[M_DATA].length = 0;
+	proc->map.segments[M_STACK].base = proc->map.segments[M_DATA].base;
 	proc->map.segments[M_STACK].length = stack_size;
 
 	extern void init_task();
@@ -60,7 +62,9 @@ struct process *create_kernel_task(const char *name, int (*task_start)())
 
 	proc->map.segments[M_TEXT].base = NULL;
 	proc->map.segments[M_TEXT].length = 0x10000;
-	proc->map.segments[M_STACK].base = stack;
+	proc->map.segments[M_DATA].base = kmalloc(stack_size);
+	proc->map.segments[M_DATA].length = 0;
+	proc->map.segments[M_STACK].base = proc->map.segments[M_DATA].base;
 	proc->map.segments[M_STACK].length = stack_size;
 	proc->sp = stack_pointer;
 

@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <stddef.h>
 #include <string.h>
 #include <kernel/kmalloc.h>
@@ -89,11 +90,13 @@ void free_process_memory(struct process *proc)
 
 	if (proc->map.segments[M_TEXT].base)
 		kmfree(proc->map.segments[M_TEXT].base);
-	if (proc->map.segments[M_STACK].base)
-		kmfree(proc->map.segments[M_STACK].base);
+	if (proc->map.segments[M_DATA].base)
+		kmfree(proc->map.segments[M_DATA].base);
 
 	proc->map.segments[M_TEXT].base = NULL;
 	proc->map.segments[M_TEXT].length = 0;
+	proc->map.segments[M_DATA].base = NULL;
+	proc->map.segments[M_DATA].length = 0;
 	proc->map.segments[M_STACK].base = NULL;
 	proc->map.segments[M_STACK].length = 0;
 	/*
@@ -112,7 +115,9 @@ int clone_process_memory(struct process *parent_proc, struct process *proc)
 
 	memcpy_s(stack, parent_proc->map.segments[M_STACK].base, parent_proc->map.segments[M_STACK].length);
 
-	proc->map.segments[M_STACK].base = stack;
+	proc->map.segments[M_DATA].base = stack;
+	proc->map.segments[M_DATA].length = 0;
+	proc->map.segments[M_STACK].base = proc->map.segments[M_DATA].base;
 	proc->map.segments[M_STACK].length = stack_size;
 	proc->sp = stack_pointer;
 
@@ -135,6 +140,12 @@ int clone_process_memory(struct process *parent_proc, struct process *proc)
 
 int reset_stack(struct process *proc, void *entry, char *const argv[], char *const envp[])
 {
+	// TODO this might be wrong if the data segment contains non-heap memory areas
+	// Reset the data segment to be 0
+	proc->map.segments[M_STACK].length += proc->map.segments[M_DATA].length;
+	proc->map.segments[M_STACK].base = proc->map.segments[M_DATA].base;
+	proc->map.segments[M_DATA].length = 0;
+
 	// Reset the stack to start our new process
 	char *task_stack_pointer = proc->map.segments[M_STACK].base + proc->map.segments[M_STACK].length;
 
@@ -142,6 +153,23 @@ int reset_stack(struct process *proc, void *entry, char *const argv[], char *con
 	task_stack_pointer = copy_exec_args(task_stack_pointer, argv, envp, proc->cmdline);
 	task_stack_pointer = create_context(task_stack_pointer, entry, _exit);
 	proc->sp = task_stack_pointer;
+
+	return 0;
+}
+
+int increase_data_segment(struct process *proc, int increase)
+{
+	if (proc->map.segments[M_DATA].base + increase >= proc->sp)
+		return ENOMEM;
+	if (((ssize_t) proc->map.segments[M_DATA].length) + increase < 0)
+		return ENOMEM;
+	// Require an alignment to 4 bytes
+	if ((increase > 0 ? increase : -increase) & 0x3)
+		return ENOMEM;
+
+	proc->map.segments[M_DATA].length += increase;
+	proc->map.segments[M_STACK].base += increase;
+	proc->map.segments[M_STACK].length -= increase;
 
 	return 0;
 }

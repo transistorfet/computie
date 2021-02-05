@@ -42,6 +42,8 @@ uid_t getuid();
 int kill(pid_t pid, int sig);
 unsigned int alarm(unsigned int seconds);
 int pause();
+int brk(void *addr);
+void *sbrk(intptr_t increment);
 
 int mkdir(const char *path, mode_t mode);
 int rename(const char *oldpath, const char *newpath);

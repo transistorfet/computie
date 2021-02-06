@@ -9,20 +9,13 @@
 Operating System:
 
 	* implement getcwd() external to the kernel for now
-
-	* implement select()
-	* change the hardcoded search for slip0 in protocol and such to be more generic
-	* implement ifup/ifdown somehow (I'm not sure if there's a syscall, or if it uses procfs or something to configure)
-	* do you need to implement some internal routing?
-	* packets aren't being routed between networks on linux... configuration issue of some kind
-	* fix the ICMP checksum calculation
-	* add IP checksum verification, as well as UDP checksum calculating
-
 	* should you increase the number of arguments to 5 (which would still mean the sendto/recvfrom would need to pack the last two args).  There are only 6 or 7 syscalls out
 	  of 55 or so that need more than 3 arguments =/
 
-
-
+	* change the hardcoded search for slip0 in protocol and such to be more generic
+	* do you need to implement some internal routing?
+	* implement ifup/ifdown somehow (I'm not sure if there's a syscall, or if it uses procfs or something to configure)
+	* add IP checksum verification, as well as UDP checksum calculating
 
 	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
 
@@ -43,6 +36,7 @@ Operating System:
 
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
 
+	* implement select()
 	* you could possibly make an abstracted packet construction thing using an ioctl-like function defined for each protocol, which can intercept parts of
 	  the requests to fill in data in the packet headers (set src address, set dest address, add id, etc)
 	* implement an ntp client
@@ -53,16 +47,7 @@ Operating System:
 	* make user programs optionally initialize the heap in a default start routine, and make the heap able to grow (once you have brk/sbrk)
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* add check to vfs_link() for loops
-
 	* make init relaunch shell if the initial one is killed
-
-	* should you make a lib subdir, and put unistd at the top?
-	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
-	* move the math functions in libc to arch/68k
-	* move interrupt and syscall_entry code into proc??
-
-
-
 	* how can you make a df command to list how many blocks are free??  That info would need to come from the minix fs-specific code
 	* when there's a trailing / to rm or mkdir, it will create something weird
 	* add checks for errors in the serial driver? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
@@ -70,6 +55,12 @@ Operating System:
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?
 	* modify the kernel's init task creation to optionally load init from disk instead of being builtin (for kernel images written to the flash card)
+
+	* should you make a lib subdir, and put unistd at the top?
+	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
+	* move the math functions in libc to arch/68k
+	* move interrupt and syscall_entry code into proc??
+
 
 
 	* add network syscalls for local IPC (unix file, sockets)

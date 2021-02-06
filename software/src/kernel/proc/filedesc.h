@@ -2,7 +2,7 @@
 #ifndef _SRC_KERNEL_FILEDESC_H
 #define _SRC_KERNEL_FILEDESC_H
 
-#define OPEN_MAX	10
+#define OPEN_MAX	20
 
 #include <kernel/vfs.h>
 

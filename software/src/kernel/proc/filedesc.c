@@ -10,13 +10,13 @@
 
 void init_fd_table(fd_table_t table)
 {
-	for (char i = 0; i < OPEN_MAX; i++)
+	for (short i = 0; i < OPEN_MAX; i++)
 		table[i] = NULL;
 }
 
 void release_fd_table(fd_table_t table)
 {
-	for (char i = 0; i < OPEN_MAX; i++) {
+	for (short i = 0; i < OPEN_MAX; i++) {
 		if (table[i])
 			vfs_close(table[i]);
 	}
@@ -24,7 +24,7 @@ void release_fd_table(fd_table_t table)
 
 void dup_fd_table(fd_table_t dest, fd_table_t source)
 {
-	for (char i = 0; i < OPEN_MAX; i++) {
+	for (short i = 0; i < OPEN_MAX; i++) {
 		if (source[i])
 			// TODO this needs to be replaced with a new vfs_duplicate() function
 			dest[i] = vfs_duplicate_fileptr(source[i]);
@@ -33,7 +33,7 @@ void dup_fd_table(fd_table_t dest, fd_table_t source)
 
 int find_unused_fd(fd_table_t table)
 {
-	for (char i = 0; i < OPEN_MAX; i++) {
+	for (short i = 0; i < OPEN_MAX; i++) {
 		if (!table[i])
 			return i;
 	}

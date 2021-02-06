@@ -59,7 +59,7 @@ static int icmp_encode_packet(struct packet *pack, uint8_t type, uint8_t code, s
 	hdr->type = type;
 	hdr->code = code;
 	hdr->checksum = 0;
-	hdr->checksum = to_be16(ipv4_calculate_checksum(&hdr, sizeof(struct icmp_header)));
+	hdr->checksum = to_be16(ipv4_calculate_checksum(data, length));
 
 	pack->data_offset = pack->length;
 	if (packet_append(pack, data, length))
@@ -83,6 +83,7 @@ static struct packet *icmp_create_packet(struct protocol *proto, uint8_t type, u
 
 int icmp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset)
 {
+	uint16_t checksum;
 	struct icmp_header *hdr;
 
 	if (pack->length - offset < sizeof(struct icmp_header))
@@ -95,7 +96,12 @@ int icmp_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 	hdr->checksum = from_be16(hdr->checksum);
 	hdr->data = from_be32(hdr->data);
 
-	// TODO validate checksum
+	checksum = hdr->checksum;
+	hdr->checksum = 0;
+	printk_safe("%x %x\n", checksum, ipv4_calculate_checksum(&pack->data[offset], pack->length - offset));
+	if (checksum != ipv4_calculate_checksum(&pack->data[offset], pack->length - offset))
+		return -2;
+	hdr->checksum = checksum;
 
 	return 0;
 }

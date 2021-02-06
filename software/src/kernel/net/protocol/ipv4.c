@@ -84,6 +84,7 @@ int ipv4_encode_header(struct packet *pack, const struct ipv4_address *src, cons
 int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset)
 {
 	int error;
+	uint16_t checksum;
 	struct protocol *next;
 	struct ipv4_header *hdr;
 	struct ipv4_custom_data *custom;
@@ -102,7 +103,11 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 	hdr->src = from_be32(hdr->src);
 	hdr->dest = from_be32(hdr->dest);
 
-	// TODO validate checksum
+	checksum = hdr->checksum;
+	hdr->checksum = 0;
+	if (checksum != ipv4_calculate_checksum(hdr, sizeof(struct ipv4_header)))
+		return -2;
+	hdr->checksum = checksum;
 
 	custom = (struct ipv4_custom_data *) &pack->custom_data;
 	custom->src.addr = hdr->src;
@@ -112,7 +117,7 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 
 	next = net_get_protocol(PF_INET, 0, hdr->protocol);
 	if (!next)
-		return -2;
+		return -3;
 	pack->proto = next;
 
 	error = next->ops->decode_header(next, pack, offset + (((uint16_t) hdr->ihl) << 2));

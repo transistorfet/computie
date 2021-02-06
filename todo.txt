@@ -11,6 +11,7 @@ Operating System:
 	* implement getcwd() external to the kernel for now
 	* should you increase the number of arguments to 5 (which would still mean the sendto/recvfrom would need to pack the last two args).  There are only 6 or 7 syscalls out
 	  of 55 or so that need more than 3 arguments =/
+	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
 
 	* change the hardcoded search for slip0 in protocol and such to be more generic
 	* do you need to implement some internal routing?
@@ -33,8 +34,6 @@ Operating System:
 	* write the bootloader into rom somewhere, such that it can boot from rom or the compact flash (maybe mod eraserom/writerom to take an arg, so you can write to 0x20000)
 	* make the boot loader recognize the partition table
 
-
-	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
 
 	* implement select()
 	* you could possibly make an abstracted packet construction thing using an ioctl-like function defined for each protocol, which can intercept parts of

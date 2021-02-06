@@ -36,6 +36,7 @@ COMMANDS = 		\
 	mount.send	\
 	mv.send		\
 	ns.send		\
+	ntpdate.send	\
 	ps.send		\
 	rm.send		\
 	sh.send		\

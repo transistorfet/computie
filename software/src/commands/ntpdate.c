@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
@@ -34,6 +35,11 @@ struct ntp_packet {
 	uint32_t transmit_ts_f;
 };
 
+void handle_alarm(int signum)
+{
+	printf("timeout\n");
+}
+
 int main(int argc, char **argv)
 {
 	int i;
@@ -42,6 +48,7 @@ int main(int argc, char **argv)
 	int nbytes;
 	int sockfd;
 	int sa_len;
+	struct sigaction act;
 	struct ntp_packet tx;
 	struct ntp_packet rx;
 	struct sockaddr_in addr;
@@ -54,6 +61,16 @@ int main(int argc, char **argv)
 	if (argc >= 3)
 		port = strtol(argv[2], NULL, 10);
 
+	act.sa_handler = handle_alarm;
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
+	sigaction(SIGALRM, &act, NULL);
+
+	if (alarm(6)) {
+		printf("Unable to set alarm\n");
+		return -1;
+	}
+
 	sockfd = socket(PF_INET, SOCK_DGRAM, 0);
 	if (sockfd < 0) {
 		printf("Unable to create socket: %d\n", sockfd);
@@ -64,7 +81,6 @@ int main(int argc, char **argv)
 	addr.sin_family = AF_INET;
 	addr.sin_port = to_be16(port);
 	inet_aton(address, &addr.sin_addr);
-	//addr.sin_addr.s_addr = 0xC0A80166;
 
 	memset(&tx, '\0', sizeof(struct ntp_packet));
 	tx.mode = '\x1b';
@@ -75,8 +91,8 @@ int main(int argc, char **argv)
 	}
 
 	nbytes = recvfrom(sockfd, &rx, sizeof(struct ntp_packet), 0, NULL, NULL);
-	if (error < 0) {
-		printf("Error reading: %d\n", error);
+	if (nbytes < 0) {
+		printf("Error reading: %d\n", nbytes);
 		return -1;
 	}
 	t = rx.transmit_ts_s  - 2208988800;

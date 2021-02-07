@@ -8,10 +8,8 @@
 
 Operating System:
 
-	* .. doesn't work on mounted file systems (/media/.. doesn't list /, it lists /media)
 	* /proc doesn't work when you chdir there or use the . or .. files
 
-	* implement getcwd() external to the kernel for now
 	* should you increase the number of arguments to 5 (which would still mean the sendto/recvfrom would need to pack the last two args).  There are only 6 or 7 syscalls out
 	  of 55 or so that need more than 3 arguments =/
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
@@ -22,13 +20,7 @@ Operating System:
 	* add IP checksum verification, as well as UDP checksum calculating
 
 	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
-
-	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum)
-	* need a function to convert a vnode reference into a path.  (A reverse_lookup funcptr in vnodeops would be fastest (given vnode find and return name) but would require more code.
-	  A syscall without special function would pretty much have to open/readdir/close every level up to find it, which could be long, which could be bad to have such a long syscall.
-	  Minix and linux and fbsd implement it as a library function, but that would mean a lot of code compiled into any binary that uses it.  But how many would use it?!  (also I kinda
-	  need it in the kernel for printing the mountpoints))
-	* need to add those to the /proc/mounts file
+	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum) (add to /proc/mounts)
 
 
 
@@ -75,7 +67,7 @@ Operating System:
 	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
 	* try porting a simple command, and then something more complex, maybe awk or something as a big target
 
-	* add commands: rmdir, pwd, dd, chown
+	* add commands: rmdir, dd, chown
 	* implement fcntl
 	* implement shell scripting?
 	* add the & (run in background) option to the shell

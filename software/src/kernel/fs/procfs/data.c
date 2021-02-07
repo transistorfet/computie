@@ -85,13 +85,17 @@ static inline size_t get_proc_size(struct process *proc)
 int get_data_mounts(struct process *proc, char *buffer, int max)
 {
 	size_t i = 0;
+	char name[100];
 	struct mount *mp;
 	struct mount_iter iter;
+	extern struct process *current_proc;
 
 	vfs_mount_iter_start(&iter);
 
-	while ((mp = vfs_mount_iter_next(&iter)))
-		i += snprintf(&buffer[i], max - i, "%x %s %s\n", mp->dev, mp->ops->fstype, (mp->bits & VFS_MBF_READ_ONLY) ? "ro" : "rw");
+	while ((mp = vfs_mount_iter_next(&iter))) {
+		vfs_reverse_lookup(mp->mount_node, name, 100, current_proc->uid);
+		i += snprintf(&buffer[i], max - i, "%s %x %s %s\n", name, mp->dev, mp->ops->fstype, (mp->bits & VFS_MBF_READ_ONLY) ? "ro" : "rw");
+	}
 	return i;
 }
 

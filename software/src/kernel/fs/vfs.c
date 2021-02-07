@@ -188,7 +188,6 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 			if (!mp)
 				return ENXIO;
 			cur = vfs_clone_vnode(mp->root_node);
-
 		}
 
 		// Return successfully with the result
@@ -224,6 +223,13 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 		if (flags & VLOOKUP_PARENT_OF && path[i] == '\0')
 			continue;
 
+		// If we're at the root of a mounted fs and are accessing "..", then swap the root node for the mounted node before lookup
+		if (!strcmp(component, "..") && cur == cur->mp->root_node) {
+			mp = cur->mp;
+			vfs_release_vnode(cur);
+			cur = vfs_clone_vnode(mp->mount_node);
+		}
+
 		// Call the fs-specific lookup to get the referenced node
 		error = cur->ops->lookup(cur, component, &cur);
 		if (error) {
@@ -240,9 +246,10 @@ int vfs_reverse_lookup(struct vnode *cwd, char *buf, size_t size, uid_t uid)
 	int j;
 	int len;
 	int error;
+	struct mount *mp;
+	struct vnode *cur;
 	struct dirent dir;
 	struct vfile *file;
-	struct vnode *current;
 
 	if (!cwd)
 		cwd = root_fs->root_node;
@@ -253,11 +260,18 @@ int vfs_reverse_lookup(struct vnode *cwd, char *buf, size_t size, uid_t uid)
 
 	j = size;
 	buf[--j] = '\0';
-	current = vfs_clone_vnode(cwd);
-	while (current != root_fs->root_node) {
-		error = vfs_open(current, "..", O_RDONLY, 0, uid, &file);
+	cur = vfs_clone_vnode(cwd);
+	while (cur != root_fs->root_node) {
+		// If the current node is the fs root node, then switch to the vnode that it's mounted on, or else the inode number wont match
+		if (cur == cur->mp->root_node) {
+			mp = cur->mp;
+			vfs_release_vnode(cur);
+			cur = vfs_clone_vnode(mp->mount_node);
+		}
+
+		error = vfs_open(cur, "..", O_RDONLY, 0, uid, &file);
 		if (error) {
-			vfs_release_vnode(current);
+			vfs_release_vnode(cur);
 			return error;
 		}
 
@@ -265,17 +279,17 @@ int vfs_reverse_lookup(struct vnode *cwd, char *buf, size_t size, uid_t uid)
 			error = vfs_readdir(file, &dir);
 			if (error < 0) {
 				vfs_close(file);
-				vfs_release_vnode(current);
+				vfs_release_vnode(cur);
 				return error;
 			}
 			else if (error == 0)
 				break;
 
-			if (dir.d_ino == current->ino && !(dir.d_name[0] == '.' && dir.d_name[1] == '\0')) {
+			if (dir.d_ino == cur->ino && strcmp(dir.d_name, ".") && strcmp(dir.d_name, "..")) {
 				len = strlen(dir.d_name);
 				if (j - len - 1 < 0) {
 					vfs_close(file);
-					vfs_release_vnode(current);
+					vfs_release_vnode(cur);
 					return -1;
 				}
 
@@ -286,12 +300,12 @@ int vfs_reverse_lookup(struct vnode *cwd, char *buf, size_t size, uid_t uid)
 			}
 		}
 
-		vfs_release_vnode(current);
-		current = vfs_clone_vnode(file->vnode);
+		vfs_release_vnode(cur);
+		cur = vfs_clone_vnode(file->vnode);
 
 		vfs_close(file);
 	}
-	vfs_release_vnode(current);
+	vfs_release_vnode(cur);
 
 	if (buf[j] != '/')
 		buf[--j] = VFS_SEP;

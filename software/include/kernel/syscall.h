@@ -41,37 +41,38 @@
 #define SYS_RENAME	35
 #define SYS_MKDIR	36
 #define SYS_RMDIR	37
-#define SYS_DUP2	38
-#define SYS_PIPE	39
-#define SYS_IOCTL	40
-#define SYS_FCNTL	41
-#define SYS_READDIR	42
-#define SYS_GETPPID	43
-#define SYS_SYMLINK	44
-#define SYS_GETPGID	45
-#define SYS_SETPGID	46
-#define SYS_GETSID	47
-#define SYS_SETSID	48
-#define SYS_UMASK	49
-#define SYS_SBRK	50
-#define SYS_SELECT	51
+#define SYS_GETCWD	38
+#define SYS_DUP2	39
+#define SYS_PIPE	40
+#define SYS_IOCTL	41
+#define SYS_FCNTL	42
+#define SYS_READDIR	43
+#define SYS_GETPPID	44
+#define SYS_SYMLINK	45
+#define SYS_GETPGID	46
+#define SYS_SETPGID	47
+#define SYS_GETSID	48
+#define SYS_SETSID	49
+#define SYS_UMASK	50
+#define SYS_SBRK	51
+#define SYS_SELECT	52
 
-#define SYS_SOCKET	52
-#define SYS_SOCKETPAIR	53
-#define SYS_CONNECT	54
-#define SYS_BIND	55
-#define SYS_LISTEN	56
-#define SYS_ACCEPT	57
-#define SYS_SHUTDOWN	58
-#define SYS_SEND	69
-#define SYS_SENDTO	60
-#define SYS_SENDMSG	61
-#define SYS_RECV	62
-#define SYS_RECVFROM	63
-#define SYS_RECVMSG	64
+#define SYS_SOCKET	53
+#define SYS_SOCKETPAIR	54
+#define SYS_CONNECT	55
+#define SYS_BIND	56
+#define SYS_LISTEN	57
+#define SYS_ACCEPT	58
+#define SYS_SHUTDOWN	59
+#define SYS_SEND	60
+#define SYS_SENDTO	61
+#define SYS_SENDMSG	62
+#define SYS_RECV	63
+#define SYS_RECVFROM	64
+#define SYS_RECVMSG	65
 
 // TODO remove this after testing
-#define SYS_EXECBUILTIN	65
+#define SYS_EXECBUILTIN	66
 
 typedef int (*syscall_t)(int, int, int);
 

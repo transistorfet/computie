@@ -5,7 +5,7 @@
 
 int mount(const char *source, const char *target, const char *fstype, int mountflags, void *data)
 {
-	struct mount_opts opts;
+	volatile struct mount_opts opts;
 
 	opts.fstype = fstype;
 	opts.mountflags = mountflags;

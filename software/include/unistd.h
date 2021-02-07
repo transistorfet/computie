@@ -49,6 +49,7 @@ uid_t getuid();
 int setuid(uid_t uid);
 
 int mkdir(const char *path, mode_t mode);
+char *getcwd(char *buf, size_t size);
 int rename(const char *oldpath, const char *newpath);
 
 int mknod(const char *path, mode_t mode, device_t dev);

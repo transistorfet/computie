@@ -25,7 +25,7 @@ static struct vnode *dir_setup(struct vnode *vnode, struct vnode *parent)
 	entries[0].inode = to_le16((minix_v1_inode_t) vnode->ino);
 	strcpy(entries[0].filename, ".");
 
-	entries[1].inode = to_le16(parent ? (minix_v1_inode_t) vnode->ino : 1);
+	entries[1].inode = to_le16(parent ? (minix_v1_inode_t) parent->ino : 1);
 	strcpy(entries[1].filename, "..");
 
 	release_block(buf, BCF_DIRTY);

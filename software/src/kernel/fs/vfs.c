@@ -235,6 +235,72 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 	return ENOENT;
 }
 
+int vfs_reverse_lookup(struct vnode *cwd, char *buf, size_t size, uid_t uid)
+{
+	int j;
+	int len;
+	int error;
+	struct dirent dir;
+	struct vfile *file;
+	struct vnode *current;
+
+	if (!cwd)
+		cwd = root_fs->root_node;
+
+	// TODO this only works for directories, but if we took another vnode arg, we could optionally include its filename
+	if (!S_ISDIR(cwd->mode))
+		return ENOTDIR;
+
+	j = size;
+	buf[--j] = '\0';
+	current = vfs_clone_vnode(cwd);
+	while (current != root_fs->root_node) {
+		error = vfs_open(current, "..", O_RDONLY, 0, uid, &file);
+		if (error) {
+			vfs_release_vnode(current);
+			return error;
+		}
+
+		while (1) {
+			error = vfs_readdir(file, &dir);
+			if (error < 0) {
+				vfs_close(file);
+				vfs_release_vnode(current);
+				return error;
+			}
+			else if (error == 0)
+				break;
+
+			if (dir.d_ino == current->ino && !(dir.d_name[0] == '.' && dir.d_name[1] == '\0')) {
+				len = strlen(dir.d_name);
+				if (j - len - 1 < 0) {
+					vfs_close(file);
+					vfs_release_vnode(current);
+					return -1;
+				}
+
+				strncpy(&buf[j - len], dir.d_name, len);
+				j -= len;
+				buf[--j] = VFS_SEP;
+				break;
+			}
+		}
+
+		vfs_release_vnode(current);
+		current = vfs_clone_vnode(file->vnode);
+
+		vfs_close(file);
+	}
+	vfs_release_vnode(current);
+
+	if (buf[j] != '/')
+		buf[--j] = VFS_SEP;
+
+	strcpy(buf, &buf[j]);
+	return 0;
+}
+
+
 int vfs_access(struct vnode *cwd, const char *path, int mode, uid_t uid)
 {
 	int error;

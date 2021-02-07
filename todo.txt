@@ -8,6 +8,9 @@
 
 Operating System:
 
+	* .. doesn't work on mounted file systems (/media/.. doesn't list /, it lists /media)
+	* /proc doesn't work when you chdir there or use the . or .. files
+
 	* implement getcwd() external to the kernel for now
 	* should you increase the number of arguments to 5 (which would still mean the sendto/recvfrom would need to pack the last two args).  There are only 6 or 7 syscalls out
 	  of 55 or so that need more than 3 arguments =/

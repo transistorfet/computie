@@ -75,13 +75,14 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_rename,
 	do_mkdir,
 	test,		// 37 = rmdir, not yet implemented
+	do_getcwd,
 	do_dup2,
 	do_pipe,
 	do_ioctl,
 	do_fcntl,
 	do_readdir,
 	do_getppid,
-	test,		// 44 = symlink, not yet implemented
+	test,		// 45 = symlink, not yet implemented
 	do_getpgid,
 	do_setpgid,
 	do_getsid,
@@ -139,7 +140,7 @@ void do_syscall()
 
 int do_mount(const char *source, const char *target, struct mount_opts *opts)
 {
-	extern struct mount_ops **filesystems;
+	extern struct mount_ops *filesystems[];
 	extern struct mount_ops minix_mount_ops;
 
 	struct vnode *vnode;
@@ -216,6 +217,13 @@ int do_mkdir(const char *path, mode_t mode)
 		return error;
 	vfs_close(file);
 	return 0;
+}
+
+char *do_getcwd(char *buf, size_t size)
+{
+	if (vfs_reverse_lookup(current_proc->cwd, buf, size, current_proc->uid))
+		return NULL;
+	return buf;
 }
 
 int do_creat(const char *path, mode_t mode)

@@ -38,6 +38,7 @@ COMMANDS = 		\
 	ns.send		\
 	ntpdate.send	\
 	ps.send		\
+	pwd.send	\
 	rm.send		\
 	sh.send		\
 	sync.send	\

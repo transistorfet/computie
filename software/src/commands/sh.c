@@ -238,6 +238,7 @@ int command_chdir(int argc, char **argv, char **envp)
 #include "cat.c"
 #include "ls.c"
 #include "mkdir.c"
+#include "pwd.c"
 #include "mv.c"
 #include "cp.c"
 #include "ln.c"
@@ -295,6 +296,7 @@ void init_commands()
 	add_command("cat", 	command_cat);
 	add_command("ls", 	command_ls);
 	add_command("mkdir", 	command_mkdir);
+	add_command("pwd", 	command_pwd);
 	add_command("cp", 	command_cp);
 	add_command("mv", 	command_mv);
 	add_command("ln", 	command_ln);

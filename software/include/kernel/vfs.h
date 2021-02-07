@@ -140,6 +140,7 @@ int vfs_unmount(device_t dev, uid_t uid);
 int vfs_sync(device_t dev);
 
 int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct vnode **result);
+int vfs_reverse_lookup(struct vnode *cwd, char *buf, size_t size, uid_t uid);
 int vfs_access(struct vnode *cwd, const char *path, int mode, uid_t uid);
 int vfs_chmod(struct vnode *cwd, const char *path, int mode, uid_t uid);
 int vfs_chown(struct vnode *cwd, const char *path, uid_t owner, gid_t group, uid_t uid);

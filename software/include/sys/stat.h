@@ -44,7 +44,7 @@
 
 struct stat {
 	device_t st_dev;
-	//inode_t st_ino;
+	inode_t st_ino;
 	mode_t st_mode;
 	short st_nlinks;
 	uid_t st_uid;

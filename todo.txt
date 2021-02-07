@@ -85,6 +85,7 @@ Operating System:
 
 
 	* rewrite the math functions to use fewer registers, and cover the 32 bit divide by 32 bit number case
+	* reduce the size of the elf header file
 	* should you refactor the header files in minixfs implementation into actual c files, with a common header to declare the functions?
 	* implement symlinks in minixfs
 	* implement links for mallocfs

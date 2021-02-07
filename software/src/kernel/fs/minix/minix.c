@@ -121,7 +121,7 @@ int minix_create(struct vnode *vnode, const char *filename, mode_t mode, uid_t u
 		return ENOMEM;
 	}
 
-	dir->inode = to_le16(MINIX_DATA(newnode).ino);
+	dir->inode = to_le16((minix_v1_inode_t) newnode->ino);
 	release_block(buf, BCF_DIRTY);
 
 	// TODO need to adjust the size of the directory size
@@ -151,7 +151,7 @@ int minix_mknod(struct vnode *vnode, const char *filename, mode_t mode, device_t
 		return EMFILE;
 	}
 
-	dir->inode = to_le16(MINIX_DATA(newnode).ino);
+	dir->inode = to_le16((minix_v1_inode_t) newnode->ino);
 	release_block(buf, BCF_DIRTY);
 
 	*result = newnode;
@@ -190,9 +190,9 @@ int minix_link(struct vnode *oldvnode, struct vnode *newparent, const char *file
 		return ENOSPC;
 
 	oldvnode->nlinks += 1;
-	dir->inode = to_le16(MINIX_DATA(oldvnode).ino);
+	dir->inode = to_le16((minix_v1_inode_t) oldvnode->ino);
 	release_block(buf, BCF_DIRTY);
-	write_inode(oldvnode, MINIX_DATA(oldvnode).ino);
+	write_inode(oldvnode, oldvnode->ino);
 
 	return 0;
 }
@@ -218,7 +218,7 @@ int minix_unlink(struct vnode *parent, struct vnode *vnode, const char *filename
 		delete_vnode(vnode);
 	}
 	else
-		write_inode(vnode, MINIX_DATA(vnode).ino);
+		write_inode(vnode, vnode->ino);
 	return 0;
 }
 
@@ -245,7 +245,7 @@ int minix_rename(struct vnode *vnode, struct vnode *oldparent, const char *oldna
 		return ENOENT;
 	}
 
-	newdir->inode = to_le16(MINIX_DATA(vnode).ino);
+	newdir->inode = to_le16((minix_v1_inode_t) vnode->ino);
 	olddir->inode = to_le16(0);
 	release_block(newbuf, BCF_DIRTY);
 	release_block(oldbuf, BCF_DIRTY);
@@ -267,17 +267,17 @@ int minix_truncate(struct vnode *vnode)
 
 int minix_update(struct vnode *vnode)
 {
-	write_inode(vnode, MINIX_DATA(vnode).ino);
+	write_inode(vnode, vnode->ino);
 	return 0;
 }
 
 int minix_release(struct vnode *vnode)
 {
 	// NOTE we only free vnodes who's inode has been deleted.  The vnode cache will release other vnodes when they are pushed out by newer nodes
-	if (MINIX_DATA(vnode).ino == 0)
+	if (vnode->ino == 0)
 		release_vnode(vnode);
 	else if (vnode->bits & VBF_DIRTY)
-		write_inode(vnode, MINIX_DATA(vnode).ino);
+		write_inode(vnode, vnode->ino);
 	return 0;
 }
 

@@ -272,7 +272,7 @@ static struct vnode *_alloc_vnode(pid_t pid, procfs_filenum_t filenum, mode_t mo
 {
 	for (short i = 0; i < MAX_VNODES; i++) {
 		if (vnode_table[i].vn.refcount <= 0) {
-			vfs_init_vnode(&vnode_table[i].vn, &procfs_vnode_ops, mp, mode, 1, 0, 0, 0, 0, 0, 0, 0);
+			vfs_init_vnode(&vnode_table[i].vn, &procfs_vnode_ops, mp, mode, 1, 0, 0, 0, filenum, 0, 0, 0, 0);
 			PROCFS_DATA(&vnode_table[i]).pid = pid;
 			PROCFS_DATA(&vnode_table[i]).filenum = filenum;
 			return &vnode_table[i].vn;

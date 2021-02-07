@@ -31,7 +31,7 @@ struct vfile_ops sock_vfile_ops = {
 	net_socket_close,
 	net_socket_read,
 	net_socket_write,
-	nop_ioctl,
+	net_socket_ioctl,
 	nop_seek,
 	nop_readdir,
 };
@@ -62,7 +62,7 @@ int net_socket_create(int domain, int type, int protocol, uid_t uid, struct vfil
 	vnode = kmalloc(sizeof(struct sock_vnode));
 	if (!vnode)
 		return NULL;
-	vfs_init_vnode(&vnode->vn, &sock_vnode_ops, NULL, S_IFSOCK | 0600, 1, uid, 0, 0, 0, 0, 0, 0);
+	vfs_init_vnode(&vnode->vn, &sock_vnode_ops, NULL, S_IFSOCK | 0600, 1, uid, 0, 0, 0, 0, 0, 0, 0);
 
 	*file = new_fileptr(&vnode->vn, 0);
 	if (!*file) {
@@ -192,5 +192,17 @@ int net_socket_wakeup(struct socket *sock)
 	resume_blocked_procs(sock->syscall, vnode, 0);
 	sock->syscall = 0;
 	return 0;
+}
+
+int net_socket_ioctl(struct vfile *file, unsigned int request, void *argp)
+{
+	struct socket *sock = SOCKET(file->vnode);
+
+	if (!S_ISSOCK(file->vnode->mode))
+		return EBADF;
+
+	// TODO implement options
+
+	return -1;
 }
 

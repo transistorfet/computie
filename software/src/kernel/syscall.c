@@ -347,6 +347,7 @@ int do_stat(const char *path, struct stat *statbuf)
 	statbuf->st_uid = vnode->uid;
 	statbuf->st_gid = vnode->gid;
 	statbuf->st_rdev = vnode->rdev;
+	statbuf->st_ino = vnode->ino;
 	statbuf->st_size = vnode->size;
 	statbuf->st_atime = vnode->atime;
 	statbuf->st_mtime = vnode->mtime;
@@ -370,6 +371,7 @@ int do_fstat(int fd, struct stat *statbuf)
 	statbuf->st_uid = file->vnode->uid;
 	statbuf->st_gid = file->vnode->gid;
 	statbuf->st_rdev = file->vnode->rdev;
+	statbuf->st_ino = file->vnode->ino;
 	statbuf->st_size = file->vnode->size;
 	statbuf->st_atime = file->vnode->atime;
 	statbuf->st_mtime = file->vnode->mtime;

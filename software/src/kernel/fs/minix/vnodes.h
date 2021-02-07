@@ -35,7 +35,7 @@ static void sync_vnodes()
 	for (struct queue_node *cur = cache.head; cur; cur = cur->next) {
 		vnode = MINIX_QUEUE_NODE_TO_VNODE(cur);
 		if (vnode->bits & VBF_DIRTY)
-			write_inode(vnode, MINIX_DATA(vnode).ino);
+			write_inode(vnode, vnode->ino);
 	}
 }
 
@@ -56,8 +56,7 @@ static struct vnode *load_vnode(struct mount *mp, inode_t ino)
 	//printk("L:%x;%d;%d\n", vnode, mp->dev, ino);
 	_queue_insert(&cache, &MINIX_DATA(vnode).node);
 
-	vfs_init_vnode(vnode, &minix_vnode_ops, mp, 0, 1, 0, 0, 0, 0, 0, 0, 0);
-	MINIX_DATA(vnode).ino = ino;
+	vfs_init_vnode(vnode, &minix_vnode_ops, mp, 0, 1, 0, 0, 0, ino, 0, 0, 0, 0);
 	for (char j = 0; j < MINIX_V1_INODE_ZONENUMS; j++)
 		MINIX_DATA(vnode).zones[j] = NULL;
 
@@ -78,8 +77,8 @@ static struct vnode *get_vnode(struct mount *mp, inode_t ino)
 
 	for (struct queue_node *cur = cache.head; cur; cur = cur->next) {
 		vnode = MINIX_QUEUE_NODE_TO_VNODE(cur);
-		//printk("S:%x;%d;%d\n", vnode, vnode->mp->dev, MINIX_DATA(vnode).ino);
-		if (vnode->mp->dev == mp->dev && MINIX_DATA(vnode).ino == ino) {
+		//printk("S:%x;%d;%d\n", vnode, vnode->mp->dev, vnode->ino);
+		if (vnode->mp->dev == mp->dev && vnode->ino == ino) {
 			//printk("G:%x;%d;%d\n", vnode, mp->dev, ino);
 			vfs_clone_vnode(vnode);
 
@@ -108,7 +107,7 @@ static struct vnode *alloc_vnode(struct mount *mp, mode_t mode, uid_t uid, gid_t
 		return NULL;
 	}
 
-	//printk("C:%x;%d\n", vnode, MINIX_DATA(vnode).ino);
+	//printk("C:%x;%d\n", vnode, vnode->ino);
 	return vnode;
 }
 
@@ -119,15 +118,15 @@ static void mark_vnode_dirty(struct vnode *vnode)
 
 static int delete_vnode(struct vnode *vnode)
 {
-	free_inode(MINIX_SUPER(vnode->mp->super), MINIX_DATA(vnode).ino);
-	MINIX_DATA(vnode).ino = 0;
+	free_inode(MINIX_SUPER(vnode->mp->super), vnode->ino);
+	vnode->ino = 0;
 	return 0;
 }
 
 static int release_vnode(struct vnode *vnode)
 {
-	if (MINIX_DATA(vnode).ino && vnode->bits & VBF_DIRTY)
-		write_inode(vnode, MINIX_DATA(vnode).ino);
+	if (vnode->ino && vnode->bits & VBF_DIRTY)
+		write_inode(vnode, vnode->ino);
 	_queue_remove(&cache, &MINIX_DATA(vnode).node);
 	kmfree(vnode);
 	nodes_in_cache -= 1;

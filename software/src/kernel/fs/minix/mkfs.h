@@ -81,9 +81,9 @@ static int minix_mkfs(device_t dev)
 	struct minix_v1_dirent *entries = dir_buf->block;
 	memset_s(dir_buf->block, 0, MINIX_V1_ZONE_SIZE);
 
-	entries[0].inode = to_le16(root_ino);
+	entries[0].inode = to_le16((minix_v1_inode_t) root_ino);
 	strcpy(entries[0].filename, ".");
-	entries[1].inode = to_le16(root_ino);
+	entries[1].inode = to_le16((minix_v1_inode_t) root_ino);
 	strcpy(entries[1].filename, "..");
 
 	release_block(dir_buf, BCF_DIRTY);

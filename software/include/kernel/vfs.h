@@ -102,15 +102,16 @@ struct mount {
 struct vnode {
 	struct vnode_ops *ops;
 	struct mount *mp;		// The mountpoint this vnode belongs to
-	short refcount;			// Number of references to this vnode currently in use
+	int refcount;			// Number of references to this vnode currently in use
 
 	mode_t mode;
 	short nlinks;
 	uid_t uid;
 	gid_t gid;
-	offset_t size;
 	uint16_t bits;
 	device_t rdev;
+	inode_t ino;
+	offset_t size;
 
 	time_t atime;
 	time_t mtime;
@@ -170,8 +171,9 @@ static inline void vfs_init_vnode(
 	short nlinks,
 	uid_t uid,
 	gid_t gid,
-	offset_t size,
 	device_t rdev,
+	inode_t ino,
+	offset_t size,
 	time_t atime,
 	time_t mtime,
 	time_t ctime)
@@ -183,9 +185,10 @@ static inline void vfs_init_vnode(
 	vnode->nlinks = nlinks;
 	vnode->uid = uid;
 	vnode->gid = gid;
-	vnode->size = size;
 	vnode->bits = 0;
 	vnode->rdev = rdev;
+	vnode->ino = ino;
+	vnode->size = size;
 
 	vnode->atime = atime;
 	vnode->mtime = mtime;

@@ -65,10 +65,10 @@ ssize_t recv(int fd, void *buf, size_t n, int flags);
 ssize_t recvfrom(int fd, void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t *addr_len);
 ssize_t recvmsg(int fd, struct msghdr *message, int flags);
 
-int getsockname(int fd, struct sockaddr *addr, socklen_t *len);
-int getpeername(int fd, struct sockaddr *addr, socklen_t *len);
-int getsockopt(int fd, int level, int optname, void *optval, socklen_t *optlen);
-int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen);
+//int getsockname(int fd, struct sockaddr *addr, socklen_t *len);
+//int getpeername(int fd, struct sockaddr *addr, socklen_t *len);
+//int getsockopt(int fd, int level, int optname, void *optval, socklen_t *optlen);
+//int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen);
 
 
 #endif

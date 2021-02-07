@@ -153,7 +153,7 @@ static struct vnode *_new_vnode(device_t dev, mode_t mode, struct vnode_ops *ops
 {
 	for (char i = 0; i < MAX_VNODES; i++) {
 		if (vnode_table[i].refcount <= 0) {
-			vfs_init_vnode(&vnode_table[i], ops, NULL, mode, 1, 0, 0, 0, 0, 0, 0, 0);
+			vfs_init_vnode(&vnode_table[i], ops, NULL, mode, 1, 0, 0, 0, dev, 0, 0, 0, 0);
 			DEVFS_DATA(&vnode_table[i]).device = dev;
 			return &vnode_table[i];
 		}

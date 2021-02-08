@@ -49,6 +49,8 @@ struct mount_ops procfs_mount_ops = {
 };
 
 struct procfs_dir_entry root_files[] = {
+	{ PFN_ROOTDIR,	".",		NULL },
+	{ PFN_ROOTDIR,	"..",		NULL },
 	{ PFN_MOUNTS,	"mounts",	get_data_mounts },
 	{ 0, NULL, NULL },
 };

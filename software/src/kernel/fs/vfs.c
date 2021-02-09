@@ -648,9 +648,9 @@ int vfs_write(struct vfile *file, const char *buffer, size_t size)
 	return file->ops->write(file, buffer, size);
 }
 
-int vfs_ioctl(struct vfile *file, unsigned int request, void *argp)
+int vfs_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid)
 {
-	return file->ops->ioctl(file, request, argp);
+	return file->ops->ioctl(file, request, argp, uid);
 }
 
 offset_t vfs_seek(struct vfile *file, offset_t position, int whence)

@@ -75,7 +75,7 @@ int nop_write(struct vfile *file, const char *buf, size_t nbytes)
 	return 0;
 }
 
-int nop_ioctl(struct vfile *file, unsigned int request, void *argp)
+int nop_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid)
 {
 	return EPERM;
 }

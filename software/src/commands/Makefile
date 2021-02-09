@@ -28,6 +28,7 @@ COMMANDS = 		\
 	date.send	\
 	echo.send	\
 	hello.send	\
+	ifconfig.send	\
 	init.send	\
 	kill.send	\
 	ln.send		\

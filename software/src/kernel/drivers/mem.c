@@ -16,7 +16,7 @@ int mem_open(devminor_t minor, int access);
 int mem_close(devminor_t minor);
 int mem_read(devminor_t minor, char *buffer, offset_t offset, size_t size);
 int mem_write(devminor_t minor, const char *buffer, offset_t offset, size_t size);
-int mem_ioctl(devminor_t minor, unsigned int request, void *argp);
+int mem_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid);
 offset_t mem_seek(devminor_t minor, offset_t position, int whence, offset_t offset);
 
 
@@ -92,7 +92,7 @@ int mem_write(devminor_t minor, const char *buffer, offset_t offset, size_t size
 	return size;
 }
 
-int mem_ioctl(devminor_t minor, unsigned int request, void *argp)
+int mem_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid)
 {
 	if (minor >= num_devices)
 		return ENXIO;

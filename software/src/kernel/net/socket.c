@@ -194,7 +194,7 @@ int net_socket_wakeup(struct socket *sock)
 	return 0;
 }
 
-int net_socket_ioctl(struct vfile *file, unsigned int request, void *argp)
+int net_socket_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid)
 {
 	struct socket *sock = SOCKET(file->vnode);
 
@@ -203,6 +203,11 @@ int net_socket_ioctl(struct vfile *file, unsigned int request, void *argp)
 
 	// TODO implement options
 
-	return -1;
+	switch (request) {
+
+		default:
+			return net_if_ioctl(request, (struct ifreq *) argp, uid);
+	}
+	return 0;
 }
 

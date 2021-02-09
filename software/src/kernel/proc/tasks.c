@@ -10,8 +10,6 @@
 #include "process.h"
 #include "context.h"
 
-extern struct process *current_proc;
-
 struct process *create_init_task()
 {
 	int error = 0;

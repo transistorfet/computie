@@ -98,7 +98,6 @@ int icmp_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 
 	checksum = hdr->checksum;
 	hdr->checksum = 0;
-	printk_safe("%x %x\n", checksum, ipv4_calculate_checksum(&pack->data[offset], pack->length - offset));
 	if (checksum != ipv4_calculate_checksum(&pack->data[offset], pack->length - offset))
 		return -2;
 	hdr->checksum = checksum;

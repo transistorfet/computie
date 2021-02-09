@@ -29,12 +29,21 @@
 
 typedef unsigned int socklen_t;
 
-typedef unsigned char sa_family_t;
+typedef unsigned short sa_family_t;
 
 struct sockaddr {
 	sa_family_t sa_family;
 	char sa_data[14];
 };
+
+// TODO this is supposed to be the largest possible sockaddr.  Right now it's set to the size of struct sockaddr, but if IPv6 addrs were supported, it would need to be bigger
+#define _SA_STORAGE_SIZE	16
+
+struct sockaddr_storage {
+	sa_family_t ss_family;
+	char _padding[_SA_STORAGE_SIZE - sizeof(sa_family_t)];
+};
+
 
 struct iovec;
 

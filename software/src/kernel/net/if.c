@@ -1,16 +1,20 @@
 
+#include <errno.h>
 #include <string.h>
+#include <sys/ioctl.h>
+
 #include <kernel/bh.h>
 #include <kernel/driver.h>
-
-// TODO this is temporary until a proper solution for ifup/ip addresses is found
-#include <netinet/in.h>
+#include <kernel/printk.h>
 
 #include "if.h"
 #include "packet.h"
 #include "protocol.h"
 
 #define IFDEV_MAX	2
+
+#define IFF_SET_MASK	(IFF_UP | IFF_DEBUG)
+
 
 static struct if_device *active_ifdevs[IFDEV_MAX];
 static void net_if_process_bh(void *_unused);
@@ -23,31 +27,12 @@ void init_net_if()
 	register_bh(BH_NET, net_if_process_bh, NULL);
 }
 
-int register_if_device(struct if_device *ifdev)
+int net_if_register_device(struct if_device *ifdev)
 {
 	for (char i = 0; i < IFDEV_MAX; i++) {
 		if (!active_ifdevs[i])
 			active_ifdevs[i] = ifdev;
 	}
-}
-
-int net_if_up(const char *name)
-{
-	for (char i = 0; i < IFDEV_MAX; i++) {
-		if (!strcmp(active_ifdevs[i]->name, name)) {
-			// TODO a lot more needs to be done here
-			extern struct protocol ipv4_protocol;
-			active_ifdevs[i]->incoming_proto = &ipv4_protocol;
-
-			((struct sockaddr_in *) &active_ifdevs[i]->address)->sin_family = AF_INET;
-			((struct sockaddr_in *) &active_ifdevs[i]->address)->sin_addr.s_addr = 0xC0A801C8;
-			((struct sockaddr_in *) &active_ifdevs[i]->address)->sin_port = 0;
-
-			printk_safe("%s: bringing up interface\n", active_ifdevs[i]->name);
-			return active_ifdevs[i]->ops->up(active_ifdevs[i]);
-		}
-	}
-	return -1;
 }
 
 struct if_device *net_if_find(const char *name)
@@ -57,6 +42,73 @@ struct if_device *net_if_find(const char *name)
 			return active_ifdevs[i];
 	}
 	return NULL;
+}
+
+int net_if_change_state(struct if_device *ifdev, int state)
+{
+	int error;
+
+	// If the UP state doesn't change, just set some flags and return
+	if (!((ifdev->flags & IFF_UP) ^ (state & IFF_UP))) {
+		ifdev->flags = state & IFF_SET_MASK;
+		return 0;
+	}
+
+	if (state & IFF_UP) {
+		if (!ifdev->address.ss_family)
+			// TODO what error should be here?
+			return -1;
+
+		extern struct protocol ipv4_protocol;
+		ifdev->incoming_proto = &ipv4_protocol;
+
+		printk_safe("%s: bringing interface up\n", ifdev->name);
+		error = ifdev->ops->up(ifdev);
+		if (error)
+			return error;
+	}
+	else {
+		printk_safe("%s: bringing interface down\n", ifdev->name);
+		error = ifdev->ops->down(ifdev);
+		if (error)
+			return error;
+	}
+
+	ifdev->flags = state & IFF_SET_MASK;
+	return 0;
+}
+
+int net_if_ioctl(int request, struct ifreq *ifreq, uid_t uid)
+{
+	struct if_device *ifdev;
+
+	if (_IO_TYPE(request) != 'I' || _IO_PARAM(request) != sizeof(struct ifreq))
+		return EINVAL;
+
+	ifdev = net_if_find(ifreq->ifr_name);
+	if (!ifdev)
+		return ENODEV;
+
+	switch (request) {
+		case SIOCGIFFLAGS:
+			ifreq->ifr_flags = ifdev->flags;
+			break;
+		case SIOCSIFFLAGS:
+			if (uid != SU_UID)
+				return EPERM;
+			return net_if_change_state(ifdev, ifreq->ifr_flags);
+		case SIOCGIFADDR:
+			memcpy(&ifreq->ifr_addr, &ifdev->address, sizeof(struct sockaddr));
+			break;
+		case SIOCSIFADDR:
+			if (uid != SU_UID)
+				return EPERM;
+			memcpy(&ifdev->address, &ifreq->ifr_addr, sizeof(struct sockaddr));
+			break;
+		default:
+			return -1;
+	}
+	return 0;
 }
 
 int net_if_send_packet(struct if_device *ifdev, struct packet *pack)

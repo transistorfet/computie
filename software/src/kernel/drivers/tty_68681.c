@@ -30,7 +30,7 @@ int tty_68681_open(devminor_t minor, int access);
 int tty_68681_close(devminor_t minor);
 int tty_68681_read(devminor_t minor, char *buffer, offset_t offset, size_t size);
 int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_t size);
-int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp);
+int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid);
 offset_t tty_68681_seek(devminor_t minor, offset_t position, int whence, offset_t offset);
 
 struct driver tty_68681_driver = {
@@ -607,7 +607,7 @@ int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_
 	return size;
 }
 
-int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp)
+int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid)
 {
 	struct serial_channel *channel = from_minor_dev(minor);
 

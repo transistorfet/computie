@@ -14,4 +14,8 @@
 #define _IOW(x,y,t)	((x << 8) | y | ((sizeof(t) & _IOCPARM_MASK) << 16) | _IOC_IN)
 #define _IORW(x,y,t)	((x << 8) | y | ((sizeof(t) & _IOCPARM_MASK) << 16) | _IOC_INOUT)
 
+#define _IO_NUM(req)	((req) & 0xFF)
+#define _IO_TYPE(req)	(((req) >> 8) & 0xFF)
+#define _IO_PARAM(req)	(((req) >> 16) & _IOCPARM_MASK)
+
 #endif

@@ -12,8 +12,6 @@
 #include "memory.h"
 #include "process.h"
 
-extern struct process *current_proc;
-
 int load_flat_binary(struct vfile *file, struct process *proc, void **entry);
 int load_elf_binary(struct vfile *file, struct process *proc, void **entry);
 

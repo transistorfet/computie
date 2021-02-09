@@ -307,7 +307,7 @@ int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
 	return offset;
 }
 
-int mallocfs_ioctl(struct vfile *file, unsigned int request, void *argp)
+int mallocfs_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid)
 {
 	return -1;
 }

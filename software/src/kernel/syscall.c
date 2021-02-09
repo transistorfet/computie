@@ -302,7 +302,7 @@ int do_ioctl(int fd, unsigned int request, void *argp)
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file)
 		return EBADF;
-	return vfs_ioctl(file, request, argp);
+	return vfs_ioctl(file, request, argp, current_proc->uid);
 }
 
 extern int do_fcntl(int fd, int cmd, void *argp)

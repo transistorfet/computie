@@ -3,8 +3,11 @@
 #define _SRC_KERNEL_NET_IF_H
 
 #include <stdint.h>
+#include <sys/ioc_if.h>
+
 #include "socket.h"
 #include "packet.h"
+
 
 struct if_device;
 
@@ -38,8 +41,10 @@ struct if_device {
 };
 
 void init_net_if();
-int net_if_up(const char *name);
+int net_if_register_device(struct if_device *ifdev);
 struct if_device *net_if_find(const char *name);
+int net_if_change_state(struct if_device *ifdev, int state);
+int net_if_ioctl(int request, struct ifreq *ifreq, uid_t uid);
 int net_if_send_packet(struct if_device *ifdev, struct packet *pack);
 int net_if_recv_packet(struct if_device *ifdev, struct packet **pack);
 

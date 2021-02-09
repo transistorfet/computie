@@ -187,7 +187,7 @@ int procfs_write(struct vfile *file, const char *buf, size_t nbytes)
 	return 0;
 }
 
-int procfs_ioctl(struct vfile *file, unsigned int request, void *argp)
+int procfs_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid)
 {
 	return -1;
 }

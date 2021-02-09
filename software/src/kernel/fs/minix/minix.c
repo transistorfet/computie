@@ -390,7 +390,7 @@ int minix_write(struct vfile *file, const char *buffer, size_t nbytes)
 	return offset;
 }
 
-int minix_ioctl(struct vfile *file, unsigned int request, void *argp)
+int minix_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid)
 {
 	return -1;
 }

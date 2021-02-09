@@ -6,6 +6,7 @@
 
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <netinet/in.h>
 
 #include <kernel/vfs.h>
 #include <kernel/time.h>
@@ -37,7 +38,7 @@ struct driver *drivers[] = {
 	&tty_driver,
 	&mem_driver,
 	&ata_driver,
-	NULL	// Null Termination of Drivers List
+	NULL	// Null Termination
 };
 
 extern struct mount_ops mallocfs_mount_ops;
@@ -48,13 +49,27 @@ struct mount_ops *filesystems[] = {
 	//&mallocfs_mount_ops,
 	&minix_mount_ops,
 	&procfs_mount_ops,
-	NULL	// Null Termination of Filesystems List
+	NULL	// Null Termination
 };
 
 extern struct if_ops slip_if_ops;
+
+struct if_ops *interfaces[] = {
+	&slip_if_ops,
+	NULL	// Null Termination
+};
+
 extern struct protocol_ops ipv4_protocol_ops;
 extern struct protocol_ops udp_protocol_ops;
 extern struct protocol_ops icmp_protocol_ops;
+
+struct protocol_ops *protocols[] = {
+	&ipv4_protocol_ops,
+	&udp_protocol_ops,
+	&icmp_protocol_ops,
+	NULL	// Null Termination
+};
+
 
 char boot_args[32] = "mem0";
 device_t root_dev = DEVNUM(DEVMAJOR_MEM, 0);
@@ -111,31 +126,32 @@ int main()
 	init_scheduler();
 
 	// Initialize drivers before VFS
-	for (char i = 0; drivers[i]; i++) {
+	for (char i = 0; drivers[i]; i++)
 		drivers[i]->init();
-	}
 
 	init_vfs();
 
 	// Initialize specific filesystems
-	for (char i = 0; filesystems[i]; i++) {
+	for (char i = 0; filesystems[i]; i++)
 		filesystems[i]->init();
-	}
 
 	init_net_if();
 	init_net_protocol();
-	slip_if_ops.init();
-	ipv4_protocol_ops.init();
-	udp_protocol_ops.init();
-	icmp_protocol_ops.init();
-	// TODO this is a temporary hack.  The ifup should be done later
-	net_if_up("slip0");
 
-	// TODO this would be moved elsewhere
-	//vfs_mount(NULL, "/", 0, &mallocfs_mount_ops, SU_UID);
+	// Initialize specific network interfaces
+	for (char i = 0; interfaces[i]; i++)
+		interfaces[i]->init();
+
+	// Initialize specific network protocols
+	for (char i = 0; protocols[i]; i++)
+		protocols[i]->init();
+
+
 	printk_safe("minixfs: mounting (%x) at %s\n", root_dev, "/");
 	vfs_mount(NULL, "/", root_dev, &minix_mount_ops, 0, SU_UID);
 
+
+	// TODO this would be moved elsewhere
 	create_dir_or_panic("/bin");
 	create_dir_or_panic("/dev");
 	create_dir_or_panic("/proc");
@@ -151,6 +167,15 @@ int main()
 	vfs_mount(NULL, "/proc", 1, &procfs_mount_ops, VFS_MBF_READ_ONLY, SU_UID);
 
 	//vfs_mount(NULL, "/media", DEVNUM(DEVMAJOR_ATA, 0), &minix_mount_ops, SU_UID);
+
+
+	// TODO this is a temporary hack.  The ifup should be done through ifconfig
+	struct if_device *ifdev = net_if_find("slip0");
+	memset(&ifdev->address, '\0', sizeof(struct sockaddr_in));
+	((struct sockaddr_in *) &ifdev->address)->sin_family = AF_INET;
+	inet_aton("192.168.1.200", &((struct sockaddr_in *) &ifdev->address)->sin_addr);
+	net_if_change_state(ifdev, IFF_UP | IFF_DEBUG);
+
 
 	begin_multitasking();
 }

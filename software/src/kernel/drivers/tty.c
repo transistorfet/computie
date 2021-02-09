@@ -61,7 +61,7 @@ int tty_open(devminor_t minor, int access);
 int tty_close(devminor_t minor);
 int tty_read(devminor_t minor, char *buffer, offset_t offset, size_t size);
 int tty_write(devminor_t minor, const char *buffer, offset_t offset, size_t size);
-int tty_ioctl(devminor_t minor, unsigned int request, void *argp);
+int tty_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid);
 
 struct driver tty_driver = {
 	tty_init,
@@ -272,7 +272,7 @@ int tty_write(devminor_t minor, const char *buffer, offset_t offset, size_t size
 	return written;
 }
 
-int tty_ioctl(devminor_t minor, unsigned int request, void *argp)
+int tty_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid)
 {
 	short saved_status;
 
@@ -302,7 +302,7 @@ int tty_ioctl(devminor_t minor, unsigned int request, void *argp)
 			return 0;
 		}
 		default:
-			return dev_ioctl(devices[minor].rdev, request, argp);
+			return dev_ioctl(devices[minor].rdev, request, argp, uid);
 	}
 	return -1;
 }

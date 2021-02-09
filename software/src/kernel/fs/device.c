@@ -48,9 +48,9 @@ int device_ops_write(struct vfile *file, const char *buffer, size_t size)
 	return nbytes;
 }
 
-int device_ops_ioctl(struct vfile *file, unsigned int request, void *argp)
+int device_ops_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid)
 {
-	return dev_ioctl(file->vnode->rdev, request, argp);
+	return dev_ioctl(file->vnode->rdev, request, argp, uid);
 }
 
 offset_t device_ops_seek(struct vfile *file, offset_t position, int whence)

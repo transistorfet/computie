@@ -46,7 +46,7 @@ int procfs_open(struct vfile *file, int flags);
 int procfs_close(struct vfile *file);
 int procfs_read(struct vfile *file, char *buf, size_t nbytes);
 int procfs_write(struct vfile *file, const char *buf, size_t nbytes);
-int procfs_ioctl(struct vfile *file, unsigned int request, void *argp);
+int procfs_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid);
 offset_t procfs_seek(struct vfile *file, offset_t position, int whence);
 int procfs_readdir(struct vfile *file, struct dirent *dir);
 

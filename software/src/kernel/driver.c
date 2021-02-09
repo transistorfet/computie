@@ -55,14 +55,14 @@ int dev_write(device_t dev, const char *buffer, offset_t offset, size_t size)
 	return drv_table[major]->write(minor, buffer, offset, size);
 }
 
-int dev_ioctl(device_t dev, unsigned int request, void *argp)
+int dev_ioctl(device_t dev, unsigned int request, void *argp, uid_t uid)
 {
 	devmajor_t major = dev >> 8;
 	devminor_t minor = (devminor_t) dev;
 
 	if (major >= MAX_DRIVERS)
 		return ENXIO;
-	return drv_table[major]->ioctl(minor, request, argp);
+	return drv_table[major]->ioctl(minor, request, argp, uid);
 }
 
 offset_t dev_seek(device_t dev, offset_t position, int whence, offset_t offset)

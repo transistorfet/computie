@@ -81,7 +81,7 @@ struct vfile_ops {
 	int (*close)(struct vfile *file);
 	int (*read)(struct vfile *file, char *buffer, size_t size);
 	int (*write)(struct vfile *file, const char *buffer, size_t size);
-	int (*ioctl)(struct vfile *file, unsigned int request, void *argp);
+	int (*ioctl)(struct vfile *file, unsigned int request, void *argp, uid_t uid);
 	offset_t (*seek)(struct vfile *file, offset_t position, int whence);
 	int (*readdir)(struct vfile *file, struct dirent *dir);
 };
@@ -153,7 +153,7 @@ int vfs_open(struct vnode *cwd, const char *path, int flags, mode_t mode, uid_t 
 int vfs_close(struct vfile *file);
 int vfs_read(struct vfile *file, char *buffer, size_t size);
 int vfs_write(struct vfile *file, const char *buffer, size_t size);
-int vfs_ioctl(struct vfile *file, unsigned int request, void *argp);
+int vfs_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid);
 offset_t vfs_seek(struct vfile *file, offset_t position, int whence);
 int vfs_readdir(struct vfile *file, struct dirent *dir);
 struct vfile *vfs_duplicate_fileptr(struct vfile *file);

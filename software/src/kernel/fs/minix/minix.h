@@ -56,7 +56,7 @@ int minix_open(struct vfile *file, int flags);
 int minix_close(struct vfile *file);
 int minix_read(struct vfile *file, char *buf, size_t nbytes);
 int minix_write(struct vfile *file, const char *buf, size_t nbytes);
-int minix_ioctl(struct vfile *file, unsigned int request, void *argp);
+int minix_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid);
 offset_t minix_seek(struct vfile *file, offset_t position, int whence);
 int minix_readdir(struct vfile *file, struct dirent *dir);
 

@@ -4,6 +4,7 @@
 
 #include <kernel/bh.h>
 #include <kernel/driver.h>
+#include <kernel/printk.h>
 
 #include "../if.h"
 #include "../packet.h"
@@ -63,7 +64,7 @@ int slip_if_init()
 
 	register_bh(BH_SLIP, slip_if_process_input, NULL);
 	for (short i = 0; i < SLIP_DEVICES; i++)
-		register_if_device(&devices[i]);
+		net_if_register_device((struct if_device *) &devices[i]);
 }
 
 int slip_if_up(struct if_device *ifdev)
@@ -99,11 +100,13 @@ static void slip_encode_packet(struct slip_if_device *ifdev)
 	_queue_remove(&ifdev->ifdev.tx_queue, &pack->node);
 
 
-	printk_safe("send packet: ");
-	for (int i = 0; i < pack->length; i++) {
-		printk_safe("%x ", (int) pack->data[i]);
+	if (ifdev->ifdev.flags & IFF_DEBUG) {
+		printk_safe("DEBUG: send packet: ");
+		for (int i = 0; i < pack->length; i++) {
+			printk_safe("%x ", (int) pack->data[i]);
+		}
+		printk_safe("\n");
 	}
-	printk_safe("\n");
 
 
 	ifdev->tx_buffer[j++] = SLIP_FRAME_END;
@@ -155,10 +158,12 @@ static void slip_decode_packet(struct slip_if_device *ifdev, short length)
 	}
 	pack->length = j;
 
-	printk_safe("recv packet: ");
-	for (int i = 0; i < pack->length; i++)
-		printk_safe("%x ", (int) pack->data[i]);
-	printk_safe("\n");
+	if (ifdev->ifdev.flags & IFF_DEBUG) {
+		printk_safe("DEBUG: recv packet: ");
+		for (int i = 0; i < pack->length; i++)
+			printk_safe("%x ", (int) pack->data[i]);
+		printk_safe("\n");
+	}
 
 	_queue_insert_after(&ifdev->ifdev.rx_queue, &pack->node, ifdev->ifdev.rx_queue.tail);
 	request_bh_run(BH_NET);

@@ -13,13 +13,10 @@ Operating System:
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
 
 	* change the hardcoded search for slip0 in protocol and such to be more generic
-	* do you need to implement some internal routing?
-	* implement ifup/ifdown somehow (I'm not sure if there's a syscall, or if it uses procfs or something to configure)
-	* add IP checksum verification, as well as UDP checksum calculating
+	* implement ifup/ifdown somehow
+	* add UDP checksum calculating
 
-	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
-	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum) (add to /proc/mounts)
-
+	* implement fopen, etc
 
 
 	* maybe add some parsing of params to the bootloader, rather than using the builtin defaults
@@ -29,13 +26,19 @@ Operating System:
 
 
 	* implement select()
+	* how hard would it be to implement dns?
+	* implement TCP?
+	* do you need to implement some internal network routing?
 	* you could possibly make an abstracted packet construction thing using an ioctl-like function defined for each protocol, which can intercept parts of
 	  the requests to fill in data in the packet headers (set src address, set dest address, add id, etc)
-	* how hard would it be to implement dns?
 
 	* add calculating of cpu runtime
+	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 	* make user programs optionally initialize the heap in a default start routine, and make the heap able to grow (once you have brk/sbrk)
+	* modify the kernel's init task creation to optionally load init from disk instead of being builtin (for kernel images written to the flash card)
+	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
+	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum) (add to /proc/mounts)
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* add check to vfs_link() for loops
 	* make init relaunch shell if the initial one is killed
@@ -44,8 +47,6 @@ Operating System:
 	* add checks for errors in the serial driver? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
-	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?
-	* modify the kernel's init task creation to optionally load init from disk instead of being builtin (for kernel images written to the flash card)
 
 	* should you make a lib subdir, and put unistd at the top?
 	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
@@ -54,25 +55,24 @@ Operating System:
 
 
 
-	* add network syscalls for local IPC (unix file, sockets)
-	* to stdlib, add: fprintf, fscanf, scanf, fopen, fclose, fgetpos, fseek, feof, fread, fwrite
 	* add pipe setup to command evaluation
 	* add fifos (should be easy now)
 	* add stack guard protection
 	* implement login system (setuid)
+	* to stdlib, add: fprintf, fscanf, scanf, fopen, fclose, fgetpos, fseek, feof, fread, fwrite
+	* implement fcntl
 	* can you implement some kind of terminal switching, like alt-F* keys... I don't think it's as possible with a serial port
 	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
+	* implement unix domain sockets
 	* try porting a simple command, and then something more complex, maybe awk or something as a big target
 
 	* add commands: rmdir, dd, chown
-	* implement fcntl
 	* implement shell scripting?
 	* add the & (run in background) option to the shell
 	* implement fg/bg somehow... it would be builtin to the shell and would require job control stuff...
 	* add up/down arrow processing to the shell (easy without cooked input, but how would it be done with...)
 	* add some kind of debugging or tracing support
 	* make a PIE format that can be loaded and executed (lower priority now that we have .data.rel.ro relocation working)
-
 
 
 

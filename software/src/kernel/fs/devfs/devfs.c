@@ -129,9 +129,9 @@ int devfs_write(struct vfile *file, const char *buf, size_t nbytes)
 	return dev_write(DEVFS_DATA(file->vnode).device, buf, 0, nbytes);
 }
 
-int devfs_ioctl(struct vfile *file, unsigned int request, void *argp)
+int devfs_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid)
 {
-	return dev_ioctl(DEVFS_DATA(file->vnode).device, request, argp);
+	return dev_ioctl(DEVFS_DATA(file->vnode).device, request, argp, uid);
 }
 
 offset_t devfs_seek(struct vfile *file, offset_t position, int whence)

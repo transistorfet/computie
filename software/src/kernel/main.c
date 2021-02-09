@@ -170,7 +170,7 @@ int main()
 
 
 	// TODO this is a temporary hack.  The ifup should be done through ifconfig
-	struct if_device *ifdev = net_if_find("slip0");
+	struct if_device *ifdev = net_if_find("slip0", NULL);
 	memset(&ifdev->address, '\0', sizeof(struct sockaddr_in));
 	((struct sockaddr_in *) &ifdev->address)->sin_family = AF_INET;
 	inet_aton("192.168.1.200", &((struct sockaddr_in *) &ifdev->address)->sin_addr);

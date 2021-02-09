@@ -35,10 +35,10 @@ int net_if_register_device(struct if_device *ifdev)
 	}
 }
 
-struct if_device *net_if_find(const char *name)
+struct if_device *net_if_find(const char *name, struct protocol *proto)
 {
 	for (char i = 0; i < IFDEV_MAX; i++) {
-		if (!strcmp(active_ifdevs[i]->name, name))
+		if ((!name || !strcmp(active_ifdevs[i]->name, name)) && (!proto || active_ifdevs[i]->incoming_proto == proto))
 			return active_ifdevs[i];
 	}
 	return NULL;
@@ -85,7 +85,7 @@ int net_if_ioctl(int request, struct ifreq *ifreq, uid_t uid)
 	if (_IO_TYPE(request) != 'I' || _IO_PARAM(request) != sizeof(struct ifreq))
 		return EINVAL;
 
-	ifdev = net_if_find(ifreq->ifr_name);
+	ifdev = net_if_find(ifreq->ifr_name, NULL);
 	if (!ifdev)
 		return ENODEV;
 
@@ -98,12 +98,12 @@ int net_if_ioctl(int request, struct ifreq *ifreq, uid_t uid)
 				return EPERM;
 			return net_if_change_state(ifdev, ifreq->ifr_flags);
 		case SIOCGIFADDR:
-			memcpy(&ifreq->ifr_addr, &ifdev->address, sizeof(struct sockaddr));
+			memcpy(&ifreq->ifr_addr, &ifdev->address, sizeof(struct sockaddr_storage));
 			break;
 		case SIOCSIFADDR:
 			if (uid != SU_UID)
 				return EPERM;
-			memcpy(&ifdev->address, &ifreq->ifr_addr, sizeof(struct sockaddr));
+			memcpy(&ifdev->address, &ifreq->ifr_addr, sizeof(struct sockaddr_storage));
 			break;
 		default:
 			return -1;

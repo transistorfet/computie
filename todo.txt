@@ -12,9 +12,10 @@ Operating System:
 	  of 55 or so that need more than 3 arguments =/
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
 
-	* change the hardcoded search for slip0 in protocol and such to be more generic
-	* implement ifup/ifdown somehow
+	* add getpeername() and getsockname(), which will require talking to protocol
+	* add send/recv and put a check to see if they are NULL before calling? Or make a protocol_nop set
 	* add UDP checksum calculating
+	* how hard would it be to implement dns?
 
 	* implement fopen, etc
 
@@ -26,7 +27,6 @@ Operating System:
 
 
 	* implement select()
-	* how hard would it be to implement dns?
 	* implement TCP?
 	* do you need to implement some internal network routing?
 	* you could possibly make an abstracted packet construction thing using an ioctl-like function defined for each protocol, which can intercept parts of

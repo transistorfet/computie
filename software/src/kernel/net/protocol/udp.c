@@ -176,8 +176,8 @@ int udp_create_endpoint(struct protocol *proto, struct socket *sock, const struc
 	struct ipv4_address src;
 	struct udp_endpoint *ep;
 
-	// TODO this is a hack for now
-	ifdev = net_if_find("slip0");
+	// TODO this is a hack.  this should be resolved by the router
+	ifdev = net_if_find(NULL, &ipv4_protocol);
 
 	// Get the real IP and port number to send from
 	error = inet_resolve_address(sockaddr, len, (const struct sockaddr *) &ifdev->address, &src);

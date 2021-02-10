@@ -30,10 +30,10 @@ $(ROOT)/libc-68k-none.a: CFLAGS += -mpcrel
 ARCH = 68k-os
 OBJDIR = objs/$(ARCH)
 
-LIBC_68K_NONE_SRCS = $(filter-out arch/*, $(wildcard **/*.[cs]))
+LIBC_68K_NONE_SRCS = $(wildcard 68k/**/*.[cs]) $(wildcard none/**/*.[cs]) $(wildcard common/**/*.[cs])
 LIBC_68K_NONE_OBJS = $(patsubst %.c,%.o, $(patsubst %.s,%.o, $(LIBC_68K_NONE_SRCS)))
 
-LIBC_68K_OS_SRCS = $(filter-out arch/*, $(wildcard **/*.[cs])) $(wildcard arch/$(ARCH)/**/*.[cs])
+LIBC_68K_OS_SRCS = $(wildcard 68k/**/*.[cs]) $(wildcard os/**/*.[cs]) $(wildcard common/**/*.[cs])
 LIBC_68K_OS_OBJS = $(patsubst %.c,%.o, $(patsubst %.s,%.o, $(LIBC_68K_OS_SRCS)))
 
 $(ROOT)/libc-68k-none.a: $(LIBC_68K_NONE_OBJS)

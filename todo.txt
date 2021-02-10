@@ -11,11 +11,13 @@ Operating System:
 	* booting directly after power on doesn't work.  The first time it hangs, and then after that it gets a fatal error.  Loading a kernel first fixes the problem.
 	  I suspect it might have something to do with the tty init in the boot loader
 
+	* split the arch stuff into 68k-specific stuff and os-specific but system generic??
 	* make a crt0/_start file that initializes the heap, env, and any other values needed
 	* fix ephemeral port assignment
 	* fix the malloc implementation to use brk() (and also port the kmalloc merging code?)
 	* implement fopen, etc
 
+	* add timestamps to packets
 	* implement select()
 	* how hard would it be to implement dns?
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card

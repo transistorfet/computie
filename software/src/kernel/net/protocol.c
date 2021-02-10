@@ -62,6 +62,8 @@ int net_incoming_packet(struct protocol *proto, struct packet *pack)
 
 int net_create_endpoint(struct protocol *proto, struct socket *sock, const struct sockaddr *sockaddr, socklen_t len, struct endpoint **result)
 {
+	if (!proto->ops->create_endpoint)
+		return EAFNOSUPPORT;
 	return proto->ops->create_endpoint(proto, sock, sockaddr, len, result);
 }
 
@@ -85,5 +87,13 @@ int net_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct so
 	return ep->ops->recv_from(ep, buf, nbytes, sockaddr, len);
 }
 
+int net_endpoint_get_options(struct endpoint *ep, int level, int optname, void *optval, socklen_t *optlen)
+{
+	return ep->ops->get_options(ep, level, optname, optval, optlen);
+}
 
+int net_endpoint_set_options(struct endpoint *ep, int level, int optname, const void *optval, socklen_t optlen)
+{
+	return ep->ops->set_options(ep, level, optname, optval, optlen);
+}
 

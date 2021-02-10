@@ -23,7 +23,7 @@ python3 tools/load.py -l src/commands/daemontest.send
 Enable SLIP on linux:
 
 sudo slattach -s 38400 -p slip /dev/ttyUSB1
-sudo ifconfig sl0 192.168.1.2 pointopoint 192.168.1.200 arp up
+sudo ifconfig sl0 192.168.1.2 pointopoint 192.168.1.200 up
 // (this is automatically added on my machine) >> sudo route add -host 192.168.1.200 sl0
 sudo arp -Ds 192.168.1.200 enp3s0 pub
 sudo iptables -A FORWARD -i sl0 -j ACCEPT

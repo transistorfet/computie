@@ -31,6 +31,8 @@ ssize_t net_socket_sendto(struct vfile *file, const void *buf, size_t n, int fla
 ssize_t net_socket_recv(struct vfile *file, void *buf, size_t n, int flags);
 ssize_t net_socket_recvfrom(struct vfile *file, void *buf, size_t n, int flags, struct sockaddr *addr, socklen_t *addr_len);
 int net_socket_wakeup(struct socket *sock);
+int net_socket_get_options(struct vfile *file, int level, int optname, void *optval, socklen_t *optlen);
+int net_socket_set_options(struct vfile *file, int level, int optname, const void *optval, socklen_t optlen);
 
 #endif
 

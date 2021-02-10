@@ -70,9 +70,11 @@
 #define SYS_RECV	63
 #define SYS_RECVFROM	64
 #define SYS_RECVMSG	65
+#define SYS_GETSOCKOPT	66
+#define SYS_SETSOCKOPT	67
 
 // TODO remove this after testing
-#define SYS_EXECBUILTIN	66
+#define SYS_EXECBUILTIN	68
 
 typedef int (*syscall_t)(int, int, int);
 

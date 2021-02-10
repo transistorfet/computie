@@ -104,6 +104,8 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_recv,
 	do_recvfrom,
 	do_recvmsg,
+	do_getsockopt,
+	do_setsockopt,
 
 	do_execbuiltin,
 };
@@ -783,4 +785,21 @@ ssize_t do_recvmsg(int fd, struct msghdr *message, int flags)
 	return -1;
 }
 
+//int do_getsockopt(int fd, int level, int optname, void *optval, socklen_t *optlen)
+int do_getsockopt(int fd, int level, unsigned int opts[3])
+{
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file || !S_ISSOCK(file->vnode->mode))
+		return EBADF;
+	return net_socket_get_options(file, level, (int) opts[0], (void *) opts[1], (socklen_t *) opts[2]);
+}
+
+//int do_setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen)
+int do_setsockopt(int fd, int level, unsigned int opts[3])
+{
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file || !S_ISSOCK(file->vnode->mode))
+		return EBADF;
+	return net_socket_set_options(file, level, (int) opts[0], (const void *) opts[1], (socklen_t) opts[2]);
+}
 

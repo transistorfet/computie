@@ -26,6 +26,8 @@ int udp_connect_endpoint(struct endpoint *ep, const struct sockaddr *sockaddr, s
 int udp_destroy_endpoint(struct endpoint *ep);
 int udp_endpoint_send_to(struct endpoint *ep, const char *buf, int nbytes, const struct sockaddr *sockaddr, socklen_t len);
 int udp_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct sockaddr *sockaddr, socklen_t *len);
+int udp_endpoint_get_options(struct endpoint *ep, int level, int optname, void *optval, socklen_t *optlen);
+int udp_endpoint_set_options(struct endpoint *ep, int level, int optname, const void *optval, socklen_t optlen);
 
 
 struct protocol_ops udp_protocol_ops = {
@@ -49,6 +51,8 @@ struct endpoint_ops udp_endpoint_ops = {
 	udp_destroy_endpoint,
 	udp_endpoint_send_to,
 	udp_endpoint_recv_from,
+	udp_endpoint_get_options,
+	udp_endpoint_set_options,
 };
 
 struct udp_endpoint {
@@ -149,7 +153,6 @@ int udp_forward_packet(struct protocol *proto, struct packet *pack)
 	struct endpoint *ep;
 	struct ipv4_custom_data *custom = (struct ipv4_custom_data *) pack->custom_data;
 
-	printk("forwarding %x:%d\n", custom->dest.addr, custom->dest.port);
 	ep = lookup_endpoint(proto, custom->dest.addr, custom->dest.port);
 	if (!ep)
 		return PACKET_DROPPED;
@@ -268,5 +271,31 @@ int udp_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct so
 
 	packet_free(pack);
 	return nbytes;
+}
+
+int udp_endpoint_get_options(struct endpoint *ep, int level, int optname, void *optval, socklen_t *optlen)
+{
+	switch (optname) {
+		case SO_GETSOCKNAME:
+			if (!UDP_ENDPOINT(ep)->src.addr)
+				return ENOTCONN;
+			inet_load_sockaddr((struct sockaddr *) optval, optlen, &UDP_ENDPOINT(ep)->src);
+			return 0;
+		case SO_GETPEERNAME:
+			if (!UDP_ENDPOINT(ep)->dest.addr)
+				return ENOTCONN;
+			inet_load_sockaddr((struct sockaddr *) optval, optlen, &UDP_ENDPOINT(ep)->dest);
+			return 0;
+		default:
+			return -1;
+	}
+}
+
+int udp_endpoint_set_options(struct endpoint *ep, int level, int optname, const void *optval, socklen_t optlen)
+{
+	switch (optname) {
+		default:
+			return -1;
+	}
 }
 

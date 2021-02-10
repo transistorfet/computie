@@ -85,7 +85,7 @@ extern ssize_t do_recvmsg(int fd, struct msghdr *message, int flags);
 
 //extern int do_getsockname(int fd, struct sockaddr *addr, socklen_t *len);
 //extern int do_getpeername(int fd, struct sockaddr *addr, socklen_t *len);
-//extern int do_getsockopt(int fd, int level, int optname, void *optval, socklen_t *optlen);
-//extern int do_setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen);
+extern int do_getsockopt(int fd, int level, unsigned int opts[3]);
+extern int do_setsockopt(int fd, int level, unsigned int opts[3]);
 
 #endif

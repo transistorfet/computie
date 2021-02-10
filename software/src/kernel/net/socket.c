@@ -211,3 +211,21 @@ int net_socket_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t
 	return 0;
 }
 
+int net_socket_get_options(struct vfile *file, int level, int optname, void *optval, socklen_t *optlen)
+{
+	struct socket *sock = SOCKET(file->vnode);
+
+	if (!sock->ep)
+		return ENOTCONN;
+	return net_endpoint_get_options(sock->ep, level, optname, optval, optlen);
+}
+
+int net_socket_set_options(struct vfile *file, int level, int optname, const void *optval, socklen_t optlen)
+{
+	struct socket *sock = SOCKET(file->vnode);
+
+	if (!sock->ep)
+		return ENOTCONN;
+	return net_endpoint_set_options(sock->ep, level, optname, optval, optlen);
+}
+

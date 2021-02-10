@@ -4,27 +4,32 @@
 
 #include <stddef.h>
 
-#define SOCK_STREAM	1
-#define SOCK_DGRAM	2
-#define SOCK_RAW	3
+#define SOCK_STREAM		1
+#define SOCK_DGRAM		2
+#define SOCK_RAW		3
 
 // Protocol Families
-#define PF_UNSPEC	0		// Unspecified
-#define PF_UNIX		1		// Pipes and file-domain
-#define PF_LOCAL	PF_LOCAL	// Other name for PF_UNIX
-#define PF_INET		2		// IP version 4
-#define PF_INET6	3		// IP version 6
+#define PF_UNSPEC		0		// Unspecified
+#define PF_UNIX			1		// Pipes and file-domain
+#define PF_LOCAL		PF_LOCAL	// Other name for PF_UNIX
+#define PF_INET			2		// IP version 4
+#define PF_INET6		3		// IP version 6
 
 // Address Families
-#define AF_UNSPEC	PF_UNSPEC
-#define AF_LOCAL	PF_UNIX
-#define AF_UNIX		PF_UNIX
-#define AF_INET		PF_INET
-#define AF_INET6	PF_INET6
+#define AF_UNSPEC		PF_UNSPEC
+#define AF_LOCAL		PF_UNIX
+#define AF_UNIX			PF_UNIX
+#define AF_INET			PF_INET
+#define AF_INET6		PF_INET6
 
-#define SHUT_RD		0
-#define SHUT_WR		1
-#define SHUT_RDWR	2
+#define SHUT_RD			0
+#define SHUT_WR			1
+#define SHUT_RDWR		2
+
+// Socket Options
+#define SO_DEBUG		4
+#define SO_GETSOCKNAME		128
+#define SO_GETPEERNAME		129
 
 
 typedef unsigned int socklen_t;
@@ -74,11 +79,10 @@ ssize_t recv(int fd, void *buf, size_t n, int flags);
 ssize_t recvfrom(int fd, void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t *addr_len);
 ssize_t recvmsg(int fd, struct msghdr *message, int flags);
 
-//int getsockname(int fd, struct sockaddr *addr, socklen_t *len);
-//int getpeername(int fd, struct sockaddr *addr, socklen_t *len);
-//int getsockopt(int fd, int level, int optname, void *optval, socklen_t *optlen);
-//int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen);
-
+int getsockname(int fd, struct sockaddr *addr, socklen_t *len);
+int getpeername(int fd, struct sockaddr *addr, socklen_t *len);
+int getsockopt(int fd, int level, int optname, void *optval, socklen_t *optlen);
+int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen);
 
 #endif
 

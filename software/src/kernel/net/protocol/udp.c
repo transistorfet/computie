@@ -126,7 +126,7 @@ int udp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offs
 	struct ipv4_custom_data *custom;
 
 	if (pack->length - offset < sizeof(struct udp_header))
-		return -1;
+		return -5;
 
 	hdr = (struct udp_header *) &pack->data[offset];
 	hdr->src = from_be16(hdr->src);
@@ -135,7 +135,7 @@ int udp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offs
 	hdr->checksum = from_be16(hdr->checksum);
 
 	if (hdr->length != pack->length - offset)
-		return -1;
+		return -6;
 	pack->transport_offset = offset;
 	pack->data_offset = offset + sizeof(struct udp_header);
 

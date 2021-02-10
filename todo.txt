@@ -11,15 +11,14 @@ Operating System:
 	* booting directly after power on doesn't work.  The first time it hangs, and then after that it gets a fatal error.  Loading a kernel first fixes the problem.
 	  I suspect it might have something to do with the tty init in the boot loader
 
-	* implement fopen, etc
-	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
-	* fix the malloc implementation to use brk() (and also port the kmalloc merging code?)
 	* make a crt0/_start file that initializes the heap, env, and any other values needed
+	* fix ephemeral port assignment
+	* fix the malloc implementation to use brk() (and also port the kmalloc merging code?)
+	* implement fopen, etc
 
 	* implement select()
-	* fix ephemeral port assignment
-	* add getpeername() and getsockname(), which will require talking to protocol
 	* how hard would it be to implement dns?
+	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
 
 
 

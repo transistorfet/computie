@@ -96,7 +96,7 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 		return -1;
 	pack->data_offset = offset + sizeof(struct ipv4_header);
 	if (hdr->version != 4 || hdr->ihl < 5 || hdr->ihl > 9)
-		return -1;
+		return -2;
 
 	hdr->length = from_be16(hdr->length);
 	hdr->checksum = from_be16(hdr->checksum);
@@ -106,7 +106,7 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 	checksum = hdr->checksum;
 	hdr->checksum = 0;
 	if (checksum != ipv4_calculate_checksum(hdr, sizeof(struct ipv4_header)))
-		return -2;
+		return -3;
 	hdr->checksum = checksum;
 
 	custom = (struct ipv4_custom_data *) &pack->custom_data;
@@ -117,7 +117,7 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 
 	next = net_get_protocol(PF_INET, 0, hdr->protocol);
 	if (!next)
-		return -3;
+		return -4;
 	pack->proto = next;
 
 	error = next->ops->decode_header(next, pack, offset + (((uint16_t) hdr->ihl) << 2));
@@ -142,6 +142,9 @@ uint16_t ipv4_calculate_checksum(void *data, int len)
 
 	for (short i = 0; i < (len >> 1); i++)
 		checksum += ((uint16_t *) data)[i];
+
+	if (len & 0x01)
+		checksum += (((uint8_t *) data)[len - 1] << 8);
 
 	carry = checksum >> 16;
 	checksum &= 0xFFFF;

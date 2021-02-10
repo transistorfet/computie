@@ -114,6 +114,7 @@ int load_elf_binary(struct vfile *file, struct process *proc, void **entry)
 				return EKILL;
 			if ((error = vfs_read(file, proc->map.segments[M_TEXT].base + prog_headers[i].p_vaddr, prog_headers[i].p_filesz)) < 0)
 				return EKILL;
+			memset(proc->map.segments[M_TEXT].base + prog_headers[i].p_vaddr + prog_headers[i].p_filesz, '\0', prog_headers[i].p_memsz - prog_headers[i].p_filesz);
 		}
 		else if (prog_headers[i].p_type == PT_GNU_RELRO) {
 			char **data = proc->map.segments[M_TEXT].base + prog_headers[i].p_vaddr;

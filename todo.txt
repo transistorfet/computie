@@ -8,12 +8,10 @@
 
 Operating System:
 
+	* add kernel level timers of some kind that can be used by the tcp code to set timeouts
 	* make a crt0/_start file that initializes env, and any other values needed
-	* fix ephemeral port assignment
 	* implement fopen, etc
 
-	* add srand() and rand(), such that they can be used in the kernel for port and tcp random numbers
-	* add kernel level timers of some kind that can be used by the tcp code to set timeouts
 	* add send/recv and put a check to see if they are NULL before calling? Or make a protocol_nop set
 	* implement TCP?
 

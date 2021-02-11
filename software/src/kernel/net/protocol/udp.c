@@ -49,6 +49,8 @@ struct protocol udp_protocol = {
 struct endpoint_ops udp_endpoint_ops = {
 	udp_connect_endpoint,
 	udp_destroy_endpoint,
+	NULL,
+	NULL,
 	udp_endpoint_send_to,
 	udp_endpoint_recv_from,
 	udp_endpoint_get_options,

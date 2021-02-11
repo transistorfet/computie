@@ -127,6 +127,24 @@ int net_socket_connect(struct vfile *file, const struct sockaddr *addr, socklen_
 	return net_connect_endpoint(sock->ep, addr, len);
 }
 
+int net_socket_listen(struct vfile *file, int n)
+{
+	// TODO implement
+	return -1;
+}
+
+int net_socket_accept(struct vfile *file, struct sockaddr *addr, socklen_t *addr_len)
+{
+	// TODO implement
+	return -1;
+}
+
+int net_socket_shutdown(struct vfile *file, int how)
+{
+	// TODO implement
+	return -1;
+}
+
 int net_socket_read(struct vfile *file, char *buf, size_t nbytes)
 {
 	if (!S_ISSOCK(file->vnode->mode))
@@ -143,7 +161,14 @@ int net_socket_write(struct vfile *file, const char *buf, size_t nbytes)
 
 ssize_t net_socket_send(struct vfile *file, const void *buf, size_t n, int flags)
 {
+	// TODO implement
+	return -1;
+}
 
+ssize_t net_socket_recv(struct vfile *file, void *buf, size_t n, int flags)
+{
+	// TODO implement
+	return -1;
 }
 
 ssize_t net_socket_sendto(struct vfile *file, const void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t addr_len)
@@ -161,11 +186,6 @@ ssize_t net_socket_sendto(struct vfile *file, const void *buf, size_t n, int fla
 	}
 
 	return net_endpoint_send_to(sock->ep, buf, n, addr, addr_len);
-}
-
-ssize_t net_socket_recv(struct vfile *file, void *buf, size_t n, int flags)
-{
-
 }
 
 ssize_t net_socket_recvfrom(struct vfile *file, void *buf, size_t n, int flags, struct sockaddr *addr, socklen_t *addr_len)

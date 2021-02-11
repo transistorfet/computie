@@ -39,8 +39,8 @@ struct protocol {
 struct endpoint_ops {
 	int (*connect)(struct endpoint *ep, const struct sockaddr *sockaddr, socklen_t len);
 	int (*destroy)(struct endpoint *ep);
-	//int (*send)(struct endpoint *ep, const char *buf, int nbytes);
-	//int (*recv)(struct endpoint *ep, char *buf, int max);
+	int (*send)(struct endpoint *ep, const char *buf, int nbytes);
+	int (*recv)(struct endpoint *ep, char *buf, int max);
 	int (*send_to)(struct endpoint *ep, const char *buf, int nbytes, const struct sockaddr *sockaddr, socklen_t len);
 	int (*recv_from)(struct endpoint *ep, char *buf, int max, struct sockaddr *sockaddr, socklen_t *len);
 	int (*get_options)(struct endpoint *ep, int level, int optname, void *optval, socklen_t *optlen);

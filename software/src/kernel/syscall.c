@@ -723,28 +723,36 @@ int do_bind(int fd, const struct sockaddr *addr, socklen_t len)
 
 int do_listen(int fd, int n)
 {
-	// TODO implement
-	return -1;
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file || !S_ISSOCK(file->vnode->mode))
+		return EBADF;
+	return net_socket_listen(file, n);
 }
 
 int do_accept(int fd, struct sockaddr *addr, socklen_t *addr_len)
 {
-	// TODO implement
-	return -1;
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file || !S_ISSOCK(file->vnode->mode))
+		return EBADF;
+	return net_socket_accept(file, addr, addr_len);
 }
 
 int do_shutdown(int fd, int how)
 {
-	// TODO implement
-	return -1;
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file || !S_ISSOCK(file->vnode->mode))
+		return EBADF;
+	return net_socket_shutdown(file, how);
 }
 
 
 // Unistd Declaration: ssize_t do_send(int fd, const void *buf, size_t n, int flags)
 ssize_t do_send(int fd, const void *buf, unsigned int opts[2])
 {
-	// TODO implement
-	return -1;
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file || !S_ISSOCK(file->vnode->mode))
+		return EBADF;
+	return net_socket_send(file, buf, (size_t) opts[0], (int) opts[1]);
 }
 
 // Unistd Declaration:ssize_t do_sendto(int fd, const void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t addr_len)
@@ -766,8 +774,10 @@ ssize_t do_sendmsg(int fd, const struct msghdr *message, int flags)
 // Unistd Declaration:ssize_t do_recv(int fd, void *buf, size_t n, int flags)
 ssize_t do_recv(int fd, void *buf, unsigned int opts[2])
 {
-	// TODO implement
-	return -1;
+	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	if (!file || !S_ISSOCK(file->vnode->mode))
+		return EBADF;
+	return net_socket_recv(file, buf, (size_t) opts[0], (int) opts[1]);
 }
 
 // Unistd Declaration:ssize_t do_recvfrom(int fd, void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t *addr_len)

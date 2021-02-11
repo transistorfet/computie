@@ -15,7 +15,7 @@ static char *load_address = (char *) 0x100000;	// Address to load the kernel
 static char *mem_drive = (char *) 0x080000;	// The address in ROM of the start of the drive
 static int ata_drive = 0x800;			// The sector number of the start of the boot partition
 static char boot_device = 2;			// 1 = ROM, 2 = ATA
-static minix_v1_zone_t inode_zone = 5;		// Zone of the inode table where the kernel is stored
+//static minix_v1_zone_t inode_zone = 6;		// Zone of the inode table where the kernel is stored
 static short inode_num = 2;			// Inode offset into zone of the kernel inode
 
 int init_tty();
@@ -70,9 +70,9 @@ void load_kernel(char *offset)
 	char buffer[MINIX_V1_ZONE_SIZE];
 
 	// Load our target inode and get the zone table in the inode
-	//super = (struct minix_v1_superblock *) copy_zone_data(buffer, MINIX_V1_SUPER_ZONE);
-	//MINIX_V1_INODE_TABLE_START(super);
-	//inode_zone = MINIX_V1_BITMAP_ZONES + from_le16((super)->imap_blocks) + from_le16((super)->zmap_blocks);
+	super = (struct minix_v1_superblock *) copy_zone_data(buffer, MINIX_V1_SUPER_ZONE);
+	MINIX_V1_INODE_TABLE_START(super);
+	minix_v1_zone_t inode_zone = MINIX_V1_BITMAP_ZONES + from_le16((super)->imap_blocks) + from_le16((super)->zmap_blocks);
 
 	// Load our target inode and get the zone table in the inode
 	inode_table = (struct minix_v1_inode *) copy_zone_data(buffer, inode_zone);
@@ -128,6 +128,14 @@ void ata_wait()
 	ATA_DELAY(10);
 }
 
+static inline char hexchar(uint8_t byte)
+{
+	if (byte < 10)
+		return byte + 0x30;
+	else
+		return byte + 0x37;
+}
+
 int ata_read_sector(int sector, char *buffer)
 {
 	// Set 8-bit mode
@@ -156,6 +164,15 @@ int ata_read_sector(int sector, char *buffer)
 		buffer[i] = (*ATA_REG_DATA_BYTE);
 		ata_wait();
 	}
+
+	/*
+	for (int i = 0; i < 1024; i++) {
+		putchar(hexchar((buffer[i] >> 4) & 0xF));
+		putchar(hexchar(buffer[i] & 0xF));
+		if ((i & 0x1F) == 0x1F)
+			putchar('\n');
+	}
+	*/
 
 	return 0;
 }
@@ -225,13 +242,13 @@ int init_tty()
 	*IMR_WR_ADDR = 0x00;
 
 	*CRA_WR_ADDR = CMD_RESET_MR;
+	*CRA_WR_ADDR = CMD_RESET_TX;
 
 	*MR1A_MR2A_ADDR = MR1A_MODE_A_REG_1_CONFIG;
 	*MR1A_MR2A_ADDR = MR2A_MODE_A_REG_2_CONFIG;
 	*CSRA_WR_ADDR = CSRA_CLK_SELECT_REG_A_CONFIG;
 	*ACR_WR_ADDR = ACR_AUX_CONTROL_REG_CONFIG;
 
-	*CRA_WR_ADDR = CMD_RESET_TX;
 	*CRA_WR_ADDR = CMD_ENABLE_TX;
 }
 

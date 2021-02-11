@@ -11,10 +11,8 @@ Operating System:
 	* booting directly after power on doesn't work.  The first time it hangs, and then after that it gets a fatal error.  Loading a kernel first fixes the problem.
 	  I suspect it might have something to do with the tty init in the boot loader
 
-	* split the arch stuff into 68k-specific stuff and os-specific but system generic??
-	* make a crt0/_start file that initializes the heap, env, and any other values needed
+	* make a crt0/_start file that initializes env, and any other values needed
 	* fix ephemeral port assignment
-	* fix the malloc implementation to use brk() (and also port the kmalloc merging code?)
 	* implement fopen, etc
 
 	* add timestamps to packets
@@ -53,9 +51,7 @@ Operating System:
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 
-	* should you make a lib subdir, and put unistd at the top?
 	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
-	* move the math functions in libc to arch/68k
 	* move interrupt and syscall_entry code into proc??
 
 

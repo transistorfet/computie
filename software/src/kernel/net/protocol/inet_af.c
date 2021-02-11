@@ -1,10 +1,14 @@
 
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
 #include "inet_af.h"
+
+#define EPHEMERAL_BASE		49152
+#define EPHEMERAL_RANGE		16383
 
 
 int inet_load_sockaddr(struct sockaddr *sa, socklen_t *sa_len, struct ipv4_address *ipv4)
@@ -41,10 +45,10 @@ int inet_resolve_address(const struct sockaddr *requested, socklen_t len, const 
 	// Get the real IP and port to send from
 	if (ipv4->addr == INADDR_ANY)
 		ipv4->addr = actual_sin->sin_addr.s_addr;
+
 	// TODO should this be in the udp code to ensure the ephemeral port isn't already in use?
 	if (ipv4->port == 0)
-		// TODO this should be an ephemeral port.  This is a temporary hack
-		ipv4->port = 1284;
+		ipv4->port = EPHEMERAL_BASE + (rand() & EPHEMERAL_RANGE);
 
 	return 0;
 }

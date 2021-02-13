@@ -173,7 +173,6 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 		return EINVAL;
 
 	cur = (cwd && path[0] != VFS_SEP) ? cwd : root_fs->root_node;
-	// We are always starting from the root node, so ignore a leading slash
 	if (path[0] == VFS_SEP) {
 		cur = root_fs->root_node;
 		i += 1;
@@ -190,13 +189,13 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 			cur = vfs_clone_vnode(mp->root_node);
 		}
 
-		// Return successfully with the result
+		// If we're at the end of the path, then return successfully with the result
 		if (path[i] == '\0') {
 			*result = cur;
 			return 0;
 		}
 
-		// This is not the last component, so it must be directory
+		// This is not the last component, so it must be directory in order to continue
 		if (!S_ISDIR(cur->mode)) {
 			vfs_release_vnode(cur);
 			return ENOTDIR;
@@ -224,7 +223,7 @@ int vfs_lookup(struct vnode *cwd, const char *path, int flags, uid_t uid, struct
 			continue;
 
 		// If we're at the root of a mounted fs and are accessing "..", then swap the root node for the mounted node before lookup
-		if (!strcmp(component, "..") && cur == cur->mp->root_node) {
+		if (cur == cur->mp->root_node && !strcmp(component, "..")) {
 			mp = cur->mp;
 			vfs_release_vnode(cur);
 			cur = vfs_clone_vnode(mp->mount_node);

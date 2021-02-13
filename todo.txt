@@ -8,6 +8,10 @@
 
 Operating System:
 
+	* the tcp protocol might not be correctly switching endianness, even though it doesn't affect 68k archs
+	* figure out how to unblock the connect syscall properly
+	* add timers and retransmissions to tcp
+
 	* add kernel level timers of some kind that can be used by the tcp code to set timeouts
 	* make a crt0/_start file that initializes env, and any other values needed
 	* implement fopen, etc
@@ -51,6 +55,7 @@ Operating System:
 
 	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
 	* move interrupt and syscall_entry code into proc??
+	* should you rename vfs_clone_vnode/vfs_release_vnode to instead be vfs_clone_vnode_ref/vfs_drop_vnode_ref ??  The latter would make more sense, albeit be longer
 
 
 

@@ -26,7 +26,6 @@ struct protocol ipv4_protocol = {
 	PF_INET,
 	SOCK_RAW,
 	IPPROTO_IP,
-	{ NULL },
 };
 
 
@@ -56,6 +55,7 @@ int ipv4_init()
 int ipv4_encode_header(struct packet *pack, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *data, int length)
 {
 	struct ipv4_header hdr;
+	struct ipv4_custom_data *custom;
 
 	if (!pack->proto)
 		return -1;
@@ -74,7 +74,13 @@ int ipv4_encode_header(struct packet *pack, const struct ipv4_address *src, cons
 	hdr.src = to_be32(src->addr);
 	hdr.dest = to_be32(dest->addr);
 
-	hdr.checksum = ipv4_calculate_checksum(&hdr, sizeof(struct ipv4_header));
+	hdr.checksum = ipv4_calculate_checksum(&hdr, sizeof(struct ipv4_header), 0);
+
+	custom = (struct ipv4_custom_data *) &pack->custom_data;
+	custom->src.addr = src->addr;
+	custom->src.port = src->port;
+	custom->dest.addr = dest->addr;
+	custom->dest.port = dest->port;
 
 	pack->network_offset = pack->length;
 	pack->transport_offset = pack->length + sizeof(struct ipv4_header);
@@ -105,7 +111,7 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 
 	checksum = hdr->checksum;
 	hdr->checksum = 0;
-	if (checksum != ipv4_calculate_checksum(hdr, sizeof(struct ipv4_header)))
+	if (checksum != ipv4_calculate_checksum(hdr, sizeof(struct ipv4_header), 0))
 		return -3;
 	hdr->checksum = checksum;
 
@@ -135,10 +141,10 @@ int ipv4_forward_packet(struct protocol *proto, struct packet *pack)
 	return pack->proto->ops->forward_packet(pack->proto, pack);
 }
 
-uint16_t ipv4_calculate_checksum(void *data, int len)
+uint16_t ipv4_calculate_checksum(void *data, int len, uint32_t start)
 {
 	uint16_t carry;
-	uint32_t checksum = 0;
+	uint32_t checksum = start;
 
 	for (short i = 0; i < (len >> 1); i++)
 		checksum += ((uint16_t *) data)[i];

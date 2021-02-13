@@ -27,7 +27,7 @@ int net_socket_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t
 int net_socket_bind(struct vfile *file, const struct sockaddr *addr, socklen_t len);
 int net_socket_connect(struct vfile *file, const struct sockaddr *addr, socklen_t len);
 int net_socket_listen(struct vfile *file, int n);
-int net_socket_accept(struct vfile *file, struct sockaddr *addr, socklen_t *addr_len);
+int net_socket_accept(struct vfile *file, struct sockaddr *addr, socklen_t *addr_len, uid_t uid, struct vfile **result);
 int net_socket_shutdown(struct vfile *file, int how);
 ssize_t net_socket_send(struct vfile *file, const void *buf, size_t n, int flags);
 ssize_t net_socket_sendto(struct vfile *file, const void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t addr_len);

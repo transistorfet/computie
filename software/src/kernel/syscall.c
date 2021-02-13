@@ -731,10 +731,26 @@ int do_listen(int fd, int n)
 
 int do_accept(int fd, struct sockaddr *addr, socklen_t *addr_len)
 {
-	struct vfile *file = get_fd(current_proc->fd_table, fd);
+	int newfd;
+	int error;
+	struct vfile *file;
+	struct vfile *newfile;
+
+	file = get_fd(current_proc->fd_table, fd);
 	if (!file || !S_ISSOCK(file->vnode->mode))
 		return EBADF;
-	return net_socket_accept(file, addr, addr_len);
+
+	newfd = find_unused_fd(current_proc->fd_table);
+	if (newfd < 0)
+		return newfd;
+
+	error = net_socket_accept(file, addr, addr_len, current_proc->uid, &newfile);
+	if (error)
+		return error;
+
+	set_fd(current_proc->fd_table, newfd, newfile);
+
+	return newfd;
 }
 
 int do_shutdown(int fd, int how)

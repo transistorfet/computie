@@ -29,7 +29,6 @@ struct protocol icmp_protocol = {
 	PF_INET,
 	SOCK_RAW,
 	IPPROTO_ICMP,
-	{ NULL },
 };
 
 
@@ -59,7 +58,7 @@ static int icmp_encode_packet(struct packet *pack, uint8_t type, uint8_t code, s
 	hdr->type = type;
 	hdr->code = code;
 	hdr->checksum = 0;
-	hdr->checksum = to_be16(ipv4_calculate_checksum(data, length));
+	hdr->checksum = to_be16(ipv4_calculate_checksum(data, length, 0));
 
 	pack->data_offset = pack->length;
 	if (packet_append(pack, data, length))
@@ -98,7 +97,7 @@ int icmp_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 
 	checksum = hdr->checksum;
 	hdr->checksum = 0;
-	if (checksum != ipv4_calculate_checksum(&pack->data[offset], pack->length - offset))
+	if (checksum != ipv4_calculate_checksum(&pack->data[offset], pack->length - offset, 0))
 		return -2;
 	hdr->checksum = checksum;
 

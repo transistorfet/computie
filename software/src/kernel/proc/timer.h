@@ -6,6 +6,11 @@
 
 struct process;
 
+//struct timer {
+//	struct queue_node node;
+//	int expires;
+//};
+
 int set_alarm(struct process *proc, uint32_t seconds);
 void check_timers();
 

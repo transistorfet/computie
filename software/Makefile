@@ -76,15 +76,6 @@ KERNEL_OBJS = \
 	src/kernel/proc/filedesc.o \
 	src/kernel/proc/binaries.o \
 	src/kernel/mm/kmalloc.o \
-	src/kernel/net/packet.o \
-	src/kernel/net/socket.o \
-	src/kernel/net/protocol.o \
-	src/kernel/net/protocol/inet_af.o \
-	src/kernel/net/protocol/ipv4.o \
-	src/kernel/net/protocol/udp.o \
-	src/kernel/net/protocol/icmp.o \
-	src/kernel/net/if.o \
-	src/kernel/net/if/slip.o \
 	src/kernel/fs/vfs.o \
 	src/kernel/fs/nop.o \
 	src/kernel/fs/pipe.o \
@@ -94,6 +85,16 @@ KERNEL_OBJS = \
 	src/kernel/fs/bufcache.o \
 	$(FILESYSTEM_OBJS) \
 	$(DRIVER_OBJS) \
+	src/kernel/net/packet.o \
+	src/kernel/net/socket.o \
+	src/kernel/net/protocol.o \
+	src/kernel/net/protocol/inet_af.o \
+	src/kernel/net/protocol/ipv4.o \
+	src/kernel/net/protocol/udp.o \
+	src/kernel/net/protocol/icmp.o \
+	src/kernel/net/protocol/tcp.o \
+	src/kernel/net/if.o \
+	src/kernel/net/if/slip.o \
 	src/commands/init.o \
 	src/commands/sh.o \
 	libc-68k-os.a

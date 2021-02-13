@@ -72,28 +72,3 @@ int net_destroy_endpoint(struct endpoint *ep)
 	return ep->ops->destroy(ep);
 }
 
-int net_connect_endpoint(struct endpoint *ep, const struct sockaddr *sockaddr, socklen_t len)
-{
-	return ep->ops->connect(ep, sockaddr, len);
-}
-
-int net_endpoint_send_to(struct endpoint *ep, const char *buf, int nbytes, const struct sockaddr *sockaddr, socklen_t len)
-{
-	return ep->ops->send_to(ep, buf, nbytes, sockaddr, len);
-}
-
-int net_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct sockaddr *sockaddr, socklen_t *len)
-{
-	return ep->ops->recv_from(ep, buf, nbytes, sockaddr, len);
-}
-
-int net_endpoint_get_options(struct endpoint *ep, int level, int optname, void *optval, socklen_t *optlen)
-{
-	return ep->ops->get_options(ep, level, optname, optval, optlen);
-}
-
-int net_endpoint_set_options(struct endpoint *ep, int level, int optname, const void *optval, socklen_t optlen)
-{
-	return ep->ops->set_options(ep, level, optname, optval, optlen);
-}
-

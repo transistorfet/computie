@@ -120,23 +120,73 @@ int net_socket_bind(struct vfile *file, const struct sockaddr *addr, socklen_t l
 
 int net_socket_connect(struct vfile *file, const struct sockaddr *addr, socklen_t len)
 {
+	int result;
 	struct socket *sock = SOCKET(file->vnode);
 
-	if (!sock->ep)
-		return ENOTCONN;
-	return net_connect_endpoint(sock->ep, addr, len);
+	if (sock->ep)
+		return EISCONN;
+
+	int error = net_create_endpoint(sock->proto, sock, NULL, 0, &sock->ep);
+	if (error)
+		return error;
+
+	if (!sock->ep->ops->connect)
+		// TODO should you free the endpoint here?  It will still be freed when the socket is closed
+		return EAFNOSUPPORT;
+
+	result = sock->ep->ops->connect(sock->ep, addr, len);
+	// TODO restarting the connect syscall would fail because we are connected, so this wont work
+	//if (result == EWOULDBLOCK) {
+	//	sock->syscall = SYS_CONNECT;
+	//	suspend_current_proc();
+	//	return 0;
+	//}
+	return result;
 }
 
 int net_socket_listen(struct vfile *file, int n)
 {
-	// TODO implement
-	return -1;
+	struct socket *sock = SOCKET(file->vnode);
+
+	if (!sock->ep)
+		return ENOTCONN;
+	if (!sock->ep->ops->listen)
+		return EAFNOSUPPORT;
+	return sock->ep->ops->listen(sock->ep, n);
 }
 
-int net_socket_accept(struct vfile *file, struct sockaddr *addr, socklen_t *addr_len)
+int net_socket_accept(struct vfile *file, struct sockaddr *addr, socklen_t *addr_len, uid_t uid, struct vfile **result)
 {
-	// TODO implement
-	return -1;
+	int error;
+	struct endpoint *ep;
+	struct vfile *newfile;
+	struct socket *client;
+	struct socket *sock = SOCKET(file->vnode);
+
+	if (!sock->ep)
+		return ENOTCONN;
+	if (!sock->ep->ops->accept)
+		return EAFNOSUPPORT;
+
+	error = sock->ep->ops->accept(sock->ep, addr, addr_len, &ep);
+	if (error == EWOULDBLOCK) {
+		sock->syscall = SYS_ACCEPT;
+		suspend_current_proc();
+		return 0;
+	}
+	else if (error)
+		return error;
+
+	error = net_socket_create(sock->domain, sock->type, sock->proto->protocol, uid, &newfile);
+	if (error)
+		return error;
+
+	client = SOCKET(newfile->vnode);
+	client->ep = ep;
+	ep->sock = client;
+
+	*result = newfile;
+	return 0;
 }
 
 int net_socket_shutdown(struct vfile *file, int how)
@@ -161,14 +211,41 @@ int net_socket_write(struct vfile *file, const char *buf, size_t nbytes)
 
 ssize_t net_socket_send(struct vfile *file, const void *buf, size_t n, int flags)
 {
-	// TODO implement
-	return -1;
+	int result;
+	struct socket *sock = SOCKET(file->vnode);
+
+	if (!sock->ep)
+		return ENOTCONN;
+	if (!sock->ep->ops->send)
+		return EAFNOSUPPORT;
+
+	result = sock->ep->ops->send(sock->ep, buf, n);
+	if (result == EWOULDBLOCK) {
+		sock->syscall = SYS_SEND;
+		suspend_current_proc();
+		return 0;
+	}
+	return result;
 }
 
 ssize_t net_socket_recv(struct vfile *file, void *buf, size_t n, int flags)
 {
-	// TODO implement
-	return -1;
+	int result;
+	struct socket *sock = SOCKET(file->vnode);
+
+	if (!sock->ep)
+		return ENOTCONN;
+	if (!sock->ep->ops->recv)
+		return EAFNOSUPPORT;
+
+	result = sock->ep->ops->recv(sock->ep, buf, n);
+	if (result == EWOULDBLOCK) {
+		sock->syscall = SYS_RECV;
+		suspend_current_proc();
+		return 0;
+	}
+
+	return result;
 }
 
 ssize_t net_socket_sendto(struct vfile *file, const void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t addr_len)
@@ -185,25 +262,29 @@ ssize_t net_socket_sendto(struct vfile *file, const void *buf, size_t n, int fla
 			return error;
 	}
 
-	return net_endpoint_send_to(sock->ep, buf, n, addr, addr_len);
+	if (!sock->ep->ops->send_to)
+		return EAFNOSUPPORT;
+
+	return sock->ep->ops->send_to(sock->ep, buf, n, addr, addr_len);
 }
 
 ssize_t net_socket_recvfrom(struct vfile *file, void *buf, size_t n, int flags, struct sockaddr *addr, socklen_t *addr_len)
 {
-	int error;
+	int result;
 	struct socket *sock = SOCKET(file->vnode);
 
 	if (!sock->ep)
 		return ENOTCONN;
+	if (!sock->ep->ops->recv_from)
+		return EAFNOSUPPORT;
 
-	error = net_endpoint_recv_from(sock->ep, buf, n, addr, addr_len);
-	if (error == EWOULDBLOCK) {
+	result = sock->ep->ops->recv_from(sock->ep, buf, n, addr, addr_len);
+	if (result == EWOULDBLOCK) {
 		sock->syscall = SYS_RECVFROM;
 		suspend_current_proc();
 		return 0;
 	}
-
-	return error;
+	return result;
 }
 
 int net_socket_wakeup(struct socket *sock)
@@ -237,7 +318,9 @@ int net_socket_get_options(struct vfile *file, int level, int optname, void *opt
 
 	if (!sock->ep)
 		return ENOTCONN;
-	return net_endpoint_get_options(sock->ep, level, optname, optval, optlen);
+	if (!sock->ep->ops->get_options)
+		return EAFNOSUPPORT;
+	return sock->ep->ops->get_options(sock->ep, level, optname, optval, optlen);
 }
 
 int net_socket_set_options(struct vfile *file, int level, int optname, const void *optval, socklen_t optlen)
@@ -246,6 +329,8 @@ int net_socket_set_options(struct vfile *file, int level, int optname, const voi
 
 	if (!sock->ep)
 		return ENOTCONN;
-	return net_endpoint_set_options(sock->ep, level, optname, optval, optlen);
+	if (!sock->ep->ops->set_options)
+		return EAFNOSUPPORT;
+	return sock->ep->ops->set_options(sock->ep, level, optname, optval, optlen);
 }
 

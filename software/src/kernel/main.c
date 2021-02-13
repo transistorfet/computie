@@ -60,13 +60,15 @@ struct if_ops *interfaces[] = {
 };
 
 extern struct protocol_ops ipv4_protocol_ops;
-extern struct protocol_ops udp_protocol_ops;
 extern struct protocol_ops icmp_protocol_ops;
+extern struct protocol_ops udp_protocol_ops;
+extern struct protocol_ops tcp_protocol_ops;
 
 struct protocol_ops *protocols[] = {
 	&ipv4_protocol_ops,
-	&udp_protocol_ops,
 	&icmp_protocol_ops,
+	&udp_protocol_ops,
+	&tcp_protocol_ops,
 	NULL	// Null Termination
 };
 
@@ -117,7 +119,8 @@ int main()
 	printk_safe("\nBooting with \"%s\"...\n\n", boot_args);
 	parse_boot_args();
 
-	init_kernel_heap((void *) 0x110000, 0xD0000);
+	//init_kernel_heap((void *) 0x110000, 0xD0000);
+	init_kernel_heap((void *) 0x120000, 0xC0000);
 
 	init_time();
 	init_interrupts();

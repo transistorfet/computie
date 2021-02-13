@@ -521,12 +521,12 @@ void tty_68681_normal_mode()
 
 void tty_68681_preinit()
 {
-	_buf_init(&channels[CH_A].rx);
-	_buf_init(&channels[CH_A].tx);
+	_buf_init(&channels[CH_A].rx, 0);
+	_buf_init(&channels[CH_A].tx, 0);
 	channels[CH_A].ports = &channel_a_ports;
 
-	_buf_init(&channels[CH_B].rx);
-	_buf_init(&channels[CH_B].tx);
+	_buf_init(&channels[CH_B].rx, 0);
+	_buf_init(&channels[CH_B].tx, 0);
 	channels[CH_B].ports = &channel_b_ports;
 
 	tty_68681_tx_safe_mode();

@@ -12,7 +12,7 @@ struct ipv4_custom_data {
 	struct ipv4_address dest;
 };
 
-uint16_t ipv4_calculate_checksum(void *data, int len);
+uint16_t ipv4_calculate_checksum(void *data, int len, uint32_t start);
 
 int ipv4_encode_header(struct packet *pack, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *data, int length);
 

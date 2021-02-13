@@ -47,6 +47,8 @@ COMMANDS = 		\
 	umount.send	\
 	test.send	\
 	nettest.send	\
+	tcptest.send	\
+	tcpserv.send	\
 	daemontest.send
 
 all: $(ROOT)/libc-68k-os.a $(COMMANDS)

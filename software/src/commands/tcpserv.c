@@ -74,6 +74,17 @@ int main(int argc, char **argv)
 			buffer[error] = '\0';
 
 			printf("recv: %s\n", buffer);
+
+			if (!strcmp(buffer, "test\n")) {
+				error = send(sockfd, "I heard you\n", 12, 0);
+				if (error < 0) {
+					printf("Error sending: %d\n", error);
+					return -1;
+				}
+			}
+			else if (!strcmp(buffer, "exit\n")) {
+				break;
+			}
 		}
 
 		close(sockfd);

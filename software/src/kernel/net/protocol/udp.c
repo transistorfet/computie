@@ -75,6 +75,8 @@ struct udp_endpoint {
 };
 
 
+static struct packet *udp_create_packet(struct protocol *proto, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *buf, int nbytes);
+static int udp_encode_packet(struct packet *pack, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *data, int length);
 static struct udp_endpoint *udp_lookup_endpoint(struct protocol *proto, uint32_t addr, uint16_t port);
 
 static struct queue udp_endpoints;
@@ -85,49 +87,6 @@ int udp_init()
 	_queue_init(&udp_endpoints);
 	net_register_protocol(&udp_protocol);
 }
-
-int udp_encode_packet(struct packet *pack, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *data, int length)
-{
-	int error;
-	struct udp_header hdr;
-
-	error = ipv4_encode_header(pack, src, dest, data, sizeof(struct udp_header) + length);
-	if (error)
-		return error;
-
-	hdr.src = to_be16(src->port);
-	hdr.dest = to_be16(dest->port);
-	hdr.length = to_be16(sizeof(struct udp_header) + length);
-	// TODO calculate checksum
-	hdr.checksum = to_be16(0);
-
-	error = packet_append(pack, &hdr, sizeof(struct udp_header));
-	if (error)
-		return error;
-
-	pack->data_offset = pack->length;
-	if (packet_append(pack, data, length)) {
-		packet_free(pack);
-		return NULL;
-	}
-
-	return 0;
-}
-
-static struct packet *udp_create_packet(struct protocol *proto, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *buf, int nbytes)
-{
-	struct packet *pack;
-
-	pack = packet_alloc(NULL, proto, nbytes + 100);
-
-	if (udp_encode_packet(pack, src, dest, buf, nbytes)) {
-		packet_free(pack);
-		return NULL;
-	}
-
-	return pack;
-}
-
 
 int udp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset)
 {
@@ -171,15 +130,47 @@ int udp_forward_packet(struct protocol *proto, struct packet *pack)
 	return PACKET_DELIVERED;
 }
 
-
-static struct udp_endpoint *udp_lookup_endpoint(struct protocol *proto, uint32_t addr, uint16_t port)
+static struct packet *udp_create_packet(struct protocol *proto, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *buf, int nbytes)
 {
-	for (struct udp_endpoint *cur = _queue_head(&udp_endpoints); cur; cur = _queue_next(&cur->ep.node)) {
-		if (cur->src.port == port)
-			return cur;
+	struct packet *pack;
+
+	pack = packet_alloc(NULL, proto, nbytes + 100);
+
+	if (udp_encode_packet(pack, src, dest, buf, nbytes)) {
+		packet_free(pack);
+		return NULL;
 	}
-	return NULL;
+	return pack;
 }
+
+static int udp_encode_packet(struct packet *pack, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *data, int length)
+{
+	int error;
+	struct udp_header *hdr;
+
+	error = ipv4_encode_header(pack, src, dest, data, sizeof(struct udp_header) + length);
+	if (error)
+		return error;
+
+	pack->transport_offset = pack->length;
+	pack->length += sizeof(struct udp_header);
+
+	hdr = (struct udp_header *) &pack->data[pack->transport_offset];
+	hdr->src = to_be16(src->port);
+	hdr->dest = to_be16(dest->port);
+	hdr->length = to_be16(sizeof(struct udp_header) + length);
+	// TODO calculate checksum
+	hdr->checksum = to_be16(0);
+
+	pack->data_offset = pack->length;
+	if (packet_append(pack, data, length)) {
+		packet_free(pack);
+		return NULL;
+	}
+
+	return 0;
+}
+
 
 int udp_create_endpoint(struct protocol *proto, struct socket *sock, const struct sockaddr *sockaddr, socklen_t len, struct endpoint **result)
 {
@@ -214,6 +205,15 @@ int udp_create_endpoint(struct protocol *proto, struct socket *sock, const struc
 
 	_queue_insert_after(&udp_endpoints, &ep->ep.node, udp_endpoints.tail);
 	return 0;
+}
+
+static struct udp_endpoint *udp_lookup_endpoint(struct protocol *proto, uint32_t addr, uint16_t port)
+{
+	for (struct udp_endpoint *cur = _queue_head(&udp_endpoints); cur; cur = _queue_next(&cur->ep.node)) {
+		if (cur->src.port == port)
+			return cur;
+	}
+	return NULL;
 }
 
 int udp_destroy_endpoint(struct endpoint *ep)

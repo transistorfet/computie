@@ -59,8 +59,8 @@ struct tcp_endpoint {
 
 	int state;
 	int listen_queue_max;
-	unsigned int tx_last_seq;
-	unsigned int rx_last_seq;
+	uint32_t tx_last_seq;
+	uint32_t rx_last_seq;
 
 	struct circular_buffer *rx;
 	struct circular_buffer *tx;

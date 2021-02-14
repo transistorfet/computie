@@ -8,7 +8,7 @@ struct circular_buffer {
 	short max;
 	volatile short in;
 	volatile short out;
-	unsigned char buffer[CIRCLE_BUFFER_SIZE];
+	volatile unsigned char buffer[CIRCLE_BUFFER_SIZE];
 };
 
 
@@ -38,7 +38,7 @@ static inline short _buf_available(struct circular_buffer *cb)
 {
 	if (cb->in > cb->out)
 		return cb->in - cb->out;
-	else //(cb->in <= cb->out)
+	else
 		return cb->max - cb->out + cb->in;
 }
 
@@ -46,7 +46,7 @@ static inline short _buf_free_space(struct circular_buffer *cb)
 {
 	if (cb->out > cb->in)
 		return cb->out - cb->in - 1;
-	else //(cb->out <= cb->in)
+	else
 		return cb->max - cb->in + cb->out - 1;
 }
 
@@ -120,16 +120,15 @@ static inline short _buf_put(struct circular_buffer *cb, const unsigned char *da
 
 static inline short _buf_drop(struct circular_buffer *cb, short size)
 {
-	short i;
+	short avail = _buf_available(cb);
 
-	for (i = 0; i < size; i++) {
-		if (cb->out == cb->in)
-			return i;
-		cb->out += 1;
-		if (cb->out >= cb->max)
-			cb->out = 0;
-	}
-	return i;
+	if (size > avail)
+		size = avail;
+
+	cb->out += size;
+	if (cb->out > cb->max)
+		cb->out -= cb->max;
+	return size;
 }
 
 

@@ -52,41 +52,6 @@ int ipv4_init()
 	net_register_protocol(&ipv4_protocol);
 }
 
-int ipv4_encode_header(struct packet *pack, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *data, int length)
-{
-	struct ipv4_header hdr;
-	struct ipv4_custom_data *custom;
-
-	if (!pack->proto)
-		return -1;
-
-	hdr.version = 4;
-	hdr.ihl = 5;
-	hdr.dscp = 0;
-	hdr.ecn = 0;
-	hdr.length = to_be16(sizeof(struct ipv4_header) + length);
-	hdr.id = to_be16(0);
-	hdr.flags = 2;
-	hdr.frag_offset = to_be16(0);
-	hdr.ttl = 0x40;
-	hdr.protocol = pack->proto->protocol;
-	hdr.checksum = to_be16(0);
-	hdr.src = to_be32(src->addr);
-	hdr.dest = to_be32(dest->addr);
-
-	hdr.checksum = ipv4_calculate_checksum(&hdr, sizeof(struct ipv4_header), 0);
-
-	custom = (struct ipv4_custom_data *) &pack->custom_data;
-	custom->src.addr = src->addr;
-	custom->src.port = src->port;
-	custom->dest.addr = dest->addr;
-	custom->dest.port = dest->port;
-
-	pack->network_offset = pack->length;
-	pack->transport_offset = pack->length + sizeof(struct ipv4_header);
-	return packet_append(pack, &hdr, sizeof(struct ipv4_header));
-}
-
 int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset)
 {
 	int error;
@@ -96,11 +61,10 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 	struct ipv4_custom_data *custom;
 
 	pack->network_offset = offset;
-	hdr = (struct ipv4_header *) &pack->data[offset];
+	hdr = (struct ipv4_header *) &pack->data[pack->network_offset];
 
 	if (pack->length - offset < sizeof(struct ipv4_header))
 		return -1;
-	pack->data_offset = offset + sizeof(struct ipv4_header);
 	if (hdr->version != 4 || hdr->ihl < 5 || hdr->ihl > 9)
 		return -2;
 
@@ -126,19 +90,58 @@ int ipv4_decode_header(struct protocol *proto, struct packet *pack, uint16_t off
 		return -4;
 	pack->proto = next;
 
-	error = next->ops->decode_header(next, pack, offset + (((uint16_t) hdr->ihl) << 2));
+	pack->transport_offset = offset + (((uint16_t) hdr->ihl) << 2);
+	error = next->ops->decode_header(next, pack, pack->transport_offset);
 	if (error)
 		return error;
-
 	return 0;
 }
-
 
 int ipv4_forward_packet(struct protocol *proto, struct packet *pack)
 {
 	if (!pack->proto || pack->proto == proto)
 		return PACKET_DROPPED;
 	return pack->proto->ops->forward_packet(pack->proto, pack);
+}
+
+int ipv4_encode_header(struct packet *pack, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *data, int length)
+{
+	struct ipv4_header *hdr;
+	struct ipv4_custom_data *custom;
+
+	if (!pack->proto)
+		return -1;
+
+	if (pack->capacity < pack->length + sizeof(struct ipv4_header) + length)
+		return -2;
+	pack->network_offset = pack->length;
+	pack->length += sizeof(struct ipv4_header);
+
+	hdr = (struct ipv4_header *) &pack->data[pack->network_offset];
+	hdr->version = 4;
+	hdr->ihl = 5;
+	hdr->dscp = 0;
+	hdr->ecn = 0;
+	hdr->length = to_be16(sizeof(struct ipv4_header) + length);
+	hdr->id = to_be16(0);
+	hdr->flags = 2;
+	hdr->frag_offset = to_be16(0);
+	hdr->ttl = 0x40;
+	hdr->protocol = pack->proto->protocol;
+	hdr->checksum = to_be16(0);
+	hdr->src = to_be32(src->addr);
+	hdr->dest = to_be32(dest->addr);
+
+	hdr->checksum = ipv4_calculate_checksum(hdr, sizeof(struct ipv4_header), 0);
+
+	custom = (struct ipv4_custom_data *) &pack->custom_data;
+	custom->src.addr = src->addr;
+	custom->src.port = src->port;
+	custom->dest.addr = dest->addr;
+	custom->dest.port = dest->port;
+
+	pack->transport_offset = pack->length;
+	return 0;
 }
 
 uint16_t ipv4_calculate_checksum(void *data, int len, uint32_t start)

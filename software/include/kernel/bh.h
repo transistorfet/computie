@@ -18,6 +18,8 @@ struct bh_handler {
 
 void init_bh();
 void register_bh(int bhnum, bh_handler_t fn, void *data);
+void enable_bh(int bhnum);
+void disable_bh(int bhnum);
 void request_bh_run(int bhnum);
 void run_bh_handlers();
 

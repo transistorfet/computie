@@ -180,6 +180,7 @@ int tty_init()
 
 	register_driver(DEVMAJOR_TTY, &tty_driver);
 	register_bh(BH_TTY, tty_process_input, NULL);
+	enable_bh(BH_TTY);
 }
 
 int tty_open(devminor_t minor, int mode)

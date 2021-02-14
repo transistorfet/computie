@@ -69,13 +69,20 @@ int slip_if_init()
 
 int slip_if_up(struct if_device *ifdev)
 {
+	int error;
+
 	// TODO you need to notify the serial driver to request the net bottom half run after any input
 	// TODO should you have a mode flag to exclusively open a device, which gives an error if it's already open
-	return dev_open(SLIP_IFDEV(ifdev)->rdev, O_RDWR | O_NONBLOCK);
+	error = dev_open(SLIP_IFDEV(ifdev)->rdev, O_RDWR | O_NONBLOCK);
+	if (error)
+		return error;
+	enable_bh(BH_SLIP);
+	return 0;
 }
 
 int slip_if_down(struct if_device *ifdev)
 {
+	disable_bh(BH_SLIP);
 	return dev_close(SLIP_IFDEV(ifdev)->rdev);
 }
 

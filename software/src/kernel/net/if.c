@@ -25,6 +25,7 @@ void init_net_if()
 		active_ifdevs[i] = NULL;
 
 	register_bh(BH_NET, net_if_process_bh, NULL);
+	enable_bh(BH_NET);
 }
 
 int net_if_register_device(struct if_device *ifdev)

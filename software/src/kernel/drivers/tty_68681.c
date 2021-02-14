@@ -538,6 +538,7 @@ int tty_68681_init()
 
 	register_driver(DEVMAJOR_TTY68681, &tty_68681_driver);
 	register_bh(BH_TTY68681, tty_68681_process_input, NULL);
+	enable_bh(BH_TTY68681);
 }
 
 int tty_68681_open(devminor_t minor, int mode)

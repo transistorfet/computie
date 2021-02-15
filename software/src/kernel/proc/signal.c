@@ -99,6 +99,10 @@ static inline void run_signal_handler(struct process *proc, int signum)
 {
 	struct sigcontext *context;
 
+	// If the syscall won't be restarted after the handler has run, then cancel it now
+	if ((proc->bits & PB_PAUSED) || !(proc->signals.actions[signum - 1].sa_flags & SA_RESTART))
+		cancel_syscall(proc);
+
 	// Save signal data on the stack for use by sigreturn
 	context = (((struct sigcontext *) proc->sp) - 1);
 	context->signum = signum;
@@ -110,10 +114,7 @@ static inline void run_signal_handler(struct process *proc, int signum)
 	proc->sp = create_context(proc->sp, proc->signals.actions[signum - 1].sa_handler, _sigreturn);
 
 	// Resume the process without restarting the last syscall
-	// TODO this is a hack to skip over the resuming state
-	resume_proc(proc);
-	proc->state = PS_RUNNING;
-	reschedule_proc_to_now(proc);
+	resume_proc_without_restart(proc);
 }
 
 void cleanup_signal_handler()
@@ -127,15 +128,11 @@ void cleanup_signal_handler()
 	signum = context->signum;
 	current_proc->sp = (((struct sigcontext *) current_proc->sp) + 1);
 
-	check_pending_signals();
-
-	// NOTE the signum range check here is defensive, in case the stack was corrupted during the signal handling
-	// 	This has occurred in the specific condition of a single handler that calls puts() and nothing else,
-	//	which gcc will generate as a tail-call optimized version that jumps directly to puts() with a modified stack
-	if ((current_proc->bits & PB_PAUSED) || signum >= SIG_HANDLERS_NUM || !(current_proc->signals.actions[signum - 1].sa_flags & SA_RESTART))
-		cancel_syscall(current_proc);
-	else if (current_proc->bits & PB_SYSCALL)
+	// TODO maybe restart the syscall anyways, which would then block again if it's not ready?
+	if (current_proc->bits & PB_SYSCALL)
 		suspend_proc(current_proc, 0);
+
+	check_pending_signals();
 }
 
 void check_pending_signals()

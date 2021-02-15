@@ -130,6 +130,13 @@ void resume_proc(struct process *proc)
 	UNLOCK(saved_status);
 }
 
+void resume_proc_without_restart(struct process *proc)
+{
+	resume_proc(proc);
+	proc->state = PS_RUNNING;
+	reschedule_proc_to_now(proc);
+}
+
 void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev)
 {
 	short saved_status;

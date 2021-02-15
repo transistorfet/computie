@@ -129,7 +129,7 @@ int init_tty()
 	*OUT_RESET_ADDR = 0xF0;
 
 	// This slight delay prevents garbled output being sent during the welcome message
-	delay(10);
+	delay(100);
 
 	// Assert CTS
 	*OUT_SET_ADDR = 0x01;

@@ -300,7 +300,7 @@ void command_eraserom(int argc, char **args)
 	}
 
 	erase_flash(sector);
-	delay(200000);
+	delay(300000);
 	data = dest[0];
 
 	puts("\nVerifying erase\n");
@@ -345,7 +345,7 @@ void command_writerom(int argc, char **args)
 
 	for (int i = 0; i < ROM_SIZE; i++) {
 		program_flash_data(&dest[i], source[i]);
-		for (char j = 0; j < 100; j++) { asm volatile(""); }
+		delay(200);
 		printf("%x ", dest[i]);
 	}
 

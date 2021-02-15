@@ -76,7 +76,7 @@ ssize_t sendto(int fd, const void *buf, size_t n, int flags, const struct sockad
 ssize_t sendmsg(int fd, const struct msghdr *message, int flags);
 
 ssize_t recv(int fd, void *buf, size_t n, int flags);
-ssize_t recvfrom(int fd, void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t *addr_len);
+ssize_t recvfrom(int fd, void *buf, size_t n, int flags, struct sockaddr *addr, socklen_t *addr_len);
 ssize_t recvmsg(int fd, struct msghdr *message, int flags);
 
 int getsockname(int fd, struct sockaddr *addr, socklen_t *len);

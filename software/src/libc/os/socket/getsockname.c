@@ -4,8 +4,7 @@
 
 int getsockname(int fd, struct sockaddr *addr, socklen_t *len)
 {
-	volatile unsigned int opts[3] = { SO_GETSOCKNAME, (int) addr, (int) len };
-	return SYSCALL3(SYS_GETSOCKOPT, fd, (int) 0, (int) opts);
+	return SYSCALL5(SYS_GETSOCKOPT, fd, (int) 0, SO_GETSOCKNAME, (int) addr, (int) len);
 }
 
 

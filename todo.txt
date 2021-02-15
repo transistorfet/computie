@@ -8,21 +8,16 @@
 
 Operating System:
 
-	* the tcp protocol might not be correctly switching endianness, even though it doesn't affect 68k archs
+	* implement select(), but how to block/resume?
 	* figure out how to unblock the connect syscall properly
 	* add timers and retransmissions to tcp
 
-	* add kernel level timers of some kind that can be used by the tcp code to set timeouts
+
 	* make a crt0/_start file that initializes env, and any other values needed
-	* implement fopen, etc
-
-	* add send/recv and put a check to see if they are NULL before calling? Or make a protocol_nop set
-	* implement TCP?
-
-	* add timestamps to packets
-	* implement select(), but how to block/resume?
-	* how hard would it be to implement dns?
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
+	* implement fopen, etc
+	* add timestamps to packets
+	* how hard would it be to implement dns?
 
 
 

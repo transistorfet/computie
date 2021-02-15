@@ -39,9 +39,10 @@ enter_syscall:
 	or.w	#0x0700, %sr
 	bsr	save_context
 
+	| Save the arguments in the order expected of the syscall struct
 	move.l	%d0, -(%sp)
-
-	| Save the arguments in right to left order to match the C calling convention
+	move.l	%d3, -(%sp)
+	move.l	%d2, -(%sp)
 	move.l	%a1, -(%sp)
 	move.l	%a0, -(%sp)
 	move.l	%d1, -(%sp)
@@ -53,12 +54,13 @@ enter_syscall:
 	jsr	do_syscall
 	or.w	#0x0700, %sr
 
-	| Restore the argument registers
+	| Restore the syscall registers
 	move.l	(%sp)+, %d1
 	move.l	(%sp)+, %a0
 	move.l	(%sp)+, %a1
-
-	add.l	(%sp)+, %d0
+	move.l	(%sp)+, %d2
+	move.l	(%sp)+, %d3
+	move.l	(%sp)+, %d0
 
 	| Jump to the syscall interrupt return
 	bra	restore_context

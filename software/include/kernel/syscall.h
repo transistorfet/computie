@@ -76,7 +76,7 @@
 // TODO remove this after testing
 #define SYS_EXECBUILTIN	68
 
-typedef int (*syscall_t)(int, int, int);
+typedef int (*syscall_t)(int, int, int, int, int);
 
 static inline int SYSCALL1(int n, int a1)
 {
@@ -115,8 +115,6 @@ static inline int SYSCALL2(int n, int a1, int a2)
 	return ret;
 }
 
-
-
 static inline int SYSCALL3(int n, int a1, int a2, int a3)
 {
 	register int ret;
@@ -137,19 +135,46 @@ static inline int SYSCALL3(int n, int a1, int a2, int a3)
 	return ret;
 }
 
+static inline int SYSCALL5(int n, int a1, int a2, int a3, int a4, int a5)
+{
+	register int ret;
+
+	asm volatile(
+	"move.l	%0, %%d0\n"
+	"move.l	%1, %%d1\n"
+	"move.l	%2, %%a0\n"
+	"move.l	%3, %%a1\n"
+	"move.l	%4, %%d2\n"
+	"move.l	%5, %%d3\n"
+	"trap	#1\n"
+	: // Output in %d0
+	: "g" (n), "g" (a1), "g" (a2), "g" (a3), "g" (a4), "g" (a5)
+	: "%d0", "%d1", "%a0", "%a1", "%d2", "%d3"
+	);
+
+	asm volatile("move.l	%%d0, %0\n" : "=g" (ret) : : "%d0");
+
+	return ret;
+}
+
+
 
 struct syscall_record {
 	int arg1;
 	int arg2;
 	int arg3;
+	int arg4;
+	int arg5;
 	int syscall;
 };
 
-static inline void SYSCALL_SAVE(struct syscall_record *r, int n, int a1, int a2, int a3)
+static inline void SYSCALL_SAVE(struct syscall_record *r, int n, int a1, int a2, int a3, int a4, int a5)
 {
 	r->arg1 = a1;
 	r->arg2 = a2;
 	r->arg3 = a3;
+	r->arg4 = a4;
+	r->arg5 = a5;
 	r->syscall = n;
 }
 

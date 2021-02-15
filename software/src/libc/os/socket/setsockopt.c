@@ -4,7 +4,6 @@
 
 int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen)
 {
-	volatile unsigned int opts[3] = { optname, (int) optval, (int) optlen };
-	return SYSCALL3(SYS_SETSOCKOPT, fd, (int) level, (int) opts);
+	return SYSCALL5(SYS_SETSOCKOPT, fd, (int) level, optname, (int) optval, (int) optlen);
 }
 

@@ -177,7 +177,7 @@ int main()
 	memset(&ifdev->address, '\0', sizeof(struct sockaddr_in));
 	((struct sockaddr_in *) &ifdev->address)->sin_family = AF_INET;
 	inet_aton("192.168.1.200", &((struct sockaddr_in *) &ifdev->address)->sin_addr);
-	net_if_change_state(ifdev, IFF_UP | IFF_DEBUG);
+	net_if_change_state(ifdev, IFF_UP);
 
 
 	begin_multitasking();

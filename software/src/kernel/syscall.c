@@ -134,7 +134,7 @@ void do_syscall()
 
 	tty_68681_set_leds(0x04);
 
-	ret = ((syscall_t) syscall_table[current_syscall->syscall])(current_syscall->arg1, current_syscall->arg2, current_syscall->arg3);
+	ret = ((syscall_t) syscall_table[current_syscall->syscall])(current_syscall->arg1, current_syscall->arg2, current_syscall->arg3, current_syscall->arg4, current_syscall->arg5);
 	return_to_current_proc(ret);
 
 	tty_68681_reset_leds(0x04);
@@ -762,22 +762,21 @@ int do_shutdown(int fd, int how)
 }
 
 
-// Unistd Declaration: ssize_t do_send(int fd, const void *buf, size_t n, int flags)
-ssize_t do_send(int fd, const void *buf, unsigned int opts[2])
+ssize_t do_send(int fd, const void *buf, size_t n, int flags)
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file || !S_ISSOCK(file->vnode->mode))
 		return EBADF;
-	return net_socket_send(file, buf, (size_t) opts[0], (int) opts[1]);
+	return net_socket_send(file, buf, n, flags);
 }
 
 // Unistd Declaration:ssize_t do_sendto(int fd, const void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t addr_len)
-ssize_t do_sendto(int fd, const void *buf, unsigned int opts[4])
+ssize_t do_sendto(int fd, const void *buf, size_t n, int flags, const void *opts[2])
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file || !S_ISSOCK(file->vnode->mode))
 		return EBADF;
-	return net_socket_sendto(file, buf, (size_t) opts[0], (int) opts[1], (const struct sockaddr *) opts[2], (socklen_t) opts[3]);
+	return net_socket_sendto(file, buf, n, flags, (const struct sockaddr *) opts[0], (socklen_t) opts[1]);
 }
 
 ssize_t do_sendmsg(int fd, const struct msghdr *message, int flags)
@@ -787,22 +786,21 @@ ssize_t do_sendmsg(int fd, const struct msghdr *message, int flags)
 }
 
 
-// Unistd Declaration:ssize_t do_recv(int fd, void *buf, size_t n, int flags)
-ssize_t do_recv(int fd, void *buf, unsigned int opts[2])
+ssize_t do_recv(int fd, void *buf, size_t n, int flags)
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file || !S_ISSOCK(file->vnode->mode))
 		return EBADF;
-	return net_socket_recv(file, buf, (size_t) opts[0], (int) opts[1]);
+	return net_socket_recv(file, buf, n, flags);
 }
 
-// Unistd Declaration:ssize_t do_recvfrom(int fd, void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t *addr_len)
-ssize_t do_recvfrom(int fd, void *buf, unsigned int opts[4])
+// Unistd Declaration:ssize_t do_recvfrom(int fd, void *buf, size_t n, int flags, struct sockaddr *addr, socklen_t *addr_len)
+ssize_t do_recvfrom(int fd, void *buf, size_t n, int flags, void *opts[2])
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file || !S_ISSOCK(file->vnode->mode))
 		return EBADF;
-	return net_socket_recvfrom(file, buf, (size_t) opts[0], (int) opts[1], (struct sockaddr *) opts[2], (socklen_t *) opts[3]);
+	return net_socket_recvfrom(file, buf, n, flags, (struct sockaddr *) opts[0], (socklen_t *) opts[1]);
 }
 
 ssize_t do_recvmsg(int fd, struct msghdr *message, int flags)
@@ -811,21 +809,19 @@ ssize_t do_recvmsg(int fd, struct msghdr *message, int flags)
 	return -1;
 }
 
-//int do_getsockopt(int fd, int level, int optname, void *optval, socklen_t *optlen)
-int do_getsockopt(int fd, int level, unsigned int opts[3])
+int do_getsockopt(int fd, int level, int optname, void *optval, socklen_t *optlen)
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file || !S_ISSOCK(file->vnode->mode))
 		return EBADF;
-	return net_socket_get_options(file, level, (int) opts[0], (void *) opts[1], (socklen_t *) opts[2]);
+	return net_socket_get_options(file, level, optname, optval, optlen);
 }
 
-//int do_setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen)
-int do_setsockopt(int fd, int level, unsigned int opts[3])
+int do_setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen)
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file || !S_ISSOCK(file->vnode->mode))
 		return EBADF;
-	return net_socket_set_options(file, level, (int) opts[0], (const void *) opts[1], (socklen_t) opts[2]);
+	return net_socket_set_options(file, level, optname, optval, optlen);
 }
 

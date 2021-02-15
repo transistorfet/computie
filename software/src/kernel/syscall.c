@@ -140,6 +140,212 @@ void do_syscall()
 	tty_68681_reset_leds(0x04);
 }
 
+void do_exit(int exitcode)
+{
+	exit_proc(current_proc, exitcode);
+	resume_waiting_parent(current_proc);
+}
+
+pid_t do_fork()
+{
+	struct process *proc;
+
+	proc = new_proc(0, current_proc->uid);
+	if (!proc)
+		panic("Ran out of procs\n");
+
+	clone_process_memory(current_proc, proc);
+
+	// Apply return value to the stack context of the cloned proc, and return to the parent with the new pid
+	set_proc_return_value(proc, 0);
+	return proc->pid;
+}
+
+int do_exec(const char *path, char *const argv[], char *const envp[])
+{
+	int error;
+	void *entry;
+
+	error = load_binary(path, current_proc, &entry);
+	if (error == EKILL) {
+		// An error occurred past the point of no return.  The memory maps have been irrepairably damaged, so kill the process
+		printk_safe("Process terminated\n");
+		exit_proc(current_proc, -1);
+		resume_waiting_parent(current_proc);
+		return error;
+	}
+	else if (error)
+		return error;
+
+	reset_stack(current_proc, entry, argv, envp);
+
+	return 0;
+}
+
+int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
+{
+	// NOTE no modification of the memory maps here, since the code should be in the same process
+	reset_stack(current_proc, addr, argv, envp);
+	return 0;
+}
+
+
+pid_t do_waitpid(pid_t pid, int *status, int options)
+{
+	struct process *proc;
+
+	// Must be a valid pid, or -1 to wait for any process
+	if (pid <= 0 && pid != -1)
+		return EINVAL;
+
+	// TODO should this wake up all parent procesess instead of just one?
+	proc = find_exited_child(current_proc->pid, pid);
+	if (!proc) {
+		current_proc->bits |= PB_WAITING;
+		suspend_current_proc();
+	}
+	else {
+		current_proc->bits &= ~PB_WAITING;
+		*status = proc->exitcode;
+		pid = proc->pid;
+		cleanup_proc(proc);
+		return pid;
+	}
+}
+
+int do_kill(pid_t pid, int sig)
+{
+	if (pid < 0)
+		return send_signal_process_group(-pid, sig);
+	else
+		return send_signal(pid, sig);
+}
+
+int do_sigreturn()
+{
+	cleanup_signal_handler();
+	return 0;
+}
+
+int do_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
+{
+	if (oldact)
+		get_signal_action(current_proc, signum, oldact);
+
+	if (act)
+		return set_signal_action(current_proc, signum, act);
+	return 0;
+}
+
+unsigned int do_alarm(unsigned int seconds)
+{
+	return set_alarm(current_proc, seconds);
+}
+
+int do_pause()
+{
+	current_proc->bits |= PB_PAUSED;
+	suspend_current_proc();
+	return 0;
+}
+
+int do_brk(void *addr)
+{
+	int diff = addr - current_proc->map.segments[M_DATA].base;
+	return increase_data_segment(current_proc, diff);
+}
+
+void *do_sbrk(intptr_t increment)
+{
+	if (increment) {
+		if (increase_data_segment(current_proc, increment))
+			return NULL;
+	}
+	return current_proc->map.segments[M_DATA].base + current_proc->map.segments[M_DATA].length;
+}
+
+pid_t do_getpid()
+{
+	return current_proc->pid;
+}
+
+pid_t do_getppid()
+{
+	return current_proc->parent;
+}
+
+pid_t do_getpgid(pid_t pid)
+{
+	struct process *proc = pid ? get_proc(pid) : current_proc;
+
+	if (!proc)
+		return ESRCH;
+	return proc->pgid;
+}
+
+int do_setpgid(pid_t pid, pid_t pgid)
+{
+	struct process *proc = pid ? get_proc(pid) : current_proc;
+
+	if (pgid < 0)
+		return EINVAL;
+	if (!proc || (proc != current_proc && proc->pid != current_proc->parent))
+		return ESRCH;
+
+	if (pgid == 0)
+		proc->pgid = proc->pid;
+	else {
+		struct process *pg;
+
+		pg = get_proc(pgid);
+		if (!pg || pg->session != proc->session || proc->pid == proc->session)
+			return EPERM;
+		proc->pgid = pgid;
+	}
+	return 0;
+}
+
+pid_t do_getsid(pid_t pid)
+{
+	struct process *proc = pid ? get_proc(pid) : current_proc;
+
+	if (!proc)
+		return ESRCH;
+	return current_proc->session;
+}
+
+pid_t do_setsid(void)
+{
+	struct process *proc;
+	struct process_iter iter;
+
+	proc_iter_start(&iter);
+	while ((proc = proc_iter_next(&iter))) {
+		if (proc != current_proc && proc->pgid == current_proc->pid)
+			return EPERM;
+	}
+
+	current_proc->session = current_proc->pid;
+	current_proc->pgid = current_proc->pid;
+	return current_proc->session;
+}
+
+uid_t do_getuid()
+{
+	return current_proc->uid;
+}
+
+int do_setuid(uid_t uid)
+{
+	// TODO this isn't entirely accurate according to the standards
+	if (current_proc->uid != SU_UID)
+		return EPERM;
+	current_proc->uid = uid;
+	return 0;
+}
+
+
+
 int do_mount(const char *source, const char *target, struct mount_opts *opts)
 {
 	extern struct mount_ops *filesystems[];
@@ -456,211 +662,6 @@ int do_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, st
 
 }
 */
-
-
-void do_exit(int exitcode)
-{
-	exit_proc(current_proc, exitcode);
-	resume_waiting_parent(current_proc);
-}
-
-pid_t do_fork()
-{
-	struct process *proc;
-
-	proc = new_proc(0, current_proc->uid);
-	if (!proc)
-		panic("Ran out of procs\n");
-
-	clone_process_memory(current_proc, proc);
-
-	// Apply return value to the stack context of the cloned proc, and return to the parent with the new pid
-	set_proc_return_value(proc, 0);
-	return proc->pid;
-}
-
-int do_exec(const char *path, char *const argv[], char *const envp[])
-{
-	int error;
-	void *entry;
-
-	error = load_binary(path, current_proc, &entry);
-	if (error == EKILL) {
-		// An error occurred past the point of no return.  The memory maps have been irrepairably damaged, so kill the process
-		printk_safe("Process terminated\n");
-		exit_proc(current_proc, -1);
-		resume_waiting_parent(current_proc);
-		return error;
-	}
-	else if (error)
-		return error;
-
-	reset_stack(current_proc, entry, argv, envp);
-
-	return 0;
-}
-
-int do_execbuiltin(void *addr, char *const argv[], char *const envp[])
-{
-	// NOTE no modification of the memory maps here, since the code should be in the same process
-	reset_stack(current_proc, addr, argv, envp);
-	return 0;
-}
-
-
-pid_t do_waitpid(pid_t pid, int *status, int options)
-{
-	struct process *proc;
-
-	// Must be a valid pid, or -1 to wait for any process
-	if (pid <= 0 && pid != -1)
-		return EINVAL;
-
-	// TODO should this wake up all parent procesess instead of just one?
-	proc = find_exited_child(current_proc->pid, pid);
-	if (!proc) {
-		current_proc->bits |= PB_WAITING;
-		suspend_current_proc();
-	}
-	else {
-		current_proc->bits &= ~PB_WAITING;
-		*status = proc->exitcode;
-		pid = proc->pid;
-		cleanup_proc(proc);
-		return pid;
-	}
-}
-
-int do_kill(pid_t pid, int sig)
-{
-	if (pid < 0)
-		return send_signal_process_group(-pid, sig);
-	else
-		return send_signal(pid, sig);
-}
-
-int do_sigreturn()
-{
-	cleanup_signal_handler();
-	return 0;
-}
-
-int do_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
-{
-	if (oldact)
-		get_signal_action(current_proc, signum, oldact);
-
-	if (act)
-		return set_signal_action(current_proc, signum, act);
-	return 0;
-}
-
-unsigned int do_alarm(unsigned int seconds)
-{
-	return set_alarm(current_proc, seconds);
-}
-
-int do_pause()
-{
-	current_proc->bits |= PB_PAUSED;
-	suspend_current_proc();
-	return 0;
-}
-
-int do_brk(void *addr)
-{
-	int diff = addr - current_proc->map.segments[M_DATA].base;
-	return increase_data_segment(current_proc, diff);
-}
-
-void *do_sbrk(intptr_t increment)
-{
-	if (increment) {
-		if (increase_data_segment(current_proc, increment))
-			return NULL;
-	}
-	return current_proc->map.segments[M_DATA].base + current_proc->map.segments[M_DATA].length;
-}
-
-pid_t do_getpid()
-{
-	return current_proc->pid;
-}
-
-pid_t do_getppid()
-{
-	return current_proc->parent;
-}
-
-pid_t do_getpgid(pid_t pid)
-{
-	struct process *proc = pid ? get_proc(pid) : current_proc;
-
-	if (!proc)
-		return ESRCH;
-	return proc->pgid;
-}
-
-int do_setpgid(pid_t pid, pid_t pgid)
-{
-	struct process *proc = pid ? get_proc(pid) : current_proc;
-
-	if (pgid < 0)
-		return EINVAL;
-	if (!proc || (proc != current_proc && proc->pid != current_proc->parent))
-		return ESRCH;
-
-	if (pgid == 0)
-		proc->pgid = proc->pid;
-	else {
-		struct process *pg;
-
-		pg = get_proc(pgid);
-		if (!pg || pg->session != proc->session || proc->pid == proc->session)
-			return EPERM;
-		proc->pgid = pgid;
-	}
-	return 0;
-}
-
-pid_t do_getsid(pid_t pid)
-{
-	struct process *proc = pid ? get_proc(pid) : current_proc;
-
-	if (!proc)
-		return ESRCH;
-	return current_proc->session;
-}
-
-pid_t do_setsid(void)
-{
-	struct process *proc;
-	struct process_iter iter;
-
-	proc_iter_start(&iter);
-	while ((proc = proc_iter_next(&iter))) {
-		if (proc != current_proc && proc->pgid == current_proc->pid)
-			return EPERM;
-	}
-
-	current_proc->session = current_proc->pid;
-	current_proc->pgid = current_proc->pid;
-	return current_proc->session;
-}
-
-uid_t do_getuid()
-{
-	return current_proc->uid;
-}
-
-int do_setuid(uid_t uid)
-{
-	// TODO this isn't entirely accurate according to the standards
-	if (current_proc->uid != SU_UID)
-		return EPERM;
-	current_proc->uid = uid;
-	return 0;
-}
 
 
 time_t do_time(time_t *t)

@@ -38,7 +38,6 @@ Operating System:
 	* modify the kernel's init task creation to optionally load init from disk instead of being builtin (for kernel images written to the flash card)
 	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
 	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum) (add to /proc/mounts)
-	* should you increase the number of arguments to 5 (which would still mean the sendto/recvfrom would need to pack the last two args).  Only 7/66 syscalls that need more than 3 arguments =/
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* add check to vfs_link() for loops
 	* make init relaunch shell if the initial one is killed

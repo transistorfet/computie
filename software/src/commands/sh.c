@@ -20,9 +20,6 @@
 
 #include "prototype.h"
 
-#ifdef LINUXHOST
-#define putsn(x) { fputs((x), stdout); fflush(stdout); }
-#endif
 
 #ifdef ADDMAIN
 int sh_task();
@@ -58,7 +55,7 @@ void dump_line(const uint16_t *addr, short len)
 		buffer[1] = hexchar((addr[i] >> 8) & 0xF);
 		buffer[2] = hexchar((addr[i] >> 4) & 0xF);
 		buffer[3] = hexchar(addr[i] & 0x0F);
-		putsn(buffer);
+		fputs(buffer, stdout);
 	}
 	putchar('\n');
 }
@@ -572,7 +569,7 @@ void serial_read_loop()
 
 	while (1) {
 		memset(commands, 0, sizeof(struct pipe_command) * PIPE_SIZE);
-		putsn("% ");
+		fputs("% ", stdout);
 		//if (!readline(buffer, BUF_SIZE))
 		if ((error = read(0, buffer, BUF_SIZE)) <= 0) {
 			if (error != EINTR)

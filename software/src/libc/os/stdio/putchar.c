@@ -9,3 +9,4 @@ int putchar(int ch)
 	//return SYSCALL1(SYS_TEST, ch);
 	return ch;
 }
+

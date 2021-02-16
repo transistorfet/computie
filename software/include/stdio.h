@@ -21,9 +21,8 @@ extern FILE *stdout;
 extern FILE *stderr;
 
 
-int printf(const char *fmt, ...);
-int vprintf(const char *fmt, va_list args);
-
+int sprintf(char *buffer, const char *fmt, ...);
+int vsprintf(char *buffer, const char *fmt, va_list args);
 int snprintf(char *buffer, size_t n, const char *fmt, ...);
 int vsnprintf(char *buffer, size_t n, const char *fmt, va_list args);
 
@@ -31,14 +30,27 @@ int sscanf(const char *str, const char *fmt, ...);
 int vsscanf(const char *str, const char *fmt, va_list args);
 
 
+int printf(const char *fmt, ...);
+int vprintf(const char *fmt, va_list args);
+int fprintf(FILE *stream, const char *fmt, ...);
+int vfprintf(FILE *stream, const char *fmt, va_list args);
+
+int scanf(const char *fmt, ...);
+int vscanf(const char *fmt, va_list args);
+int fscanf(FILE *stream, const char *fmt, ...);
+int vfscanf(FILE *stream, const char *fmt, va_list args);
+
 int fgetc(FILE *stream);
-int fgets(char *str, int num, FILE *stream);
-int getchar(void);
+int fgets(char *str, int max, FILE *stream);
 
 int fputc(int ch, FILE *stream);
 int fputs(const char *str, FILE *stream);
-int putsn(const char *str);	// Non-standard, same as puts but without the extra newline
 int puts(const char *str);
+
+
+// Platform-Defined Functions
+
+int getchar(void);
 int putchar(int);
 
 size_t fread(void *ptr, size_t size, size_t count, FILE *stream);

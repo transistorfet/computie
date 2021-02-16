@@ -26,7 +26,7 @@ int main()
 	putchar('\n');
 
 	while (1) {
-		putsn("$ ");
+		fputs("$ ", stdout);
 
 		readline(buffer, BUF_SIZE);
 		puts(buffer);

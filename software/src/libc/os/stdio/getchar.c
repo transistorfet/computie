@@ -9,3 +9,4 @@ int getchar()
 	read(STDIN_FILENO, &ch, 1);
 	return ch;
 }
+

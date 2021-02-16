@@ -8,10 +8,15 @@
 
 Operating System:
 
+	* implement fputc, fgetc
+	* implement fopen, fclose, feof, fseek
+
 	* I don't like the name PB_RETURN_SET....
 	* for blocking, there's process alarms, the pause system call, the wait system call, a suspended syscall which restarts on resume, and we'll need to add select
 	* the PB_WAITING flag is kinda weird and possibly not entirely needed
 	* can we change how alarms/timers work so that we don't have to traverse all procs, but instead just go through a list of timers (which could include proc timers and tcp/network timers)
+
+	* try transfering files over tcp, to test the stability of TCP (it should be possible to `nc -l 3904 > tar -x` or something to transfer data)
 
 
 	* implement select(), but how to block/resume?
@@ -22,7 +27,6 @@ Operating System:
 
 	* make a crt0/_start file that initializes env, and any other values needed
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
-	* implement fopen, etc
 	* add timestamps to packets
 	* how hard would it be to implement dns?
 
@@ -64,7 +68,7 @@ Operating System:
 	* add fifos (should be easy now)
 	* add stack guard protection
 	* implement login system (setuid)
-	* to stdlib, add: fprintf, fscanf, scanf, fopen, fclose, fgetpos, fseek, feof, fread, fwrite
+	* optionally implement ftell, fgetpos, fsetpos
 	* implement fcntl
 	* can you implement some kind of terminal switching, like alt-F* keys... It would have to be more like `screen`
 	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only

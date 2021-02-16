@@ -96,7 +96,7 @@ void dump(const uint16_t *addr, short len)
 			buffer[1] = hexchar((addr[i] >> 8) & 0xF);
 			buffer[2] = hexchar((addr[i] >> 4) & 0xF);
 			buffer[3] = hexchar(addr[i] & 0x0F);
-			putsn(buffer);
+			fputs(buffer, stdout);
 		}
 		putchar('\n');
 		addr += 8;
@@ -122,7 +122,7 @@ void dump(const uint16_t *addr, short len)
 void command_dump(int argc, char **args)
 {
 	if (argc <= 1)
-		puts("You need an address");
+		fputs("You need an address\n", stdout);
 	else {
 		short length = 0x40;
 
@@ -164,7 +164,7 @@ void command_info(int argc, char **args)
 void command_poke(int argc, char **args)
 {
 	if (argc <= 2)
-		puts("You need an address and byte to poke");
+		fputs("You need an address and byte to poke\n", stdout);
 	else {
 		uint8_t *address = (uint8_t *) strtol(args[1], NULL, 16);
 		uint8_t data = (uint8_t) strtol(args[2], NULL, 16);
@@ -303,7 +303,7 @@ void command_eraserom(int argc, char **args)
 	delay(300000);
 	data = dest[0];
 
-	puts("\nVerifying erase\n");
+	fputs("\nVerifying erase\n\n", stdout);
 	for (int i = 0; i < ROM_SIZE; i++) {
 		data = dest[i];
 		if (data != 0xFFFF) {
@@ -312,7 +312,7 @@ void command_eraserom(int argc, char **args)
 		}
 	}
 
-	puts("Rom erased! Make sure to writerom before resetting\n");
+	fputs("Rom erased! Make sure to writerom before resetting\n\n", stdout);
 }
 
 
@@ -349,7 +349,7 @@ void command_writerom(int argc, char **args)
 		printf("%x ", dest[i]);
 	}
 
-	puts("\nWrite complete");
+	fputs("\nWrite complete\n", stdout);
 }
 
 void command_verifyrom(int argc, char **args)
@@ -367,13 +367,13 @@ void command_verifyrom(int argc, char **args)
 		if (dest[i] != source[i]) {
 			printf("@%x expected %x but found %x\n", &dest[i], source[i], dest[i]);
 			if (++errors > 100) {
-				puts("Bailing out\n");
+				fputs("Bailing out\n", stdout);
 				break;
 			}
 		}
 	}
 
-	puts("\nVerification complete");
+	fputs("\nVerification complete\n", stdout);
 }
 
 uint16_t fetch_word(char max)
@@ -413,7 +413,7 @@ void command_load(int argc, char **args)
 	if (odd_size)
 		mem[i] = fetch_word(2);
 
-	puts("Load complete");
+	fputs("Load complete\n", stdout);
 }
 
 void command_boot(int argc, char **args)
@@ -478,16 +478,18 @@ void serial_read_loop()
 	int num_commands = load_commands(command_list);
 
 	while (1) {
-		putsn("> ");
+		fputs("> ", stdout);
 		readline(buffer, BUF_SIZE);
 		argc = parseline(buffer, args);
 
 		if (!strcmp(args[0], "test")) {
-			puts("this is only a test");
+			fputs("this is only a test\n", stdout);
 		}
 		else if (!strcmp(args[0], "help")) {
-			for (int i = 0; i < num_commands; i++)
-				puts(command_list[i].name);
+			for (int i = 0; i < num_commands; i++) {
+				fputs(command_list[i].name, stdout);
+				putchar('\n');
+			}
 		}
 		else {
 			for (i = 0; i < num_commands; i++) {
@@ -498,7 +500,7 @@ void serial_read_loop()
 			}
 
 			if (i >= num_commands && args[0][0] != '\0') {
-				puts("Unknown command\n");
+				fputs("Unknown command\n", stdout);
 			}
 		}
 	}
@@ -520,7 +522,7 @@ int main()
 
 	//delay(10000);
 
-	puts("\n\nWelcome to the 68k Monitor!\n");
+	fputs("\n\nWelcome to the 68k Monitor!\n\n", stdout);
 
 	/*
 	int *data = malloc(sizeof(int) * 10);

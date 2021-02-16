@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mount.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 
 void init_syscall();
@@ -62,7 +63,7 @@ extern mode_t do_umask(mode_t mask);
 extern int do_mount(const char *source, const char *target, struct mount_opts *opts);
 extern int do_umount(const char *source);
 extern int do_sync();
-//extern int do_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+extern int do_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
 
 // Time
 extern time_t do_time(time_t *t);

@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
@@ -80,6 +81,24 @@ int main(int argc, char **argv)
 				if (error < 0) {
 					printf("Error sending: %d\n", error);
 					return -1;
+				}
+			}
+			else if (!strcmp(buffer, "light_on\n")) {
+				int data = 0x01;
+				if (!ioctl(STDIN_FILENO, TSETLEDS, &data)) {
+					send(sockfd, "ok\n", 3, 0);
+				}
+				else {
+					send(sockfd, "error\n", 6, 0);
+				}
+			}
+			else if (!strcmp(buffer, "light_off\n")) {
+				int data = 0x00;
+				if (!ioctl(STDIN_FILENO, TSETLEDS, &data)) {
+					send(sockfd, "ok\n", 3, 0);
+				}
+				else {
+					send(sockfd, "error\n", 6, 0);
 				}
 			}
 			else if (!strcmp(buffer, "exit\n")) {

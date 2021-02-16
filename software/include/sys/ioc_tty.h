@@ -12,4 +12,7 @@
 #define	TIOCGPGRP	_IOW('T', 18, int)
 #define	TIOCSPGRP	_IOW('T', 19, int)
 
+
+#define	TSETLEDS	_IOW('T', 80, int)
+
 #endif

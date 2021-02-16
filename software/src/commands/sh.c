@@ -631,7 +631,7 @@ int MAIN(sh_task)()
 
 	//alarm(3);
 	//pause();
-	//puts("Hey!\n");
+	//puts("Ok, now we run!\n");
 
 	//test_math();
 

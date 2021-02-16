@@ -616,6 +616,12 @@ int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t ui
 		return ENODEV;
 
 	switch (request) {
+		case TSETLEDS: {
+			int leds = *((int *) argp) & 0x03;
+			tty_68681_reset_leds(~leds);
+			tty_68681_set_leds(leds);
+			return 0;
+		}
 		default:
 			break;
 	}

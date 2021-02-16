@@ -89,7 +89,7 @@ void *syscall_table[SYSCALL_MAX] = {
 	do_setsid,
 	do_umask,
 	do_sbrk,
-	test,		//do_select,
+	do_select,
 
 	do_socket,
 	do_socketpair,
@@ -656,12 +656,16 @@ mode_t do_umask(mode_t mask)
 	return previous;
 }
 
-/*
 int do_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout)
 {
+	if (nfds <= 0 || nfds > OPEN_MAX)
+		return EINVAL;
 
+	// TODO check all sets to ensure the file is open
+
+	// TODO implement
+	return -1;
 }
-*/
 
 
 time_t do_time(time_t *t)

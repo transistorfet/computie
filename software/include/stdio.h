@@ -11,14 +11,17 @@
 #define SEEK_CUR	1	// Seek relative to the current position
 #define SEEK_END	2	// Seek relative to the end of file
 
+struct _FILE;
 
-typedef struct _FILE {
-	int fd;
-} FILE;
+typedef struct _FILE FILE;
 
-extern FILE *stdin;
-extern FILE *stdout;
-extern FILE *stderr;
+extern FILE __stdin;
+extern FILE __stdout;
+extern FILE __stderr;
+
+#define	stdin		(&__stdin)
+#define	stdout		(&__stdout)
+#define	stderr		(&__stderr)
 
 
 int sprintf(char *buffer, const char *fmt, ...);
@@ -55,5 +58,11 @@ int putchar(int);
 
 size_t fread(void *ptr, size_t size, size_t count, FILE *stream);
 size_t fwrite(const void *ptr, size_t size, size_t count, FILE *stream);
+
+FILE *fopen(const char *filename, const char *mode);
+int fclose(FILE *stream);
+int fseek(FILE *stream, long int offset, int origin);
+int feof(FILE *stream);
+
 
 #endif

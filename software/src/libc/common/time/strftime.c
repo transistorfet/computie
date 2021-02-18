@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 
-extern char *itoa_padded(int num, char *buffer, int radix, char width, char zeropad);
+extern char *itoa_padded(int num, char *buffer, int radix, char width, char zeropad, char is_signed);
 
 
 static char *_weeknames[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
@@ -114,7 +114,7 @@ size_t strftime (char* buffer, size_t max, const char *fmt, const struct tm *tp)
 				i += strftime(&buffer[i], max - i, subfmt, tp);
 			}
 			else if (width && width < max - i) {
-				itoa_padded(value, &buffer[i], 10, width, padding);
+				itoa_padded(value, &buffer[i], 10, width, padding, 0);
 				i += width;
 			}
 		}

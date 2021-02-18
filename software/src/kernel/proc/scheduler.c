@@ -204,7 +204,7 @@ void cancel_syscall(struct process *proc)
 		proc->state = PS_RUNNING;
 	proc->bits &= ~(PB_SYSCALL | PB_WAITING | PB_PAUSED);
 	set_proc_return_value(proc, EINTR);
-	proc->bits |= PB_RETURN_SET;
+	proc->bits |= PB_DONT_SET_RETURN_VAL;
 	UNLOCK(saved_status);
 }
 
@@ -217,8 +217,8 @@ void set_proc_return_value(struct process *proc, int ret)
 
 void return_to_current_proc(int ret)
 {
-	if (current_proc->bits & PB_RETURN_SET)
-		current_proc->bits &= ~PB_RETURN_SET;
+	if (current_proc->bits & PB_DONT_SET_RETURN_VAL)
+		current_proc->bits &= ~PB_DONT_SET_RETURN_VAL;
 	else if (current_proc->state == PS_RUNNING) {
 		// If the process is still in the ready state, then set the return value in the process's context
 		*((uint32_t *) current_proc->sp) = ret;

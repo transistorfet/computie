@@ -113,7 +113,7 @@ int clone_process_memory(struct process *parent_proc, struct process *proc)
 	char *stack = kmalloc(stack_size);
 	char *stack_pointer = (stack + stack_size) - ((parent_proc->map.segments[M_STACK].base + parent_proc->map.segments[M_STACK].length) - parent_proc->sp);
 
-	memcpy_s(stack, parent_proc->map.segments[M_STACK].base, parent_proc->map.segments[M_STACK].length);
+	memcpy(stack, parent_proc->map.segments[M_STACK].base, parent_proc->map.segments[M_STACK].length);
 
 	proc->map.segments[M_DATA].base = stack;
 	proc->map.segments[M_DATA].length = 0;

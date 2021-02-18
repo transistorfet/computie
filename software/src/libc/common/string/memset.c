@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdint.h>
 
-void *memset_s(void *ptr, int value, size_t num)
+void *memset(void *ptr, int value, size_t num)
 {
 	register unsigned char *dest = ptr;
 
@@ -24,4 +24,3 @@ void *memset_s(void *ptr, int value, size_t num)
 	return ptr;
 }
 
-extern void *memset(void *ptr, int value, size_t num) __attribute__((alias("memset_s")));

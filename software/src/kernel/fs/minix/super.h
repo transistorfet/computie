@@ -43,7 +43,7 @@ static struct minix_super *load_superblock(device_t dev)
 	}
 
 	super = kmalloc(sizeof(struct minix_super));
-	memcpy_s(&super->super_v1, super_v1, sizeof(struct minix_v1_superblock));
+	memcpy(&super->super_v1, super_v1, sizeof(struct minix_v1_superblock));
 	superblock_from_le(&super->super_v1);
 	super->dev = dev;
 	super->max_filename = MINIX_V1_MAX_FILENAME;

@@ -132,7 +132,7 @@ welcome:
 
 
 monitor.bin: $(MONITOR_OBJS)
-	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1200 -o $@.elf $^
+	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1400 -o $@.elf $^
 	$(CC) $(CFLAGS) --entry=_start -Tmonitor.ld -o $@ $^
 	hexdump -v -e '/1 "0x%02X, "' $@ > output.txt
 

@@ -22,7 +22,7 @@ static zone_t minix_alloc_zone(struct minix_super *super)
 	if (!buf)
 		return NULL;
 
-	memset_s(buf->block, 0, MINIX_V1_ZONE_SIZE);
+	memset(buf->block, 0, MINIX_V1_ZONE_SIZE);
 	release_block(buf, BCF_DIRTY);
 
 	return bit;

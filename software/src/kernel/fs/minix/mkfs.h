@@ -29,7 +29,7 @@ static int minix_mkfs(device_t dev)
 	super_v1 = (struct minix_v1_superblock *) super_buf->block;
 
 	// TODO we assume this is not a disk yet, so manually initialize it
-	memset_s(super_buf->block, 0x00, MINIX_V1_ZONE_SIZE);
+	memset(super_buf->block, 0x00, MINIX_V1_ZONE_SIZE);
 	super_v1->num_inodes = to_le16(super_v1_cached.num_inodes);
 	super_v1->num_zones = to_le16(super_v1_cached.num_zones);
 	super_v1->imap_blocks = to_le16(super_v1_cached.imap_blocks);
@@ -53,7 +53,7 @@ static int minix_mkfs(device_t dev)
 		struct buf *inode_buf = get_block(dev, MINIX_V1_INODE_TABLE_START(super_v1) + i);
 		if (!inode_buf)
 			return ENOMEM;
-		memset_s(inode_buf->block, 0x00, MINIX_V1_ZONE_SIZE);
+		memset(inode_buf->block, 0x00, MINIX_V1_ZONE_SIZE);
 		release_block(inode_buf, BCF_DIRTY);
 	}
 
@@ -79,7 +79,7 @@ static int minix_mkfs(device_t dev)
 	if (!dir_buf)
 		return ENOMEM;
 	struct minix_v1_dirent *entries = dir_buf->block;
-	memset_s(dir_buf->block, 0, MINIX_V1_ZONE_SIZE);
+	memset(dir_buf->block, 0, MINIX_V1_ZONE_SIZE);
 
 	entries[0].inode = to_le16((minix_v1_inode_t) root_ino);
 	strcpy(entries[0].filename, ".");

@@ -8,12 +8,12 @@
 
 Operating System:
 
-	* implement fputc, fgetc
+	* add errno variable
+	* implement fputc, fgetc, and getc/putc
 	* implementation for fgets is currently wrong (when reading files especially).  It should buffer the read() and only return one line's worth of data
 	* add an optional rc script to be run by init
-	* try compiling fortune (requires getc() and EOF...)
+	* try compiling fortune
 
-	* I don't like the name PB_RETURN_SET....
 	* for blocking, there's process alarms, the pause system call, the wait system call, a suspended syscall which restarts on resume, and we'll need to add select
 	* the PB_WAITING flag is kinda weird and possibly not entirely needed
 	* can we change how alarms/timers work so that we don't have to traverse all procs, but instead just go through a list of timers (which could include proc timers and tcp/network timers)

@@ -249,7 +249,7 @@ int mallocfs_read(struct vfile *file, char *buf, size_t nbytes)
 		if (zlen > nbytes)
 			zlen = nbytes;
 
-		memcpy_s(&buf[offset], &zone[zpos], zlen);
+		memcpy(&buf[offset], &zone[zpos], zlen);
 
 		offset += zlen;
 		nbytes -= zlen;
@@ -287,7 +287,7 @@ int mallocfs_write(struct vfile *file, const char *buf, size_t nbytes)
 		if (zlen > nbytes)
 			zlen = nbytes;
 
-		memcpy_s(&zone[zpos], &buf[offset], zlen);
+		memcpy(&zone[zpos], &buf[offset], zlen);
 
 		offset += zlen;
 		nbytes -= zlen;

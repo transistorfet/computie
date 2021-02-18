@@ -1,22 +1,22 @@
 
 #include <stdio.h>
 
-char *itoa_padded(int num, char *buffer, int radix, char width, char zeropad);
+char *itoa_padded(int num, char *buffer, int radix, char width, char zeropad, char is_signed);
 
 
 char *itoa(int num, char *buffer, int radix)
 {
-	return itoa_padded(num, buffer, radix, 0, 0);
+	return itoa_padded(num, buffer, radix, 0, 0, radix == 10 ? 1 : 0);
 }
 
-char *itoa_padded(int num, char *buffer, int radix, char width, char zeropad)
+char *itoa_padded(int num, char *buffer, int radix, char width, char zeropad, char is_signed)
 {
 	char c;
 	int i = 0;
 	int j = 0;
 	int sign = 0;
 
-	if (radix == 10 && num < 0) {
+	if (is_signed && num < 0) {
 		sign = 1;
 		num = -num;
 	}

@@ -322,7 +322,7 @@ int minix_read(struct vfile *file, char *buffer, size_t nbytes)
 		if (zlen > nbytes)
 			zlen = nbytes;
 
-		memcpy_s(&buffer[offset], &(((char *) buf->block)[zpos]), zlen);
+		memcpy(&buffer[offset], &(((char *) buf->block)[zpos]), zlen);
 		release_block(buf, 0);
 
 		offset += zlen;
@@ -367,7 +367,7 @@ int minix_write(struct vfile *file, const char *buffer, size_t nbytes)
 		if (zlen > nbytes)
 			zlen = nbytes;
 
-		memcpy_s(&(((char *) buf->block)[zpos]), &buffer[offset], zlen);
+		memcpy(&(((char *) buf->block)[zpos]), &buffer[offset], zlen);
 		release_block(buf, BCF_DIRTY);
 
 		offset += zlen;

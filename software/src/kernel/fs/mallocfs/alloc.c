@@ -48,7 +48,7 @@ struct mallocfs_block *new_mallocfs_block(char zero)
 		return NULL;
 
 	if (zero)
-		memset_s(block, 0, MALLOCFS_BLOCK_SIZE);
+		memset(block, 0, MALLOCFS_BLOCK_SIZE);
 
 	return block;
 }

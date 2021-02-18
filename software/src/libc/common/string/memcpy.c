@@ -2,8 +2,7 @@
 #include <string.h>
 #include <stdint.h>
 
-
-void *memcpy_s(void *dest, const void *src, size_t num)
+void *memcpy(void *dest, const void *src, size_t num)
 {
 	register unsigned char *vdest = dest;
 
@@ -12,4 +11,3 @@ void *memcpy_s(void *dest, const void *src, size_t num)
 	return dest;
 }
 
-extern void *memcpy(void *dest, const void *src, size_t num) __attribute__((alias("memcpy_s")));

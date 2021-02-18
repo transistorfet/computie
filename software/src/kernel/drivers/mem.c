@@ -74,7 +74,7 @@ int mem_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 		return -1;
 	if (offset + size > geo->size)
 		size = geo->size - offset;
-	memcpy_s(buffer, &geo->base[offset], size);
+	memcpy(buffer, &geo->base[offset], size);
 	return size;
 }
 
@@ -88,7 +88,7 @@ int mem_write(devminor_t minor, const char *buffer, offset_t offset, size_t size
 		return -1;
 	if (offset + size > geo->size)
 		size = geo->size - offset;
-	memcpy_s(&geo->base[offset], buffer, size);
+	memcpy(&geo->base[offset], buffer, size);
 	return size;
 }
 

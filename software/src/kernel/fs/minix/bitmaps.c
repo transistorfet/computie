@@ -23,14 +23,14 @@ int bitmap_init(device_t dev, zone_t bitmap_start, int bitmap_size, int num_entr
 
 			if (bits)
 				bytes += 1;
-			memset_s(block, 0x00, bytes);
+			memset(block, 0x00, bytes);
 			if (bits)
 				block[bytes - 1] = ~bit_mask(bits);
-			memset_s(&block[bytes], 0xFF, MINIX_V1_ZONE_SIZE - bytes);
+			memset(&block[bytes], 0xFF, MINIX_V1_ZONE_SIZE - bytes);
 			break;
 		}
 		else
-			memset_s(block, 0x00, MINIX_V1_ZONE_SIZE);
+			memset(block, 0x00, MINIX_V1_ZONE_SIZE);
 		num_entries -= MINIX_V1_BITS_PER_ZONE;
 
 		release_block(buf, BCF_DIRTY);

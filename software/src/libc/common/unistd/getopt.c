@@ -1,7 +1,7 @@
 
 #include <stddef.h>
 #include <string.h>
-#include <unistd.h>
+#include <stdio.h>	// For EOF only
 
 int optind = 1;
 int opterr = 0;

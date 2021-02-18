@@ -117,7 +117,7 @@ int pipe_read(struct vfile *file, char *buf, size_t nbytes)
 
 	if (nbytes > vnode->size - file->position)
 		nbytes = vnode->size - file->position;
-	memcpy_s(buf, &buffer[file->position], nbytes);
+	memcpy(buf, &buffer[file->position], nbytes);
 	file->position += nbytes;
 
 	if (file->position == vnode->size) {
@@ -148,7 +148,7 @@ int pipe_write(struct vfile *file, const char *buf, size_t nbytes)
 		return 0;
 		//nbytes = PIPE_BUFFER_MAX - file->position;
 	}
-	memcpy_s(&buffer[file->position], buf, nbytes);
+	memcpy(&buffer[file->position], buf, nbytes);
 	file->position += nbytes;
 
 	if (file->position > vnode->size)

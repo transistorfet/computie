@@ -69,16 +69,16 @@ int test_process()
 	printk("Task Address: %x\n", task);
 	printk("Task Stack: %x\n", task_stack_p);
 
-	//memset_s(task, 0, 0xC00);		// With memset doing nothing, this value will not cause a fatal
-	//memset_s(task, 0, 0xD00);		// With memset doing nothing, this value will sometimes cause a fatal
-	//memset_s(task, 0, 0xF00);		// With memset doing nothing, this value will mostly cause a fatal
+	//memsets(task, 0, 0xC00);		// With memset doing nothing, this value will not cause a fatal
+	//memsets(task, 0, 0xD00);		// With memset doing nothing, this value will sometimes cause a fatal
+	//memsets(task, 0, 0xF00);		// With memset doing nothing, this value will mostly cause a fatal
 
-	//memset_s(task + 0x400, 0, 0x1000);	// TODO this will cause the fatal and the string glitch
-	//memset_s(task + 0x800, 0, 0xB00);	// Works but causes the string glitch
-	//memset_s(task + 0x400, 0, 0xB00);	// Works but causes the string glitch
+	//memsets(task + 0x400, 0, 0x1000);	// TODO this will cause the fatal and the string glitch
+	//memsets(task + 0x800, 0, 0xB00);	// Works but causes the string glitch
+	//memsets(task + 0x400, 0, 0xB00);	// Works but causes the string glitch
 
-	//memset_s(task, 0, task_size);
-	memcpy_s(task, hello_task, TASK_SIZE);
+	//memset(task, 0, task_size);
+	memcpy(task, hello_task, TASK_SIZE);
 	//dump(task, task_size);
 
 	//print_stack();

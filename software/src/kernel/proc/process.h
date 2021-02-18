@@ -33,7 +33,7 @@ struct mem_map {
 #define PB_SYSCALL			0x0002
 #define PB_WAITING			0x0004
 #define PB_PAUSED			0x0008
-#define PB_RETURN_SET			0x0010
+#define PB_DONT_SET_RETURN_VAL		0x0010
 
 #define PROC_IS_RUNNING(proc)		((proc)->state == PS_RUNNING || (proc)->state == PS_RESUMING)
 

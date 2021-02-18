@@ -6,6 +6,10 @@
 
 #include <stddef.h>
 
+#define FOPEN_MAX	20
+
+#define EOF		(-1)
+
 // WHENCE argument to fseek
 #define SEEK_SET	0	// Seek relative to the beginning of file
 #define SEEK_CUR	1	// Seek relative to the current position
@@ -63,6 +67,7 @@ FILE *fopen(const char *filename, const char *mode);
 int fclose(FILE *stream);
 int fseek(FILE *stream, long int offset, int origin);
 int feof(FILE *stream);
+int fileno(FILE *stream);
 
 
 #endif

@@ -1,6 +1,7 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <unistd.h>
 
 int optind = 1;
 int opterr = 0;
@@ -14,10 +15,10 @@ int getopt(int argc, char * const argv[], const char *optstring)
 
 	if (nextchar == 1) {
 		if (optind >= argc || argv[optind][0] != '-' || argv[optind][0] == '\0')
-			return -1;
+			return EOF;
 		else if (!strcmp(argv[optind], "--")) {
 			optind++;
-			return -1;
+			return EOF;
 		}
 	}
 

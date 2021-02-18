@@ -13,7 +13,7 @@ int MAIN(command_mount)(int argc, char **argv, char **envp)
 	const char *usage = "Usage: mount [-t <fstype>] <devfile> <mountpoint>";
 
 	optind = 1;
-	while ((opt = getopt(argc, argv, "t:")) != -1) {
+	while ((opt = getopt(argc, argv, "t:")) != EOF) {
 		switch (opt) {
 		    case '?':
 			puts(usage);

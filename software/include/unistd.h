@@ -20,6 +20,7 @@
 #define SEEK_SET	0	// Seek relative to the beginning of file
 #define SEEK_CUR	1	// Seek relative to the current position
 #define SEEK_END	2	// Seek relative to the end of file
+#define EOF		-1
 #endif
 
 #define PIPE_READ_FD	0

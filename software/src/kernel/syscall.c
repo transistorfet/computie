@@ -776,7 +776,7 @@ ssize_t do_send(int fd, const void *buf, size_t n, int flags)
 }
 
 // Unistd Declaration:ssize_t do_sendto(int fd, const void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t addr_len)
-ssize_t do_sendto(int fd, const void *buf, size_t n, int flags, const void *opts[2])
+ssize_t do_sendto(int fd, const void *buf, size_t n, int flags, int opts[2])
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file || !S_ISSOCK(file->vnode->mode))
@@ -800,7 +800,7 @@ ssize_t do_recv(int fd, void *buf, size_t n, int flags)
 }
 
 // Unistd Declaration:ssize_t do_recvfrom(int fd, void *buf, size_t n, int flags, struct sockaddr *addr, socklen_t *addr_len)
-ssize_t do_recvfrom(int fd, void *buf, size_t n, int flags, void *opts[2])
+ssize_t do_recvfrom(int fd, void *buf, size_t n, int flags, int opts[2])
 {
 	struct vfile *file = get_fd(current_proc->fd_table, fd);
 	if (!file || !S_ISSOCK(file->vnode->mode))

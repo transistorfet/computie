@@ -48,6 +48,11 @@ FILE *fopen(const char *filename, const char *mode)
 
 	stream = &_file_table[_STDIO_BASE_FD + fd];
 	stream->fd = fd;
+	stream->flags = 0;
+	stream->bufsize = 0;
+	stream->count = 0;
+	stream->pos = 0;
+	stream->buf = NULL;
 
 	return stream;
 }

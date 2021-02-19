@@ -2,11 +2,23 @@
 #include <stdio.h>
 #include <string.h>
 
-int fgets(char *str, int max, FILE *stream)
+char *fgets(char *str, int max, FILE *stream)
 {
-	// TODO this is wrong
-	int r = fread(str, max - 1, 1, stream);
-	str[r] = '\0';
-	return r;
+	int i;
+
+	for (i = 0; i < max - 1; i++) {
+		str[i] = fgetc(stream);
+		if (str[i] == '\n') {
+			i += 1;
+			break;
+		}
+		else if (str[i] == EOF) {
+			if (!i)
+				return NULL;
+			break;
+		}
+	}
+	str[i] = '\0';
+	return str;
 }
 

@@ -4,6 +4,6 @@
 
 int feof(FILE *stream)
 {
-	return stream->flags & _STDIO_FF_EOF;
+	return stream->flags & _IOEOF;
 }
 

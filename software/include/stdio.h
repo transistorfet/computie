@@ -7,6 +7,7 @@
 #include <stddef.h>
 
 #define FOPEN_MAX	20
+#define BUFSIZE		1024
 
 #define EOF		(-1)
 
@@ -14,6 +15,12 @@
 #define SEEK_SET	0	// Seek relative to the beginning of file
 #define SEEK_CUR	1	// Seek relative to the current position
 #define SEEK_END	2	// Seek relative to the end of file
+
+#define	_IOFBF		0x000
+#define	_IONBF		0x004
+#define	_IOFREEBUF	0x008
+#define	_IOEOF		0x010
+#define	_IOERR		0x020
 
 struct _FILE;
 
@@ -47,11 +54,6 @@ int vscanf(const char *fmt, va_list args);
 int fscanf(FILE *stream, const char *fmt, ...);
 int vfscanf(FILE *stream, const char *fmt, va_list args);
 
-int fgetc(FILE *stream);
-int fgets(char *str, int max, FILE *stream);
-
-int fputc(int ch, FILE *stream);
-int fputs(const char *str, FILE *stream);
 int puts(const char *str);
 
 
@@ -68,6 +70,12 @@ int fclose(FILE *stream);
 int fseek(FILE *stream, long int offset, int origin);
 int feof(FILE *stream);
 int fileno(FILE *stream);
+
+int fputc(int ch, FILE *stream);
+int fgetc(FILE *stream);
+
+int fputs(const char *str, FILE *stream);
+char *fgets(char *str, int max, FILE *stream);
 
 
 #endif

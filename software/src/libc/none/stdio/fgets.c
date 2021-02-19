@@ -2,16 +2,18 @@
 #include <stdio.h>
 #include <string.h>
 
-int fgets(char *str, int max, FILE *stream)
+char *fgets(char *str, int max, FILE *stream)
 {
 	int i = 0;
 
-	for (; i < max; i++) {
+	for (; i < max - 1; i++) {
 		str[i] = getchar();
-		if (str[i] == '\n')
+		if (str[i] == '\n') {
+			i += 1;
 			break;
+		}
 	}
 	str[i] = '\0';
-	return i;
+	return str;
 }
 

@@ -1,6 +1,5 @@
  
 #include <unistd.h>
-#include <kernel/syscall.h>
 
 int putchar(int ch)
 {

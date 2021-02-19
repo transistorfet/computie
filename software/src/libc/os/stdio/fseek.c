@@ -5,6 +5,7 @@
 
 int fseek(FILE *stream, long int offset, int origin)
 {
+	stream->count = 0;
 	return lseek(stream->fd, offset, origin);
 }
 

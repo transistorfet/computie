@@ -77,6 +77,7 @@ struct udp_endpoint {
 
 static struct packet *udp_create_packet(struct protocol *proto, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *buf, int nbytes);
 static int udp_encode_packet(struct packet *pack, const struct ipv4_address *src, const struct ipv4_address *dest, const unsigned char *data, int length);
+static uint16_t udp_calculate_checksum(struct protocol *proto, struct packet *pack);
 static struct udp_endpoint *udp_lookup_endpoint(struct protocol *proto, uint32_t addr, uint16_t port);
 
 static struct queue udp_endpoints;
@@ -90,6 +91,7 @@ int udp_init()
 
 int udp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset)
 {
+	uint16_t checksum;
 	struct udp_header *hdr;
 	struct ipv4_custom_data *custom;
 
@@ -107,11 +109,15 @@ int udp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offs
 	pack->transport_offset = offset;
 	pack->data_offset = offset + sizeof(struct udp_header);
 
-	// TODO validate checksum
-
 	custom = (struct ipv4_custom_data *) &pack->custom_data;
 	custom->src.port = hdr->src;
 	custom->dest.port = hdr->dest;
+
+	checksum = hdr->checksum;
+	hdr->checksum = 0;
+	if (checksum != udp_calculate_checksum(proto, pack))
+		return -7;
+	hdr->checksum = checksum;
 
 	return 0;
 }
@@ -159,7 +165,6 @@ static int udp_encode_packet(struct packet *pack, const struct ipv4_address *src
 	hdr->src = to_be16(src->port);
 	hdr->dest = to_be16(dest->port);
 	hdr->length = to_be16(sizeof(struct udp_header) + length);
-	// TODO calculate checksum
 	hdr->checksum = to_be16(0);
 
 	pack->data_offset = pack->length;
@@ -168,9 +173,24 @@ static int udp_encode_packet(struct packet *pack, const struct ipv4_address *src
 		return NULL;
 	}
 
+	// Update the checksum
+	hdr->checksum = to_be16(udp_calculate_checksum(pack->proto, pack));
+
 	return 0;
 }
 
+static uint16_t udp_calculate_checksum(struct protocol *proto, struct packet *pack)
+{
+	uint32_t checksum = 0;
+	struct ipv4_custom_data *custom = (struct ipv4_custom_data *) &pack->custom_data;
+
+	checksum += (custom->src.addr >> 16) + (custom->src.addr & 0xFFFF);
+	checksum += (custom->dest.addr >> 16) + (custom->dest.addr & 0xFFFF);
+	checksum += proto->protocol;
+	checksum += pack->length - pack->transport_offset;
+
+	return ipv4_calculate_checksum(&pack->data[pack->transport_offset], pack->length - pack->transport_offset, checksum);
+}
 
 int udp_create_endpoint(struct protocol *proto, struct socket *sock, const struct sockaddr *sockaddr, socklen_t len, struct endpoint **result)
 {

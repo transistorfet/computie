@@ -106,6 +106,7 @@ int tcp_init()
 
 int tcp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offset)
 {
+	uint16_t checksum;
 	struct tcp_header *hdr;
 	struct ipv4_custom_data *custom;
 
@@ -125,11 +126,15 @@ int tcp_decode_header(struct protocol *proto, struct packet *pack, uint16_t offs
 	pack->transport_offset = offset;
 	pack->data_offset = offset + (hdr->offset << 2);
 
-	// TODO validate checksum
-
 	custom = (struct ipv4_custom_data *) &pack->custom_data;
 	custom->src.port = hdr->src;
 	custom->dest.port = hdr->dest;
+
+	checksum = hdr->checksum;
+	hdr->checksum = 0;
+	if (checksum != tcp_calculate_checksum(proto, pack))
+		return -7;
+	hdr->checksum = checksum;
 
 	return 0;
 }

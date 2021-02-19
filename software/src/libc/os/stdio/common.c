@@ -8,4 +8,3 @@ FILE __stdin = { 0, 0 };
 FILE __stdout = { 1, 0 };
 FILE __stderr = { 2, 0 };
 
-

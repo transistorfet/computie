@@ -4,9 +4,9 @@
 
 int fgets(char *str, int max, FILE *stream)
 {
+	// TODO this is wrong
 	int r = fread(str, max - 1, 1, stream);
 	str[r] = '\0';
 	return r;
 }
-
 

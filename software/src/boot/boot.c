@@ -11,26 +11,49 @@
 
 #include "../kernel/fs/minix/minix-v1.h"
 
+#define PARTITION_OFFSET	0x1BE
+
+struct partition_entry {
+	uint8_t status;
+	uint8_t chs_start[3];
+	uint8_t fstype;
+	uint8_t chs_end[3];
+	uint32_t lba_start;
+	uint32_t lba_sectors;
+};
+
+
 static char *load_address = (char *) 0x100000;	// Address to load the kernel
 static char *mem_drive = (char *) 0x080000;	// The address in ROM of the start of the drive
-static int ata_drive = 0x800;			// The sector number of the start of the boot partition
 static char boot_device = 2;			// 1 = ROM, 2 = ATA
-//static minix_v1_zone_t inode_zone = 6;		// Zone of the inode table where the kernel is stored
 static short inode_num = 2;			// Inode offset into zone of the kernel inode
+
+static int ata_lba_start;			// The sector number of the start of the boot partition
 
 int init_tty();
 int putchar(int ch);
+void load_partition(int partition);
 void load_kernel(char *offset);
 int ata_read_sector(int sector, char *buffer);
 
 int main(char *boot_args)
 {
+	short device_num;
+
+	ata_lba_start = 0;
+	if (!boot_args[0])
+		boot_args = "ata0";
+
+	boot_device = boot_args[0] == 'a' ? 2 : 1;
+	device_num = boot_args[3] - '0';
+
 	init_tty();
+	load_partition(device_num);
 	load_kernel(load_address);
 
 	__attribute__((noreturn)) void (*entry)(char *) = (void (*)(char *)) load_address;
-	//entry(boot_args);
-	entry("ata0");
+	entry(boot_args);
+	//entry("ata0");
 	__builtin_unreachable();
 }
 
@@ -41,7 +64,7 @@ char *copy_zone_data(char *dest, minix_v1_zone_t zone)
 		memcpy(dest, src, MINIX_V1_ZONE_SIZE);
 	}
 	else {
-		ata_read_sector(ata_drive + (zone << 1), dest);
+		ata_read_sector(ata_lba_start + (zone << 1), dest);
 	}
 
 	return dest;
@@ -59,6 +82,16 @@ char *load_zones(minix_v1_zone_t *zones, int max, char *dest)
 		putchar('.');
 	}
 	return dest;
+}
+
+void load_partition(int partition)
+{
+	struct partition_entry *entry;
+	char buffer[MINIX_V1_ZONE_SIZE];
+
+	copy_zone_data(buffer, 0);
+	entry = (struct partition_entry *) &buffer[PARTITION_OFFSET];
+	ata_lba_start = from_le32(entry[partition].lba_start);
 }
 
 void load_kernel(char *offset)

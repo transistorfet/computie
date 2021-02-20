@@ -115,9 +115,11 @@ devicefiles:
 	sudo mknod $(BUILD)/dev/ata0 c 4 0
 
 otherfiles:
+	sudo mkdir -p $(BUILD)/etc
 	sudo mkdir -p $(BUILD)/proc
 	sudo mkdir -p $(BUILD)/home
 	sudo mkdir -p $(BUILD)/media
+	sudo cp -r etc/* $(BUILD)/etc
 
 
 libc-68k-none.a libc-68k-os.a:

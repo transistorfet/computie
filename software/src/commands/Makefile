@@ -62,7 +62,7 @@ $(ROOT)/libc-68k-os.a:
 	make -C $(ROOT)/src/libc clean $@
 
 %.send: %.bin
-	$(ROOT)/tools/make-send-file $(BUILD)/bin/$* $@ $*
+	$(ROOT)/tools/make-send-file $(BUILD)/bin/$* $@ $(notdir $*)
 
 %.bin: %.o 
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $*.elf $^ $(ROOT)/libc-68k-os.a

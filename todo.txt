@@ -9,27 +9,22 @@
 Operating System:
 
 	* add an optional rc script to be run by init
-
 	* implement select(), but how to block/resume?
+	* add timers and retransmissions to tcp
 	* figure out how to unblock the connect syscall properly
 	* for blocking, there's process alarms, the pause system call, the wait system call, a suspended syscall which restarts on resume, and we'll need to add select
-	* the PB_WAITING flag is kinda weird and possibly not entirely needed
 	* can we change how alarms/timers work so that we don't have to traverse all procs, but instead just go through a list of timers (which could include proc timers and tcp/network timers)
 
-	* try compiling fortune
 	* make checksum command for file integrity
 	* add errno variable
 
-	* add UDP checksum calculating (annoying to do because of the pseudoheader)
 	* try transfering files over tcp, to test the stability of TCP (it should be possible to `nc -l 3904 > tar -x` or something to transfer data)
-	* add timers and retransmissions to tcp
 	* how can you prevent a process from being unkillable because input has been entered and the ^C and ^Z characters aren't being processed anymore... tty68681 would have to do the checking
 
 
 	* make a crt0/_start file that initializes env, and any other values needed
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
-	* add timestamps to packets
-	* how hard would it be to implement dns?
+	* implement dns
 
 
 
@@ -55,6 +50,7 @@ Operating System:
 	* when there's a trailing / to rm or mkdir, it will create something weird
 	* add checks for errors in the serial driver? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
+	* add timestamps to packets
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 	* should there be something that periodically syncs data to disk?
 

@@ -30,7 +30,7 @@ int MAIN(init_task)()
 
 
 	int pid, status;
-	char *argv[2] = { NULL };
+	char *argv[3] = { NULL };
 	char *envp[2] = { NULL };
 
  	pid = fork();
@@ -41,6 +41,18 @@ int MAIN(init_task)()
 		ioctl(STDOUT_FILENO, TIOCSPGRP, &fgpid);
 
 		argv[0] = "/bin/sh";
+		argv[1] = "/etc/rc";
+		if (!access(argv[1], X_OK)) {
+			if (!fork()) {
+				execve(argv[0], argv, envp);
+				exit(0);
+			}
+			else {
+				wait(&status);
+			}
+		}
+		argv[1] = NULL;
+
 		status = execve(argv[0], argv, envp);
 
 		#ifdef ONEBINARY

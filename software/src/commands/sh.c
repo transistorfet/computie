@@ -21,12 +21,15 @@
 #include "prototype.h"
 
 
+int f_interactive = 1;
+
+
 #ifdef ADDMAIN
 int sh_task();
 
-int main()
+int main(int argc, char **argv, char **env)
 {
-	return sh_task();
+	return sh_task(argc, argv, env);
 }
 #endif
 
@@ -144,9 +147,9 @@ int command_send(int argc, char **argv, char **envp)
 	}
 
 	size = fetch_word(4);
+	printf("Expecting %x\n", size);
 	odd_size = size & 0x01;
 	size >>= 1;
-	printf("Expecting %x\n", size);
 
 	for (short i = 0; i < size; i++) {
 		data = fetch_word(4);
@@ -552,30 +555,66 @@ int execute_command(struct pipe_command *command, int argc, char **argv, char **
 	return 0;
 }
 
+#define INPUT_SIZE	512
+
+int read_input(int fin, char *buffer, int max)
+{
+	static int pos = 0;
+	static int count = 0;
+	static char input_buf[INPUT_SIZE];
+
+	int i;
+
+	if (f_interactive)
+		write(STDOUT_FILENO, "% ", 2);
+
+	for (i = 0; i < max - 1; i++) {
+		if (pos >= count) {
+			count = read(fin, input_buf, INPUT_SIZE);
+			if (count == 0) {
+				if (i > 0)
+					break;
+				return 1;
+			}
+			else if (count < 0) {
+				if (count != EINTR)
+					printf("Error: %d\n", count);
+				return -1;
+			}
+			pos = 0;
+		}
+
+		buffer[i] = input_buf[pos++];
+		if (buffer[i] == '\n')
+			break;
+	}
+	buffer[i] = '\0';
+	return 0;
+}
+
 
 #define BUF_SIZE	256
 #define ARG_SIZE	10
 #define PIPE_SIZE	5
 
-void serial_read_loop()
+int read_loop(int fin)
 {
 	int argc;
-	int error;
+	int result;
 	main_t main;
-	char buffer[BUF_SIZE];
 	char *argv[ARG_SIZE];
+	char buffer[BUF_SIZE];
 	struct pipe_command commands[PIPE_SIZE];
 	char *envp[2] = { "PATH=/bin:/sbin", NULL };
 
 	while (1) {
 		memset(commands, 0, sizeof(struct pipe_command) * PIPE_SIZE);
-		fputs("% ", stdout);
-		//if (!readline(buffer, BUF_SIZE))
-		if ((error = read(0, buffer, BUF_SIZE)) <= 0) {
-			if (error != EINTR)
-				printf("Error: %d\n", error);
-			continue;
-		}
+		result = read_input(fin, buffer, BUF_SIZE);
+		if (result < 0)
+			return result;
+		else if (result)
+			break;
+
 		if (parse_command_line(buffer, commands))
 			continue;
 
@@ -592,14 +631,14 @@ void serial_read_loop()
 		if (argc <= 0 || !argv[0] || *argv[0] == '\0')
 			continue;
 		else if (!strcmp(argv[0], "exit"))
-			return;
-		else if (!strcmp(argv[0], "cd")) {
+			break;
+		else if (!strcmp(argv[0], "cd"))
 			command_chdir(argc, argv, envp);
-			continue;
-		}
-
-		execute_command(&commands[0], argc, argv, envp);
+		else
+			execute_command(&commands[0], argc, argv, envp);
 	}
+
+	return 0;
 }
 
 void handle_signal(int signum)
@@ -612,12 +651,12 @@ void handle_signal(int signum)
  * Main Entry *
  **************/
 
-//int sh_task()
-int MAIN(sh_task)()
+int MAIN(sh_task)(int argc, char **argv, char **env)
 {
-	init_commands();
+	int error = 0;
+	int fin = STDIN_FILENO;
 
-	puts("\n\nThe Pseudo Shell!\n");
+	init_commands();
 
 	struct sigaction act;
 	act.sa_handler = handle_signal;
@@ -632,9 +671,24 @@ int MAIN(sh_task)()
 
 	//test_math();
 
-	serial_read_loop();
+	if (argc >= 2) {
+		f_interactive = 0;
+		fin = open(argv[1], O_RDONLY, 0);
+		if (fin < 0) {
+			printf("Error: no such file \"%s\"\n", argv[1]);
+			return -1;
+		}
+	}
 
-	return 0;
+	if (f_interactive)
+		puts("\n\nThe Pseudo Shell!\n");
+
+	error = read_loop(fin);
+
+	if (fin != STDIN_FILENO)
+		close(fin);
+
+	return error;
 }
 
 

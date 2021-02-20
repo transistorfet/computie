@@ -77,5 +77,7 @@ int fgetc(FILE *stream);
 int fputs(const char *str, FILE *stream);
 char *fgets(char *str, int max, FILE *stream);
 
+#define getc(stream)		fgetc((stream))
+#define putc(ch, stream)	fputc((ch), (stream))
 
 #endif

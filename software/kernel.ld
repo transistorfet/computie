@@ -9,7 +9,6 @@ SECTIONS
   */
   .text 0x100000 : { *(.text) }
   .rodata : { *(.rodata) }
-  /* . = 0x101400; */
   .data : { *(.data) }
-  .bss : { *(.bss) } /* TODO for now, we want to reserve space for this */
+  .bss : { *(.bss) }
 }

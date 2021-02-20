@@ -8,7 +8,9 @@
 
 Operating System:
 
-	* add an optional rc script to be run by init
+	* there's an issue with input where holding down backspace can cause lag and corruption to the input buffer?
+
+	* should select check all 3 lists at once?? should it have an iterator
 	* implement select(), but how to block/resume?
 	* add timers and retransmissions to tcp
 	* figure out how to unblock the connect syscall properly
@@ -16,32 +18,26 @@ Operating System:
 	* can we change how alarms/timers work so that we don't have to traverse all procs, but instead just go through a list of timers (which could include proc timers and tcp/network timers)
 
 	* make checksum command for file integrity
-	* add errno variable
+	* maybe add some parsing of params to the bootloader, rather than using the builtin defaults
+	* make the boot loader recognize the partition table
+	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
 
-	* try transfering files over tcp, to test the stability of TCP (it should be possible to `nc -l 3904 > tar -x` or something to transfer data)
 	* how can you prevent a process from being unkillable because input has been entered and the ^C and ^Z characters aren't being processed anymore... tty68681 would have to do the checking
 
 
-	* make a crt0/_start file that initializes env, and any other values needed
-	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
-	* implement dns
 
-
-
-	* maybe add some parsing of params to the bootloader, rather than using the builtin defaults
-	* split the boot loader up into multiple parts, so it can be stage loaded
-	* make the boot loader recognize the partition table
-
+	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)
 	* do you need to implement some internal network routing?
 	* you could possibly make an abstracted packet construction thing using an ioctl-like function defined for each protocol, which can intercept parts of
 	  the requests to fill in data in the packet headers (set src address, set dest address, add id, etc)
 
-	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)
-	* add calculating of cpu runtime
+	* try transfering files over tcp, to test the stability of TCP (it should be possible to `nc -l 3904 > tar -x` or something to transfer data)
+	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
 	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?
+	* add calculating of cpu runtime
+	* split the boot loader up into multiple parts, so it can be stage loaded
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
 	* modify the kernel's init task creation to optionally load init from disk instead of being builtin (for kernel images written to the flash card)
-	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
 	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum) (add to /proc/mounts)
 	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* add check to vfs_link() for loops
@@ -59,9 +55,11 @@ Operating System:
 	* move interrupt and syscall_entry code into proc??
 
 
-	* port some kind of interpreter, like scheme
-	* make a simple web server
+	* implement dns
 	* add pipe setup to command evaluation
+	* add the & (run in background) option to the shell
+	* add support for * in shell
+	* make a simple web server
 	* add fifos (should be easy now)
 	* implement unix domain sockets
 	* add stack guard protection
@@ -71,9 +69,9 @@ Operating System:
 	* optionally implement ftell, fgetpos, fsetpos
 	* can you implement some kind of terminal switching, like alt-F* keys... It would have to be more like `screen`
 	* make a /dev/flash0 device or /dev/rom0 device in the mem.c driver, possibly even with a partition table and bootloader, that can be mounted read only
+	* port some kind of interpreter, like scheme
 	* try porting a simple command, and then something more complex, maybe awk or something as a big target
 
-	* add the & (run in background) option to the shell
 	* implement fg/bg somehow... it would be builtin to the shell and would require job control stuff...
 	* add commands: rmdir, dd, chown, grep
 	* implement shell scripting?

@@ -22,79 +22,81 @@ struct partition_entry {
 	uint32_t lba_sectors;
 };
 
+struct boot_drive {
+	char drive_type;				// 1 = ROM, 2 = ATA
+	char partition;					// The partition number of the boot partition
+	int ata_lba_start;				// The sector number of the start of the boot partition
+};
 
-static char *load_address = (char *) 0x100000;	// Address to load the kernel
-static char *mem_drive = (char *) 0x080000;	// The address in ROM of the start of the drive
-static char boot_device = 2;			// 1 = ROM, 2 = ATA
-static short inode_num = 2;			// Inode offset into zone of the kernel inode
+static char *load_address = (char *) 0x100000;		// Address to load the kernel
+static char *mem_drive = (char *) 0x080000;		// The address in ROM of the start of the mem drive
+static const short inode_num = 2;			// Inode offset into zone of the kernel inode
 
-static int ata_lba_start;			// The sector number of the start of the boot partition
 
 int init_tty();
 int putchar(int ch);
-void load_partition(int partition);
-void load_kernel(char *offset);
+void load_partition(struct boot_drive *drive);
+void load_kernel(struct boot_drive *drive, char *offset);
 int ata_read_sector(int sector, char *buffer);
 
 int main(char *boot_args)
 {
-	short device_num;
+	struct boot_drive drive;
 
-	ata_lba_start = 0;
 	if (!boot_args[0])
 		boot_args = "ata0";
 
-	boot_device = boot_args[0] == 'a' ? 2 : 1;
-	device_num = boot_args[3] - '0';
+	drive.drive_type = boot_args[0] == 'a' ? 2 : 1;
+	drive.partition = boot_args[3] - '0';
+	drive.ata_lba_start = 0;
 
 	init_tty();
-	load_partition(device_num);
-	load_kernel(load_address);
+	load_partition(&drive);
+	load_kernel(&drive, load_address);
 
 	__attribute__((noreturn)) void (*entry)(char *) = (void (*)(char *)) load_address;
 	entry(boot_args);
-	//entry("ata0");
 	__builtin_unreachable();
 }
 
-char *copy_zone_data(char *dest, minix_v1_zone_t zone)
+char *copy_zone_data(struct boot_drive *drive, char *dest, minix_v1_zone_t zone)
 {
-	if (boot_device == 1) {
+	if (drive->drive_type == 1) {
 		char *src = mem_drive + (zone * MINIX_V1_ZONE_SIZE);
 		memcpy(dest, src, MINIX_V1_ZONE_SIZE);
 	}
 	else {
-		ata_read_sector(ata_lba_start + (zone << 1), dest);
+		ata_read_sector(drive->ata_lba_start + (zone << 1), dest);
 	}
 
 	return dest;
 }
 
-char *load_zones(minix_v1_zone_t *zones, int max, char *dest)
+char *load_zones(struct boot_drive *drive, minix_v1_zone_t *zones, int max, char *dest)
 {
 	char *src;
 
 	for (short i = 0; i < max; i++) {
 		if (!zones[i])
 			return NULL;
-		src = copy_zone_data(dest, from_le16(zones[i]));
+		src = copy_zone_data(drive, dest, from_le16(zones[i]));
 		dest += MINIX_V1_ZONE_SIZE;
 		putchar('.');
 	}
 	return dest;
 }
 
-void load_partition(int partition)
+void load_partition(struct boot_drive *drive)
 {
 	struct partition_entry *entry;
 	char buffer[MINIX_V1_ZONE_SIZE];
 
-	copy_zone_data(buffer, 0);
+	copy_zone_data(drive, buffer, 0);
 	entry = (struct partition_entry *) &buffer[PARTITION_OFFSET];
-	ata_lba_start = from_le32(entry[partition].lba_start);
+	drive->ata_lba_start = from_le32(entry[drive->partition].lba_start);
 }
 
-void load_kernel(char *offset)
+void load_kernel(struct boot_drive *drive, char *offset)
 {
 	minix_v1_zone_t *zone_table;
 	minix_v1_zone_t *inode_zones;
@@ -103,21 +105,21 @@ void load_kernel(char *offset)
 	char buffer[MINIX_V1_ZONE_SIZE];
 
 	// Load our target inode and get the zone table in the inode
-	super = (struct minix_v1_superblock *) copy_zone_data(buffer, MINIX_V1_SUPER_ZONE);
+	super = (struct minix_v1_superblock *) copy_zone_data(drive, buffer, MINIX_V1_SUPER_ZONE);
 	MINIX_V1_INODE_TABLE_START(super);
 	minix_v1_zone_t inode_zone = MINIX_V1_BITMAP_ZONES + from_le16((super)->imap_blocks) + from_le16((super)->zmap_blocks);
 
 	// Load our target inode and get the zone table in the inode
-	inode_table = (struct minix_v1_inode *) copy_zone_data(buffer, inode_zone);
+	inode_table = (struct minix_v1_inode *) copy_zone_data(drive, buffer, inode_zone);
 	inode_zones = inode_table[inode_num - 1].zones;
 
 	// Copy all the inode zones to RAM
-	offset = load_zones(inode_zones, MINIX_V1_TIER1_ZONENUMS, offset);
+	offset = load_zones(drive, inode_zones, MINIX_V1_TIER1_ZONENUMS, offset);
 
 	// If there are more zones, load the indirect zone table and copy all the zones to RAM
 	if (offset && inode_zones[MINIX_V1_TIER1_ZONENUMS]) {
-		zone_table = (minix_v1_zone_t *) copy_zone_data(buffer, from_le16(inode_table[inode_num - 1].zones[MINIX_V1_TIER1_ZONENUMS]));
-		offset = load_zones(zone_table, MINIX_V1_ZONENUMS_PER_ZONE, offset);
+		zone_table = (minix_v1_zone_t *) copy_zone_data(drive, buffer, from_le16(inode_table[inode_num - 1].zones[MINIX_V1_TIER1_ZONENUMS]));
+		offset = load_zones(drive, zone_table, MINIX_V1_ZONENUMS_PER_ZONE, offset);
 	}
 
 	putchar('\n');

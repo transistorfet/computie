@@ -18,8 +18,6 @@ Operating System:
 	* can we change how alarms/timers work so that we don't have to traverse all procs, but instead just go through a list of timers (which could include proc timers and tcp/network timers)
 
 	* make checksum command for file integrity
-	* maybe add some parsing of params to the bootloader, rather than using the builtin defaults
-	* make the boot loader recognize the partition table
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
 
 	* how can you prevent a process from being unkillable because input has been entered and the ^C and ^Z characters aren't being processed anymore... tty68681 would have to do the checking

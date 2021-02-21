@@ -1,4 +1,4 @@
-echo "Running rc"
+echo "Running /etc/rc"
 
 ntpdate
 

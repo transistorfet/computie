@@ -10,7 +10,8 @@ OBJCOPY = m68k-linux-gnu-objcopy
 RANLIB = m68k-linux-gnu-ranlib
 INCLUDE = ./include
 ASFLAGS = -m68010 --defsym __mc68010__=1
-CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -g -Os
+CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -fno-zero-initialized-in-bss -g -Os
+LDFLAGS = -Wl,--build-id=none
 
 # reduce the elf output size by reducing the alignment
 CFLAGS += -z max-page-size=0x10
@@ -134,8 +135,8 @@ welcome:
 
 
 monitor.bin: $(MONITOR_OBJS)
-	$(CC) $(CFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1400 -o $@.elf $^
-	$(CC) $(CFLAGS) --entry=_start -Tmonitor.ld -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1400 -o $@.elf $^
+	$(CC) $(CFLAGS) $(LDFLAGS) --entry=_start -Tmonitor.ld -o $@ $^
 	hexdump -v -e '/1 "0x%02X, "' $@ > output.txt
 
 
@@ -143,14 +144,14 @@ boot.load: boot.bin
 	tools/make-load-file $^ $@ 180000
 
 boot.bin: $(BOOT_OBJS)
-	$(CC) $(CFLAGS) --entry=main -Ttext=0x0000 -o $@.elf $^
-	$(CC) $(CFLAGS) --entry=main -Ttext=0x0000 -Wl,--oformat=binary -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) --entry=main -Ttext=0x0000 -o $@.elf $^
+	$(CC) $(CFLAGS) $(LDFLAGS) --entry=main -Ttext=0x0000 -Wl,--oformat=binary -o $@ $^
 
 
 kernel.bin: CFLAGS += -DONEBINARY
 kernel.bin: $(KERNEL_OBJS)
-	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -o $@.elf $^
-	$(CC) $(CFLAGS) --entry=_start -Tkernel.ld -Wl,--oformat=binary -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) --entry=_start -Tkernel.ld -o $@.elf $^
+	$(CC) $(CFLAGS) $(LDFLAGS) --entry=_start -Tkernel.ld -Wl,--oformat=binary -o $@ $^
 	mkdir -p $(BUILD)
 	cp $@ $(BUILD)
 

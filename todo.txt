@@ -9,6 +9,7 @@
 Operating System:
 
 	* there's an issue with input where holding down backspace can cause lag and corruption to the input buffer?
+	* how can you prevent a process from being unkillable because input has been entered and the ^C and ^Z characters aren't being processed anymore... tty68681 would have to do the checking
 
 	* should select check all 3 lists at once?? should it have an iterator
 	* implement select(), but how to block/resume?
@@ -19,9 +20,6 @@ Operating System:
 
 	* make checksum command for file integrity
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
-
-	* how can you prevent a process from being unkillable because input has been entered and the ^C and ^Z characters aren't being processed anymore... tty68681 would have to do the checking
-
 
 
 	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)

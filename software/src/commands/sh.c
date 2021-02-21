@@ -570,18 +570,18 @@ int read_input(int fin, char *buffer, int max)
 
 	for (i = 0; i < max - 1; i++) {
 		if (pos >= count) {
+			pos = 0;
 			count = read(fin, input_buf, INPUT_SIZE);
 			if (count == 0) {
 				if (i > 0)
 					break;
-				return 1;
+				return 0;
 			}
 			else if (count < 0) {
 				if (count != EINTR)
 					printf("Error: %d\n", count);
 				return -1;
 			}
-			pos = 0;
 		}
 
 		buffer[i] = input_buf[pos++];
@@ -589,7 +589,7 @@ int read_input(int fin, char *buffer, int max)
 			break;
 	}
 	buffer[i] = '\0';
-	return 0;
+	return 1;
 }
 
 
@@ -610,10 +610,10 @@ int read_loop(int fin)
 	while (1) {
 		memset(commands, 0, sizeof(struct pipe_command) * PIPE_SIZE);
 		result = read_input(fin, buffer, BUF_SIZE);
-		if (result < 0)
-			return result;
-		else if (result)
+		if (!result)
 			break;
+		else if (result < 0)
+			return result;
 
 		if (parse_command_line(buffer, commands))
 			continue;

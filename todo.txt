@@ -13,42 +13,40 @@ Operating System:
 
 	* should select check all 3 lists at once?? should it have an iterator
 	* implement select(), but how to block/resume?
-	* add timers and retransmissions to tcp
 	* figure out how to unblock the connect syscall properly
 	* for blocking, there's process alarms, the pause system call, the wait system call, a suspended syscall which restarts on resume, and we'll need to add select
 	* can we change how alarms/timers work so that we don't have to traverse all procs, but instead just go through a list of timers (which could include proc timers and tcp/network timers)
 
+	* add timers and retransmissions to tcp
+	* when there's a trailing / to rm or mkdir, it will create something weird
 	* make checksum command for file integrity
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
 
 
-	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The 3 values not in the vnode (ino, blksize, blocks)
-	* do you need to implement some internal network routing?
-	* you could possibly make an abstracted packet construction thing using an ioctl-like function defined for each protocol, which can intercept parts of
-	  the requests to fill in data in the packet headers (set src address, set dest address, add id, etc)
-
-	* try transfering files over tcp, to test the stability of TCP (it should be possible to `nc -l 3904 > tar -x` or something to transfer data)
 	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
-	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?
-	* add calculating of cpu runtime
-	* split the boot loader up into multiple parts, so it can be stage loaded
 	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
-	* modify the kernel's init task creation to optionally load init from disk instead of being builtin (for kernel images written to the flash card)
+	* should there be something that periodically syncs data to disk?
+	* try transfering files over tcp, to test the stability of TCP (it should be possible to `nc -l 3904 > tar -x` or something to transfer data)
 	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum) (add to /proc/mounts)
-	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
+	* add calculating of cpu runtime
+
+
+	* modify the kernel's init task creation to optionally load init from disk instead of being builtin (for kernel images written to the flash card)
+	* do you need to implement some internal network routing?
 	* add check to vfs_link() for loops
-	* make init relaunch shell if the initial one is killed
+	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?
+	* split the boot loader up into multiple parts, so it can be stage loaded
+	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
+	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The only 2 values not in the vnode are blksize, blocks
 	* how can you make a df command to list how many blocks are free??  That info would need to come from the minix fs-specific code
-	* when there's a trailing / to rm or mkdir, it will create something weird
 	* add checks for errors in the serial driver? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
-	* add timestamps to packets
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
-	* should there be something that periodically syncs data to disk?
 
 	* should you rename vfs_clone_vnode/vfs_release_vnode to instead be vfs_clone_vnode_ref/vfs_drop_vnode_ref ??  The latter would make more sense, albeit be longer
 	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
-	* move interrupt and syscall_entry code into proc??
+	* you could possibly make an abstracted packet construction thing using an ioctl-like function defined for each protocol, which can intercept parts of
+	  the requests to fill in data in the packet headers (set src address, set dest address, add id, etc)
 
 
 	* implement dns
@@ -78,6 +76,7 @@ Operating System:
 
 
 	* should there be a lighter weight task type, instead of processes, so that you can service interrupt processing without a bunch of wasted memory
+	* should you add timestamps to packets? (not currently a use for it)
 	* rewrite the math functions to use fewer registers, and cover the 32 bit divide by 32 bit number case
 	* minixfs, implement versions 2 and 3
 	* implement links for mallocfs

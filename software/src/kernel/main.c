@@ -181,6 +181,7 @@ int main()
 	inet_aton("192.168.1.200", &((struct sockaddr_in *) &ifdev->address)->sin_addr);
 	net_if_change_state(ifdev, IFF_UP);
 
+	create_init_task();
 
 	begin_multitasking();
 }

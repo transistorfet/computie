@@ -35,8 +35,6 @@ void init_scheduler()
 	_queue_init(&run_queue);
 	_queue_init(&blocked_queue);
 
-	create_init_task();
-
 	idle_proc = create_kernel_task("idle", idle_task);
 	_queue_remove(&run_queue, &idle_proc->node);
 }

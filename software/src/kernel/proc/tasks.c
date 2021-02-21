@@ -9,37 +9,42 @@
 #include "memory.h"
 #include "process.h"
 #include "context.h"
+#include "binaries.h"
 
 struct process *create_init_task()
 {
-	int error = 0;
+	int error;
+	char *argv[2] = { "init", NULL }, *envp[1] = { NULL };
 
 	struct process *proc = new_proc(INIT_PID, SU_UID);
 	if (!proc)
 		panic("Ran out of procs\n");
 
-	/*
-	// TODO this would load and execute an actual binary from the mounted disk
-	void *entry;
-	error = load_binary("/bin/init", proc, &entry);
-	if (error)
-		return error;
-	reset_stack(proc, entry, argv, envp);
-	*/
-
-
 	// Setup memory segments
 	int stack_size = 0x2000;
-	proc->map.segments[M_TEXT].base = NULL;
-	proc->map.segments[M_TEXT].length = 0x10000;
 	proc->map.segments[M_DATA].base = kmalloc(stack_size);
 	proc->map.segments[M_DATA].length = 0;
 	proc->map.segments[M_STACK].base = proc->map.segments[M_DATA].base;
 	proc->map.segments[M_STACK].length = stack_size;
 
+	#ifndef ONEBINARY
+
+	// TODO this would load and execute an actual binary from the mounted disk
+	void *entry;
+	error = load_binary("/bin/init", proc, &entry);
+	if (error)
+		return NULL;
+	reset_stack(proc, entry, argv, envp);
+
+	#else
+
+	proc->map.segments[M_TEXT].base = NULL;
+	proc->map.segments[M_TEXT].length = 0x10000;
+
 	extern void init_task();
-	char *argv[2] = { "init", NULL }, *envp[1] = { NULL };
 	reset_stack(proc, init_task, argv, envp);
+
+	#endif
 
 	return proc;
 }

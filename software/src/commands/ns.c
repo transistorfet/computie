@@ -12,23 +12,23 @@
 
 #define MAX_INPUT		20
 
-int client_loop(int sockfd, int f_udp, char *address, int port);
-int listen_loop(int sockfd, int f_udp, int port);
+int client_loop(int sockfd, int f_udp, char *address, int port, int f_verbose);
+int listen_loop(int sockfd, int f_udp, int port, int f_verbose);
 
 int MAIN(command_ns)(int argc, char **argv)
 {
 	int opt;
 	int sockfd;
 
-	const char *usage = "Usage: ns [-ul] [<address> [<port>]]";
+	const char *usage = "Usage: ns [-ulv] [<address> [<port>]]";
 	char *address = "192.168.1.102";
 	int port = 3904;
-	int f_listen = 0, f_udp = 0;
+	int f_listen = 0, f_udp = 0, f_verbose = 0;
 
 	// TODO this is only needed if compiled into shell, so remove it
 	optind = 1;
 
-	while ((opt = getopt(argc, argv, "ul")) != EOF) {
+	while ((opt = getopt(argc, argv, "ulv")) != EOF) {
 		switch (opt) {
 		    case '?':
 			puts(usage);
@@ -38,6 +38,9 @@ int MAIN(command_ns)(int argc, char **argv)
 			break;
 		    case 'l':
 			f_listen = 1;
+			break;
+		    case 'v':
+			f_verbose = 1;
 			break;
 		    default:
 			// TODO this is for debugging
@@ -66,16 +69,16 @@ int MAIN(command_ns)(int argc, char **argv)
 	}
 
 	if (f_listen)
-		listen_loop(sockfd, f_udp, port);
+		listen_loop(sockfd, f_udp, port, f_verbose);
 	else
-		client_loop(sockfd, f_udp, address, port);
+		client_loop(sockfd, f_udp, address, port, f_verbose);
 
 	close(sockfd);
 
 	return 0;
 }
 
-int client_loop(int sockfd, int f_udp, char *address, int port)
+int client_loop(int sockfd, int f_udp, char *address, int port, int f_verbose)
 {
 	int error;
 	int nbytes;
@@ -94,6 +97,9 @@ int client_loop(int sockfd, int f_udp, char *address, int port)
 			return -1;
 		}
 	}
+
+	if (f_verbose)
+		printf("connected to %s:%d\n", address, port);
 
 	while (1) {
 		nbytes = read(STDIN_FILENO, buffer, MAX_INPUT);
@@ -116,7 +122,7 @@ int client_loop(int sockfd, int f_udp, char *address, int port)
 	return 0;
 }
 
-int listen_loop(int sockfd, int f_udp, int port)
+int listen_loop(int sockfd, int f_udp, int port, int f_verbose)
 {
 	int nbytes;
 	int error;
@@ -142,6 +148,9 @@ int listen_loop(int sockfd, int f_udp, int port)
 			return -1;
 		}
 
+		if (f_verbose)
+			printf("listening on port %d\n", port);
+
 		sa_len = sizeof(struct sockaddr_in);
 		sockfd = accept(sockfd, (struct sockaddr *) &addr, &sa_len);
 		if (sockfd < 0) {
@@ -149,7 +158,8 @@ int listen_loop(int sockfd, int f_udp, int port)
 			return -1;
 		}
 
-		printf("Connection from %s:%d\n", inet_ntoa(addr.sin_addr), addr.sin_port);
+		if (f_verbose)
+			printf("connection from %s:%d\n", inet_ntoa(addr.sin_addr), addr.sin_port);
 	}
 
 	while (1) {
@@ -166,9 +176,9 @@ int listen_loop(int sockfd, int f_udp, int port)
 		buffer[nbytes] = '\0';
 
 		if (f_udp)
-			printf("%s:%d >> %d: %s", inet_ntoa(addr.sin_addr), addr.sin_port, nbytes, buffer);
+			fputs(buffer, stdout);
 		else
-			printf("%d: %s", nbytes, buffer);
+			fputs(buffer, stdout);
 	}
 
 	close(sockfd);

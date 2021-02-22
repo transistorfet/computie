@@ -24,14 +24,13 @@ Operating System:
 
 
 	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
-	* make use of 68k's supervisor and user mode (you might not have to switch stacks if you do, since it would use a different stack register)
+	* make use of 68k's supervisor and user mode. This requires major changes to the create_context since the entry point can't be put onto the user stack. RTE will pop the ret off the supervisor stack
 	* should there be something that periodically syncs data to disk?
 	* try transfering files over tcp, to test the stability of TCP (it should be possible to `nc -l 3904 > tar -x` or something to transfer data)
 	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum) (add to /proc/mounts)
 	* add calculating of cpu runtime
 
 
-	* modify the kernel's init task creation to optionally load init from disk instead of being builtin (for kernel images written to the flash card)
 	* do you need to implement some internal network routing?
 	* add check to vfs_link() for loops
 	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?

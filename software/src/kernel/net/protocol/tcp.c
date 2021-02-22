@@ -648,8 +648,8 @@ static int tcp_forward_established(struct tcp_endpoint *tep, struct packet *pack
 	if (tcp_check_close(tep, pack) == PACKET_DELIVERED)
 		return PACKET_DELIVERED;
 
-	if (!(hdr->flags & (PSH | ACK)))
-		return PACKET_DROPPED;
+	//if (!(hdr->flags & (PSH | ACK)))
+	//	return PACKET_DROPPED;
 
 	if (hdr->flags & ACK) {
 		// Discard the data that's been acknowledged
@@ -667,7 +667,7 @@ static int tcp_forward_established(struct tcp_endpoint *tep, struct packet *pack
 		}
 	}
 
-	if (hdr->flags & PSH) {
+	if (pack->length - pack->data_offset > 0) {
 		tcp_queue_packet(tep, pack);
 		tcp_check_waiting_packet(tep);
 		tcp_send_packet(tep, ACK, 0);

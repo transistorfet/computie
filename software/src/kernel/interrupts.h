@@ -39,6 +39,8 @@
 
 /*** Macros ***/
 
+#define HALT()			asm volatile("stop #0x2700\n")
+
 #define DISABLE_INTS()		asm volatile("or.w	#0x0700, %sr");
 #define ENABLE_INTS()		asm volatile("and.w	#0xF8FF, %sr");
 

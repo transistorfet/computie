@@ -4,7 +4,6 @@
 
 #define NOP()			asm volatile("nop\n")
 #define GOTO_LABEL(label)	asm volatile("bra " label "\n")
-#define HALT()			asm volatile("stop #0x2700\n")
 
 static inline short endian_convert_word(short x)
 {

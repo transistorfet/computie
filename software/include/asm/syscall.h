@@ -1,9 +1,9 @@
  
-#ifndef _ASM_MACROS_H
-#define _ASM_MACROS_H
+#ifndef _ASM_SYSCALL_H
+#define _ASM_SYSCALL_H
 
 #ifdef __m68k__
-#include <asm/m68k/macros.h>
+#include <asm/m68k/syscall.h>
 #else
 #error "No architecture detected\n"
 #endif

@@ -239,7 +239,7 @@ int do_sigaction(int signum, const struct sigaction *act, struct sigaction *olda
 
 unsigned int do_alarm(unsigned int seconds)
 {
-	return set_alarm(current_proc, seconds);
+	return set_proc_alarm(current_proc, seconds);
 }
 
 int do_pause()
@@ -661,9 +661,6 @@ int do_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, st
 	if (nfds <= 0 || nfds > OPEN_MAX)
 		return EINVAL;
 
-	// TODO check all sets to ensure the file is open
-
-	// TODO implement
 	return -1;
 }
 

@@ -4,14 +4,24 @@
 
 #include <stdint.h>
 
-struct process;
+#include "../misc/queue.h"
 
-//struct timer {
-//	struct queue_node node;
-//	int expires;
-//};
+struct timer;
 
-int set_alarm(struct process *proc, uint32_t seconds);
+typedef int (*timer_callback_t)(struct timer *timer, void *argp);
+
+struct timer {
+	struct queue_node node;
+	unsigned int expires_sec;
+	unsigned int expires_usec;
+	void *argp;
+	timer_callback_t callback;
+};
+
+int init_timer_list();
+void init_timer(struct timer *timer);
+int add_timer(struct timer *timer, int seconds, int microseconds);
+int remove_timer(struct timer *timer);
 void check_timers();
 
 #endif

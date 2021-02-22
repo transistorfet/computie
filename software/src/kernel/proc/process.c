@@ -9,6 +9,7 @@
 #include "../interrupts.h"
 #include "../misc/queue.h"
 
+#include "timer.h"
 #include "memory.h"
 #include "process.h"
 #include "filedesc.h"
@@ -67,7 +68,7 @@ struct process *new_proc(pid_t pid, uid_t uid)
 
 			table[i].bits = 0;
 			table[i].exitcode = 0;
-			table[i].next_alarm = 0;
+			init_timer(&table[i].timer);
 			init_signal_data(&table[i]);
 
 			table[i].start_time = get_system_time();
@@ -125,6 +126,25 @@ struct process *find_exited_child(pid_t parent, pid_t child)
 		}
 	}
 	return NULL;
+}
+
+static int on_alarm(struct timer *timer, struct process *proc)
+{
+	proc->bits &= ~PB_ALARM_ON;
+	send_signal(proc->pid, SIGALRM);
+}
+
+int set_proc_alarm(struct process *proc, uint32_t seconds)
+{
+	if (!seconds)
+		remove_timer(&proc->timer);
+	else {
+		proc->bits |= PB_ALARM_ON;
+		proc->timer.argp = proc;
+		proc->timer.callback = (timer_callback_t) on_alarm;
+		add_timer(&proc->timer, seconds, 0);
+	}
+	return 0;
 }
 
 

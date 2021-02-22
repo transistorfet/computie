@@ -6,6 +6,7 @@
 #include <kernel/signal.h>
 #include <kernel/syscall.h>
 
+#include "timer.h"
 #include "filedesc.h"
 #include "../misc/queue.h"
 
@@ -33,7 +34,8 @@ struct mem_map {
 #define PB_SYSCALL			0x0002
 #define PB_WAITING			0x0004
 #define PB_PAUSED			0x0008
-#define PB_DONT_SET_RETURN_VAL		0x0010
+#define PB_SELECT			0x0010
+#define PB_DONT_SET_RETURN_VAL		0x0020
 
 #define PROC_IS_RUNNING(proc)		((proc)->state == PS_RUNNING || (proc)->state == PS_RESUMING)
 
@@ -65,8 +67,8 @@ struct process {
 
 	uint16_t bits;
 	int exitcode;
-	time_t next_alarm;
 	struct syscall_record blocked_call;
+	struct timer timer;
 	struct signal_data signals;
 
 	time_t start_time;
@@ -91,6 +93,7 @@ struct process *get_proc(pid_t pid);
 void close_proc(struct process *proc);
 void cleanup_proc(struct process *proc);
 struct process *find_exited_child(pid_t parent, pid_t child);
+int set_proc_alarm(struct process *proc, uint32_t seconds);
 
 void proc_iter_start(struct process_iter *iter);
 struct process *proc_iter_next(struct process_iter *iter);

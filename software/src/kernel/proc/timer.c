@@ -1,34 +1,59 @@
 
-#include "timer.h"
-#include "process.h"
-
 #include <kernel/time.h>
 #include <kernel/signal.h>
 
-int set_alarm(struct process *proc, uint32_t seconds)
+#include "../misc/queue.h"
+
+#include "timer.h"
+
+
+static struct queue timer_list;
+
+int init_timer_list()
 {
-	if (!seconds)
-		proc->bits &= ~PB_ALARM_ON;
-	else {
-		proc->bits |= PB_ALARM_ON;
-		proc->next_alarm = get_system_time() + seconds;
-	}
+	_queue_init(&timer_list);
+}
+
+void init_timer(struct timer *timer)
+{
+	_queue_node_init(&timer->node);
+	timer->expires_sec = 0;
+	timer->expires_usec = 0;
+}
+
+int add_timer(struct timer *timer, int seconds, int microseconds)
+{
+	time_t uptime[2];
+
+	if (timer->expires_sec || timer->expires_usec)
+		_queue_remove(&timer_list, &timer->node);
+	get_system_uptime(uptime);
+	timer->expires_sec = uptime[0] + seconds;
+	timer->expires_usec = uptime[1] + microseconds;
+	_queue_insert(&timer_list, &timer->node);
+	return 0;
+}
+
+int remove_timer(struct timer *timer)
+{
+	_queue_remove(&timer_list, &timer->node);
+	timer->expires_sec = 0;
+	timer->expires_usec = 0;
 	return 0;
 }
 
 void check_timers()
 {
-	struct process *proc;
-	struct process_iter iter;
-	time_t t = get_system_time();
+	time_t uptime[2];
+	struct timer *next = NULL;
 
-	proc_iter_start(&iter);
-	while ((proc = proc_iter_next(&iter))) {
-		if (proc->pid && (proc->bits & PB_ALARM_ON) && t >= proc->next_alarm) {
-			proc->bits &= ~PB_ALARM_ON;
-			send_signal(proc->pid, SIGALRM);
+	get_system_uptime(uptime);
+	for (struct timer *cur = (struct timer *) _queue_head(&timer_list); cur; cur = next) {
+		next = (struct timer *) _queue_next(&cur->node);
+		if (uptime[0] > cur->expires_sec && uptime[1] > cur->expires_usec) {
+			remove_timer(cur);
+			cur->callback(cur, cur->argp);
 		}
 	}
 }
-
 

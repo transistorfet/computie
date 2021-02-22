@@ -8,26 +8,26 @@
 
 Operating System:
 
-	* there's an issue with input where holding down backspace can cause lag and corruption to the input buffer?
-	* how can you prevent a process from being unkillable because input has been entered and the ^C and ^Z characters aren't being processed anymore... tty68681 would have to do the checking
-
 	* should select check all 3 lists at once?? should it have an iterator
 	* implement select(), but how to block/resume?
 	* figure out how to unblock the connect syscall properly
 	* for blocking, there's process alarms, the pause system call, the wait system call, a suspended syscall which restarts on resume, and we'll need to add select
 	* can we change how alarms/timers work so that we don't have to traverse all procs, but instead just go through a list of timers (which could include proc timers and tcp/network timers)
 
-	* add timers and retransmissions to tcp
+
 	* when there's a trailing / to rm or mkdir, it will create something weird
+	* there's an issue with input where holding down backspace can cause lag and corruption to the input buffer?
+	* how can you prevent a process from being unkillable because input has been entered and the ^C and ^Z characters aren't being processed anymore... tty68681 would have to do the checking
+
+
+	* add timers and retransmissions to tcp
 	* make checksum command for file integrity
+	* try transfering files over tcp, to test the stability of TCP (it should be possible to `nc -l 3904 > tar -x` or something to transfer data)
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
-
-
+	* should there be something that periodically syncs data to disk?
+	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum) (add to /proc/mounts)
 	* I don't really like the point-of-no-return code in execve().  Is there a way to ensure that wont happen, such as not overwriting the memory segments until the new process is loaded
 	* make use of 68k's supervisor and user mode. This requires major changes to the create_context since the entry point can't be put onto the user stack. RTE will pop the ret off the supervisor stack
-	* should there be something that periodically syncs data to disk?
-	* try transfering files over tcp, to test the stability of TCP (it should be possible to `nc -l 3904 > tar -x` or something to transfer data)
-	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum) (add to /proc/mounts)
 	* add calculating of cpu runtime
 
 
@@ -43,7 +43,7 @@ Operating System:
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
 
 	* should you rename vfs_clone_vnode/vfs_release_vnode to instead be vfs_clone_vnode_ref/vfs_drop_vnode_ref ??  The latter would make more sense, albeit be longer
-	* move as much inline assembly into a redirectable asm directory: kernel/syscall.h, and interrupts.h/interrupts.c are the last places... interrupt code will need it's own arch dir
+	* move interrupts.c/h to its own arch dir somewhere.  It contains the last m68k specific assembly, but requires a subdir in src/kernel for the code, along with the syscall_entry.s and start.s files
 	* you could possibly make an abstracted packet construction thing using an ioctl-like function defined for each protocol, which can intercept parts of
 	  the requests to fill in data in the packet headers (set src address, set dest address, add id, etc)
 

@@ -125,6 +125,7 @@ int main()
 	init_kernel_heap((void *) 0x120000, 0xC0000);
 
 	init_time();
+	init_timer_list();
 	init_interrupts();
 	init_syscall();
 	init_proc();

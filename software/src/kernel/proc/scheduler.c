@@ -101,17 +101,6 @@ void suspend_proc(struct process *proc, int flags)
 	UNLOCK(saved_status);
 }
 
-void suspend_current_proc()
-{
-	short saved_status;
-
-	LOCK(saved_status);
-	suspend_proc(current_proc, PB_SYSCALL);
-	current_proc->blocked_call = *current_syscall;
-	UNLOCK(saved_status);
-}
-
-
 void resume_proc(struct process *proc)
 {
 	short saved_status;
@@ -135,6 +124,16 @@ void resume_proc_without_restart(struct process *proc)
 	reschedule_proc_to_now(proc);
 }
 
+
+void resume_waiting_parent(struct process *proc)
+{
+	struct process *parent;
+
+	parent = get_proc(proc->parent);
+	if (parent->state == PS_BLOCKED && (parent->bits & PB_WAITING))
+		resume_proc(parent);
+}
+
 void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev)
 {
 	short saved_status;
@@ -153,27 +152,28 @@ void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev)
 	UNLOCK(saved_status);
 }
 
-void resume_waiting_parent(struct process *proc)
-{
-	struct process *parent;
-
-	parent = get_proc(proc->parent);
-	if (parent->state == PS_BLOCKED && (parent->bits & PB_WAITING))
-		resume_proc(parent);
-}
-
-void reschedule_proc_to_now(struct process *proc)
+void cancel_syscall(struct process *proc)
 {
 	short saved_status;
 
 	LOCK(saved_status);
-	if (proc == current_proc || !PROC_IS_RUNNING(proc) || !PROC_IS_RUNNING(current_proc)) {
-		UNLOCK(saved_status);
-		return;
-	}
+	if (proc->state == PS_BLOCKED)
+		resume_proc(proc);
+	if (proc->state == PS_RESUMING)
+		proc->state = PS_RUNNING;
+	proc->bits &= ~(PB_SYSCALL | PB_WAITING | PB_PAUSED);
+	set_proc_return_value(proc, EINTR);
+	proc->bits |= PB_DONT_SET_RETURN_VAL;
+	UNLOCK(saved_status);
+}
 
-	_queue_remove(&run_queue, &proc->node);
-	_queue_insert_after(&run_queue, &proc->node, &current_proc->node);
+void suspend_current_proc()
+{
+	short saved_status;
+
+	LOCK(saved_status);
+	suspend_proc(current_proc, PB_SYSCALL);
+	current_proc->blocked_call = *current_syscall;
 	UNLOCK(saved_status);
 }
 
@@ -190,22 +190,6 @@ void restart_current_syscall()
 		do_syscall();
 	}
 }
-
-void cancel_syscall(struct process *proc)
-{
-	short saved_status;
-
-	LOCK(saved_status);
-	if (proc->state == PS_BLOCKED)
-		resume_proc(proc);
-	if (proc->state == PS_RESUMING)
-		proc->state = PS_RUNNING;
-	proc->bits &= ~(PB_SYSCALL | PB_WAITING | PB_PAUSED);
-	set_proc_return_value(proc, EINTR);
-	proc->bits |= PB_DONT_SET_RETURN_VAL;
-	UNLOCK(saved_status);
-}
-
 
 
 void set_proc_return_value(struct process *proc, int ret)
@@ -227,6 +211,21 @@ void return_to_current_proc(int ret)
 void request_reschedule()
 {
 	need_reschedule = 1;
+}
+
+void reschedule_proc_to_now(struct process *proc)
+{
+	short saved_status;
+
+	LOCK(saved_status);
+	if (proc == current_proc || !PROC_IS_RUNNING(proc) || !PROC_IS_RUNNING(current_proc)) {
+		UNLOCK(saved_status);
+		return;
+	}
+
+	_queue_remove(&run_queue, &proc->node);
+	_queue_insert_after(&run_queue, &proc->node, &current_proc->node);
+	UNLOCK(saved_status);
 }
 
 void schedule()

@@ -8,7 +8,6 @@
 
 Operating System:
 
-	* figure out how to unblock the connect syscall properly
 	* should the wait_check code use events instead of syscall number to wakeup processes?
 
 

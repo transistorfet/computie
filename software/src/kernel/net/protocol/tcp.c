@@ -278,6 +278,9 @@ int tcp_endpoint_connect(struct endpoint *ep, const struct sockaddr *sockaddr, s
 	struct tcp_endpoint *tep = TCP_ENDPOINT(ep);
 	struct sockaddr_in *addr = (struct sockaddr_in *) sockaddr;
 
+	if (tep->state == TS_ESTABLISHED && tep->connect_return != 0)
+		return tep->connect_return < 0 ? tep->connect_return : 0;
+
 	if (tep->state != TS_CLOSED)
 		return EISCONN;
 
@@ -288,9 +291,7 @@ int tcp_endpoint_connect(struct endpoint *ep, const struct sockaddr *sockaddr, s
 	tcp_send_packet(tep, SYN, 1);
 	tep->state = TS_SYN_SENT;
 
-	// TODO should probably block here?? But how will the restart work (maybe based on state?)
-	//return EWOULDBLOCK;
-	return 0;
+	return EWOULDBLOCK;
 }
 
 int tcp_endpoint_send(struct endpoint *ep, const char *buf, int nbytes)
@@ -361,7 +362,6 @@ int tcp_endpoint_poll(struct endpoint *ep, int events)
 	int revents = 0;
 	struct tcp_endpoint *tep = TCP_ENDPOINT(ep);
 
-	printk_safe("State: %x %d\n", ep->sock, tep->state);
 	if (events & VFS_POLL_READ) {
 		if (
 		    (tep->state == TS_ESTABLISHED && !_buf_is_empty(tep->rx))
@@ -403,6 +403,7 @@ static struct tcp_endpoint *tcp_alloc_endpoint(struct protocol *proto, struct so
 	_queue_init(&tep->recv_queue);
 	tep->queue_size = 0;
 	tep->state = TS_CLOSED;
+	tep->connect_return = 0;
 	tep->listen_queue_max = 0;
 
 	tep->rx = kmalloc(TCP_RX_BUFFER);
@@ -660,7 +661,8 @@ static int tcp_forward_syn_sent(struct tcp_endpoint *tep, struct packet *pack)
 	packet_free(pack);
 
 	tcp_send_packet(tep, ACK, 1);
-	// TODO wakeup socket that's waiting to connect()
+	tep->connect_return = 1;
+	net_socket_wakeup(tep->ep.sock);
 
 	return PACKET_DELIVERED;
 }

@@ -123,12 +123,11 @@ int net_socket_connect(struct vfile *file, const struct sockaddr *addr, socklen_
 	int result;
 	struct socket *sock = SOCKET(file->vnode);
 
-	if (sock->ep)
-		return EISCONN;
-
-	int error = net_create_endpoint(sock->proto, sock, NULL, 0, &sock->ep);
-	if (error)
-		return error;
+	if (!sock->ep) {
+		int error = net_create_endpoint(sock->proto, sock, NULL, 0, &sock->ep);
+		if (error)
+			return error;
+	}
 
 	if (!sock->ep->ops->connect)
 		// TODO should you free the endpoint here?  It will still be freed when the socket is closed
@@ -136,11 +135,11 @@ int net_socket_connect(struct vfile *file, const struct sockaddr *addr, socklen_
 
 	result = sock->ep->ops->connect(sock->ep, addr, len);
 	// TODO restarting the connect syscall would fail because we are connected, so this wont work
-	//if (result == EWOULDBLOCK) {
-	//	sock->syscall = SYS_CONNECT;
-	//	suspend_current_syscall();
-	//	return 0;
-	//}
+	if (result == EWOULDBLOCK) {
+		sock->syscall = SYS_CONNECT;
+		suspend_current_syscall();
+		return 0;
+	}
 	return result;
 }
 

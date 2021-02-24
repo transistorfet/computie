@@ -17,6 +17,7 @@ int mem_close(devminor_t minor);
 int mem_read(devminor_t minor, char *buffer, offset_t offset, size_t size);
 int mem_write(devminor_t minor, const char *buffer, offset_t offset, size_t size);
 int mem_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid);
+int mem_poll(devminor_t minor, int events);
 offset_t mem_seek(devminor_t minor, offset_t position, int whence, offset_t offset);
 
 
@@ -27,6 +28,7 @@ struct driver mem_driver = {
 	mem_read,
 	mem_write,
 	mem_ioctl,
+	mem_poll,
 	mem_seek,
 };
 
@@ -97,6 +99,11 @@ int mem_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid)
 	if (minor >= num_devices)
 		return ENXIO;
 	return -1;
+}
+
+int mem_poll(devminor_t minor, int events)
+{
+	return events & (VFS_POLL_READ | VFS_POLL_WRITE);
 }
 
 offset_t mem_seek(devminor_t minor, offset_t position, int whence, offset_t offset)

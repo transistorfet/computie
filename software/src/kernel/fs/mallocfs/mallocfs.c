@@ -22,6 +22,7 @@ struct vfile_ops mallocfs_vfile_ops = {
 	mallocfs_read,
 	mallocfs_write,
 	mallocfs_ioctl,
+	nop_poll,
 	mallocfs_seek,
 	mallocfs_readdir,
 };

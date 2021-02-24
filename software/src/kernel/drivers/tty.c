@@ -7,6 +7,7 @@
 #include <sys/ioc_tty.h>
 
 #include <kernel/bh.h>
+#include <kernel/vfs.h>
 #include <kernel/driver.h>
 #include <kernel/syscall.h>
 #include <kernel/signal.h>
@@ -62,6 +63,7 @@ int tty_close(devminor_t minor);
 int tty_read(devminor_t minor, char *buffer, offset_t offset, size_t size);
 int tty_write(devminor_t minor, const char *buffer, offset_t offset, size_t size);
 int tty_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid);
+int tty_poll(devminor_t minor, int events);
 
 struct driver tty_driver = {
 	tty_init,
@@ -70,6 +72,8 @@ struct driver tty_driver = {
 	tty_read,
 	tty_write,
 	tty_ioctl,
+	tty_poll,
+	NULL,
 };
 
 
@@ -230,7 +234,7 @@ int tty_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 
 		int read = dev_read(devices[minor].rdev, buffer, offset, size);
 		if (read == 0) {
-			suspend_current_proc();
+			suspend_current_syscall();
 			return 0;
 		}
 		return read;
@@ -238,7 +242,7 @@ int tty_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 	else {
 		// If an entire line is not available yet, then suspend the process
 		if (!devices[minor].ready) {
-			suspend_current_proc();
+			suspend_current_syscall();
 			return 0;
 		}
 
@@ -267,7 +271,7 @@ int tty_write(devminor_t minor, const char *buffer, offset_t offset, size_t size
 
 	written = dev_write(devices[minor].rdev, buffer, offset, size);
 	if (!written) {
-		suspend_current_proc();
+		suspend_current_syscall();
 		return 0;
 	}
 	return written;
@@ -308,5 +312,18 @@ int tty_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid)
 	return -1;
 }
 
+int tty_poll(devminor_t minor, int events)
+{
+	int revents = 0;
+	struct tty_device *tty = &devices[minor];
 
+	if ((events & VFS_POLL_READ) && tty->opens > 0 && tty->ready)
+		revents |= VFS_POLL_READ;
+	if ((events & VFS_POLL_WRITE) && tty->opens > 0)
+		revents |= dev_poll(devices[minor].rdev, VFS_POLL_WRITE);
+	if ((events & VFS_POLL_ERROR) && tty->opens > 0 && tty->error)
+		revents |= VFS_POLL_ERROR;
+
+	return revents;
+}
 

@@ -16,7 +16,9 @@ struct vfile_ops devfs_vfile_ops = {
 	devfs_read,
 	devfs_write,
 	devfs_ioctl,
+	nop_poll,
 	devfs_seek,
+	nop_readdir,
 };
 
 struct vnode_ops devfs_vnode_ops = {

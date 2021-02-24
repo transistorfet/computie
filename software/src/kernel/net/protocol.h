@@ -46,6 +46,7 @@ struct endpoint_ops {
 	int (*recv_from)(struct endpoint *ep, char *buf, int max, struct sockaddr *sockaddr, socklen_t *len);
 	int (*get_options)(struct endpoint *ep, int level, int optname, void *optval, socklen_t *optlen);
 	int (*set_options)(struct endpoint *ep, int level, int optname, const void *optval, socklen_t optlen);
+	int (*poll)(struct endpoint *ep, int events);
 };
 
 struct endpoint {

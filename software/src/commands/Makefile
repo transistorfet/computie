@@ -49,6 +49,7 @@ COMMANDS = 		\
 	nettest.send	\
 	tcptest.send	\
 	tcpserv.send	\
+	httpd.send	\
 	daemontest.send
 
 all: $(ROOT)/libc-68k-os.a $(COMMANDS)

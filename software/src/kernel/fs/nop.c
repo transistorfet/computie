@@ -80,6 +80,11 @@ int nop_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid)
 	return EPERM;
 }
 
+int nop_poll(struct vfile *file, int events)
+{
+	return events & (VFS_POLL_READ | VFS_POLL_WRITE);
+}
+
 offset_t nop_seek(struct vfile *file, offset_t position, int whence)
 {
 	return 0;
@@ -89,3 +94,4 @@ int nop_readdir(struct vfile *file, struct dirent *dir)
 {
 	return 0;
 }
+

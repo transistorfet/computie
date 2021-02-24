@@ -37,6 +37,7 @@ int udp_endpoint_send_to(struct endpoint *ep, const char *buf, int nbytes, const
 int udp_endpoint_recv_from(struct endpoint *ep, char *buf, int nbytes, struct sockaddr *sockaddr, socklen_t *len);
 int udp_endpoint_get_options(struct endpoint *ep, int level, int optname, void *optval, socklen_t *optlen);
 int udp_endpoint_set_options(struct endpoint *ep, int level, int optname, const void *optval, socklen_t optlen);
+int udp_endpoint_poll(struct endpoint *ep, int events);
 
 
 struct protocol_ops udp_protocol_ops = {
@@ -65,6 +66,7 @@ struct endpoint_ops udp_endpoint_ops = {
 	udp_endpoint_recv_from,
 	udp_endpoint_get_options,
 	udp_endpoint_set_options,
+	udp_endpoint_poll,
 };
 
 struct udp_endpoint {
@@ -329,5 +331,18 @@ int udp_endpoint_set_options(struct endpoint *ep, int level, int optname, const 
 		default:
 			return -1;
 	}
+}
+
+int udp_endpoint_poll(struct endpoint *ep, int events)
+{
+	int revents = 0;
+	struct udp_endpoint *uep = UDP_ENDPOINT(ep);
+
+	if ((events & VFS_POLL_READ) && _queue_head(&uep->recv_queue))
+		revents |= VFS_POLL_READ;
+	// Writing is always available
+	revents |= VFS_POLL_WRITE;
+
+	return revents;
 }
 

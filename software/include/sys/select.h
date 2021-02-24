@@ -18,9 +18,9 @@ typedef struct {
 } fd_set;
 
 
-#define	FD_SET(fd, fdsetp)	((fdsetp).fds_bits[(fd) >> __FDS_LOG_BITS] |=  (0x01 << ((fd) & __FDS_MASK_BITS)))
-#define	FD_CLR(fd, fdsetp)	((fdsetp).fds_bits[(fd) >> __FDS_LOG_BITS] &= ~(0x01 << ((fd) & __FDS_MASK_BITS)))
-#define	FD_ISSET(fd, fdsetp)	((fdsetp).fds_bits[(fd) >> __FDS_LOG_BITS] &   (0x01 << ((fd) & __FDS_MASK_BITS)))
+#define	FD_SET(fd, fdsetp)	((fdsetp)->fds_bits[(fd) >> __FDS_LOG_BITS] |=  (0x01 << ((fd) & __FDS_MASK_BITS)))
+#define	FD_CLR(fd, fdsetp)	((fdsetp)->fds_bits[(fd) >> __FDS_LOG_BITS] &= ~(0x01 << ((fd) & __FDS_MASK_BITS)))
+#define	FD_ISSET(fd, fdsetp)	((fdsetp)->fds_bits[(fd) >> __FDS_LOG_BITS] &   (0x01 << ((fd) & __FDS_MASK_BITS)))
 #define	FD_ZERO(fdsetp)		(memset((fdsetp), '\0', sizeof(fd_set)))
 
 

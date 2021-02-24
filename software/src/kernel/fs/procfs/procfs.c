@@ -23,6 +23,7 @@ struct vfile_ops procfs_vfile_ops = {
 	procfs_read,
 	procfs_write,
 	procfs_ioctl,
+	nop_poll,
 	procfs_seek,
 	procfs_readdir,
 };

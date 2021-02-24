@@ -18,6 +18,7 @@
 #include "super.h"
 #include "dir.h"
 
+#include "../nop.h"
 #include "../bufcache.h"
 
 
@@ -27,6 +28,7 @@ struct vfile_ops minix_vfile_ops = {
 	minix_read,
 	minix_write,
 	minix_ioctl,
+	nop_poll,
 	minix_seek,
 	minix_readdir,
 };

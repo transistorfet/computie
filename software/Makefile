@@ -76,6 +76,7 @@ KERNEL_OBJS = \
 	src/kernel/proc/signal.o \
 	src/kernel/proc/filedesc.o \
 	src/kernel/proc/binaries.o \
+	src/kernel/proc/select.o \
 	src/kernel/mm/kmalloc.o \
 	src/kernel/fs/vfs.o \
 	src/kernel/fs/nop.o \

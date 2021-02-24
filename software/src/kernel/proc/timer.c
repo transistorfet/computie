@@ -36,6 +36,8 @@ int add_timer(struct timer *timer, int seconds, int microseconds)
 
 int remove_timer(struct timer *timer)
 {
+	if (!timer->expires_sec && !timer->expires_usec)
+		return -1;
 	_queue_remove(&timer_list, &timer->node);
 	timer->expires_sec = 0;
 	timer->expires_usec = 0;

@@ -68,6 +68,7 @@ struct process *new_proc(pid_t pid, uid_t uid)
 
 			table[i].bits = 0;
 			table[i].exitcode = 0;
+			table[i].wait_check = NULL;
 			init_timer(&table[i].timer);
 			init_signal_data(&table[i]);
 
@@ -102,6 +103,7 @@ struct process *get_proc(pid_t pid)
 
 void close_proc(struct process *proc)
 {
+	remove_timer(&proc->timer);
 	release_fd_table(proc->fd_table);
 	free_process_memory(proc);
 

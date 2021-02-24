@@ -652,6 +652,11 @@ int vfs_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid)
 	return file->ops->ioctl(file, request, argp, uid);
 }
 
+int vfs_poll(struct vfile *file, int events)
+{
+	return file->ops->poll(file, events);
+}
+
 offset_t vfs_seek(struct vfile *file, offset_t position, int whence)
 {
 	return file->ops->seek(file, position, whence);

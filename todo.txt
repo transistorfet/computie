@@ -8,13 +8,11 @@
 
 Operating System:
 
-	* should select check all 3 lists at once?? should it have an iterator
-	* implement select(), but how to block/resume?
 	* figure out how to unblock the connect syscall properly
-	* for blocking, there's process alarms, the pause system call, the wait system call, a suspended syscall which restarts on resume, and we'll need to add select
-	* can we change how alarms/timers work so that we don't have to traverse all procs, but instead just go through a list of timers (which could include proc timers and tcp/network timers)
+	* should the wait_check code use events instead of syscall number to wakeup processes?
 
 
+	* there is no wakeup code in the tty68681 driver when writing is available, only wakeup from reading
 	* when there's a trailing / to rm or mkdir, it will create something weird
 	* there's an issue with input where holding down backspace can cause lag and corruption to the input buffer?
 	* how can you prevent a process from being unkillable because input has been entered and the ^C and ^Z characters aren't being processed anymore... tty68681 would have to do the checking

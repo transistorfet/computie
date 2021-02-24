@@ -30,12 +30,13 @@ struct mem_map {
 };
 
 
-#define PB_ALARM_ON			0x0001
-#define PB_SYSCALL			0x0002
-#define PB_WAITING			0x0004
-#define PB_PAUSED			0x0008
-#define PB_SELECT			0x0010
-#define PB_DONT_SET_RETURN_VAL		0x0020
+#define PB_BLOCK_CONDITIONS		0x00FF
+#define PB_SYSCALL			0x0001
+#define PB_WAITING			0x0002
+#define PB_PAUSED			0x0004
+#define PB_SELECT			0x0008
+#define PB_ALARM_ON			0x0100
+#define PB_DONT_SET_RETURN_VAL		0x0200
 
 #define PROC_IS_RUNNING(proc)		((proc)->state == PS_RUNNING || (proc)->state == PS_RESUMING)
 
@@ -52,6 +53,9 @@ typedef enum {
 #define PROC_CMDLINE_ARGS	4
 
 struct vnode;
+struct process;
+
+typedef int (*wait_check_t)(struct process *proc, int events, struct vnode *vnode, device_t rdev);
 
 struct process {
 	struct queue_node node;
@@ -67,6 +71,7 @@ struct process {
 
 	uint16_t bits;
 	int exitcode;
+	wait_check_t wait_check;
 	struct syscall_record blocked_call;
 	struct timer timer;
 	struct signal_data signals;

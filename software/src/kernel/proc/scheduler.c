@@ -19,10 +19,6 @@ struct process *idle_proc;
 struct process *current_proc;
 struct syscall_record *current_syscall;
 
-// TODO could this be used to calculate the offset of process_sp in syscall_entry??
-//const process_sp_offset = offsetof(struct process, sp);
-//const int process_sp_offset = (int) &(((struct process *) NULL)->sp);
-
 static struct queue run_queue;
 static struct queue blocked_queue;
 
@@ -96,7 +92,7 @@ void suspend_proc(struct process *proc, int flags)
 	_queue_remove(&run_queue, &proc->node);
 	_queue_insert(&blocked_queue, &proc->node);
 	proc->state = PS_BLOCKED;
-	proc->bits |= (flags & 0x0F);
+	proc->bits |= (flags & PB_BLOCK_CONDITIONS);
 	need_reschedule = 1;
 	UNLOCK(saved_status);
 }
@@ -114,6 +110,7 @@ void resume_proc(struct process *proc)
 		_queue_remove(&blocked_queue, &proc->node);
 	_queue_insert(&run_queue, &proc->node);
 	proc->state = PS_RESUMING;
+	proc->wait_check = NULL;
 	UNLOCK(saved_status);
 }
 
@@ -123,6 +120,7 @@ void resume_proc_without_restart(struct process *proc)
 	proc->state = PS_RUNNING;
 	reschedule_proc_to_now(proc);
 }
+
 
 
 void resume_waiting_parent(struct process *proc)
@@ -137,18 +135,28 @@ void resume_waiting_parent(struct process *proc)
 void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev)
 {
 	short saved_status;
-	struct process *cur;
+	struct process *cur, *next;
 
 	LOCK(saved_status);
-	cur = (struct process *) blocked_queue.tail;
-	for (; cur; cur = (struct process *) cur->node.prev) {
-		if (cur->state == PS_BLOCKED && cur->blocked_call.syscall == syscall_num) {
-			int fd = cur->blocked_call.arg1;
-			if ((vnode && cur->fd_table[fd]->vnode == vnode) || (rdev && cur->fd_table[fd]->vnode->rdev == rdev)) {
-				resume_proc(cur);
-			}
-		}
+	cur = (struct process *) _queue_head(&blocked_queue);
+	for (; cur; cur = next) {
+		next = (struct process *) _queue_next(&cur->node);
+		UNLOCK(saved_status);
+		if (cur->wait_check && cur->wait_check(cur, syscall_num, vnode, rdev))
+			resume_proc(cur);
+		LOCK(saved_status);
 	}
+	UNLOCK(saved_status);
+}
+
+void suspend_syscall(struct process *proc, int flags, wait_check_t wait_check, struct syscall_record *syscall)
+{
+	short saved_status;
+
+	LOCK(saved_status);
+	suspend_proc(current_proc, PB_SYSCALL | flags);
+	current_proc->blocked_call = *syscall;
+	current_proc->wait_check = wait_check;
 	UNLOCK(saved_status);
 }
 
@@ -161,20 +169,23 @@ void cancel_syscall(struct process *proc)
 		resume_proc(proc);
 	if (proc->state == PS_RESUMING)
 		proc->state = PS_RUNNING;
-	proc->bits &= ~(PB_SYSCALL | PB_WAITING | PB_PAUSED);
+	proc->bits &= ~((uint16_t) PB_BLOCK_CONDITIONS);
 	set_proc_return_value(proc, EINTR);
 	proc->bits |= PB_DONT_SET_RETURN_VAL;
 	UNLOCK(saved_status);
 }
 
-void suspend_current_proc()
+static int syscall_wait_check(struct process *proc, int events, struct vnode *vnode, device_t rdev)
 {
-	short saved_status;
+	int fd;
 
-	LOCK(saved_status);
-	suspend_proc(current_proc, PB_SYSCALL);
-	current_proc->blocked_call = *current_syscall;
-	UNLOCK(saved_status);
+	fd = proc->blocked_call.arg1;
+	return proc->blocked_call.syscall == events && (vnode && proc->fd_table[fd]->vnode == vnode) || (rdev && proc->fd_table[fd]->vnode->rdev == rdev);
+}
+
+void suspend_current_syscall()
+{
+	suspend_syscall(current_proc, PB_SYSCALL, syscall_wait_check, current_syscall);
 }
 
 void restart_current_syscall()
@@ -190,7 +201,6 @@ void restart_current_syscall()
 		do_syscall();
 	}
 }
-
 
 void set_proc_return_value(struct process *proc, int ret)
 {

@@ -31,6 +31,7 @@ int tty_68681_close(devminor_t minor);
 int tty_68681_read(devminor_t minor, char *buffer, offset_t offset, size_t size);
 int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_t size);
 int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid);
+int tty_68681_poll(devminor_t minor, int events);
 offset_t tty_68681_seek(devminor_t minor, offset_t position, int whence, offset_t offset);
 
 struct driver tty_68681_driver = {
@@ -40,6 +41,7 @@ struct driver tty_68681_driver = {
 	tty_68681_read,
 	tty_68681_write,
 	tty_68681_ioctl,
+	tty_68681_poll,
 	tty_68681_seek,
 };
 
@@ -579,7 +581,7 @@ int tty_68681_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 		if (_buf_is_empty(&channel->rx)) {
 			// Suspend the process only if we haven't read any data yet
 			if (size == i && !(channel->open_mode & O_NONBLOCK))
-				suspend_current_proc();
+				suspend_current_syscall();
 			return size - i;
 		}
 		*buffer = getchar_buffered(channel);
@@ -598,7 +600,7 @@ int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_
 	// TODO with this method, each write's size must always be smaller than buffer size
 	if (_buf_free_space(&channel->tx) < size) {
 		if (!(channel->open_mode & O_NONBLOCK))
-			suspend_current_proc();
+			suspend_current_syscall();
 		return 0;
 	}
 
@@ -626,6 +628,19 @@ int tty_68681_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t ui
 			break;
 	}
 	return -1;
+}
+
+int tty_68681_poll(devminor_t minor, int events)
+{
+	int revents = 0;
+	struct serial_channel *channel = from_minor_dev(minor);
+
+	if ((events & VFS_POLL_READ) && channel->opens > 0 && !_buf_is_empty(&channel->rx))
+		revents |= VFS_POLL_READ;
+	if ((events & VFS_POLL_WRITE) && channel->opens > 0 && !_buf_is_full(&channel->tx))
+		revents |= VFS_POLL_WRITE;
+
+	return revents;
 }
 
 offset_t tty_68681_seek(devminor_t minor, offset_t position, int whence, offset_t offset)

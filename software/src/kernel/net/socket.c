@@ -32,6 +32,7 @@ struct vfile_ops sock_vfile_ops = {
 	net_socket_read,
 	net_socket_write,
 	net_socket_ioctl,
+	net_socket_poll,
 	nop_seek,
 	nop_readdir,
 };
@@ -72,7 +73,6 @@ int net_socket_create(int domain, int type, int protocol, uid_t uid, struct vfil
 
 	vnode->sock.domain = domain;
 	vnode->sock.type = type;
-	vnode->sock.state = 0;
 	vnode->sock.syscall = 0;
 
 	vnode->sock.proto = proto;
@@ -138,7 +138,7 @@ int net_socket_connect(struct vfile *file, const struct sockaddr *addr, socklen_
 	// TODO restarting the connect syscall would fail because we are connected, so this wont work
 	//if (result == EWOULDBLOCK) {
 	//	sock->syscall = SYS_CONNECT;
-	//	suspend_current_proc();
+	//	suspend_current_syscall();
 	//	return 0;
 	//}
 	return result;
@@ -171,7 +171,7 @@ int net_socket_accept(struct vfile *file, struct sockaddr *addr, socklen_t *addr
 	error = sock->ep->ops->accept(sock->ep, addr, addr_len, &ep);
 	if (error == EWOULDBLOCK) {
 		sock->syscall = SYS_ACCEPT;
-		suspend_current_proc();
+		suspend_current_syscall();
 		return 0;
 	}
 	else if (error)
@@ -222,7 +222,7 @@ ssize_t net_socket_send(struct vfile *file, const void *buf, size_t n, int flags
 	result = sock->ep->ops->send(sock->ep, buf, n);
 	if (result == EWOULDBLOCK) {
 		sock->syscall = SYS_SEND;
-		suspend_current_proc();
+		suspend_current_syscall();
 		return 0;
 	}
 	return result;
@@ -241,7 +241,7 @@ ssize_t net_socket_recv(struct vfile *file, void *buf, size_t n, int flags)
 	result = sock->ep->ops->recv(sock->ep, buf, n);
 	if (result == EWOULDBLOCK) {
 		sock->syscall = SYS_RECV;
-		suspend_current_proc();
+		suspend_current_syscall();
 		return 0;
 	}
 
@@ -281,7 +281,7 @@ ssize_t net_socket_recvfrom(struct vfile *file, void *buf, size_t n, int flags, 
 	result = sock->ep->ops->recv_from(sock->ep, buf, n, addr, addr_len);
 	if (result == EWOULDBLOCK) {
 		sock->syscall = SYS_RECVFROM;
-		suspend_current_proc();
+		suspend_current_syscall();
 		return 0;
 	}
 	return result;
@@ -302,14 +302,25 @@ int net_socket_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t
 	if (!S_ISSOCK(file->vnode->mode))
 		return EBADF;
 
-	// TODO implement options
-
 	switch (request) {
 
 		default:
 			return net_if_ioctl(request, (struct ifreq *) argp, uid);
 	}
 	return 0;
+}
+
+int net_socket_poll(struct vfile *file, int events)
+{
+	struct socket *sock = SOCKET(file->vnode);
+
+	if (!S_ISSOCK(file->vnode->mode))
+		return EBADF;
+	if (!sock->ep)
+		return ENOTCONN;
+	if (!sock->ep->ops->poll)
+		return EAFNOSUPPORT;
+	return sock->ep->ops->poll(sock->ep, events);
 }
 
 int net_socket_get_options(struct vfile *file, int level, int optname, void *optval, socklen_t *optlen)

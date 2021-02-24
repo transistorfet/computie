@@ -12,6 +12,7 @@ struct vfile_ops device_vfile_ops = {
 	device_ops_read,
 	device_ops_write,
 	device_ops_ioctl,
+	device_ops_poll,
 	device_ops_seek,
 	nop_readdir,
 };
@@ -51,6 +52,11 @@ int device_ops_write(struct vfile *file, const char *buffer, size_t size)
 int device_ops_ioctl(struct vfile *file, unsigned int request, void *argp, uid_t uid)
 {
 	return dev_ioctl(file->vnode->rdev, request, argp, uid);
+}
+
+int device_ops_poll(struct vfile *file, int events)
+{
+	return dev_poll(file->vnode->rdev, events);
 }
 
 offset_t device_ops_seek(struct vfile *file, offset_t position, int whence)

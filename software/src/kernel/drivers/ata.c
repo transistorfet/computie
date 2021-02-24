@@ -20,6 +20,7 @@ int ata_close(devminor_t minor);
 int ata_read(devminor_t minor, char *buffer, offset_t offset, size_t size);
 int ata_write(devminor_t minor, const char *buffer, offset_t offset, size_t size);
 int ata_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid);
+int ata_poll(devminor_t minor, int events);
 offset_t ata_seek(devminor_t minor, offset_t position, int whence, offset_t offset);
 
 
@@ -30,6 +31,7 @@ struct driver ata_driver = {
 	ata_read,
 	ata_write,
 	ata_ioctl,
+	ata_poll,
 	ata_seek,
 };
 
@@ -323,6 +325,12 @@ int ata_ioctl(devminor_t minor, unsigned int request, void *argp, uid_t uid)
 	if (!device)
 		return ENXIO;
 	return -1;
+}
+
+int ata_poll(devminor_t minor, int events)
+{
+	// TODO this could maybe do a hardware check to make sure the drive is accessible?
+	return events & (VFS_POLL_READ | VFS_POLL_WRITE);
 }
 
 offset_t ata_seek(devminor_t minor, offset_t position, int whence, offset_t offset)

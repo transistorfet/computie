@@ -36,6 +36,7 @@ int tcp_endpoint_send(struct endpoint *ep, const char *buf, int nbytes);
 int tcp_endpoint_recv(struct endpoint *ep, char *buf, int nbytes);
 int tcp_endpoint_get_options(struct endpoint *ep, int level, int optname, void *optval, socklen_t *optlen);
 int tcp_endpoint_set_options(struct endpoint *ep, int level, int optname, const void *optval, socklen_t optlen);
+int tcp_endpoint_poll(struct endpoint *ep, int events);
 
 
 struct protocol_ops tcp_protocol_ops = {
@@ -64,6 +65,7 @@ struct endpoint_ops tcp_endpoint_ops = {
 	NULL,
 	tcp_endpoint_get_options,
 	tcp_endpoint_set_options,
+	tcp_endpoint_poll,
 };
 
 
@@ -315,6 +317,10 @@ int tcp_endpoint_recv(struct endpoint *ep, char *buf, int nbytes)
 {
 	struct tcp_endpoint *tep = TCP_ENDPOINT(ep);
 
+	if (tep->state == TS_CLOSED || tep->state >= TS_FIN_WAIT1)
+		return 0;
+
+	// TODO should this be an error if you call recv on a TS_LISTEN socket?
 	if (tep->state != TS_ESTABLISHED)
 		return EWOULDBLOCK;
 
@@ -348,6 +354,26 @@ int tcp_endpoint_set_options(struct endpoint *ep, int level, int optname, const 
 		default:
 			return -1;
 	}
+}
+
+int tcp_endpoint_poll(struct endpoint *ep, int events)
+{
+	int revents = 0;
+	struct tcp_endpoint *tep = TCP_ENDPOINT(ep);
+
+	printk_safe("State: %x %d\n", ep->sock, tep->state);
+	if (events & VFS_POLL_READ) {
+		if (
+		    (tep->state == TS_ESTABLISHED && !_buf_is_empty(tep->rx))
+		 || (tep->state == TS_LISTEN && _queue_head(&tep->recv_queue))
+		 || (tep->state == TS_CLOSED || tep->state >= TS_FIN_WAIT1)
+		)
+			revents |= VFS_POLL_READ;
+	}
+	if ((events & VFS_POLL_WRITE) && !_buf_is_full(tep->tx))
+		revents |= VFS_POLL_WRITE;
+	// TODO add error events
+	return revents;
 }
 
 /*********************************

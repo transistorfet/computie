@@ -202,7 +202,7 @@ pid_t do_waitpid(pid_t pid, int *status, int options)
 	proc = find_exited_child(current_proc->pid, pid);
 	if (!proc) {
 		current_proc->bits |= PB_WAITING;
-		suspend_current_proc();
+		suspend_current_syscall();
 	}
 	else {
 		current_proc->bits &= ~PB_WAITING;
@@ -245,7 +245,7 @@ unsigned int do_alarm(unsigned int seconds)
 int do_pause()
 {
 	current_proc->bits |= PB_PAUSED;
-	suspend_current_proc();
+	suspend_current_syscall();
 	return 0;
 }
 
@@ -661,7 +661,8 @@ int do_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, st
 	if (nfds <= 0 || nfds > OPEN_MAX)
 		return EINVAL;
 
-	return -1;
+	extern int enter_select(struct process *proc, int max, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+	return enter_select(current_proc, nfds, readfds, writefds, exceptfds, timeout);
 }
 
 

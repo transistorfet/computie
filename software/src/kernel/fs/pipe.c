@@ -17,6 +17,7 @@ int pipe_close(struct vfile *file);
 int pipe_read(struct vfile *file, char *buf, size_t nbytes);
 int pipe_write(struct vfile *file, const char *buf, size_t nbytes);
 int pipe_release(struct vnode *vnode);
+int pipe_poll(struct vfile *file, int events);
 
 struct vfile_ops pipe_vfile_ops = {
 	nop_open,
@@ -24,6 +25,7 @@ struct vfile_ops pipe_vfile_ops = {
 	pipe_read,
 	pipe_write,
 	nop_ioctl,
+	pipe_poll,
 	nop_seek,
 	nop_readdir,
 };
@@ -111,7 +113,7 @@ int pipe_read(struct vfile *file, char *buf, size_t nbytes)
 	// TODO Do you also need to add a check for a broken pipe here too?
 
 	if (file->position == vnode->size) {
-		suspend_current_proc();
+		suspend_current_syscall();
 		return 0;
 	}
 
@@ -144,7 +146,7 @@ int pipe_write(struct vfile *file, const char *buf, size_t nbytes)
 	if (nbytes > PIPE_BUFFER_MAX - file->position) {
 		// TODO this will work for now, but any write operation that's larger than the buffer size wont ever complete.  Same issue in tty driver's suspend
 		// Trying to write more bytes than are available in the buffer, so block until the reader has caught up
-		suspend_current_proc();
+		suspend_current_syscall();
 		return 0;
 		//nbytes = PIPE_BUFFER_MAX - file->position;
 	}
@@ -158,5 +160,17 @@ int pipe_write(struct vfile *file, const char *buf, size_t nbytes)
 	resume_blocked_procs(SYS_READ, vnode, 0);
 
 	return nbytes;
+}
+
+int pipe_poll(struct vfile *file, int events)
+{
+	int revents = 0;
+	register struct vnode *vnode = file->vnode;
+
+	if ((events & VFS_POLL_READ) && (vnode->size - file->position > 0))
+		revents |= VFS_POLL_READ;
+	if ((events & VFS_POLL_WRITE) && vnode->size >= PIPE_BUFFER_MAX)
+		revents |= VFS_POLL_WRITE;
+	return revents;
 }
 

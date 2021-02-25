@@ -16,7 +16,9 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/ioctl.h>
+#ifndef LINUXHOST
 #include <kernel/syscall.h>
+#endif
 
 #include "prototype.h"
 
@@ -656,6 +658,8 @@ int MAIN(sh_task)(int argc, char **argv, char **env)
 	int error = 0;
 	int fin = STDIN_FILENO;
 
+	setsid();
+
 	init_commands();
 
 	struct sigaction act;
@@ -668,8 +672,6 @@ int MAIN(sh_task)(int argc, char **argv, char **env)
 	//alarm(3);
 	//pause();
 	//puts("Ok, now we run!\n");
-
-	//test_math();
 
 	if (argc >= 2) {
 		f_interactive = 0;

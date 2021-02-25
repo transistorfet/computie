@@ -178,6 +178,7 @@ struct serial_channel {
 	const struct channel_ports *ports;
 	int opens;
 	int open_mode;
+	char error;
 	char rx_ready;
 	char bh_num;
 };
@@ -192,6 +193,7 @@ static inline void config_serial_channel(struct serial_channel *channel)
 {
 	channel->opens = 0;
 	channel->open_mode = 0;
+	channel->error = 0;
 	channel->rx_ready = 0;
 	channel->bh_num = BH_TTY;
 
@@ -306,10 +308,18 @@ static inline void handle_channel_io(register char isr, register devminor_t mino
 		isr >>= 4;
 
 	if (isr & ISR_S_RX_READY_FULL) {
-		while (*channels[minor].ports->status & SR_RX_READY) {
-			if (_buf_is_full(&channels[minor].rx))
+		register volatile uint8_t status;
+		while (1) {
+			status = *channels[minor].ports->status;
+			if (!(status & SR_RX_READY))
 				break;
-			_buf_put_char(&channels[minor].rx, *channels[minor].ports->recv);
+			if (status & (SR_FRAMING_ERROR | SR_PARITY_ERROR | SR_OVERRUN_ERROR))
+				channels[minor].error = 1;
+			else {
+				if (_buf_is_full(&channels[minor].rx))
+					break;
+				_buf_put_char(&channels[minor].rx, *channels[minor].ports->recv);
+			}
 		}
 
 		if (_buf_free_space(&channels[minor].rx) < 10)
@@ -576,6 +586,9 @@ int tty_68681_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 
 	if (!channel)
 		return ENODEV;
+
+	if (channel->error)
+		return EIO;
 
 	for (; i > 0; i--, buffer++) {
 		if (_buf_is_empty(&channel->rx)) {

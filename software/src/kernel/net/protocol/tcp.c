@@ -78,7 +78,7 @@ static uint16_t tcp_calculate_checksum(struct protocol *proto, struct packet *pa
 static int tcp_finalize_and_send_packet(struct tcp_endpoint *tep, struct packet *pack);
 static int tcp_send_packet(struct tcp_endpoint *tep, int flags, int ackbytes);
 static void tcp_queue_packet(struct tcp_endpoint *tep, struct packet *pack);
-static void tcp_check_waiting_packet(struct tcp_endpoint *tep);
+static int tcp_check_waiting_packet(struct tcp_endpoint *tep);
 
 static int tcp_forward_closed(struct tcp_endpoint *tep, struct packet *pack);
 static int tcp_forward_listen(struct tcp_endpoint *tep, struct packet *pack);
@@ -565,7 +565,7 @@ static void tcp_queue_packet(struct tcp_endpoint *tep, struct packet *pack)
 	_queue_insert_after(&tep->recv_queue, &pack->node, &prev->node);
 }
 
-static void tcp_check_waiting_packet(struct tcp_endpoint *tep)
+static int tcp_check_waiting_packet(struct tcp_endpoint *tep)
 {
 	int index;
 	int length;
@@ -587,11 +587,12 @@ static void tcp_check_waiting_packet(struct tcp_endpoint *tep)
 			index = _buf_put(tep->rx, &cur->data[cur->data_offset + index], length);
 			tep->rx_last_seq += index;
 			if (index < length)
-				break;
+				return 0;
 		}
 		_queue_remove(&tep->recv_queue, &cur->node);
 		packet_free(cur);
 	}
+	return 1;
 }
 
 
@@ -698,8 +699,8 @@ static int tcp_forward_established(struct tcp_endpoint *tep, struct packet *pack
 
 	if (pack->length - pack->data_offset > 0) {
 		tcp_queue_packet(tep, pack);
-		tcp_check_waiting_packet(tep);
-		tcp_send_packet(tep, ACK, 0);
+		if (tcp_check_waiting_packet(tep))
+			tcp_send_packet(tep, ACK, 0);
 
 		if (tep->ep.sock && !_buf_is_empty(tep->rx))
 			net_socket_wakeup(tep->ep.sock, VFS_POLL_READ);

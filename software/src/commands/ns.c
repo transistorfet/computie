@@ -10,7 +10,7 @@
 
 #include "prototype.h"
 
-#define MAX_INPUT		20
+#define MAX_INPUT		256
 
 int client_loop(int sockfd, int f_udp, char *address, int port, int f_verbose);
 int listen_loop(int sockfd, int f_udp, int port, int f_verbose);

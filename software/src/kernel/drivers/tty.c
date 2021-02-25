@@ -135,12 +135,12 @@ static inline void tty_read_input(device_t minor)
 				tty->buf_write--;
 				if ((tty->tio.c_lflag & ECHOE)) {
 					if (tty->buffer[tty->buf_write] == '\t')
-						dev_write(tty->rdev, "\x08\x08\x08\x08\x08\x08\x08\x08", 0, 3);
+						// TODO proper handling of this might require window dimensions and cursor position tracking
+						dev_write(tty->rdev, "\x08\x08\x08\x08\x08\x08\x08\x08", 0, 8);
 					else
 						dev_write(tty->rdev, "\x08 \x08", 0, 3);
 				}
 			}
-			break;
 		}
 		else if (ch == '\r') {
 			// Ignore

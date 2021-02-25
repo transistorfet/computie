@@ -202,7 +202,7 @@ pid_t do_waitpid(pid_t pid, int *status, int options)
 	proc = find_exited_child(current_proc->pid, pid);
 	if (!proc) {
 		current_proc->bits |= PB_WAITING;
-		suspend_current_syscall();
+		suspend_current_syscall(0);
 	}
 	else {
 		current_proc->bits &= ~PB_WAITING;
@@ -245,7 +245,7 @@ unsigned int do_alarm(unsigned int seconds)
 int do_pause()
 {
 	current_proc->bits |= PB_PAUSED;
-	suspend_current_syscall();
+	suspend_current_syscall(0);
 	return 0;
 }
 

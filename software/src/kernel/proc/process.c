@@ -68,6 +68,7 @@ struct process *new_proc(pid_t pid, uid_t uid)
 
 			table[i].bits = 0;
 			table[i].exitcode = 0;
+			table[i].wait_events = 0;
 			table[i].wait_check = NULL;
 			init_timer(&table[i].timer);
 			init_signal_data(&table[i]);

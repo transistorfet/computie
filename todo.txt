@@ -8,6 +8,8 @@
 
 Operating System:
 
+	* when a tcp message longer than 20 bytes is sent, it will transmit the first 20 bytes, and then retransmit the full message including the part already sent
+
 	* should the wait_check code use events instead of syscall number to wakeup processes?
 
 
@@ -18,8 +20,8 @@ Operating System:
 
 
 	* add timers and retransmissions to tcp
-	* make checksum command for file integrity
 	* try transfering files over tcp, to test the stability of TCP (it should be possible to `nc -l 3904 > tar -x` or something to transfer data)
+	* make checksum command for file integrity
 	* add a read only mounting mode, such that you know you wont need to sync while also not messing up the CF card
 	* should there be something that periodically syncs data to disk?
 	* need a function to convert a device number into a device name or device file path. (Could add another driver function pointer for getting the name of a devnum) (add to /proc/mounts)
@@ -28,16 +30,16 @@ Operating System:
 	* add calculating of cpu runtime
 
 
-	* do you need to implement some internal network routing?
+	* add checks for errors in the serial driver? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 	* add check to vfs_link() for loops
 	* do you need to disable triggering of the device-indepedent tty bottom half when the serial device is opened directly?
-	* split the boot loader up into multiple parts, so it can be stage loaded
-	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
 	* should there be a vnode op to fill in the statbuf struct, or should they be in the vnode?  The only 2 values not in the vnode are blksize, blocks
+	* the directory size value in the inode isn't working the best.  There is no dir size shrinking yet either
+	* split the boot loader up into multiple parts, so it can be stage loaded
 	* how can you make a df command to list how many blocks are free??  That info would need to come from the minix fs-specific code
-	* add checks for errors in the serial driver? (I don't think we're handling a frame error or buffer overrun, which could happen if interrupts are turned off for too long)
 	* need to set the ctty in the init process somehow (other systems set it as a special case when opening a tty)
 	* signals like SIGTTOU are supposed to be sent sometimes instead of returning success or failure
+	* do you need to implement some internal network routing?
 
 	* should you rename vfs_clone_vnode/vfs_release_vnode to instead be vfs_clone_vnode_ref/vfs_drop_vnode_ref ??  The latter would make more sense, albeit be longer
 	* move interrupts.c/h to its own arch dir somewhere.  It contains the last m68k specific assembly, but requires a subdir in src/kernel for the code, along with the syscall_entry.s and start.s files

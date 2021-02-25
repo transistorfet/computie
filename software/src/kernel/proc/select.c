@@ -101,10 +101,8 @@ int enter_select(struct process *proc, int max, fd_set *readfds, fd_set *writefd
 				add_timer(&current_proc->timer, timeout->tv_sec, timeout->tv_usec);
 			}
 
-			//suspend_proc(proc, PB_SELECT);
-			//proc->blocked_call = *current_syscall;
-			//proc->wait_check = select_wait_check;
-			suspend_syscall(proc, PB_SELECT, select_wait_check, current_syscall);
+			//int events = (readfds ? VFS_POLL_READ : 0) | (writefds ? VFS_POLL_WRITE : 0) | (exceptfds ? VFS_POLL_ERROR : 0);
+			suspend_syscall(proc, PB_SELECT, 0xFF, select_wait_check, current_syscall);
 			return 0;
 		}
 	}

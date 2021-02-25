@@ -97,7 +97,7 @@ static inline void tty_read_input(device_t minor)
 		// If the buffer is full, then consider the line to be terminated and resume the waiting proc
 		if (tty->buf_write >= MAX_CANNON) {
 			tty->ready = 1;
-			resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
+			resume_blocked_procs(VFS_POLL_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
 			return;
 		}
 
@@ -110,7 +110,7 @@ static inline void tty_read_input(device_t minor)
 		if ((tty->tio.c_lflag & ISIG)) {
 			if (ch == tty->tio.c_cc[VINTR]) {
 				//tty->ready = 1;
-				//resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
+				//resume_blocked_procs(VFS_POLL_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
 				tty_reset_input(minor);
 				send_signal_process_group(tty->pgid, SIGINT);
 				return;
@@ -153,7 +153,7 @@ static inline void tty_read_input(device_t minor)
 				dev_write(tty->rdev, &ch, 0, 1);
 			if (ch == '\n') {
 				tty->ready = 1;
-				resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
+				resume_blocked_procs(VFS_POLL_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
 				break;
 			}
 		}
@@ -234,7 +234,7 @@ int tty_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 
 		int read = dev_read(devices[minor].rdev, buffer, offset, size);
 		if (read == 0) {
-			suspend_current_syscall();
+			suspend_current_syscall(VFS_POLL_READ);
 			return 0;
 		}
 		return read;
@@ -242,7 +242,7 @@ int tty_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 	else {
 		// If an entire line is not available yet, then suspend the process
 		if (!devices[minor].ready) {
-			suspend_current_syscall();
+			suspend_current_syscall(VFS_POLL_READ);
 			return 0;
 		}
 
@@ -271,7 +271,7 @@ int tty_write(devminor_t minor, const char *buffer, offset_t offset, size_t size
 
 	written = dev_write(devices[minor].rdev, buffer, offset, size);
 	if (!written) {
-		suspend_current_syscall();
+		suspend_current_syscall(VFS_POLL_WRITE);
 		return 0;
 	}
 	return written;

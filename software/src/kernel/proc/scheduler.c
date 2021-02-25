@@ -110,6 +110,7 @@ void resume_proc(struct process *proc)
 		_queue_remove(&blocked_queue, &proc->node);
 	_queue_insert(&run_queue, &proc->node);
 	proc->state = PS_RESUMING;
+	proc->wait_events = 0;
 	proc->wait_check = NULL;
 	UNLOCK(saved_status);
 }
@@ -132,7 +133,7 @@ void resume_waiting_parent(struct process *proc)
 		resume_proc(parent);
 }
 
-void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev)
+void resume_blocked_procs(int events, struct vnode *vnode, device_t rdev)
 {
 	short saved_status;
 	struct process *cur, *next;
@@ -142,21 +143,22 @@ void resume_blocked_procs(int syscall_num, struct vnode *vnode, device_t rdev)
 	for (; cur; cur = next) {
 		next = (struct process *) _queue_next(&cur->node);
 		UNLOCK(saved_status);
-		if (cur->wait_check && cur->wait_check(cur, syscall_num, vnode, rdev))
+		if (cur->wait_check && (events & cur->wait_events) && cur->wait_check(cur, events, vnode, rdev))
 			resume_proc(cur);
 		LOCK(saved_status);
 	}
 	UNLOCK(saved_status);
 }
 
-void suspend_syscall(struct process *proc, int flags, wait_check_t wait_check, struct syscall_record *syscall)
+void suspend_syscall(struct process *proc, int proc_flags, int events, wait_check_t wait_check, struct syscall_record *syscall)
 {
 	short saved_status;
 
 	LOCK(saved_status);
-	suspend_proc(current_proc, PB_SYSCALL | flags);
-	current_proc->blocked_call = *syscall;
-	current_proc->wait_check = wait_check;
+	suspend_proc(proc, PB_SYSCALL | proc_flags);
+	proc->wait_events = events;
+	proc->wait_check = wait_check;
+	proc->blocked_call = *syscall;
 	UNLOCK(saved_status);
 }
 
@@ -180,12 +182,12 @@ static int syscall_wait_check(struct process *proc, int events, struct vnode *vn
 	int fd;
 
 	fd = proc->blocked_call.arg1;
-	return proc->blocked_call.syscall == events && (vnode && proc->fd_table[fd]->vnode == vnode) || (rdev && proc->fd_table[fd]->vnode->rdev == rdev);
+	return (vnode && proc->fd_table[fd]->vnode == vnode) || (rdev && proc->fd_table[fd]->vnode->rdev == rdev);
 }
 
-void suspend_current_syscall()
+void suspend_current_syscall(int events)
 {
-	suspend_syscall(current_proc, PB_SYSCALL, syscall_wait_check, current_syscall);
+	suspend_syscall(current_proc, PB_SYSCALL, events, syscall_wait_check, current_syscall);
 }
 
 void restart_current_syscall()

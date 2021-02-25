@@ -134,7 +134,7 @@ int udp_forward_packet(struct protocol *proto, struct packet *pack)
 		return PACKET_DROPPED;
 
 	_queue_insert_after(&uep->recv_queue, &pack->node, uep->recv_queue.tail);
-	net_socket_wakeup(uep->ep.sock);
+	net_socket_wakeup(uep->ep.sock, VFS_POLL_READ);
 	return PACKET_DELIVERED;
 }
 

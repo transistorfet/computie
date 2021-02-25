@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <kernel/signal.h>
 #include <kernel/syscall.h>
+#include <kernel/scheduler.h>
 
 #include "timer.h"
 #include "filedesc.h"
@@ -55,8 +56,6 @@ typedef enum {
 struct vnode;
 struct process;
 
-typedef int (*wait_check_t)(struct process *proc, int events, struct vnode *vnode, device_t rdev);
-
 struct process {
 	struct queue_node node;
 	void *sp;
@@ -71,6 +70,7 @@ struct process {
 
 	uint16_t bits;
 	int exitcode;
+	int wait_events;
 	wait_check_t wait_check;
 	struct syscall_record blocked_call;
 	struct timer timer;

@@ -615,7 +615,7 @@ static int tcp_forward_listen(struct tcp_endpoint *tep, struct packet *pack)
 
 	_queue_insert_after(&tep->recv_queue, &pack->node, tep->recv_queue.tail);
 	tep->queue_size += 1;
-	net_socket_wakeup(tep->ep.sock);
+	net_socket_wakeup(tep->ep.sock, VFS_POLL_READ);
 
 	return PACKET_DELIVERED;
 }
@@ -636,7 +636,7 @@ static int tcp_forward_syn_recv(struct tcp_endpoint *tep, struct packet *pack)
 	tep->tx_last_seq = hdr->acknum;
 
 	tep->state = TS_ESTABLISHED;
-	net_socket_wakeup(tep->ep.sock);
+	net_socket_wakeup(tep->ep.sock, VFS_POLL_READ);
 
 	packet_free(pack);
 	return PACKET_DELIVERED;
@@ -655,14 +655,14 @@ static int tcp_forward_syn_sent(struct tcp_endpoint *tep, struct packet *pack)
 	// If the acknum of the packet doesn't match our expected seqnum, then drop the packet
 	if (hdr->acknum != tep->tx_last_seq)
 		return PACKET_DROPPED;
+
 	tep->rx_last_seq = hdr->seqnum;
 	tep->state = TS_ESTABLISHED;
-	net_socket_wakeup(tep->ep.sock);
 	packet_free(pack);
 
 	tcp_send_packet(tep, ACK, 1);
 	tep->connect_return = 1;
-	net_socket_wakeup(tep->ep.sock);
+	net_socket_wakeup(tep->ep.sock, VFS_POLL_READ);
 
 	return PACKET_DELIVERED;
 }
@@ -685,6 +685,7 @@ static int tcp_forward_established(struct tcp_endpoint *tep, struct packet *pack
 		if (hdr->acknum > last_acked) {
 			_buf_drop(tep->tx, hdr->acknum - last_acked);
 			last_acked = hdr->acknum;
+			net_socket_wakeup(tep->ep.sock, VFS_POLL_WRITE);
 		}
 
 		// If not all the data sent was acknowledged, retransmit the missing data
@@ -701,7 +702,7 @@ static int tcp_forward_established(struct tcp_endpoint *tep, struct packet *pack
 		tcp_send_packet(tep, ACK, 0);
 
 		if (tep->ep.sock && !_buf_is_empty(tep->rx))
-			net_socket_wakeup(tep->ep.sock);
+			net_socket_wakeup(tep->ep.sock, VFS_POLL_READ);
 		return PACKET_DELIVERED;
 	}
 

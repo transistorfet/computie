@@ -73,7 +73,7 @@ int net_socket_create(int domain, int type, int protocol, uid_t uid, struct vfil
 
 	vnode->sock.domain = domain;
 	vnode->sock.type = type;
-	vnode->sock.syscall = 0;
+	vnode->sock.wait_events = 0;
 
 	vnode->sock.proto = proto;
 	vnode->sock.ep = NULL;
@@ -134,10 +134,8 @@ int net_socket_connect(struct vfile *file, const struct sockaddr *addr, socklen_
 		return EAFNOSUPPORT;
 
 	result = sock->ep->ops->connect(sock->ep, addr, len);
-	// TODO restarting the connect syscall would fail because we are connected, so this wont work
 	if (result == EWOULDBLOCK) {
-		sock->syscall = SYS_CONNECT;
-		suspend_current_syscall();
+		suspend_current_syscall(VFS_POLL_READ);
 		return 0;
 	}
 	return result;
@@ -169,8 +167,7 @@ int net_socket_accept(struct vfile *file, struct sockaddr *addr, socklen_t *addr
 
 	error = sock->ep->ops->accept(sock->ep, addr, addr_len, &ep);
 	if (error == EWOULDBLOCK) {
-		sock->syscall = SYS_ACCEPT;
-		suspend_current_syscall();
+		suspend_current_syscall(VFS_POLL_READ);
 		return 0;
 	}
 	else if (error)
@@ -220,8 +217,7 @@ ssize_t net_socket_send(struct vfile *file, const void *buf, size_t n, int flags
 
 	result = sock->ep->ops->send(sock->ep, buf, n);
 	if (result == EWOULDBLOCK) {
-		sock->syscall = SYS_SEND;
-		suspend_current_syscall();
+		suspend_current_syscall(VFS_POLL_WRITE);
 		return 0;
 	}
 	return result;
@@ -239,8 +235,7 @@ ssize_t net_socket_recv(struct vfile *file, void *buf, size_t n, int flags)
 
 	result = sock->ep->ops->recv(sock->ep, buf, n);
 	if (result == EWOULDBLOCK) {
-		sock->syscall = SYS_RECV;
-		suspend_current_syscall();
+		suspend_current_syscall(VFS_POLL_READ);
 		return 0;
 	}
 
@@ -279,18 +274,16 @@ ssize_t net_socket_recvfrom(struct vfile *file, void *buf, size_t n, int flags, 
 
 	result = sock->ep->ops->recv_from(sock->ep, buf, n, addr, addr_len);
 	if (result == EWOULDBLOCK) {
-		sock->syscall = SYS_RECVFROM;
-		suspend_current_syscall();
+		suspend_current_syscall(VFS_POLL_READ);
 		return 0;
 	}
 	return result;
 }
 
-int net_socket_wakeup(struct socket *sock)
+int net_socket_wakeup(struct socket *sock, int events)
 {
 	struct vnode *vnode = (struct vnode *) (((char *) sock) - sizeof(struct vnode));
-	resume_blocked_procs(sock->syscall, vnode, 0);
-	sock->syscall = 0;
+	resume_blocked_procs(events, vnode, 0);
 	return 0;
 }
 

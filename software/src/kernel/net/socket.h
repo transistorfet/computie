@@ -10,7 +10,7 @@
 struct socket {
 	uint8_t domain;
 	uint8_t type;
-	uint8_t syscall;
+	uint8_t wait_events;
 
 	struct protocol *proto;
 	struct endpoint *ep;
@@ -33,7 +33,7 @@ ssize_t net_socket_send(struct vfile *file, const void *buf, size_t n, int flags
 ssize_t net_socket_sendto(struct vfile *file, const void *buf, size_t n, int flags, const struct sockaddr *addr, socklen_t addr_len);
 ssize_t net_socket_recv(struct vfile *file, void *buf, size_t n, int flags);
 ssize_t net_socket_recvfrom(struct vfile *file, void *buf, size_t n, int flags, struct sockaddr *addr, socklen_t *addr_len);
-int net_socket_wakeup(struct socket *sock);
+int net_socket_wakeup(struct socket *sock, int events);
 int net_socket_get_options(struct vfile *file, int level, int optname, void *optval, socklen_t *optlen);
 int net_socket_set_options(struct vfile *file, int level, int optname, const void *optval, socklen_t optlen);
 

@@ -287,7 +287,7 @@ static void tty_68681_process_input(void *_unused)
 	for (char i = 0; i < 2; i++) {
 		if (channels[i].rx_ready) {
 			channels[i].rx_ready = 0;
-			resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY68681, i));
+			resume_blocked_procs(VFS_POLL_READ, NULL, DEVNUM(DEVMAJOR_TTY68681, i));
 
 			//request_bh_run(BH_TTY);
 			request_bh_run(channels[i].bh_num);
@@ -317,7 +317,7 @@ static inline void handle_channel_io(register char isr, register devminor_t mino
 
 		channels[minor].rx_ready = 1;
 		request_bh_run(BH_TTY68681);
-		//resume_blocked_procs(SYS_READ, NULL, DEVNUM(DEVMAJOR_TTY68681, channel == &channels[CH_A] ? 0 : 1));
+		//resume_blocked_procs(VFS_POLL_READ, NULL, DEVNUM(DEVMAJOR_TTY68681, channel == &channels[CH_A] ? 0 : 1));
 	}
 
 
@@ -581,7 +581,7 @@ int tty_68681_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 		if (_buf_is_empty(&channel->rx)) {
 			// Suspend the process only if we haven't read any data yet
 			if (size == i && !(channel->open_mode & O_NONBLOCK))
-				suspend_current_syscall();
+				suspend_current_syscall(VFS_POLL_READ);
 			return size - i;
 		}
 		*buffer = getchar_buffered(channel);
@@ -600,7 +600,7 @@ int tty_68681_write(devminor_t minor, const char *buffer, offset_t offset, size_
 	// TODO with this method, each write's size must always be smaller than buffer size
 	if (_buf_free_space(&channel->tx) < size) {
 		if (!(channel->open_mode & O_NONBLOCK))
-			suspend_current_syscall();
+			suspend_current_syscall(VFS_POLL_WRITE);
 		return 0;
 	}
 

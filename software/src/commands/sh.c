@@ -324,47 +324,6 @@ main_t find_command(char *name)
 	return NULL;
 }
 
-/*
-int readline(char *buffer, short max)
-{
-	short i = 0;
-
-	while (i < max) {
-		//buffer[i] = getchar();
-		int ret = read(0, &buffer[i], 1);
-		if (ret != 1) {
-			printf("Input error: %d\n", ret);
-			return 0;
-		}
-
-		switch (buffer[i]) {
-			case 0x03:	// Control-C
-				return 0;
-			case 0x08: {
-				if (i >= 1) {
-					putchar(0x08);
-					putchar(' ');
-					putchar(0x08);
-					i--;
-				}
-				break;
-			}
-			case '\n': {
-				putchar(buffer[i]);
-				buffer[i] = '\0';
-				return i;
-			}
-			default: {
-				putchar(buffer[i++]);
-				break;
-			}
-		}
-	}
-	buffer[--i] = '\0';
-	return i;
-}
-*/
-
 int parseline(char *input, char **vargs)
 {
 	short j = 0;

@@ -10,7 +10,6 @@ Operating System:
 
 	* make the tty68681 driver partially write data... right now it'll suspend if the full request can't be buffered, but it should return the partial number, and the read/write syscalls should do
 	  the actual blocking, and then for writing it can rewrite the syscall during the suspend, so that it'll restart in the proper position.  You then need to add resuming to tty
-	* how can you prevent a process from being unkillable because input has been entered and the ^C and ^Z characters aren't being processed anymore... tty68681 would have to do the checking
 
 	* when there's a trailing / to rm or mkdir, it will create something weird
 	* there's an issue with input where holding down backspace can cause lag and corruption to the input buffer?

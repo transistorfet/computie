@@ -96,8 +96,8 @@ static inline void tty_read_input(device_t minor)
 	while (1) {
 		// If the buffer is full, then consider the line to be terminated and resume the waiting proc
 		if (tty->buf_write >= MAX_CANNON) {
-			tty->ready = 1;
 			resume_blocked_procs(VFS_POLL_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
+			tty->ready = 1;
 			return;
 		}
 
@@ -109,16 +109,14 @@ static inline void tty_read_input(device_t minor)
 
 		if ((tty->tio.c_lflag & ISIG)) {
 			if (ch == tty->tio.c_cc[VINTR]) {
-				//tty->ready = 1;
-				//resume_blocked_procs(VFS_POLL_READ, NULL, DEVNUM(DEVMAJOR_TTY, minor));
 				tty_reset_input(minor);
 				send_signal_process_group(tty->pgid, SIGINT);
 				return;
 			}
-			//else if (ch == tty->tio.c_cc[VSUSP]) {
-			//	send_signal_process_group(tty->pgid, SIGSTOP);
-			//	return;
-			//}
+			else if (ch == tty->tio.c_cc[VSUSP]) {
+				send_signal_process_group(tty->pgid, SIGSTOP);
+				return;
+			}
 		}
 
 
@@ -163,7 +161,7 @@ static inline void tty_read_input(device_t minor)
 static void tty_process_input(void *_unused)
 {
 	for (short minor = 0; minor < TTY_DEVICE_NUM; minor++) {
-		if (devices[minor].opens && (devices[minor].tio.c_lflag & ICANON) && !devices[minor].ready)
+		if (devices[minor].opens && (devices[minor].tio.c_lflag & ICANON))
 			tty_read_input(minor);
 	}
 }
@@ -240,6 +238,9 @@ int tty_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 		return read;
 	}
 	else {
+		size_t max;
+		size_t count;
+
 		// If an entire line is not available yet, then suspend the process
 		if (!devices[minor].ready) {
 			suspend_current_syscall(VFS_POLL_READ);
@@ -247,18 +248,31 @@ int tty_read(devminor_t minor, char *buffer, offset_t offset, size_t size)
 		}
 
 		// Copy the lesser of the remaining buffered bytes or the requested size
-		size_t max = devices[minor].buf_write - devices[minor].buf_read;
+		max = devices[minor].buf_write - devices[minor].buf_read;
 		if (size < max)
 			max = size;
-		for (short i = 0; i < max; i++)
-			buffer[i] = devices[minor].buffer[devices[minor].buf_read++];
+		for (count = 0; count < max; count++) {
+			buffer[count] = devices[minor].buffer[devices[minor].buf_read++];
+
+			// If we reach the end of a line, shift any remaining data over to make room, and exit the loop
+			if (buffer[count] == '\n') {
+				count += 1;
+				int remaining = devices[minor].buf_write - devices[minor].buf_read;
+				if (remaining) {
+					memcpy(devices[minor].buffer, &devices[minor].buffer[devices[minor].buf_read], remaining);
+					devices[minor].buf_write -= devices[minor].buf_read;
+					devices[minor].buf_read = 0;
+				}
+				break;
+			}
+		}
 
 		// If an entire line has been read, then reset the buffer and attempt to read more input from the raw device
 		if (devices[minor].buf_read >= devices[minor].buf_write) {
 			tty_reset_input(minor);
 			request_bh_run(BH_TTY);
 		}
-		return max;
+		return count;
 	}
 }
 

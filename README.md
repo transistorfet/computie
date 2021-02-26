@@ -17,7 +17,8 @@ Currently it doesn't have a name.  It's largely based on reading Operating Syste
 Andrew S. Tanenbaum, although I've gone with a monolithic design, at least for the time being, for the simplicity of
 it.  It can do preemptive multitasking using the 68681 timer.  It also has an implementation of the minix version 1
 filesystem, which uses RAM (through a device driver) to store the data, or a Compact Flash card connected as an IDE
-device.
+device.  The second serial port can be configured as a SLIP device, with a basic implementation of UDP and TCP through
+a BSD sockets-style API, and an NTP command is provided for updating the system time on boot (when booting from disk).
 
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/OS-basic.gif "OS")
 
@@ -83,13 +84,29 @@ interrupt circuitry.
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev0/SBC.jpg "68k-SBC")
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev0/PCB-patch.jpg "68k-SBC patch for design mistake")
 
-I made a mistake and left out the logic for LDS/UDS in the chip select for the high and low memory chips.  When writing a
-single byte to memory, it would also attempt to write to both the high and low chips, instead of only one.  Thanks to a poster
-on EEVblog who suggested patching it with a P-channel MOSFET shown soldered to the back of the SRAM chips to interpose the UDS/LDS
-signals into the chip selects, with the original traces cut.
+I made a mistake and left out the logic for LDS/UDS in the chip select for the high and low memory chips.  When writing
+a single byte to memory, it would also attempt to write to both the high and low chips, instead of only one.  Thanks to
+a poster on EEVblog who suggested patching it with a P-channel MOSFET shown soldered to the back of the SRAM chips to
+interpose the UDS/LDS signals into the chip selects, with the original traces cut.
 
 Breadboard Version
 ------------------
 
 ![alt text](https://github.com/transistorfet/computie/raw/master/images/Breadboard-serial.jpg "68k-SBC Breadboard")
+
+Operating System Booting From Monitor/Compact Flash
+---------------------------------------------------
+
+![alt text](https://github.com/transistorfet/computie/raw/master/images/OS-booting.gif "OS Booting")
+
+The above video shows connecting over serial from a modern computer after first powering the board on.  The monitor
+runs first, giving the ">" prompt.  The bootloader has been burnt into flash at address 0x20000.  From the monitor, the
+boot loader is run, which then loads the kernel from the attached compact flash card.  Each period (.) character
+printed represents 1 kilobyte of data loaded from disk).  The boot loader then jumps to the loaded kernel, which
+displays boot messages before running the init process from disk.  The init process first runs `sh /etc/rc`", which runs
+the ntpdate command to update the system time.  It then runs an interactive shell.
+
+Some commands are shown after boot, and then the httpd program is run (which has forking disabled for the time being).
+From another computer, the curl command is run to issue a request to the board.  The httpd program responds with the
+data "This is a secret message"
 

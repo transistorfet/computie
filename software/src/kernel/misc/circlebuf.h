@@ -34,9 +34,9 @@ static inline int _buf_is_empty(struct circular_buffer *cb)
 	return cb->in == cb->out;
 }
 
-static inline short _buf_available(struct circular_buffer *cb)
+static inline short _buf_used_space(struct circular_buffer *cb)
 {
-	if (cb->in > cb->out)
+	if (cb->in >= cb->out)
 		return cb->in - cb->out;
 	else
 		return cb->max - cb->out + cb->in;
@@ -120,7 +120,7 @@ static inline short _buf_put(struct circular_buffer *cb, const unsigned char *da
 
 static inline short _buf_drop(struct circular_buffer *cb, short size)
 {
-	short avail = _buf_available(cb);
+	short avail = _buf_used_space(cb);
 
 	if (size > avail)
 		size = avail;

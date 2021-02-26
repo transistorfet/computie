@@ -524,7 +524,7 @@ static int tcp_send_packet(struct tcp_endpoint *tep, int flags, int ackbytes)
 	struct tcp_header *hdr;
 
 	if (flags & PSH)
-		nbytes = _buf_available(tep->tx);
+		nbytes = _buf_used_space(tep->tx);
 
 	pack = tcp_create_empty_packet(tep->ep.proto, &tep->local, &tep->remote, nbytes);
 	hdr = (struct tcp_header *) &pack->data[pack->transport_offset];
@@ -682,7 +682,7 @@ static int tcp_forward_established(struct tcp_endpoint *tep, struct packet *pack
 
 	if (hdr->flags & ACK) {
 		// Discard the data that's been acknowledged
-		int last_acked = tep->tx_last_seq - _buf_available(tep->tx);
+		int last_acked = tep->tx_last_seq - _buf_used_space(tep->tx);
 		if (hdr->acknum > last_acked) {
 			_buf_drop(tep->tx, hdr->acknum - last_acked);
 			last_acked = hdr->acknum;

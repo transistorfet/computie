@@ -17,6 +17,16 @@
 #define HTTP_PORT		8099
 #define MAX_CONNECTIONS		20
 #define MAX_INPUT		256
+#define MAX_HEADERS		512
+
+
+struct connection {
+	int fd;
+	int read;
+	char headers[MAX_HEADERS];
+};
+
+struct connection *clients[MAX_CONNECTIONS];
 
 int run_server();
 
@@ -74,7 +84,33 @@ int create_listener()
 	return listenfd;
 }
 
-int handle_connection(int listenfd, int *clients)
+struct connection *create_connection(int sockfd)
+{
+	for (int i = 0; i < MAX_CONNECTIONS; i++) {
+		if (!clients[i]) {
+			clients[i] = malloc(sizeof(struct connection));
+			clients[i]->fd = sockfd;
+			clients[i]->read = 0;
+			return clients[i];
+		}
+	}
+	return NULL;
+}
+
+void close_connection(struct connection *conn)
+{
+	for (int i = 0; i < MAX_CONNECTIONS; i++) {
+		if (clients[i] == conn) {
+			printf("closing client %d\n", clients[i]->fd);
+			close(clients[i]->fd);
+			free(clients[i]);
+			clients[i] = NULL;
+			return;
+		}
+	}
+}
+
+int handle_connection(int listenfd)
 {
 	int sockfd;
 	int sa_len;
@@ -88,22 +124,16 @@ int handle_connection(int listenfd, int *clients)
 	}
 
 	printf("Connection from %s:%d\n", inet_ntoa(addr.sin_addr), addr.sin_port);
-	for (int i = 0; i < MAX_CONNECTIONS; i++) {
-		if (clients[i] < 0) {
-			clients[i] = sockfd;
-			break;
-		}
-	}
+	create_connection(sockfd);
 
-	return sockfd;
+	return 0;
 }
 
-int handle_read(int sockfd)
+int handle_read(struct connection *conn)
 {
 	int error;
-	char buffer[MAX_INPUT];
 
-	error = recv(sockfd, buffer, MAX_INPUT, 0);
+	error = recv(conn->fd, &conn->headers[conn->read], MAX_HEADERS - conn->read - 1, 0);
 	if (error == 0) {
 		printf("client closed connection\n");
 		return 1;
@@ -112,37 +142,44 @@ int handle_read(int sockfd)
 		printf("Error receiving: %d\n", error);
 		return -1;
 	}
-	buffer[error] = '\0';
+	conn->read += error;
+	printf("%d\n", conn->read);
+	conn->headers[++conn->read] = '\0';
 
-	printf("recv: %s\n", buffer);
+	printf("recv: %s\n", conn->headers);
 
-	if (!strcmp(buffer, "test\n")) {
-		error = send(sockfd, "I heard you\n", 12, 0);
-		if (error < 0) {
-			printf("Error sending: %d\n", error);
-			return -1;
-		}
-	}
-	else if (!strcmp(buffer, "exit\n")) {
-		return 1;
-	}
+	char *end = strstr(conn->headers, "\r\n\r\n");
+	if (!end)
+		return 0;
+
+	printf("end of headers\n");
+
+	int i = 0;
+	char response[MAX_HEADERS];
+
+	char *data = "This is a secret message\n";
+
+	i += snprintf(&response[i], MAX_HEADERS - i, "HTTP/1.1 200 OK\r\n");
+	i += snprintf(&response[i], MAX_HEADERS - i, "Content-Type: text/html; charset=UTF-8\r\n");
+	i += snprintf(&response[i], MAX_HEADERS - i, "Content-Length: %d\r\n", strlen(data));
+	i += snprintf(&response[i], MAX_HEADERS - i, "\r\n");
+	i += snprintf(&response[i], MAX_HEADERS - i, data);
+
+	printf("sending: %d, %s\n", i, response);
+
+	error = send(conn->fd, response, i, 0);
+	if (error < 0)
+		printf("Error sending: %d\n", error);
 
 	return 0;
 }
 
-int run_server()
+int read_loop(int listenfd)
 {
 	int max;
 	int error;
 	fd_set rd;
-	int listenfd;
 	struct timeval timeout;
-	int clients[MAX_CONNECTIONS];
-
-	for (int i = 0; i < MAX_CONNECTIONS; i++)
-		clients[i] = -1;
-
-	listenfd = create_listener();
 
 	while (1) {
 		timeout.tv_sec = 5;
@@ -152,10 +189,10 @@ int run_server()
 		max = listenfd;
 		FD_SET(listenfd, &rd);
 		for (int i = 0; i < MAX_CONNECTIONS; i++) {
-			if (clients[i] > 0) {
-				if (clients[i] > max)
-					max = clients[i];
-				FD_SET(clients[i], &rd);
+			if (clients[i]) {
+				if (clients[i]->fd > max)
+					max = clients[i]->fd;
+				FD_SET(clients[i]->fd, &rd);
 			}
 		}
 
@@ -171,19 +208,30 @@ int run_server()
 			continue;
 
 		if (FD_ISSET(listenfd, &rd)) {
-			handle_connection(listenfd, clients);
+			handle_connection(listenfd);
 		}
 
 		for (int i = 0; i < MAX_CONNECTIONS; i++) {
-			if (clients[i] > 0 && FD_ISSET(clients[i], &rd)) {
-				if (handle_read(clients[i])) {
-					printf("closing client %d\n", clients[i]);
-					close(clients[i]);
-					clients[i] = -1;
-				}
+			if (clients[i] > 0 && FD_ISSET(clients[i]->fd, &rd)) {
+				if (handle_read(clients[i]))
+					close_connection(clients[i]);
 			}
 		}
 	}
+}
+
+int run_server()
+{
+	int listenfd;
+
+	for (int i = 0; i < MAX_CONNECTIONS; i++)
+		clients[i] = NULL;
+
+	listenfd = create_listener();
+	if (listenfd < 0)
+		return -1;
+
+	read_loop(listenfd);
 
 	close(listenfd);
 

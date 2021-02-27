@@ -157,8 +157,9 @@ kernel.bin: $(KERNEL_OBJS)
 	cp $@ $(BUILD)
 
 
+kernel.load: LOAD_ARGS = 100000 ata0
 %.load: %.bin
-	tools/make-load-file $^ $@
+	tools/make-load-file $^ $@ $(LOAD_ARGS)
 
 %.send: %.bin
 	tools/make-send-file $^ $@

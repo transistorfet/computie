@@ -2,9 +2,10 @@
 
 SRC=$1
 DEST=${2-"$1.load"}
-ADDR=" $3"
+ADDR=$3
+BOOTARGS=$4
 
-echo "load$ADDR" > $DEST
+echo "load $ADDR" > $DEST
 wc -c $SRC | awk '{printf "%04X", $1}' >> $DEST
 hexdump -v -e '/1 "%02X"' $SRC >> $DEST
-echo "\nboot$ADDR" >> $DEST
+echo "\nboot $ADDR $BOOTARGS" >> $DEST

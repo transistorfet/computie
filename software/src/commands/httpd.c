@@ -143,16 +143,13 @@ int handle_read(struct connection *conn)
 		return -1;
 	}
 	conn->read += error;
-	printf("%d\n", conn->read);
-	conn->headers[++conn->read] = '\0';
+	conn->headers[conn->read] = '\0';
 
-	printf("recv: %s\n", conn->headers);
+	printf("received:\n%s\n", conn->headers);
 
 	char *end = strstr(conn->headers, "\r\n\r\n");
 	if (!end)
 		return 0;
-
-	printf("end of headers\n");
 
 	int i = 0;
 	char response[MAX_HEADERS];
@@ -165,7 +162,7 @@ int handle_read(struct connection *conn)
 	i += snprintf(&response[i], MAX_HEADERS - i, "\r\n");
 	i += snprintf(&response[i], MAX_HEADERS - i, data);
 
-	printf("sending: %d, %s\n", i, response);
+	printf("sending:\n%s\n", i, response);
 
 	error = send(conn->fd, response, i, 0);
 	if (error < 0)

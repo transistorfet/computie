@@ -40,6 +40,7 @@ struct endpoint_ops {
 	int (*listen)(struct endpoint *ep, int queue);
 	int (*accept)(struct endpoint *ep, struct sockaddr *sockaddr, socklen_t *len, struct endpoint **result);
 	int (*connect)(struct endpoint *ep, const struct sockaddr *sockaddr, socklen_t len);
+	int (*shutdown)(struct endpoint *ep, int how);
 	int (*send)(struct endpoint *ep, const char *buf, int nbytes);
 	int (*recv)(struct endpoint *ep, char *buf, int max);
 	int (*send_to)(struct endpoint *ep, const char *buf, int nbytes, const struct sockaddr *sockaddr, socklen_t len);

@@ -10,10 +10,6 @@
 #include <sys/select.h>
 #include <netinet/in.h>
 
-//#include <arpa/inet.h>
-#include <asm/macros.h>
-#define htobe16	to_be16
-
 #define HTTP_PORT		8099
 #define MAX_CONNECTIONS		20
 #define MAX_INPUT		256
@@ -66,7 +62,7 @@ int create_listener()
 
 	memset(&addr, '\0', sizeof(struct sockaddr_in));
 	addr.sin_family = AF_INET;
-	addr.sin_port = htobe16(HTTP_PORT);
+	addr.sin_port = htons(HTTP_PORT);
 	addr.sin_addr.s_addr = INADDR_ANY;
 
 	error = bind(listenfd, (struct sockaddr *) &addr, sizeof(struct sockaddr_in));
@@ -102,6 +98,7 @@ void close_connection(struct connection *conn)
 	for (int i = 0; i < MAX_CONNECTIONS; i++) {
 		if (clients[i] == conn) {
 			printf("closing client %d\n", clients[i]->fd);
+			shutdown(clients[i]->fd, SHUT_RDWR);
 			close(clients[i]->fd);
 			free(clients[i]);
 			clients[i] = NULL;
@@ -230,6 +227,7 @@ int run_server()
 
 	read_loop(listenfd);
 
+	shutdown(listenfd, SHUT_RDWR);
 	close(listenfd);
 
 	return 0;

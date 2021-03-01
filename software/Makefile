@@ -141,9 +141,6 @@ monitor.bin: $(MONITOR_OBJS)
 	hexdump -v -e '/1 "0x%02X, "' $@ > output.txt
 
 
-boot.load: boot.bin
-	tools/make-load-file $^ $@ 180000
-
 boot.bin: $(BOOT_OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) --entry=main -Ttext=0x0000 -o $@.elf $^
 	$(CC) $(CFLAGS) $(LDFLAGS) --entry=main -Ttext=0x0000 -Wl,--oformat=binary -o $@ $^
@@ -157,7 +154,10 @@ kernel.bin: $(KERNEL_OBJS)
 	cp $@ $(BUILD)
 
 
+boot.load: LOAD_ARGS = 180000
 kernel.load: LOAD_ARGS = 100000 ata0
+
+
 %.load: %.bin
 	tools/make-load-file $^ $@ $(LOAD_ARGS)
 

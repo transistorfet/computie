@@ -187,8 +187,17 @@ int net_socket_accept(struct vfile *file, struct sockaddr *addr, socklen_t *addr
 
 int net_socket_shutdown(struct vfile *file, int how)
 {
-	// TODO implement
-	return -1;
+	int result;
+	struct socket *sock = SOCKET(file->vnode);
+
+	if (!sock->ep)
+		return ENOTCONN;
+	if (how != SHUT_RD && how != SHUT_WR && how != SHUT_RDWR)
+		return EINVAL;
+	if (!sock->ep->ops->shutdown)
+		return 0;
+
+	return sock->ep->ops->shutdown(sock->ep, how);
 }
 
 int net_socket_read(struct vfile *file, char *buf, size_t nbytes)

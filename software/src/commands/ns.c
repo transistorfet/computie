@@ -1,17 +1,18 @@
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
-#include <asm/macros.h>
 
 #include "prototype.h"
 
 #define MAX_INPUT		256
 
+void handle_signal(int signum);
 int client_loop(int sockfd, int f_udp, char *address, int port, int f_verbose);
 int listen_loop(int sockfd, int f_udp, int port, int f_verbose);
 
@@ -19,6 +20,7 @@ int MAIN(command_ns)(int argc, char **argv)
 {
 	int opt;
 	int sockfd;
+	struct sigaction act;
 
 	const char *usage = "Usage: ns [-ulv] [<address> [<port>]]";
 	char *address = "192.168.1.102";
@@ -61,6 +63,11 @@ int MAIN(command_ns)(int argc, char **argv)
 	if (optind < argc)
 		port = strtol(argv[optind++], NULL, 10);
 
+	// On SIGINT, cause the syscall to cancel
+	act.sa_handler = handle_signal;
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
+	sigaction(SIGINT, &act, NULL);
 
 	sockfd = socket(PF_INET, f_udp ? SOCK_DGRAM : SOCK_STREAM, 0);
 	if (sockfd < 0) {
@@ -73,9 +80,15 @@ int MAIN(command_ns)(int argc, char **argv)
 	else
 		client_loop(sockfd, f_udp, address, port, f_verbose);
 
+	shutdown(sockfd, SHUT_RDWR);
 	close(sockfd);
 
 	return 0;
+}
+
+void handle_signal(int signum)
+{
+	return;
 }
 
 int client_loop(int sockfd, int f_udp, char *address, int port, int f_verbose)
@@ -87,7 +100,7 @@ int client_loop(int sockfd, int f_udp, char *address, int port, int f_verbose)
 
 	memset(&addr, '\0', sizeof(struct sockaddr_in));
 	addr.sin_family = AF_INET;
-	addr.sin_port = to_be16(port);
+	addr.sin_port = htons(port);
 	inet_aton(address, &addr.sin_addr);
 
 	if (!f_udp) {
@@ -104,7 +117,8 @@ int client_loop(int sockfd, int f_udp, char *address, int port, int f_verbose)
 	while (1) {
 		nbytes = read(STDIN_FILENO, buffer, MAX_INPUT);
 		if (nbytes < 0) {
-			printf("Error reading: %d\n", nbytes);
+			if (nbytes != EINTR)
+				printf("Error reading: %d\n", nbytes);
 			break;
 		}
 
@@ -132,7 +146,7 @@ int listen_loop(int sockfd, int f_udp, int port, int f_verbose)
 
 	memset(&addr, '\0', sizeof(struct sockaddr_in));
 	addr.sin_family = AF_INET;
-	addr.sin_port = to_be16(port);
+	addr.sin_port = htons(port);
 	addr.sin_addr.s_addr = INADDR_ANY;
 
 	error = bind(sockfd, (struct sockaddr *) &addr, sizeof(struct sockaddr_in));
@@ -170,7 +184,8 @@ int listen_loop(int sockfd, int f_udp, int port, int f_verbose)
 			nbytes = recv(sockfd, buffer, MAX_INPUT, 0);
 
 		if (nbytes <= 0) {
-			printf("Error receiving: %d\n", nbytes);
+			if (nbytes != 0 && nbytes != EINTR)
+				printf("Error receiving: %d\n", nbytes);
 			return -1;
 		}
 		buffer[nbytes] = '\0';
@@ -180,8 +195,6 @@ int listen_loop(int sockfd, int f_udp, int port, int f_verbose)
 		else
 			fputs(buffer, stdout);
 	}
-
-	close(sockfd);
 
 	return 0;
 }

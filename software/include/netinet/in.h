@@ -5,6 +5,14 @@
 #include <stdint.h>
 #include <sys/socket.h>
 
+#include <asm/macros.h>
+
+#define ntohl(x)	from_be32((x))
+#define ntohs(x)	from_be16((x))
+#define htonl(x)	to_be32((x))
+#define htons(x)	to_be16((x))
+
+
 #define IPPROTO_IP		0
 #define IPPROTO_ICMP		1
 #define IPPROTO_IGMP		2

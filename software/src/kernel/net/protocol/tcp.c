@@ -32,6 +32,7 @@ int tcp_destroy_endpoint(struct endpoint *ep);
 int tcp_endpoint_listen(struct endpoint *ep, int queue);
 int tcp_endpoint_accept(struct endpoint *ep, struct sockaddr *sockaddr, socklen_t *len, struct endpoint **result);
 int tcp_endpoint_connect(struct endpoint *ep, const struct sockaddr *sockaddr, socklen_t len);
+int tcp_endpoint_shutdown(struct endpoint *ep, int how);
 int tcp_endpoint_send(struct endpoint *ep, const char *buf, int nbytes);
 int tcp_endpoint_recv(struct endpoint *ep, char *buf, int nbytes);
 int tcp_endpoint_get_options(struct endpoint *ep, int level, int optname, void *optval, socklen_t *optlen);
@@ -59,6 +60,7 @@ struct endpoint_ops tcp_endpoint_ops = {
 	tcp_endpoint_listen,
 	tcp_endpoint_accept,
 	tcp_endpoint_connect,
+	tcp_endpoint_shutdown,
 	tcp_endpoint_send,
 	tcp_endpoint_recv,
 	NULL,
@@ -80,17 +82,11 @@ static int tcp_send_packet(struct tcp_endpoint *tep, int flags, int ackbytes);
 static void tcp_queue_packet(struct tcp_endpoint *tep, struct packet *pack);
 static int tcp_check_waiting_packet(struct tcp_endpoint *tep);
 
-static int tcp_forward_closed(struct tcp_endpoint *tep, struct packet *pack);
 static int tcp_forward_listen(struct tcp_endpoint *tep, struct packet *pack);
 static int tcp_forward_syn_sent(struct tcp_endpoint *tep, struct packet *pack);
 static int tcp_forward_syn_recv(struct tcp_endpoint *tep, struct packet *pack);
 static int tcp_forward_established(struct tcp_endpoint *tep, struct packet *pack);
-static int tcp_forward_fin_wait1(struct tcp_endpoint *tep, struct packet *pack);
-static int tcp_forward_fin_wait2(struct tcp_endpoint *tep, struct packet *pack);
-static int tcp_forward_close_wait(struct tcp_endpoint *tep, struct packet *pack);
 static int tcp_forward_closing(struct tcp_endpoint *tep, struct packet *pack);
-static int tcp_forward_last_ack(struct tcp_endpoint *tep, struct packet *pack);
-static int tcp_forward_time_wait(struct tcp_endpoint *tep, struct packet *pack);
 static int tcp_check_close(struct tcp_endpoint *tep, struct packet *pack);
 
 static struct queue tcp_endpoints;
@@ -152,7 +148,7 @@ int tcp_forward_packet(struct protocol *proto, struct packet *pack)
 
 	switch (TCP_ENDPOINT(ep)->state) {
 		case TS_CLOSED:
-			return tcp_forward_closed(TCP_ENDPOINT(ep), pack);
+			return PACKET_DROPPED;
 		case TS_LISTEN:
 			return tcp_forward_listen(TCP_ENDPOINT(ep), pack);
 		case TS_SYN_SENT:
@@ -162,17 +158,12 @@ int tcp_forward_packet(struct protocol *proto, struct packet *pack)
 		case TS_ESTABLISHED:
 			return tcp_forward_established(TCP_ENDPOINT(ep), pack);
 		case TS_FIN_WAIT1:
-			return tcp_forward_fin_wait1(TCP_ENDPOINT(ep), pack);
 		case TS_FIN_WAIT2:
-			return tcp_forward_fin_wait2(TCP_ENDPOINT(ep), pack);
 		case TS_CLOSE_WAIT:
-			return tcp_forward_close_wait(TCP_ENDPOINT(ep), pack);
 		case TS_CLOSING:
-			return tcp_forward_closing(TCP_ENDPOINT(ep), pack);
 		case TS_LAST_ACK:
-			return tcp_forward_last_ack(TCP_ENDPOINT(ep), pack);
 		case TS_TIME_WAIT:
-			return tcp_forward_time_wait(TCP_ENDPOINT(ep), pack);
+			return tcp_forward_closing(TCP_ENDPOINT(ep), pack);
 		default:
 			return PACKET_DROPPED;
 	}
@@ -214,8 +205,8 @@ int tcp_destroy_endpoint(struct endpoint *ep)
 	struct tcp_endpoint *tep = TCP_ENDPOINT(ep);
 
 	// TODO this would need to close properly or return an error??
-	if (tep->remote.addr)
-		tcp_send_packet(tep, RST, 1);
+	if (tep->remote.addr && tep->state != TS_CLOSED && tep->state != TS_CLOSING && !tep->fin_sent)
+		tcp_send_packet(tep, RST | ACK, 0);
 
 	for (struct packet *next, *cur = _queue_head(&tep->recv_queue); cur; cur = next) {
 		next = _queue_next(&cur->node);
@@ -294,6 +285,22 @@ int tcp_endpoint_connect(struct endpoint *ep, const struct sockaddr *sockaddr, s
 	return EWOULDBLOCK;
 }
 
+int tcp_endpoint_shutdown(struct endpoint *ep, int how)
+{
+	struct tcp_endpoint *tep = TCP_ENDPOINT(ep);
+
+	if (tep->state != TS_SYN_RECV && tep->state != TS_ESTABLISHED && tep->state != TS_CLOSE_WAIT)
+		return 0;
+
+	tep->fin_sent = 1;
+	tcp_send_packet(tep, FIN | ACK, 0);
+	if (tep->state == TS_CLOSE_WAIT)
+		tep->state = TS_LAST_ACK;
+	else
+		tep->state = TS_FIN_WAIT1;
+	return 0;
+}
+
 int tcp_endpoint_send(struct endpoint *ep, const char *buf, int nbytes)
 {
 	struct packet *pack;
@@ -318,15 +325,15 @@ int tcp_endpoint_recv(struct endpoint *ep, char *buf, int nbytes)
 {
 	struct tcp_endpoint *tep = TCP_ENDPOINT(ep);
 
-	if (tep->state == TS_CLOSED || tep->state >= TS_FIN_WAIT1)
+	if (tep->state == TS_CLOSED)
 		return 0;
-
-	// TODO should this be an error if you call recv on a TS_LISTEN socket?
-	if (tep->state != TS_ESTABLISHED)
+	if (tep->state == TS_LISTEN)
+		return EINVAL;
+	if (tep->state == TS_SYN_SENT || tep->state == TS_SYN_RECV)
 		return EWOULDBLOCK;
 
 	nbytes = _buf_get(tep->rx, buf, nbytes);
-	if (!nbytes)
+	if (nbytes == 0 && !tep->fin_recv)
 		return EWOULDBLOCK;
 	return nbytes;
 }
@@ -403,8 +410,10 @@ static struct tcp_endpoint *tcp_alloc_endpoint(struct protocol *proto, struct so
 	_queue_init(&tep->recv_queue);
 	tep->queue_size = 0;
 	tep->state = TS_CLOSED;
-	tep->connect_return = 0;
+	tep->fin_sent = 0;
+	tep->fin_recv = 0;
 	tep->listen_queue_max = 0;
+	tep->connect_return = 0;
 
 	tep->rx = kmalloc(TCP_RX_BUFFER);
 	_buf_init(tep->rx, TCP_RX_BUFFER);
@@ -542,8 +551,8 @@ static int tcp_send_packet(struct tcp_endpoint *tep, int flags, int ackbytes)
 	}
 	else {
 		hdr->seqnum = tep->tx_last_seq;
-		if (flags == SYN)
-			tep->tx_last_seq += ackbytes;
+		if (flags == SYN || (flags & FIN))
+			tep->tx_last_seq += 1;
 	}
 
 	return tcp_finalize_and_send_packet(tep, pack);
@@ -595,11 +604,6 @@ static int tcp_check_waiting_packet(struct tcp_endpoint *tep)
 	return 1;
 }
 
-
-static int tcp_forward_closed(struct tcp_endpoint *tep, struct packet *pack)
-{
-	return PACKET_DROPPED;
-}
 
 static int tcp_forward_listen(struct tcp_endpoint *tep, struct packet *pack)
 {
@@ -677,9 +681,6 @@ static int tcp_forward_established(struct tcp_endpoint *tep, struct packet *pack
 	if (tcp_check_close(tep, pack) == PACKET_DELIVERED)
 		return PACKET_DELIVERED;
 
-	//if (!(hdr->flags & (PSH | ACK)))
-	//	return PACKET_DROPPED;
-
 	if (hdr->flags & ACK) {
 		// Discard the data that's been acknowledged
 		int last_acked = tep->tx_last_seq - _buf_used_space(tep->tx);
@@ -711,80 +712,51 @@ static int tcp_forward_established(struct tcp_endpoint *tep, struct packet *pack
 	return PACKET_DELIVERED;
 }
 
-static int tcp_forward_fin_wait1(struct tcp_endpoint *tep, struct packet *pack)
-{
-
-	// TODO implement
-	return PACKET_DROPPED;
-}
-
-static int tcp_forward_fin_wait2(struct tcp_endpoint *tep, struct packet *pack)
-{
-
-	// TODO implement
-	return PACKET_DROPPED;
-}
-
-static int tcp_forward_close_wait(struct tcp_endpoint *tep, struct packet *pack)
-{
-
-	// TODO implement
-	return PACKET_DROPPED;
-}
-
 static int tcp_forward_closing(struct tcp_endpoint *tep, struct packet *pack)
 {
-	struct tcp_header *hdr = (struct tcp_header *) &pack->data[pack->transport_offset];
-
+	// For now, this is the same behaviour as TS_CLOSING
 	if (tcp_check_close(tep, pack) == PACKET_DELIVERED)
 		return PACKET_DELIVERED;
-
-	if (!(hdr->flags & ACK))
-		return PACKET_DROPPED;
-
-	// TODO should you check the sequence numbers???
-	tep->state = TS_CLOSED;
-
-	packet_free(pack);
-	return PACKET_DELIVERED;
-}
-
-static int tcp_forward_last_ack(struct tcp_endpoint *tep, struct packet *pack)
-{
-
-	// TODO implement
-	return PACKET_DROPPED;
-}
-
-static int tcp_forward_time_wait(struct tcp_endpoint *tep, struct packet *pack)
-{
-
-	// TODO implement
 	return PACKET_DROPPED;
 }
 
 static int tcp_check_close(struct tcp_endpoint *tep, struct packet *pack)
 {
+	int ret = PACKET_DROPPED;
 	struct tcp_header *hdr = (struct tcp_header *) &pack->data[pack->transport_offset];
 
 	// If the other end requests we close the connection (ie. remote port not listening), then close and drop
 	if (hdr->flags & RST) {
-		// TODO there should probably be more to closing the connection
+		tep->fin_recv = 1;
 		tep->state = TS_CLOSING;
 		tcp_send_packet(tep, RST | ACK, 1);
-		packet_free(pack);
-		return PACKET_DELIVERED;
+		net_socket_wakeup(tep->ep.sock, VFS_POLL_READ);
+		ret = PACKET_DELIVERED;
 	}
 
 	if (hdr->flags & FIN) {
+		tep->fin_recv = 1;
 		if (hdr->seqnum != tep->rx_last_seq)
 			return PACKET_DROPPED;
-		tep->state = TS_CLOSING;
-		tcp_send_packet(tep, FIN | ACK, 1);
-		packet_free(pack);
-		return PACKET_DELIVERED;
+
+		if (tep->state == TS_ESTABLISHED)
+			tep->state = TS_CLOSE_WAIT;
+		else
+			tep->state = TS_CLOSING;
+
+		tcp_send_packet(tep, ACK, 1);
+		net_socket_wakeup(tep->ep.sock, VFS_POLL_READ);
+		ret = PACKET_DELIVERED;
 	}
 
-	return PACKET_DROPPED;
+	if (tep->fin_sent && (hdr->flags & ACK) && (hdr->acknum == tep->tx_last_seq)) {
+		tep->state = TS_CLOSED;
+		ret = PACKET_DELIVERED;
+	}
+
+	if (ret == PACKET_DELIVERED)
+		packet_free(pack);
+
+	return ret;
 }
 

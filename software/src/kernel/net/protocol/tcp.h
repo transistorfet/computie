@@ -57,9 +57,11 @@ struct tcp_endpoint {
 	int queue_size;
 	struct queue recv_queue;
 
-	int state;
+	char state;
+	char fin_sent;
+	char fin_recv;
+	char listen_queue_max;
 	int connect_return;
-	int listen_queue_max;
 	uint32_t tx_last_seq;
 	uint32_t rx_last_seq;
 

@@ -315,11 +315,10 @@ static inline void handle_channel_io(register char isr, register devminor_t mino
 				break;
 			if (status & (SR_FRAMING_ERROR | SR_PARITY_ERROR | SR_OVERRUN_ERROR))
 				channels[minor].error = 1;
-			else {
-				if (_buf_is_full(&channels[minor].rx))
-					break;
-				_buf_put_char(&channels[minor].rx, *channels[minor].ports->recv);
-			}
+
+			if (_buf_is_full(&channels[minor].rx))
+				break;
+			_buf_put_char(&channels[minor].rx, *channels[minor].ports->recv);
 		}
 
 		if (_buf_free_space(&channels[minor].rx) < 10)

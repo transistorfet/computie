@@ -64,6 +64,7 @@ struct tcp_endpoint {
 	int connect_return;
 	uint32_t tx_last_seq;
 	uint32_t rx_last_seq;
+	short tx_acks_repeated;
 
 	struct circular_buffer *rx;
 	struct circular_buffer *tx;

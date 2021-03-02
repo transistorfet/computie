@@ -89,11 +89,19 @@ static inline short _buf_get(struct circular_buffer *cb, unsigned char *data, sh
 	return i;
 }
 
-static inline short _buf_peek(struct circular_buffer *cb, unsigned char *data, short size)
+static inline short _buf_peek(struct circular_buffer *cb, unsigned char *data, short offset, short size)
 {
 	short i, j;
+	short avail;
 
-	for (i = 0, j = cb->out; i < size; i++) {
+	avail = _buf_used_space(cb);
+	if (offset > avail)
+		offset = avail;
+	j = cb->out + offset;
+	if (j > cb->max)
+		j -= cb->max;
+
+	for (i = 0; i < size; i++) {
 		if (j == cb->in)
 			return i;
 		data[i] = cb->buffer[j++];

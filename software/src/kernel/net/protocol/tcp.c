@@ -78,7 +78,7 @@ static struct packet *tcp_create_empty_packet(struct protocol *proto, const stru
 static int tcp_setup_packet(struct packet *pack, const struct ipv4_address *src, const struct ipv4_address *dest, int length);
 static uint16_t tcp_calculate_checksum(struct protocol *proto, struct packet *pack);
 static int tcp_finalize_and_send_packet(struct tcp_endpoint *tep, struct packet *pack);
-static int tcp_send_packet(struct tcp_endpoint *tep, int flags, int ackbytes);
+static int tcp_send_packet(struct tcp_endpoint *tep, int flags, int nbytes, int ackbytes);
 static void tcp_queue_packet(struct tcp_endpoint *tep, struct packet *pack);
 static int tcp_check_waiting_packet(struct tcp_endpoint *tep);
 
@@ -206,7 +206,7 @@ int tcp_destroy_endpoint(struct endpoint *ep)
 
 	// TODO this would need to close properly or return an error??
 	if (tep->remote.addr && tep->state != TS_CLOSED && tep->state != TS_CLOSING && !tep->fin_sent)
-		tcp_send_packet(tep, RST | ACK, 0);
+		tcp_send_packet(tep, RST | ACK, 0, 0);
 
 	for (struct packet *next, *cur = _queue_head(&tep->recv_queue); cur; cur = next) {
 		next = _queue_next(&cur->node);
@@ -278,8 +278,9 @@ int tcp_endpoint_connect(struct endpoint *ep, const struct sockaddr *sockaddr, s
 	tep->remote.addr = addr->sin_addr.s_addr;
 	tep->remote.port = addr->sin_port;
 	tep->tx_last_seq = rand();
+	tep->tx_acks_repeated = 0;
 
-	tcp_send_packet(tep, SYN, 1);
+	tcp_send_packet(tep, SYN, 0, 1);
 	tep->state = TS_SYN_SENT;
 
 	return EWOULDBLOCK;
@@ -293,7 +294,7 @@ int tcp_endpoint_shutdown(struct endpoint *ep, int how)
 		return 0;
 
 	tep->fin_sent = 1;
-	tcp_send_packet(tep, FIN | ACK, 0);
+	tcp_send_packet(tep, FIN | ACK, 0, 0);
 	if (tep->state == TS_CLOSE_WAIT)
 		tep->state = TS_LAST_ACK;
 	else
@@ -316,7 +317,7 @@ int tcp_endpoint_send(struct endpoint *ep, const char *buf, int nbytes)
 	_buf_put(tep->tx, buf, nbytes);
 	tep->tx_last_seq += nbytes;
 
-	tcp_send_packet(tep, PSH | ACK, 0);
+	tcp_send_packet(tep, PSH | ACK, nbytes, 0);
 
 	return nbytes;
 }
@@ -414,6 +415,7 @@ static struct tcp_endpoint *tcp_alloc_endpoint(struct protocol *proto, struct so
 	tep->fin_recv = 0;
 	tep->listen_queue_max = 0;
 	tep->connect_return = 0;
+	tep->tx_acks_repeated = 0;
 
 	tep->rx = kmalloc(TCP_RX_BUFFER);
 	_buf_init(tep->rx, TCP_RX_BUFFER);
@@ -450,7 +452,7 @@ static int tcp_create_client_endpoint(struct tcp_endpoint *tep, struct packet *p
 
 	*result = (struct endpoint *) client_ep;
 
-	tcp_send_packet(client_ep, SYN | ACK, 1);
+	tcp_send_packet(client_ep, SYN | ACK, 0, 1);
 	return 0;
 }
 
@@ -526,13 +528,13 @@ static int tcp_finalize_and_send_packet(struct tcp_endpoint *tep, struct packet 
 	return net_if_send_packet(tep->ep.ifdev, pack);
 }
 
-static int tcp_send_packet(struct tcp_endpoint *tep, int flags, int ackbytes)
+static int tcp_send_packet(struct tcp_endpoint *tep, int flags, int nbytes, int ackbytes)
 {
-	int nbytes = 0;
 	struct packet *pack;
 	struct tcp_header *hdr;
 
-	if (flags & PSH)
+	// TODO there needs to be a limit on how big packets can get.  But should the splitting happen here or in the caller?
+	if ((flags & PSH) && nbytes == -1)
 		nbytes = _buf_used_space(tep->tx);
 
 	pack = tcp_create_empty_packet(tep->ep.proto, &tep->local, &tep->remote, nbytes);
@@ -546,7 +548,7 @@ static int tcp_send_packet(struct tcp_endpoint *tep, int flags, int ackbytes)
 
 	if (flags & PSH) {
 		hdr->seqnum = tep->tx_last_seq - nbytes;
-		_buf_peek(tep->tx, &pack->data[pack->length], nbytes);
+		_buf_peek(tep->tx, &pack->data[pack->length], _buf_used_space(tep->tx) - nbytes, nbytes);
 		pack->length += nbytes;
 	}
 	else {
@@ -639,6 +641,7 @@ static int tcp_forward_syn_recv(struct tcp_endpoint *tep, struct packet *pack)
 	if (hdr->seqnum != tep->rx_last_seq)
 		return PACKET_DROPPED;
 	tep->tx_last_seq = hdr->acknum;
+	tep->tx_acks_repeated = 0;
 
 	tep->state = TS_ESTABLISHED;
 	net_socket_wakeup(tep->ep.sock, VFS_POLL_READ);
@@ -665,7 +668,7 @@ static int tcp_forward_syn_sent(struct tcp_endpoint *tep, struct packet *pack)
 	tep->state = TS_ESTABLISHED;
 	packet_free(pack);
 
-	tcp_send_packet(tep, ACK, 1);
+	tcp_send_packet(tep, ACK, 0, 1);
 	tep->connect_return = 1;
 	net_socket_wakeup(tep->ep.sock, VFS_POLL_READ);
 
@@ -674,7 +677,6 @@ static int tcp_forward_syn_sent(struct tcp_endpoint *tep, struct packet *pack)
 
 static int tcp_forward_established(struct tcp_endpoint *tep, struct packet *pack)
 {
-	// TODO implement receive packets
 	struct packet *reply;
 	struct tcp_header *hdr = (struct tcp_header *) &pack->data[pack->transport_offset];
 
@@ -685,6 +687,7 @@ static int tcp_forward_established(struct tcp_endpoint *tep, struct packet *pack
 		// Discard the data that's been acknowledged
 		int last_acked = tep->tx_last_seq - _buf_used_space(tep->tx);
 		if (hdr->acknum > last_acked) {
+			tep->tx_acks_repeated = 0;
 			_buf_drop(tep->tx, hdr->acknum - last_acked);
 			last_acked = hdr->acknum;
 			net_socket_wakeup(tep->ep.sock, VFS_POLL_WRITE);
@@ -692,16 +695,18 @@ static int tcp_forward_established(struct tcp_endpoint *tep, struct packet *pack
 
 		// If not all the data sent was acknowledged, retransmit the missing data
 		if (last_acked < tep->tx_last_seq) {
-			// TODO do you actually need to wait for 3 such packets before retransmitting???
-			// TODO retransmit (requires changes to our send_data_packet function)
-			printk_safe("need to retransmit our data\n");
+			tep->tx_acks_repeated += 1;
+			if (tep->tx_acks_repeated >= 3) {
+				tep->tx_acks_repeated = 0;
+				tcp_send_packet(tep, PSH | ACK, -1, 0);
+			}
 		}
 	}
 
 	if (pack->length - pack->data_offset > 0) {
 		tcp_queue_packet(tep, pack);
 		if (tcp_check_waiting_packet(tep))
-			tcp_send_packet(tep, ACK, 0);
+			tcp_send_packet(tep, ACK, 0, 0);
 
 		if (tep->ep.sock && !_buf_is_empty(tep->rx))
 			net_socket_wakeup(tep->ep.sock, VFS_POLL_READ);
@@ -729,7 +734,7 @@ static int tcp_check_close(struct tcp_endpoint *tep, struct packet *pack)
 	if (hdr->flags & RST) {
 		tep->fin_recv = 1;
 		tep->state = TS_CLOSING;
-		tcp_send_packet(tep, RST | ACK, 1);
+		tcp_send_packet(tep, RST | ACK, 0, 1);
 		net_socket_wakeup(tep->ep.sock, VFS_POLL_READ);
 		ret = PACKET_DELIVERED;
 	}
@@ -744,7 +749,7 @@ static int tcp_check_close(struct tcp_endpoint *tep, struct packet *pack)
 		else
 			tep->state = TS_CLOSING;
 
-		tcp_send_packet(tep, ACK, 1);
+		tcp_send_packet(tep, ACK, 0, 1);
 		net_socket_wakeup(tep->ep.sock, VFS_POLL_READ);
 		ret = PACKET_DELIVERED;
 	}

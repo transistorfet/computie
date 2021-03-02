@@ -429,6 +429,7 @@ int open_file(char *filename, int flags, int newfd)
 
 	if (dup2(fd, newfd))
 		return -1;
+	close(fd);
 	return 0;
 }
 
@@ -493,6 +494,11 @@ int execute_command(struct pipe_command *command, int argc, char **argv, char **
 		tcsetpgrp(STDOUT_FILENO, fgpid);
 
 		// TODO set the tty's process group to this one? how does it get set back when the process terminates?
+
+		if (command->stdin_file) {
+			if (open_file(command->stdin_file, O_RDONLY, STDIN_FILENO))
+				exit(-1);
+		}
 
 		if (command->stdout_file) {
 			if (open_file(command->stdout_file, O_WRONLY | O_CREAT | (command->append ? O_APPEND : O_TRUNC), STDOUT_FILENO))

@@ -2,6 +2,8 @@
 Computie68k
 ===========
 
+###### *Started October 03, 2019*
+
 A 68k-based computer, running a simple unix-like operating system.  68k-SBC is a single board computer with
 a 68010 CPU, 1MB SRAM, 1MB Flash, and a 68681 Dual UART controller.  The OS is a simple monolithic kernel
 written in C, with preemptive multitasking via the 68681 timer interrupt.
@@ -20,7 +22,7 @@ filesystem, which uses RAM (through a device driver) to store the data, or a Com
 device.  The second serial port can be configured as a SLIP device, with a basic implementation of UDP and TCP through
 a BSD sockets-style API, and an NTP command is provided for updating the system time on boot (when booting from disk).
 
-![alt text](https://github.com/transistorfet/computie/raw/master/images/OS-basic.gif "OS")
+![alt text](images/OS-basic.gif "OS")
 
 The above video shows connecting over serial from a modern PC and resetting the hardware to run the monitor in ROM
 which displays the welcome message.  The kernel is already loaded in RAM, so running the boot command will boot
@@ -35,7 +37,7 @@ It has a bus for connecting a supervisor arduino or expansion devices, but it ca
 UARTs.  It has 1MB of onboard Flash, 1MB of onboard SRAM, and a 68681 Dual UART chip with GPIO.  Some of the GPIO
 pins are wired to 4 general purpose LEDs and 2 general purpose buttons.
 
-[68k Board Schematics](https://github.com/transistorfet/computie/raw/master/hardware/68k-SBC/68kBoard.pdf)
+[68k Board Schematics](hardware/68k-SBC/68kBoard.pdf)
 
 
 The serial ports require external TTL-to-something conversion and are designed to be used with an FTDI USB-to-Serial

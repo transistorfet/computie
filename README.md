@@ -37,7 +37,7 @@ It has a bus for connecting a supervisor arduino or expansion devices, but it ca
 UARTs.  It has 1MB of onboard Flash, 1MB of onboard SRAM, and a 68681 Dual UART chip with GPIO.  Some of the GPIO
 pins are wired to 4 general purpose LEDs and 2 general purpose buttons.
 
-[68k Board Schematics](hardware/68k-SBC/68kBoard.pdf)
+[68k Board Schematics](https://github.com/transistorfet/computie/raw/master/hardware/68k-SBC/68kBoard.pdf)
 
 
 The serial ports require external TTL-to-something conversion and are designed to be used with an FTDI USB-to-Serial
@@ -63,16 +63,16 @@ added and the power supply has been removed, but it is otherwise the same design
 SMT Revision 1
 --------------
 
-![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SMT-rev1/SMT.jpg "68k-SMT Rev. 1")
-![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SMT-rev1/SMT-running.jpg "68k-SMT Running")
+![alt text](images/68k-SMT-rev1/SMT.jpg "68k-SMT Rev. 1")
+![alt text](images/68k-SMT-rev1/SMT-running.jpg "68k-SMT Running")
 
 SBC Revision 2
 --------------
 
-![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev2/SBC.jpg "68k-SBC Rev. 2")
-![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev2/ArduinoShield.jpg "Supervisor Arduino Shield")
-![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev2/SBC-running.jpg "68k-SBC Running")
-![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev2/PCBs.jpg "68k-SBC PCBs")
+![alt text](images/68k-SBC-rev2/SBC.jpg "68k-SBC Rev. 2")
+![alt text](images/68k-SBC-rev2/ArduinoShield.jpg "Supervisor Arduino Shield")
+![alt text](images/68k-SBC-rev2/SBC-running.jpg "68k-SBC Running")
+![alt text](images/68k-SBC-rev2/PCBs.jpg "68k-SBC PCBs")
 
 
 SBC Revision 0
@@ -82,9 +82,9 @@ This version has 64KB of EEPROM instead of Flash, and doesn't have onboard inter
 68000 CPU, but that was later upgraded to a 68010 to allow for relocatable interrupt tables when using off-board
 interrupt circuitry.
 
-![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev0/PCB-front.jpg "68k-SBC PCB Front")
-![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev0/SBC.jpg "68k-SBC")
-![alt text](https://github.com/transistorfet/computie/raw/master/images/68k-SBC-rev0/PCB-patch.jpg "68k-SBC patch for design mistake")
+![alt text](images/68k-SBC-rev0/PCB-front.jpg "68k-SBC PCB Front")
+![alt text](images/68k-SBC-rev0/SBC.jpg "68k-SBC")
+![alt text](images/68k-SBC-rev0/PCB-patch.jpg "68k-SBC patch for design mistake")
 
 I made a mistake and left out the logic for LDS/UDS in the chip select for the high and low memory chips.  When writing
 a single byte to memory, it would also attempt to write to both the high and low chips, instead of only one.  Thanks to
@@ -94,12 +94,12 @@ interpose the UDS/LDS signals into the chip selects, with the original traces cu
 Breadboard Version
 ------------------
 
-![alt text](https://github.com/transistorfet/computie/raw/master/images/Breadboard-serial.jpg "68k-SBC Breadboard")
+![alt text](images/Breadboard-serial.jpg "68k-SBC Breadboard")
 
 Operating System Booting From Monitor/Compact Flash
 ---------------------------------------------------
 
-![alt text](https://github.com/transistorfet/computie/raw/master/images/OS-booting.gif "OS Booting")
+![alt text](images/OS-booting.gif "OS Booting")
 
 The above video shows connecting over serial from a modern computer after first powering the board on.  The monitor
 runs first, giving the ">" prompt.  The bootloader has been burnt into flash at address 0x20000.  From the monitor, the

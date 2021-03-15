@@ -8,6 +8,7 @@
 
 Operating System:
 
+	* something is causing the SLIP serial port to mess up somehow which requires restarting the PC side the setup
 	* make the tty68681 driver partially write data... right now it'll suspend if the full request can't be buffered, but it should return the partial number, and the read/write syscalls should do
 	  the actual blocking, and then for writing it can rewrite the syscall during the suspend, so that it'll restart in the proper position.  You then need to add resuming to tty
 	* when there's a trailing / to rm or mkdir, it will create something weird

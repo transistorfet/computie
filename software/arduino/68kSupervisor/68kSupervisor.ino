@@ -65,10 +65,10 @@ byte bus_request = 0;
 #undef INLINE_NOP
 #define INLINE_NOP		__asm__("nop\n\t");
 
-#define BUS_SLAVE	0
-#define BUS_MASTER	1
+#define BUS_DEVICE	0
+#define BUS_CONTROLLER	1
 
-byte bus_mode = BUS_SLAVE;
+byte bus_mode = BUS_DEVICE;
 
 #define TTY_COMMAND	0
 #define TTY_PASS	1
@@ -102,7 +102,7 @@ void release_bus()
 	digitalWrite(M68_BGACK, 1);
 }
 
-void set_bus_master()
+void set_bus_mode_controller()
 {
 	pciDisable(M68_AS);
 
@@ -134,10 +134,10 @@ void set_bus_master()
 	M68_HDATA_DDR = 0x00;
 
 	tty_mode = TTY_COMMAND;
-	bus_mode = BUS_MASTER;
+	bus_mode = BUS_CONTROLLER;
 }
 
-void set_bus_slave()
+void set_bus_mode_device()
 {
 	// Controls
 	pinMode(M68_AS, INPUT);
@@ -169,7 +169,7 @@ void set_bus_slave()
 	M68_HDATA_DDR = 0x00;
 
 	pciSetup(M68_AS);
-	bus_mode = BUS_SLAVE;
+	bus_mode = BUS_DEVICE;
 }
 
 /******************************
@@ -197,7 +197,7 @@ byte read_serial()
 	if (tty_mode == TTY_PASS) {
 		if (b == '`') {
 			cpu_stop();
-			set_bus_master();
+			set_bus_mode_controller();
 			clear_read_buffer();
 			return 0;
 		}
@@ -577,7 +577,7 @@ void run_read_test()
 	int lvalue = 0;
 	int errors = 0;
 
-	set_bus_master();
+	set_bus_mode_controller();
 	Serial.print("Running Read Test\n");
 
 	M68_HDATA_PORT = 0x00;
@@ -642,7 +642,7 @@ void run_read_test()
 
 void run_write_test()
 {
-	set_bus_master();
+	set_bus_mode_controller();
 	Serial.print("Running Write Test\n");
 
 	digitalWrite(M68_RW, 1);
@@ -722,7 +722,7 @@ void run_send_mem()
 	word i;
 	long addr;
 
-	set_bus_master();
+	set_bus_mode_controller();
 
 	for (addr = FLASH_ADDR; addr < FLASH_ADDR + mem_size; addr += 2) {
 		word data = read_data(addr);
@@ -797,7 +797,7 @@ void run_send()
 	String data = NULL;
 	unsigned char value = 0;
 
-	set_bus_master();
+	set_bus_mode_controller();
 	Serial.print("Waiting for data...\n");
 
 	while (!data || data.length() <= 0) {
@@ -825,7 +825,7 @@ void run_clear_mem()
 {
 	word addr = (MEM_HADDR << 8);
 
-	set_bus_master();
+	set_bus_mode_controller();
 
 	M68_LDATA_PORT = 0x00;
 	M68_LDATA_DDR = 0xFF;
@@ -841,7 +841,7 @@ void run_clear_mem()
 
 void cpu_start()
 {
-	set_bus_slave();
+	set_bus_mode_device();
 	tty_mode = TTY_PASS;
 	release_bus();
 	Serial.print("Running\n\n");
@@ -851,7 +851,7 @@ void cpu_stop()
 {
 	tty_mode = TTY_COMMAND;
 	take_bus();
-	set_bus_master();
+	set_bus_mode_controller();
 	Serial.print("\nStopped");
 }
 
@@ -894,7 +894,7 @@ void do_command(String line)
 	}
 
 	else if (line.equals("setz")) {
-		set_bus_master();
+		set_bus_mode_controller();
 		write_data(0x0000, 0xFF);
 	}
 	*/
@@ -907,7 +907,7 @@ void do_command(String line)
 		cpu_stop();
 	}
 	else if (line.equals("reset")) {
-		set_bus_slave();
+		set_bus_mode_device();
 		cpu_reset();
 	}
 }
@@ -924,8 +924,8 @@ void setup()
 	digitalWrite(M68_BR, 0);
 	digitalWrite(M68_BGACK, 0);
 
-	//set_bus_master();
-	set_bus_slave();
+	//set_bus_mode_controller();
+	set_bus_mode_device();
 
 	pinMode(13, OUTPUT);
 	digitalWrite(13, 0);

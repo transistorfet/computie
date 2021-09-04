@@ -20,7 +20,7 @@ loop:
 	ld	a, (de)
 	cp	0
 	jp	Z, loop_end
-	out	(00FEh), a
+	out	(00F1h), a
 	inc	de
 	jp	loop
 	

@@ -37,7 +37,7 @@ It has a bus for connecting a supervisor arduino or expansion devices, but it ca
 UARTs.  It has 1MB of onboard Flash, 1MB of onboard SRAM, and a 68681 Dual UART chip with GPIO.  Some of the GPIO
 pins are wired to 4 general purpose LEDs and 2 general purpose buttons.
 
-[68k Board Schematics](https://github.com/transistorfet/computie/raw/master/hardware/68k-SBC/68kBoard.pdf)
+[68k Board Schematics](https://github.com/transistorfet/computie/raw/main/hardware/68k-SBC/68kBoard.pdf)
 
 
 The serial ports require external TTL-to-something conversion and are designed to be used with an FTDI USB-to-Serial

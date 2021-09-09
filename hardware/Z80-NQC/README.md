@@ -20,12 +20,12 @@ Z80Monitor contains programs that run on the Z80, which can either be loaded int
 Schematic
 ---------
 
-![alt text](https://github.com/transistorfet/computie/raw/main/Z80-NQC/Z80Proto/Z80Proto.png "Z80 NQC Proto Board")
+![alt text](https://github.com/transistorfet/computie/raw/main/hardware/Z80-NQC/Z80Proto/Z80Proto.png "Z80 NQC Proto Board")
 
 
 Board
 -----
 
-![alt text](https://github.com/transistorfet/computie/raw/main/Z80-NQC/images/Z80-NCQ-Built.jpg "Z80 NQC Proto Board")
-![alt text](https://github.com/transistorfet/computie/raw/main/Z80-NQC/images/Z80-NCQ-Board-Front.jpg "Z80 NQC Proto Board")
-![alt text](https://github.com/transistorfet/computie/raw/main/Z80-NQC/images/Z80-NCQ-Board-Back.jpg "Z80 NQC Proto Board")
+![alt text](https://github.com/transistorfet/computie/raw/main/hardware/Z80-NQC/images/Z80-NCQ-Built.jpg "Z80 NQC Proto Board")
+![alt text](https://github.com/transistorfet/computie/raw/main/hardware/Z80-NQC/images/Z80-NCQ-Board-Front.jpg "Z80 NQC Proto Board")
+![alt text](https://github.com/transistorfet/computie/raw/main/hardware/Z80-NQC/images/Z80-NCQ-Board-Back.jpg "Z80 NQC Proto Board")

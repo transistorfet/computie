@@ -11,6 +11,8 @@ written in C, with preemptive multitasking via the 68681 timer interrupt.
 68k-SMT is a mostly identical design using SMT and PLCC components.  A CompactFlash card slot has been added
 to this version, but it is also possible to connect a simple breadboarded version to 68k-SBC.
 
+For more details on how I got up and running, check out [Bootstrapping a Homebuilt Computer Using An Arduino](https://transistorfet.github.io/posts/2021-09-bootstrapping_with_arduino.html)
+
 
 The Operating System
 --------------------

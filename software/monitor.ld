@@ -1,4 +1,3 @@
-OUTPUT_FORMAT(binary)
 ENTRY(_start)
 EXTERN(_start)
 SECTIONS

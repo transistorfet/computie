@@ -1,10 +1,32 @@
 
 
-68k30 SBC:
+k30-SBC:
+	* there is some question of the I/O space, which will be different anyways, so the drivers will have to use different addresses.  It would be nice if the RAM could more easily be
+	  variable in size.  This would be ok if you reserved all of 0x00800000 to 0x00FFFFFF for onboard SRAM, and the lower area for I/O and flash, with everything above 0x01000000
+	  being on the bus
+	* where should the memory and I/O be mapped?  What if you had a bus that only used A24 space like VME allows? (ie. Z280 or something)
 
-	* really need to look up the memory interface...  Some other boards are using GALs for the A1/A0, SIZ1-0, and DTACK1-0 logic
-	* the idea for rev1 is to clock it slow and have limited features.  1M Flash, 1M SRAM would be sufficient, but if it's not too much trouble to have more...
+	* how are you going to do the dsack stuff?
+	* what will you do about interrupts?
+	* if you add a dual counter, you can have one for the flash dsack and one for berr, but they should both be configurable as to what the delay will be (or disabled for berr)
+	* should you put an OR gate into the RD and WR signals to require DS as well? it's done on KISS but not on Gryphon
+	* should you add A16 into the interrupt acknowledge signal, which would distinguish it from a coprocessor or break acknowledge cycle
 
+	* add switches to enable/disable MMU, Cache
+	* add switches/jumpers/something to select the delay for buserr and compactflash dsack
+
+	* look into the CIIN signals and stuff
+	* it would be nice to keep it as compatible with the existing one at possible, but it probably should be set up more for the future, including having 4MB or 8MB of onboard SRAM
+	* I could add headers for a 41612 connector along side the pin headers, with the idea of maybe using this card in a backplane for a single CPU/multi card computer
+	  and the bus arbitration stuff can be on the backplane.  The big question is at what point would I need drivers on the bus lines
+
+	* current plan is 2MB: 2 x 16-bit AS6C8016s, and 512KB, 8bit flash using the same AM29F040 chips.  It'll be slow running the flash code, but that's ok because it's expected
+	  to load the OS into SRAM, and it uses fewer chips, and it'll be possible to program the flash through the existing supervisor, or to remove it and program it separately
+	* the idea for rev1 is to clock it slow and have limited features
+
+
+Post:
+	* I need to elaborate on how I did things, what broke, how I fixed it...  It's a bit too much a list of what I did rather than something helpful
 
 Operating System:
 

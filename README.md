@@ -114,3 +114,19 @@ Some commands are shown after boot, and then the httpd program is run (which has
 From another computer, the curl command is run to issue a request to the board.  The httpd program responds with the
 data "This is a secret message"
 
+
+References
+----------
+
+[S-100 68000 CPU Board](http://s100computers.com/My%20System%20Pages/68000%20Board/68K%20CPU%20Board.htm)
+[Tiny68K, 68000 SBC](https://www.retrobrewcomputers.org/doku.php?id=boards:sbc:tiny68k)
+[Motorola 68000 computer](https://hackaday.io/project/7242-motorola-68000-computer)
+[68k Single Board Computer](https://www.kswichit.com/68k/68k.html)
+[Kiwi - a 68k Homebrew Computer](https://www.ist-schlau.de/hardware.html)
+
+[ECB KISS-68030](https://www.retrobrewcomputers.org/doku.php?id=boards:ecb:kiss-68030:start)
+[Gryphon 68030](https://www.retrobrewcomputers.org/doku.php?id=boards:sbc:gryphon_68030:start)
+[T030](https://hackaday.io/project/9439-t030)
+[Building a 68030 computer in 5 stages](https://hackaday.io/project/164041-building-a-68030-computer-in-5-stages)
+[Blitz - 32bit 68030 homebrew with an ISA bus](https://blog.notartyoms-box.net/blitz/)
+

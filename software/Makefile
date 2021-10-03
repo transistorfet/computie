@@ -136,8 +136,8 @@ welcome:
 
 
 monitor.bin: $(MONITOR_OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) --entry=_start -Ttext=0x0020 -Tdata=0x1400 -o $@.elf $^
-	$(CC) $(CFLAGS) $(LDFLAGS) --entry=_start -Tmonitor.ld -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) --entry=_start -Tmonitor.ld -o $@.elf $^
+	$(CC) $(CFLAGS) $(LDFLAGS) --entry=_start -Tmonitor.ld -Wl,--oformat=binary -o $@ $^
 	hexdump -v -e '/1 "0x%02X, "' $@ > output.txt
 
 
@@ -155,7 +155,7 @@ kernel.bin: $(KERNEL_OBJS)
 
 
 boot.load: LOAD_ARGS = 180000
-kernel.load: LOAD_ARGS = 100000 ata0
+#kernel.load: LOAD_ARGS = 100000 ata0
 
 
 %.load: %.bin

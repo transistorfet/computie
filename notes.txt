@@ -30,3 +30,10 @@ sudo iptables -A FORWARD -i sl0 -j ACCEPT
 sudo iptables -A FORWARD -o sl0 -j ACCEPT
 sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
 
+
+
+From the Monitor:
+
+To Boot from flash/ata0:
+boot 20000
+

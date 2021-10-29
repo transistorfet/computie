@@ -1,29 +1,26 @@
 
 
 k30-SBC:
+	* you could use the extra 2-4 decoder for onboard I/O within IOSEL (ie. MC68681 would remain the same, ATA I/O would be moved to 0x700100, and two more devices could be added
+	* need to figure out what chip to get for the 4 input OR gates, either CD4072, or possibly 74HC4002 but I'd have to maybe add an extra chip.  I have 2 NOT gates to play with
+	* should you make the DSx trigger be selectable between DS and AS or just trust it'll work?
+	* can you do something with the counter jumpers, maybe put them onto the DIP switches bank, since they're double ended switches? (need a x6 I think)
+	* is 16 clocks enough for the BERR?  It should be 480us which should be enough
+	* the buses need to be finalized.  If you can put all the new signals on the existing signals connector, then you could shrink the expansion A/D connector to 20 pins
+
+	* look into the CIIN signals and stuff
+
+	* current plan is 2MB: 2 x 16-bit AS6C8016s, and 512KB, 8bit flash using the same AM29F040 chips.  It'll be slow running the flash code, but that's ok because it's expected
+	  to load the OS into SRAM, and it uses fewer chips, and it'll be possible to program the flash through the existing supervisor, or to remove it and program it separately
+
+k30-MBC:
+
 	* there is some question of the I/O space, which will be different anyways, so the drivers will have to use different addresses.  It would be nice if the RAM could more easily be
 	  variable in size.  This would be ok if you reserved all of 0x00800000 to 0x00FFFFFF for onboard SRAM, and the lower area for I/O and flash, with everything above 0x01000000
 	  being on the bus
 	* where should the memory and I/O be mapped?  What if you had a bus that only used A24 space like VME allows? (ie. Z280 or something)
-
-	* how are you going to do the dsack stuff?
-	* what will you do about interrupts?
-	* if you add a dual counter, you can have one for the flash dsack and one for berr, but they should both be configurable as to what the delay will be (or disabled for berr)
-	* should you put an OR gate into the RD and WR signals to require DS as well? it's done on KISS but not on Gryphon
-	* should you add A16 into the interrupt acknowledge signal, which would distinguish it from a coprocessor or break acknowledge cycle
-
-	* add switches to enable/disable MMU, Cache
-	* add switches/jumpers/something to select the delay for buserr and compactflash dsack
-
-	* look into the CIIN signals and stuff
-	* it would be nice to keep it as compatible with the existing one at possible, but it probably should be set up more for the future, including having 4MB or 8MB of onboard SRAM
 	* I could add headers for a 41612 connector along side the pin headers, with the idea of maybe using this card in a backplane for a single CPU/multi card computer
 	  and the bus arbitration stuff can be on the backplane.  The big question is at what point would I need drivers on the bus lines
-
-	* current plan is 2MB: 2 x 16-bit AS6C8016s, and 512KB, 8bit flash using the same AM29F040 chips.  It'll be slow running the flash code, but that's ok because it's expected
-	  to load the OS into SRAM, and it uses fewer chips, and it'll be possible to program the flash through the existing supervisor, or to remove it and program it separately
-	* the idea for rev1 is to clock it slow and have limited features
-
 
 Post:
 	* I need to elaborate on how I did things, what broke, how I fixed it...  It's a bit too much a list of what I did rather than something helpful

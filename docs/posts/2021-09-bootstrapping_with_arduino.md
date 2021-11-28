@@ -2,7 +2,7 @@
 Bootstrapping a Homebuilt Computer Using An Arduino
 ===================================================
 
-###### *Written September 2021*
+###### *Written September 2021 by transistor_fet*
 
 
 Over the last couple of years I've been working on a series of projects to build my own computer

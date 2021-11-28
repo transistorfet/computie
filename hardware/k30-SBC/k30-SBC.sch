@@ -861,7 +861,7 @@ Wire Wire Line
 Wire Wire Line
 	7900 2500 7800 2500
 Wire Wire Line
-	6300 1100 6300 2850
+	5750 1100 5750 2850
 Wire Wire Line
 	5450 3450 7850 3450
 Text GLabel 7850 3450 2    50   Output ~ 0
@@ -871,38 +871,11 @@ DSACK0
 Text GLabel 7850 4150 2    50   Input ~ 0
 DSACK1
 Wire Wire Line
-	6400 1100 6400 4700
+	6800 1100 6800 4700
 Wire Wire Line
-	6400 4700 5100 4700
+	6800 4700 5100 4700
 Wire Wire Line
-	5100 5050 6500 5050
-Wire Wire Line
-	6500 5050 6500 1100
-Wire Wire Line
-	5100 5350 6600 5350
-Wire Wire Line
-	6600 5350 6600 1100
-Wire Wire Line
-	6700 5800 6700 1100
-Wire Wire Line
-	6800 5900 6800 1100
-$Comp
-L Device:R_Network08 RN2
-U 1 1 615B22B4
-P 6700 900
-F 0 "RN2" H 6700 1100 50  0000 L CNN
-F 1 "10k" H 6900 1100 50  0000 L CNN
-F 2 "Resistor_THT:R_Array_SIP9" V 7175 900 50  0001 C CNN
-F 3 "http://www.vishay.com/docs/31509/csc.pdf" H 6700 900 50  0001 C CNN
-	1    6700 900 
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	6150 1100 6150 4150
-Wire Wire Line
-	5100 2850 6300 2850
-Wire Wire Line
-	5100 4150 6150 4150
+	6700 1100 6700 4150
 $Comp
 L power:+5V #PWR03
 U 1 1 61F698C9
@@ -914,45 +887,12 @@ F 3 "" H 5450 700 50  0001 C CNN
 	1    5450 700 
 	1    0    0    -1  
 $EndComp
-$Comp
-L Device:R_Network08 RN1
-U 1 1 61F69B4D
-P 5850 900
-F 0 "RN1" H 5850 1100 50  0000 L CNN
-F 1 "10k" H 6050 1100 50  0000 L CNN
-F 2 "Resistor_THT:R_Array_SIP9" V 6325 900 50  0001 C CNN
-F 3 "http://www.vishay.com/docs/31509/csc.pdf" H 5850 900 50  0001 C CNN
-	1    5850 900 
-	1    0    0    -1  
-$EndComp
-Connection ~ 6300 2850
-Wire Wire Line
-	5100 1200 5450 1200
-Wire Wire Line
-	5450 1200 5450 1100
-Wire Wire Line
-	5100 1300 5550 1300
-Wire Wire Line
-	5550 1300 5550 1100
-Wire Wire Line
-	5100 1400 5650 1400
-Wire Wire Line
-	5650 1400 5650 1100
-Wire Wire Line
-	5450 1200 7850 1200
-Connection ~ 5450 1200
 Text GLabel 7850 1200 2    50   Input ~ 0
 IPL0
 Text GLabel 7850 1300 2    50   Input ~ 0
 IPL1
 Text GLabel 7850 1400 2    50   Input ~ 0
 IPL2
-Wire Wire Line
-	5550 1300 7850 1300
-Connection ~ 5550 1300
-Wire Wire Line
-	5650 1400 7850 1400
-Connection ~ 5650 1400
 Text GLabel 7850 1950 2    50   Input ~ 0
 BGACK
 Text GLabel 7850 2050 2    50   Output ~ 0
@@ -962,25 +902,25 @@ BR
 Wire Wire Line
 	5100 2050 7850 2050
 Wire Wire Line
-	5850 1950 5850 1100
+	5450 1950 5450 1100
 Wire Wire Line
-	5950 2150 5950 1100
+	5550 2150 5550 1100
 Wire Wire Line
 	7150 2500 7200 2500
 Wire Wire Line
 	7400 2500 7500 2500
 Wire Wire Line
-	5100 2400 5350 2400
-Text GLabel 5350 2400 2    50   Output ~ 0
+	5100 2400 5200 2400
+Text GLabel 5200 2400 2    50   Output ~ 0
 FC0
-Text GLabel 5350 2500 2    50   Output ~ 0
+Text GLabel 5200 2500 2    50   Output ~ 0
 FC1
-Text GLabel 5350 2600 2    50   Output ~ 0
+Text GLabel 5200 2600 2    50   Output ~ 0
 FC2
 Wire Wire Line
-	5100 2500 5350 2500
+	5100 2500 5200 2500
 Wire Wire Line
-	5100 2600 5350 2600
+	5100 2600 5200 2600
 Text GLabel 7850 3050 2    50   Input ~ 0
 BERR
 Wire Wire Line
@@ -1005,35 +945,8 @@ NoConn ~ 5100 3350
 NoConn ~ 5100 3450
 NoConn ~ 5100 3850
 NoConn ~ 5100 3950
-Wire Wire Line
-	5100 1700 5750 1700
-Wire Wire Line
-	5750 1700 5750 1100
 NoConn ~ 5100 5150
 NoConn ~ 5100 5250
-Wire Wire Line
-	5100 1950 5850 1950
-Wire Wire Line
-	5100 2150 5950 2150
-Connection ~ 5850 1950
-Connection ~ 5950 2150
-Wire Wire Line
-	5850 1950 7850 1950
-Wire Wire Line
-	5950 2150 7850 2150
-$Comp
-L Connector:TestPoint TP?
-U 1 1 61A7716E
-P 5100 1600
-AR Path="/613AFF13/61A7716E" Ref="TP?"  Part="1" 
-AR Path="/61A7716E" Ref="TP1"  Part="1" 
-F 0 "TP1" V 5100 1900 50  0000 R CNN
-F 1 "IPEND" V 5100 1950 50  0000 L CNN
-F 2 "TestPoint:TestPoint_THTPad_2.0x2.0mm_Drill1.0mm" H 5300 1600 50  0001 C CNN
-F 3 "~" H 5300 1600 50  0001 C CNN
-	1    5100 1600
-	0    1    1    0   
-$EndComp
 Text GLabel 7850 1550 2    50   Output ~ 0
 DSACK-EXT
 $Comp
@@ -1069,26 +982,9 @@ Wire Wire Line
 Wire Wire Line
 	5450 3650 5450 3450
 Wire Wire Line
-	6300 2850 7850 2850
-Wire Wire Line
-	5100 4050 6050 4050
-Wire Wire Line
-	6050 1100 6050 4050
-Connection ~ 6050 4050
-Connection ~ 6150 4150
-Wire Wire Line
-	6150 4150 7850 4150
-Wire Wire Line
-	6050 4050 7850 4050
+	6600 1100 6600 4050
 Text GLabel 7850 1700 2    50   Output ~ 0
 AVEC
-Wire Wire Line
-	5750 1700 7850 1700
-Connection ~ 5750 1700
-Wire Wire Line
-	7000 1100 7000 1550
-Wire Wire Line
-	7000 1550 7850 1550
 Wire Wire Line
 	5350 3350 5350 3550
 $Comp
@@ -1102,27 +998,131 @@ F 3 "http://www.ti.com/lit/gpn/sn74HC14" H 7500 3750 50  0001 C CNN
 	1    7500 3750
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	5100 3050 6900 3050
-Wire Wire Line
-	6900 1100 6900 3050
-Connection ~ 6900 3050
-Wire Wire Line
-	6900 3050 7850 3050
 Text GLabel 7850 5900 2    50   Output ~ 0
 MMUDIS
 Text GLabel 7850 5800 2    50   Output ~ 0
 CDIS
+$Comp
+L Connector:TestPoint TP?
+U 1 1 61A7716E
+P 5100 1600
+AR Path="/613AFF13/61A7716E" Ref="TP?"  Part="1" 
+AR Path="/61A7716E" Ref="TP1"  Part="1" 
+F 0 "TP1" V 5100 1900 50  0000 R CNN
+F 1 "IPEND" V 5000 1650 50  0000 L CNN
+F 2 "TestPoint:TestPoint_THTPad_2.0x2.0mm_Drill1.0mm" H 5300 1600 50  0001 C CNN
+F 3 "~" H 5300 1600 50  0001 C CNN
+	1    5100 1600
+	0    1    1    0   
+$EndComp
 Wire Wire Line
-	6700 5800 7850 5800
-Connection ~ 6700 5800
+	6500 1400 6500 1100
 Wire Wire Line
-	6800 5900 7850 5900
-Connection ~ 6800 5900
+	6400 1300 6400 1100
 Wire Wire Line
-	5100 5900 6800 5900
+	6300 1200 6300 1100
+$Comp
+L Device:R_Network08 RN2
+U 1 1 615B22B4
+P 6700 900
+F 0 "RN2" H 6700 1100 50  0000 L CNN
+F 1 "10k" H 6900 1100 50  0000 L CNN
+F 2 "Resistor_THT:R_Array_SIP9" V 7175 900 50  0001 C CNN
+F 3 "http://www.vishay.com/docs/31509/csc.pdf" H 6700 900 50  0001 C CNN
+	1    6700 900 
+	1    0    0    -1  
+$EndComp
 Wire Wire Line
-	5100 5800 6700 5800
+	7000 1100 7000 5050
+Wire Wire Line
+	5100 5050 7000 5050
+Wire Wire Line
+	6900 5350 6900 1100
+Wire Wire Line
+	5100 5350 6900 5350
+Connection ~ 6600 4050
+Wire Wire Line
+	6600 4050 7850 4050
+Connection ~ 6700 4150
+Wire Wire Line
+	6700 4150 7850 4150
+Wire Wire Line
+	5100 4150 6700 4150
+Wire Wire Line
+	5100 4050 6600 4050
+Wire Wire Line
+	6050 1100 6050 5900
+Wire Wire Line
+	5100 5900 6050 5900
+Wire Wire Line
+	5100 3050 5950 3050
+Wire Wire Line
+	5850 1100 5850 1700
+Wire Wire Line
+	5950 3050 5950 1100
+Connection ~ 5950 3050
+Wire Wire Line
+	5950 3050 7850 3050
+Connection ~ 6050 5900
+Wire Wire Line
+	6050 5900 7850 5900
+Wire Wire Line
+	6150 1100 6150 5800
+Wire Wire Line
+	5100 5800 6150 5800
+Connection ~ 6150 5800
+Wire Wire Line
+	6150 5800 7850 5800
+Wire Wire Line
+	5100 1400 6500 1400
+Wire Wire Line
+	5100 1300 6400 1300
+Wire Wire Line
+	5100 1200 6300 1200
+$Comp
+L Device:R_Network08 RN1
+U 1 1 61F69B4D
+P 5850 900
+F 0 "RN1" H 5850 1100 50  0000 L CNN
+F 1 "10k" H 6050 1100 50  0000 L CNN
+F 2 "Resistor_THT:R_Array_SIP9" V 6325 900 50  0001 C CNN
+F 3 "http://www.vishay.com/docs/31509/csc.pdf" H 5850 900 50  0001 C CNN
+	1    5850 900 
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5650 1100 5650 1550
+Connection ~ 6300 1200
+Wire Wire Line
+	6300 1200 7850 1200
+Connection ~ 6400 1300
+Wire Wire Line
+	6400 1300 7850 1300
+Connection ~ 6500 1400
+Wire Wire Line
+	6500 1400 7850 1400
+Wire Wire Line
+	5100 1950 5450 1950
+Wire Wire Line
+	5100 2150 5550 2150
+Wire Wire Line
+	5650 1550 7850 1550
+Connection ~ 5750 2850
+Wire Wire Line
+	5750 2850 7850 2850
+Connection ~ 5850 1700
+Wire Wire Line
+	5850 1700 7850 1700
+Wire Wire Line
+	5100 1700 5850 1700
+Wire Wire Line
+	5100 2850 5750 2850
+Connection ~ 5450 1950
+Wire Wire Line
+	5450 1950 7850 1950
+Connection ~ 5550 2150
+Wire Wire Line
+	5550 2150 7850 2150
 Wire Bus Line
 	1600 900  1600 7200
 Wire Bus Line

@@ -118,13 +118,13 @@ Entry Wire Line
 Entry Wire Line
 	3050 2750 2950 2650
 Text Label 3050 2450 0    50   ~ 0
-A0
-Text Label 3050 2550 0    50   ~ 0
 A1
-Text Label 3050 2650 0    50   ~ 0
+Text Label 3050 2550 0    50   ~ 0
 A2
-Text Label 3050 2750 0    50   ~ 0
+Text Label 3050 2650 0    50   ~ 0
 A3
+Text Label 3050 2750 0    50   ~ 0
+A4
 Wire Wire Line
 	4000 2450 3050 2450
 Wire Wire Line
@@ -759,15 +759,15 @@ Entry Wire Line
 Entry Wire Line
 	4200 5450 4100 5350
 Text Label 4200 5050 0    50   ~ 0
-D3
+D27
 Text Label 4200 5150 0    50   ~ 0
-D4
+D28
 Text Label 4200 5250 0    50   ~ 0
-D5
+D29
 Text Label 4200 5350 0    50   ~ 0
-D6
+D30
 Text Label 4200 5450 0    50   ~ 0
-D7
+D31
 Wire Wire Line
 	4750 5050 4200 5050
 Wire Wire Line
@@ -824,68 +824,17 @@ Entry Wire Line
 Entry Wire Line
 	4200 7150 4100 7050
 Text Label 4200 6950 0    50   ~ 0
-D0
+D24
 Text Label 4200 7050 0    50   ~ 0
-D1
+D25
 Text Label 4200 7150 0    50   ~ 0
-D2
+D26
 Wire Wire Line
 	4750 6950 4200 6950
 Wire Wire Line
 	4750 7050 4200 7050
 Wire Wire Line
 	4750 7150 4200 7150
-Entry Wire Line
-	5800 5050 5900 4950
-Entry Wire Line
-	5800 5150 5900 5050
-Entry Wire Line
-	5800 7050 5900 6950
-Entry Wire Line
-	5800 7150 5900 7050
-Entry Wire Line
-	5800 7250 5900 7150
-Text Label 5800 5050 2    50   ~ 0
-D11
-Text Label 5800 5150 2    50   ~ 0
-D12
-Text Label 5800 7050 2    50   ~ 0
-D8
-Text Label 5800 7150 2    50   ~ 0
-D9
-Text Label 5800 7250 2    50   ~ 0
-D10
-Wire Wire Line
-	5250 5050 5800 5050
-Wire Wire Line
-	5250 5150 5800 5150
-Wire Wire Line
-	5250 7050 5800 7050
-Wire Wire Line
-	5250 7150 5800 7150
-Wire Wire Line
-	5250 7250 5800 7250
-Entry Wire Line
-	5800 5250 5900 5150
-Entry Wire Line
-	5800 5350 5900 5250
-Text Label 5800 5250 2    50   ~ 0
-D13
-Text Label 5800 5350 2    50   ~ 0
-D14
-Wire Wire Line
-	5250 5250 5800 5250
-Wire Wire Line
-	5250 5350 5800 5350
-Entry Wire Line
-	5800 5450 5900 5350
-Text Label 5800 5450 2    50   ~ 0
-D15
-Wire Wire Line
-	5250 5450 5800 5450
-Wire Bus Line
-	4100 4400 5900 4400
-Connection ~ 4100 4400
 Wire Wire Line
 	4550 6150 4750 6150
 $Comp
@@ -1148,7 +1097,7 @@ AR Path="/613DFFC0/625F92BB" Ref="U?"  Part="1"
 AR Path="/613AFF13/625F92BB" Ref="U?"  Part="1" 
 AR Path="/613CC863/625F92BB" Ref="U7"  Part="3" 
 F 0 "U7" H 2500 5825 50  0000 C CNN
-F 1 "74LS32" H 2500 5734 50  0000 C CNN
+F 1 "74HC32" H 2500 5734 50  0000 C CNN
 F 2 "Package_SO:TSSOP-14_4.4x5mm_P0.65mm" H 2500 5500 50  0001 C CNN
 F 3 "http://www.ti.com/lit/gpn/sn74LS32" H 2500 5500 50  0001 C CNN
 	3    2500 5500
@@ -1164,7 +1113,7 @@ AR Path="/613DFFC0/62603C2A" Ref="U?"  Part="1"
 AR Path="/613AFF13/62603C2A" Ref="U?"  Part="1" 
 AR Path="/613CC863/62603C2A" Ref="U7"  Part="4" 
 F 0 "U7" H 2500 6375 50  0000 C CNN
-F 1 "74LS32" H 2500 6284 50  0000 C CNN
+F 1 "74HC32" H 2500 6284 50  0000 C CNN
 F 2 "Package_SO:TSSOP-14_4.4x5mm_P0.65mm" H 2500 6050 50  0001 C CNN
 F 3 "http://www.ti.com/lit/gpn/sn74LS32" H 2500 6050 50  0001 C CNN
 	4    2500 6050
@@ -1184,8 +1133,6 @@ Wire Bus Line
 	3750 4600 3750 6750
 Wire Bus Line
 	2950 1100 2950 2650
-Wire Bus Line
-	5900 4400 5900 7150
 Wire Bus Line
 	4100 4400 4100 7050
 Wire Bus Line

@@ -480,73 +480,73 @@ Entry Wire Line
 Wire Wire Line
 	3500 4950 3750 4950
 Text Label 3750 4950 2    50   ~ 0
-D0
+D4
 Entry Wire Line
 	3750 5050 3850 4950
 Wire Wire Line
 	3500 5050 3750 5050
 Text Label 3750 5050 2    50   ~ 0
-D1
+D5
 Entry Wire Line
 	3750 5150 3850 5050
 Wire Wire Line
 	3500 5150 3750 5150
 Text Label 3750 5150 2    50   ~ 0
-D2
+D6
 Entry Wire Line
 	3750 5250 3850 5150
 Wire Wire Line
 	3500 5250 3750 5250
 Text Label 3750 5250 2    50   ~ 0
-D3
+D7
 Entry Wire Line
 	3750 5350 3850 5250
 Wire Wire Line
 	3500 5350 3750 5350
 Text Label 3750 5350 2    50   ~ 0
-D0
+D8
 Entry Wire Line
 	3750 5450 3850 5350
 Wire Wire Line
 	3500 5450 3750 5450
 Text Label 3750 5450 2    50   ~ 0
-D1
+D9
 Entry Wire Line
 	3750 5550 3850 5450
 Wire Wire Line
 	3500 5550 3750 5550
 Text Label 3750 5550 2    50   ~ 0
-D2
+D10
 Entry Wire Line
 	3750 5650 3850 5550
 Wire Wire Line
 	3500 5650 3750 5650
 Text Label 3750 5650 2    50   ~ 0
-D3
+D11
 Entry Wire Line
 	3750 5750 3850 5650
 Wire Wire Line
 	3500 5750 3750 5750
 Text Label 3750 5750 2    50   ~ 0
-D0
+D12
 Entry Wire Line
 	3750 5850 3850 5750
 Wire Wire Line
 	3500 5850 3750 5850
 Text Label 3750 5850 2    50   ~ 0
-D1
+D13
 Entry Wire Line
 	3750 5950 3850 5850
 Wire Wire Line
 	3500 5950 3750 5950
 Text Label 3750 5950 2    50   ~ 0
-D2
+D14
 Entry Wire Line
 	3750 6050 3850 5950
 Wire Wire Line
 	3500 6050 3750 6050
 Text Label 3750 6050 2    50   ~ 0
-D3
+D15
 $Comp
 L ComputieParts:AM29F040 U16
 U 1 1 6144FBE4

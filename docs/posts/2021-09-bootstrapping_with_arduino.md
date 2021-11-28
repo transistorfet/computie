@@ -55,7 +55,7 @@ For the address and data pins, I made sure to use the [arduino
 pins](https://www.arduino.cc/en/Hacking/PinMapping2560) that correspond to specific hardware port
 registers so that I could write directly to the ATMega's PORTx registers to set all 8 bits at once.
 
-![alt text](images/arduino-with-memory-chip.jpg "Arduino With RAM")
+![alt text](images/2021-09-arduino-with-memory-chip.jpg "Arduino With RAM")
 
 The code first initializes the I/O pins.  Port A has the 8 data pins connected to it, with Port L
 and C used for the upper and lower address pins respectively.  The chip select and write pins use
@@ -166,14 +166,14 @@ address and data lines, which simplifies the wiring, and it also has a static co
 a very low frequency is possible.  I whipped up a simple oscillator using a 555 timer set to
 somewhere around 80 Hz (yes singular Hz).
 
-![alt text](images/Z80-breadboard.jpg "Z80 Breadboard")
+![alt text](images/2021-09-Z80-breadboard.jpg "Z80 Breadboard")
 (This chip turned out to be relabelled.  The black paint on top comes off with acetone or alcohol,
 the ejection holes show that it was sanded down, and the date codes of all 10 chips were identical,
 despite being desoldered.  They are labelled as being 20MHz, but I never ran them above 1MHz.  They
 are definitely a Z80 of some kind, and they worked alright for my experiments, but if you're looking
 for a reliable part, beware what you buy)
 
-![alt text](images/Z80-breadboard-with-memory-analyzer.jpg "Z80 Breadboard")
+![alt text](images/2021-09-Z80-breadboard-with-memory-analyzer.jpg "Z80 Breadboard")
 The red breadboard has the 555 oscillator on it, and the the other chip with lots of wires going to
 it is a memory chip.  The Arduino Uno clone in the picture is being used as a logic analyzer, while
 I was waiting for the generic analyzer I had ordered to arrive.
@@ -371,7 +371,7 @@ at 8 MHz without issue.  The actual execution speed was limited by the arduino's
 which was often more than 1 microsecond per instruction.  No other memory or interfacing chips are
 needed for a minimal system, besides the arduino.
 
-![alt text](images/68k-breadboard-minimal.jpg "MC68000 Breadboard")
+![alt text](images/2021-09-68k-breadboard-minimal.jpg "MC68000 Breadboard")
 Note the extra wire bundles and the generic logic analyzer in the upper left corner.  This turned
 out to be very handy indeed.  I used Logic 1.2.18 from Saleae to capture various control and data
 pins to debug various issues I came across.  I also purchased a new oscilloscope, which helped a
@@ -467,12 +467,12 @@ system ground, and the power pin unconnected.  The CPU and MC68681 were powered 
 which was powered through its USB port.
 
 <div align="center">
-<img src="images/68k-breadboard-serial.jpg" alt="MC68681 Serial" />
+<img src="images/2021-09-68k-breadboard-serial.jpg" alt="MC68681 Serial" />
 </div>
 The MC68681 on a half-sized breadboard, with an FTDI Serial-to-USB adapter (the red circuit board)
 wired to the serial pins.  The red LED and a push button are wired to GPIO pins for debugging.
 
-![alt text](images/68k-breadboard-top.jpg "MC68000 with Serial")
+![alt text](images/2021-09-68k-breadboard-top.jpg "MC68000 with Serial")
 The main breadboard at this point, with the serial board just out of frame.  The logic chip on the
 right is a 74HC14 hex inverter used for decoding the address for the MC68681.
 
@@ -500,7 +500,7 @@ could use ribbon cables to connect them instead of individual wires.  That said,
 use the ribbon cables until Rev.2 so that I could access the unwired control pins for further
 testing and expansion.
 
-![alt text](images/68k-SBC-wide.jpg "68k-SBC Board")
+![alt text](images/2021-09-68k-SBC-wide.jpg "68k-SBC Board")
 
 This board also has two jumpers in the lower right corner.  One will enable or disable the onboard
 DTACK generation.  With it disabled, the ardunio can provide the DTACK instead, giving it a chance

@@ -225,7 +225,7 @@ AR Path="/5FAF94FC/613D9CE3" Ref="J?"  Part="1"
 AR Path="/613CC863/613D9CE3" Ref="J2"  Part="1" 
 F 0 "J2" H 9022 1224 50  0000 R CNN
 F 1 "Serial1" H 9022 1133 50  0000 R CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Horizontal" H 9050 1250 50  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical" H 9050 1250 50  0001 C CNN
 F 3 "~" H 9050 1250 50  0001 C CNN
 	1    9050 1250
 	-1   0    0    -1  
@@ -273,7 +273,7 @@ AR Path="/5FAF94FC/613D9CF8" Ref="J?"  Part="1"
 AR Path="/613CC863/613D9CF8" Ref="J3"  Part="1" 
 F 0 "J3" H 9078 2326 50  0000 L CNN
 F 1 "Serial2" H 9078 2235 50  0000 L CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Horizontal" H 9050 2350 50  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical" H 9050 2350 50  0001 C CNN
 F 3 "~" H 9050 2350 50  0001 C CNN
 	1    9050 2350
 	1    0    0    -1  

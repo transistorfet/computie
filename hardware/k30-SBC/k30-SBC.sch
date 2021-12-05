@@ -943,7 +943,6 @@ Wire Wire Line
 	7150 2500 7150 2450
 NoConn ~ 5100 3350
 NoConn ~ 5100 3450
-NoConn ~ 5100 3850
 NoConn ~ 5100 3950
 NoConn ~ 5100 5150
 NoConn ~ 5100 5250
@@ -1123,6 +1122,19 @@ Wire Wire Line
 Connection ~ 5550 2150
 Wire Wire Line
 	5550 2150 7850 2150
+$Comp
+L Connector:TestPoint TP?
+U 1 1 61CD7847
+P 5100 3850
+AR Path="/613AFF13/61CD7847" Ref="TP?"  Part="1" 
+AR Path="/61CD7847" Ref="TP7"  Part="1" 
+F 0 "TP7" V 5100 4150 50  0000 R CNN
+F 1 "RMC" V 5100 4200 50  0000 L CNN
+F 2 "TestPoint:TestPoint_THTPad_2.0x2.0mm_Drill1.0mm" H 5300 3850 50  0001 C CNN
+F 3 "~" H 5300 3850 50  0001 C CNN
+	1    5100 3850
+	0    1    1    0   
+$EndComp
 Wire Bus Line
 	1600 900  1600 7200
 Wire Bus Line

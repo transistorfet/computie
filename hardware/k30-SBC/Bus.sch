@@ -457,18 +457,18 @@ Wire Wire Line
 	5100 5500 4850 5500
 Text GLabel 5100 5500 2    50   Input ~ 0
 IACK
-Text GLabel 5100 4600 2    50   Input ~ 0
+Text GLabel 5100 4800 2    50   Input ~ 0
 DS
 Wire Wire Line
-	5100 4600 4850 4600
+	5100 4800 4850 4800
 Text GLabel 5100 4700 2    50   Input ~ 0
 RD
-Text GLabel 5100 4800 2    50   Input ~ 0
+Text GLabel 5100 4600 2    50   Input ~ 0
 WR
 Wire Wire Line
 	4850 4700 5100 4700
 Wire Wire Line
-	5100 4800 4850 4800
+	5100 4600 4850 4600
 Wire Wire Line
 	4100 6000 4350 6000
 Text GLabel 4100 5900 0    50   Input ~ 0

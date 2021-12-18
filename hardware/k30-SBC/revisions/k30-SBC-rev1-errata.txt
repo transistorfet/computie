@@ -1,0 +1,9 @@
+
+Revision 1 Errata and Notes
+===========================
+
+- the footprint for the 74HC253s is too small.  I used the 16SSOP - 3.9mm wide, but the chips are
+  actually 6.2mm wide.  I've tried to bend the pins under to solder them instead
+
+- the HALT light should really be labelled RUN, since it's really ~HALT (ie. running)
+

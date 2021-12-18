@@ -4,9 +4,14 @@ Computie68k
 
 ###### *Started October 03, 2019*
 
-A 68k-based computer, running a simple unix-like operating system.  68k-SBC is a single board computer with
-a 68010 CPU, 1MB SRAM, 1MB Flash, and a 68681 Dual UART controller.  The OS is a simple monolithic kernel
-written in C, with preemptive multitasking via the 68681 timer interrupt.
+Computie is a series of single board computers using the 68010 and 68030 CPUs, along with a simple unix-like
+operating system written in C, with preemptive multitasking via a timer interrupt provided by the 68681
+serial port controller that is common to all boards.
+
+k30-SBC is the newest board, using a surface-mount 68030 CPU, 2MB of Static RAM, 512KB of Flash for the boot
+software and monitor program, and a CompactFlash slot.
+
+68k-SBC is a single board computer with a 68010 CPU, 1MB SRAM, 1MB Flash, and a 68681 Dual UART controller.
 
 68k-SMT is a mostly identical design using SMT and PLCC components.  A CompactFlash card slot has been added
 to this version, but it is also possible to connect a simple breadboarded version to 68k-SBC.
@@ -29,6 +34,34 @@ a BSD sockets-style API, and an NTP command is provided for updating the system 
 The above video shows connecting over serial from a modern PC and resetting the hardware to run the monitor in ROM
 which displays the welcome message.  The kernel is already loaded in RAM, so running the boot command will boot
 the kernel which then starts the shell.  From the shell, some basic file operations and the ps command are shown.
+
+
+The k30 Single Board Computer
+-----------------------------
+
+The k30 is the latest version, using a 68030.  It has 2MB SRAM, 512KB Flash, a 68681 Dual UART, and a CompactFlash.
+It's as similar to 68k-SMT as possible while still upgrading the CPU.  It doesn't use a programmable logic device for
+the glue logic as many similar projects use, instead opting for eleven 74 series logic chips.  It still manages to
+use the full 32-bit data bus for RAM, but only one flash chip is used which has an 8-bit data bus in order to reduce
+complexity.  Most of the software will be run from RAM, so this shouldn't be a problem.
+
+[k30 Schematics](https://github.com/transistorfet/computie/raw/main/hardware/k30-SBC/k30-SBC.pdf)
+
+DIP switches are used to select the time delay to use for the CompactFlash card (which is interfaced directly to the
+CPU), to enable the bus error watchdog timer, and to enable/disable the cache and MMU features.
+
+I made a mistake and used the wrong size footprint for the two 74HC253s, which only come in a 16SSOP package and not
+the TSSOP package used by the other logic chips.  The footprint used was 3.9 mm wide but should have been 6.2mm.
+Luckily I managed to bend the pins under the body of the chips which was enough to get all the pins touching all the
+pads.  It was very tricky to solder, and there was a bridge between DS3 and ground which was very difficult to get
+unstuck, but it's working now.
+
+
+k30 Revision 1
+--------------
+
+![alt text](images/k30-SBC-rev1/k30-SBC-running.jpg "k30-SBC Running")
+![alt text](images/k30-SBC-rev1/k30-PCBs.jpg "k30-SBC Rev. 1 PCB")
 
 
 The 68k Single Board Computer
@@ -62,11 +95,13 @@ The SBC version uses all DIP packaged chips and through-hole parts.  The SMT ver
 logic and ram, and PLCC packaged chips for the rest.  A CompactFlash socket and a 74HC32 to accommodate it has been
 added and the power supply has been removed, but it is otherwise the same design.
 
+
 SMT Revision 1
 --------------
 
 ![alt text](images/68k-SMT-rev1/SMT.jpg "68k-SMT Rev. 1")
 ![alt text](images/68k-SMT-rev1/SMT-running.jpg "68k-SMT Running")
+
 
 SBC Revision 2
 --------------
@@ -93,13 +128,15 @@ a single byte to memory, it would also attempt to write to both the high and low
 a poster on EEVblog who suggested patching it with a P-channel MOSFET shown soldered to the back of the SRAM chips to
 interpose the UDS/LDS signals into the chip selects, with the original traces cut.
 
+
 Breadboard Version
 ------------------
 
 ![alt text](images/Breadboard-serial.jpg "68k-SBC Breadboard")
 
-Operating System Booting From Monitor/Compact Flash
----------------------------------------------------
+
+Operating System Booting From Monitor/Compact Flash on 68k-SMT
+--------------------------------------------------------------
 
 ![alt text](images/OS-booting.gif "OS Booting")
 

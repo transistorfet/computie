@@ -134,7 +134,7 @@ static inline short _buf_drop(struct circular_buffer *cb, short size)
 		size = avail;
 
 	cb->out += size;
-	if (cb->out > cb->max)
+	if (cb->out >= cb->max)
 		cb->out -= cb->max;
 	return size;
 }

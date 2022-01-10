@@ -7,3 +7,7 @@ Revision 1 Errata and Notes
 
 - the HALT light should really be labelled RUN, since it's really ~HALT (ie. running)
 
+- the ATA DSACK output needs to be inverted.  The input into the NAND gate should be active-low,
+  but the output from the counter is going straight into the NAND input.  I'm going to try
+  patching it
+

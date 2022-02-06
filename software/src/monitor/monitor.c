@@ -173,101 +173,23 @@ void command_poke(int argc, char **args)
 
 }
 
-void command_ramtest(int argc, char **args)
+void erase_flash(uint32_t sector)
 {
-	uint16_t data;
-	uint16_t errors = 0;
-
-	uint16_t *mem = (uint16_t *) RAM_ADDR;
-	for (int i = 0; i < RAM_SIZE; i++) {
-		mem[i] = (uint16_t) i;
-	}
-
-	//uint8_t *mem2 = (uint8_t *) RAM_ADDR;
-	//for (int i = 0; i < RAM_SIZE; i++) {
-	//	printf("%x ", (uint8_t) mem2[i]);
-	//}
-
-
-	for (int i = 0; i < RAM_SIZE; i++) {
-		data = (uint16_t) mem[i];
-		printf("%x ", data);
-		if (data != i)
-			errors++;
-	}
-
-	printf("\nErrors: %d", errors);
-}
-
-
-/*
-#define TEST_BUF_SIZE 	32
-uint16_t test_buffer[TEST_BUF_SIZE] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
-
-void command_ramduptest(int argc, char **args)
-{
-	uint16_t data;
-
-	uint16_t *ram = (uint16_t *) 0x100000;
-	for (int i = 0; i < TEST_BUF_SIZE; i++) {
-		*ram++ = test_buffer[i];
-	}
-
-	int j = 0;
-	while ((int) ram < 0x200000) {
-		if (*ram++ == test_buffer[j]) {
-			j++;
-		}
-		else
-			j = 0;
-
-		if (j >= 5) {
-			printf("Found a match at %x\n", ram);
-			j = 0;
-		}
-	}
-
-	printf("\nComplete");
-}
-
-
-void command_readrom(int argc, char **args)
-{
-	uint16_t data;
-	uint16_t reference;
-	uint16_t errors = 0;
-
-	uint16_t *arduino = (uint16_t *) 0x000000;
-	uint16_t *rom = (uint16_t *) ROM_ADDR;
-	for (int i = 0; i < ROM_SIZE; i++) {
-		data = (uint16_t) rom[i];
-		reference = arduino[i];
-		printf("%x %x\n", data, reference);
-		if (data != reference)
-			errors++;
-	}
-
-	printf("\nErrors: %d", errors);
-}
-
-
-void command_runtest(int argc, char **args)
-{
-	uint16_t *arduino = (uint16_t *) 0x000000;
-	uint16_t *mem = (uint16_t *) RAM_ADDR;
-	for (int i = 0; i < 4200; i++) {
-		mem[i] = arduino[i];
-	}
-
-	void (*entry)() = (void (*)()) (RAM_ADDR + 0x20);
-	((void (*)()) entry)();
-}
-*/
-
-void erase_flash(int sector)
-{
-	sector <<= 17;
-
+	#ifdef BOARD_K30
+	printf("Erasing flash sector %d", sector);
+	*((volatile uint8_t *) 0x555) = 0xAA;
+	putchar('.');
+	*((volatile uint8_t *) 0x2AA) = 0x55;
+	putchar('.');
+	*((volatile uint8_t *) 0x555) = 0x80;
+	putchar('.');
+	*((volatile uint8_t *) 0x555) = 0xAA;
+	putchar('.');
+	*((volatile uint8_t *) 0x2AA) = 0x55;
+	putchar('.');
+	*((volatile uint8_t *) sector) = 0x30;
+	putchar('.');
+	#else
 	printf("Erasing flash sector %d", sector);
 	*((volatile uint16_t *) (0x555 << 1)) = 0xAAAA;
 	putchar('.');
@@ -281,22 +203,28 @@ void erase_flash(int sector)
 	putchar('.');
 	*((volatile uint16_t *) sector) = 0x3030;
 	putchar('.');
+	#endif
 }
+
+#ifdef BOARD_K30
+#define SECTOR_SIZE	0x010000
+#else
+#define SECTOR_SIZE	0x020000
+#endif
 
 void command_eraserom(int argc, char **args)
 {
 	uint16_t data;
-	unsigned int sector = 0;
 	uint16_t *dest = (uint16_t *) ROM_ADDR;
+	uint32_t sector = 0;
 
 	if (argc >= 2) {
 		sector = strtol(args[1], NULL, 16);
-		if ((sector & 0x01FFFF) || ((sector >> 18) > 8)) {
+		if ((sector & (SECTOR_SIZE - 1)) || (sector >= RAM_ADDR)) {
 			printf("Invalid sector address to erase (%x)\n", sector);
 			return;
 		}
 		dest = (uint16_t *) sector;
-		sector >>= 17;
 	}
 
 	erase_flash(sector);
@@ -318,10 +246,22 @@ void command_eraserom(int argc, char **args)
 
 void program_flash_data(uint16_t *addr, uint16_t data)
 {
+	#ifdef BOARD_K30
+	*((volatile uint8_t *) 0x555) = 0xAA;
+	*((volatile uint8_t *) 0x2AA) = 0x55;
+	*((volatile uint8_t *) 0x555) = 0xA0;
+	*((volatile uint8_t *) addr) = (uint8_t) (data >> 8);
+	delay(200);
+	*((volatile uint8_t *) 0x555) = 0xAA;
+	*((volatile uint8_t *) 0x2AA) = 0x55;
+	*((volatile uint8_t *) 0x555) = 0xA0;
+	*(((volatile uint8_t *) addr) + 1) = (uint8_t) (data & 0xFF);
+	#else
 	*((volatile uint16_t *) (0x555 << 1)) = 0xAAAA;
 	*((volatile uint16_t *) (0x2AA << 1)) = 0x5555;
 	*((volatile uint16_t *) (0x555 << 1)) = 0xA0A0;
 	*((volatile uint16_t *) addr) = data;
+	#endif
 }
 
 void command_writerom(int argc, char **args)
@@ -429,6 +369,33 @@ void command_boot(int argc, char **args)
 }
 
 
+void command_ramtest(int argc, char **args)
+{
+	uint16_t data;
+	uint16_t errors = 0;
+
+	uint16_t *mem = (uint16_t *) RAM_ADDR;
+	for (int i = 0; i < RAM_SIZE; i++) {
+		mem[i] = (uint16_t) i;
+	}
+
+	//uint8_t *mem2 = (uint8_t *) RAM_ADDR;
+	//for (int i = 0; i < RAM_SIZE; i++) {
+	//	printf("%x ", (uint8_t) mem2[i]);
+	//}
+
+
+	for (int i = 0; i < RAM_SIZE; i++) {
+		data = (uint16_t) mem[i];
+		printf("%x ", data);
+		if (data != i)
+			errors++;
+	}
+
+	printf("\nErrors: %d", errors);
+}
+
+
 /**************************
  * Command Line Execution *
  **************************/
@@ -456,10 +423,8 @@ int load_commands(struct command *command_list)
 	add_command("eraserom", command_eraserom);
 	add_command("writerom", command_writerom);
 	add_command("verifyrom", command_verifyrom);
+
 	add_command("ramtest", command_ramtest);
-	//add_command("ramduptest", command_ramtest);
-	//add_command("readrom", command_readrom);
-	//add_command("runtest", command_runtest);
 
 	return num_commands;
 }
@@ -474,7 +439,7 @@ void serial_read_loop()
 	char buffer[BUF_SIZE];
 	char *args[ARG_SIZE];
 
-	struct command command_list[10];
+	struct command command_list[20];
 	int num_commands = load_commands(command_list);
 
 	while (1) {

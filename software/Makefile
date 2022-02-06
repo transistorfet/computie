@@ -1,20 +1,7 @@
 
+ROOT = .
 
-BUILD = build
-
-AS = m68k-linux-gnu-as
-AR = m68k-linux-gnu-ar
-CC = m68k-linux-gnu-gcc
-OBJDUMP = m68k-linux-gnu-objdump
-OBJCOPY = m68k-linux-gnu-objcopy
-RANLIB = m68k-linux-gnu-ranlib
-INCLUDE = ./include
-ASFLAGS = -m68010 --defsym __mc68010__=1
-CFLAGS = -I$(INCLUDE) -m68010 -nostartfiles -nostdlib -fno-zero-initialized-in-bss -g -Os
-LDFLAGS = -Wl,--build-id=none
-
-# reduce the elf output size by reducing the alignment
-CFLAGS += -z max-page-size=0x10
+include $(ROOT)/config.mk
 
 ASLISTING = -alh
 
@@ -131,7 +118,7 @@ libc-68k-none.a libc-68k-os.a:
 welcome monitor.bin boot.bin: CFLAGS += -mpcrel
 
 welcome:
-	$(AS) -m68000 -o welcome.elf welcome.s
+	$(AS) -m68000 -o welcome.elf src/welcome.s
 	$(OBJCOPY) -O binary welcome.elf welcome.bin
 
 

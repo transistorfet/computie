@@ -11,3 +11,6 @@ Revision 1 Errata and Notes
   but the output from the counter is going straight into the NAND input.  I'm going to try
   patching it
 
+- (I think) the reset pin of the CompactFlash socket should be connected to the reset button, to
+  ensure the card is reset.  Soft resetting seems unreliable
+

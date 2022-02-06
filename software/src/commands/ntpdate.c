@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 		printf("Error reading: %d\n", nbytes);
 		return -1;
 	}
-	t = rx.transmit_ts_s  - 2208988800;
+	t = rx.transmit_ts_s - 2208988800;
 	printf("new timestamp: %d\n", t);
 	stime(&t);
 

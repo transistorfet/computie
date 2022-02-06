@@ -5,7 +5,7 @@ SECTIONS
   .vectors 0x0000 : { *(.vectors) }
   .text 0x0020 : { *(.text) }
   .rodata : { *(.rodata) }
-  . = 0x1400;
+  /*. = 0x1400;*/
   .data : { *(.data) }
   .bss : { *(.bss) }
 }

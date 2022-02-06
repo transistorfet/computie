@@ -36,8 +36,9 @@ __attribute__((interrupt)) void fatal_error()
 {
 	uint32_t *addr;
 	asm("move.l	%%sp,%0\n" : "=r" (addr));
-	printf("Fatal Error at %x, %x: Halting...\n", *addr, *(addr + 1));
-	asm("stop #0x2700\n");
+	printf("Fatal Error at %x with stack address %x: (%x).  Resetting...\n", *addr, addr, *(addr + 1));
+	//asm("stop #0x2700\n");
+	asm("jmp 0x20\n");
 }
 
 

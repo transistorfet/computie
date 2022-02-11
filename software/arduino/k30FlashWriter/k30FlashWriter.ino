@@ -25,23 +25,25 @@
 #define M68_HDATA_PORT	PORTK
 #define M68_HDATA_PIN	PINK
 #define M68_HDATA_DDR	DDRK
+#define M68_A0		9
 
 #define M68_DTACK	38 // PD7
 #define M68_BG		39 // PG2
 #define M68_BGACK	40 // PG1
 #define M68_BR		41 // PG0
 
+#define M68_DS		8
 #define M68_AS		50 // PB3
-#define M68_UDS		51 // PB2
-#define M68_LDS		52 // PB1
+#define M68_SIZ0	51 // PB2
+#define M68_SIZ1	52 // PB1
 #define M68_RW		53 // PB0
+
+#define M68_ROMSEL	A7 // PF7
 
 #define M68_RESET	10 // PB4
 #define M68_BERR	11 // PB5
 
 #define M68_IS_AS()	(!(PINB & 0x08))
-#define M68_IS_UDS()	(!(PINB & 0x04))
-#define M68_IS_LDS()	(!(PINB & 0x02))
 #define M68_IS_WRITE()	(!(PINB & 0x01))
 #define M68_IS_READ()	(PINB & 0x01)
 
@@ -104,14 +106,16 @@ void set_bus_mode_controller()
 
 	// Controls
 	pinMode(M68_AS, OUTPUT);
-	pinMode(M68_UDS, OUTPUT);
-	pinMode(M68_LDS, OUTPUT);
+	pinMode(M68_DS, OUTPUT);
+	pinMode(M68_SIZ0, OUTPUT);
+	pinMode(M68_SIZ1, OUTPUT);
 	pinMode(M68_RW, OUTPUT);
 	pinMode(M68_DTACK, INPUT);
+	digitalWrite(M68_DS, 1);
 	digitalWrite(M68_AS, 1);
-	digitalWrite(M68_UDS, 1);
-	digitalWrite(M68_LDS, 1);
 	digitalWrite(M68_RW, 1);
+	digitalWrite(M68_SIZ0, 0);
+	digitalWrite(M68_SIZ1, 0);
 
 	// Address Bus
 	M68_XADDR_PORT = 0x00;	// A17 - A23
@@ -120,6 +124,7 @@ void set_bus_mode_controller()
 	M68_HADDR_DDR = 0xFF;
 	M68_LADDR_PORT = 0x00;	// A1 - A8
 	M68_LADDR_DDR = 0xFF;
+	pinMode(M68_A0, OUTPUT);
 
 	// Data Bus
 	M68_LDATA_PORT = 0x00;	// D0 - D7
@@ -135,8 +140,9 @@ void set_bus_mode_device()
 {
 	// Controls
 	pinMode(M68_AS, INPUT);
-	pinMode(M68_UDS, INPUT);
-	pinMode(M68_LDS, INPUT);
+	pinMode(M68_DS, INPUT);
+	pinMode(M68_SIZ0, INPUT);
+	pinMode(M68_SIZ1, INPUT);
 	pinMode(M68_RW, INPUT);
 
 	M68_INIT_DTACK();
@@ -151,6 +157,7 @@ void set_bus_mode_device()
 	M68_HADDR_DDR = 0x00;
 	M68_LADDR_PORT = 0x00;	// A1 - A8
 	M68_LADDR_DDR = 0x00;
+	pinMode(M68_A0, INPUT);
 
 	// Data Bus
 	M68_LDATA_PORT = 0x00;	// D0 - D7
@@ -269,6 +276,27 @@ void flush_write_buffer()
 	}
 }
 
+#define MAX_ARGS	10
+
+int parse_serial_command(char **argv)
+{
+	int args = 1;
+
+	argv[0] = serial_rb;
+	for (int i = 0; i < serial_read_tail && serial_rb[i] != '\0'; i++) {
+		if (serial_rb[i] == ' ') {
+			serial_rb[i] = '\0';
+			argv[args] = &serial_rb[i + 1];
+			if (++args >= MAX_ARGS)
+				break;
+		}
+	}
+	argv[args] = NULL;
+
+	return args;
+}
+
+
 
 
 word send_size = 768;
@@ -309,37 +337,39 @@ byte mem[ROM_MEM_SIZE] = {
 };
 
 
+
 inline void write_data(long addr, word data)
 {
 	M68_HDATA_DDR = 0xFF;
 	M68_LDATA_DDR = 0xFF;
 
-	M68_HDATA_PORT = (byte) (data >> 8);
-	M68_LDATA_PORT = (byte) data;
+	//M68_HDATA_PORT = (byte) (data >> 8);
+	//M68_LDATA_PORT = (byte) data;
+	M68_HDATA_PORT = (byte) data;
 
 	M68_XADDR_PORT = (byte) (addr >> 17);
 	M68_HADDR_PORT = (byte) (addr >> 9);
 	M68_LADDR_PORT = (byte) (addr >> 1);
+	digitalWrite(M68_A0, addr & 0x01);
 
 	digitalWrite(M68_RW, 0);
-	//digitalWrite(M68_LDS, 0);
-	//digitalWrite(M68_UDS, 0);
 	digitalWrite(M68_AS, 0);
+	digitalWrite(M68_DS, 0);
 	delayMicroseconds(1);
+	digitalWrite(M68_DS, 1);
 	digitalWrite(M68_AS, 1);
-	//digitalWrite(M68_LDS, 1);
-	//digitalWrite(M68_UDS, 1);
 	digitalWrite(M68_RW, 1);
+	M68_XADDR_PORT = (byte) 0xFF;
 	INLINE_NOP;
 
 	M68_HDATA_DDR = 0x00;
 	M68_LDATA_DDR = 0x00;
 }
 
-inline byte read_data(long addr)
+inline byte read_data_byte(long addr)
 {
 	byte hvalue = 0;
-	byte lvalue = 0;
+	//byte lvalue = 0;
 
 	M68_HDATA_DDR = 0x00;
 	M68_LDATA_DDR = 0x00;
@@ -347,21 +377,21 @@ inline byte read_data(long addr)
 	M68_XADDR_PORT = (byte) (addr >> 17);
 	M68_HADDR_PORT = (byte) (addr >> 9);
 	M68_LADDR_PORT = (byte) (addr >> 1);
+	digitalWrite(M68_A0, addr & 0x01);
 
 	digitalWrite(M68_RW, 1);
-	//digitalWrite(M68_LDS, 0);
-	//digitalWrite(M68_UDS, 0);
 	digitalWrite(M68_AS, 0);
+	digitalWrite(M68_DS, 0);
 	delayMicroseconds(1);
 	hvalue = M68_HDATA_PIN;
-	lvalue = M68_LDATA_PIN;
+	//lvalue = M68_LDATA_PIN;
+	digitalWrite(M68_DS, 1);
 	digitalWrite(M68_AS, 1);
-	//digitalWrite(M68_LDS, 1);
-	//digitalWrite(M68_UDS, 1);
+	M68_XADDR_PORT = (byte) 0xFF;
 	INLINE_NOP;
 
-	//return (hvalue << 8) | lvalue;
-	return lvalue;
+	return hvalue;
+	//return ((word) hvalue << 8) | lvalue;
 }
 
 void run_erase_flash()
@@ -384,6 +414,13 @@ void program_flash_data(long addr, byte data)
 	write_data(addr, data);
 }
 
+inline void print_hex_byte(byte data)
+{
+	if (data < 16)
+		Serial.write('0');
+	Serial.print(data, HEX);
+}
+
 void run_send_mem()
 {
 	word i;
@@ -391,8 +428,8 @@ void run_send_mem()
 
 	set_bus_mode_controller();
 
-	for (addr = FLASH_ADDR; addr < FLASH_ADDR + mem_size; addr += 2) {
-		byte data = read_data(addr);
+	for (addr = FLASH_ADDR; addr < FLASH_ADDR + mem_size; addr++) {
+		byte data = read_data_byte(addr);
 		if (data != 0xFF) {
 			Serial.print("Flash not erased at ");
 			Serial.print(addr, HEX);
@@ -403,10 +440,10 @@ void run_send_mem()
 		}
 	}
 
-	for (i = 0, addr = FLASH_ADDR; i < mem_size; i++, addr += 2) {
+	for (i = 0, addr = FLASH_ADDR; i < mem_size; i++, addr++) {
 		byte data = mem[i];
 		program_flash_data(addr, data);
-		Serial.print(data, HEX);
+		print_hex_byte(data);
 		Serial.print("\n");
 	}
 
@@ -418,9 +455,9 @@ void run_verify_mem()
 	word i;
 	long addr;
 
-	for (i = 0, addr = FLASH_ADDR; i < mem_size; i++, addr += 2) {
+	for (i = 0, addr = FLASH_ADDR; i < mem_size; i++, addr++) {
 		byte data = mem[i];
-		byte actual_data = read_data(addr);
+		byte actual_data = read_data_byte(addr);
 		if (data != actual_data) {
 			Serial.print("Expected ");
 			Serial.print(data, HEX);
@@ -431,6 +468,67 @@ void run_verify_mem()
 	}
 
 	Serial.print("Verify complete\n");
+}
+
+void run_dump_mem(int argc, char **argv)
+{
+	word i;
+	word size;
+	long addr;
+
+	if (argc > 1) {
+		addr = strtol(argv[1], NULL, 16);
+	} else {
+		addr = FLASH_ADDR;
+	}
+
+	if (argc > 2) {
+		size = strtol(argv[2], NULL, 16);
+	} else {
+		size = mem_size;
+	}
+
+	for (i = 0; i < size; i++, addr++) {
+		byte data = read_data_byte(addr);
+		print_hex_byte(data);
+		Serial.print(" ");
+		if ((addr % 64) == 63) {
+			Serial.print("\n");
+		}
+	}
+}
+
+void run_write_test(int argc, char **argv)
+{
+	word i;
+	word size;
+	long addr;
+	long start_addr;
+
+	if (argc > 1) {
+		start_addr = strtol(argv[1], NULL, 16);
+	} else {
+		start_addr = FLASH_ADDR;
+	}
+
+	if (argc > 2) {
+		size = strtol(argv[2], NULL, 16);
+	} else {
+		size = mem_size;
+	}
+
+	for (i = 0, addr = start_addr; i < size; i++, addr += 4) {
+		write_data(addr, (byte) i);
+	}
+
+	for (i = 0, addr = start_addr; i < size; i++, addr += 4) {
+		byte data = read_data_byte(addr);
+		print_hex_byte(data);
+		Serial.print(" ");
+		if ((addr % 64) == 60) {
+			Serial.print("\n");
+		}
+	}
 }
 
 
@@ -447,7 +545,7 @@ void cpu_stop()
 	tty_mode = TTY_COMMAND;
 	take_bus();
 	set_bus_mode_controller();
-	Serial.print("\nStopped");
+	Serial.print("\nStopped\n");
 }
 
 void cpu_reset()
@@ -458,20 +556,36 @@ void cpu_reset()
 }
 
 
-void do_command(String line)
+void do_command(int argc, char **argv)
 {
-	if (line.equals("send")) {
+	if (!strcmp(argv[0], "send")) {
 		run_send_mem();
 	}
-	else if (line.equals("verify")) {
+	else if (!strcmp(argv[0], "verify")) {
 		run_verify_mem();
 	}
-	else if (line.equals("erase")) {
+	else if (!strcmp(argv[0], "erase")) {
 		run_erase_flash();
 	}
-	else if (line.equals("reset")) {
+	else if (!strcmp(argv[0], "dump")) {
+		run_dump_mem(argc, argv);
+	}
+	else if (!strcmp(argv[0], "writetest")) {
+		run_write_test(argc, argv);
+	}
+	else if (!strcmp(argv[0], "reset")) {
 		set_bus_mode_device();
 		cpu_reset();
+	}
+	else if (!strcmp(argv[0], "romsel")) {
+		digitalWrite(M68_AS, 0);
+		digitalWrite(M68_DS, 0);
+		digitalWrite(M68_SIZ0, 1);
+		digitalWrite(M68_SIZ1, 0);
+		while (1) { }
+	}
+	else {
+		Serial.println("Unknown command");
 	}
 }
 
@@ -487,8 +601,8 @@ void setup()
 	digitalWrite(M68_BR, 0);
 	digitalWrite(M68_BGACK, 0);
 
-	//set_bus_mode_controller();
-	set_bus_mode_device();
+	set_bus_mode_controller();
+	//set_bus_mode_device();
 
 	pinMode(13, OUTPUT);
 	digitalWrite(13, 0);
@@ -503,11 +617,14 @@ void setup()
 void loop()
 {
 	if (read_serial() && tty_mode == TTY_COMMAND) {
-		String line = String(serial_rb);
-		clear_read_buffer();
-		Serial.print(line);
+		int args;
+		char *argv[MAX_ARGS];
+
+		Serial.print(serial_rb);
 		Serial.print("\n");
-		do_command(line);
+		args = parse_serial_command(argv);
+		do_command(args, argv);
+		clear_read_buffer();
 		if (tty_mode == TTY_COMMAND)
 			Serial.print("\n> ");
 	}

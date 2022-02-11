@@ -1,0 +1,92 @@
+
+
+2021-02-04:
+* I found the cause of the gap in between the text segment and the data segment only when .data.rel.ro is included.  There are
+  two different values for the page size (common-page-size and max-page-size).  Setting both to be 0x10 removes the gap.  The
+  code in the default linker script causing this is: `. = DATA_SEGMENT_ALIGN (CONSTANT (MAXPAGESIZE), CONSTANT (COMMONPAGESIZE))`
+
+2021-01-21:
+* I've narrowed down a strange bug that affects running the shell (with integrated programs) as a standalone executable.  There
+  are two different results, and the appear to be different bugs.  The one where the computer locks up completely is caused by
+  an access to non-existent memory, and forcing a bus error would force a fatal exception which gives the address where it
+  occurred.  It occurs when doing a strcmp when finding a command in the command list.  I noticed the command list size was
+  smaller than the number of commands, but I'm not sure if that was the cause of the actual lockup.  I haven't been able to
+  reproduce it, but I've had trouble reproducing it in the past, so I'm not sure it's fixed yet
+
+  The other result that occurs with similar attempts at reproducing causes a "Line 1010 Emulator" fault.  The exception is caused
+  by executing an instruction starting with hex A (this exception is not documented apart from the name in the user manual for
+  the 68000/68010).  This fairly reliably happens after the following commands are entered separately:
+    ls; ./sh; ls; exit; ./sh; ls
+
+  After adding more information to the user error dump, and fixing the process memory map so the text segment data is accurate,
+  I was able to get the exact offset into the text segment that the exception occurs at, so I can follow along in the object
+  code.  The text data in memory at that address is clearly overwritten with data, which is being executed as code, causing the
+  exception.  The data written to the text segment is a series of what look like addresses; 42 x 32bit addresses where the
+  addresses are either between 0011ABED-0011AD1E or 001183DC-0011913A and alternate between an A series and 8 series address,
+  and the last two 32bit numbers are 0.  The program data is correct before and after that chunk, so it's just that bit that
+  gets overwritten.  I'm not sure yet what's causing it, but it's something memory-related.
+
+* I put some debug statements in the kmalloc/kmfree functions, but nothing stood out there.  So I took a break and as I was
+  getting ready for bed, realized the pattern in the data.  It's probably the command list being initialized on startup.  Each
+  command has two pointers (the name, and the function address).  There are 20 pairs of addresses, plus two 0 entries terminating
+  the list, and all the addresses are within the text segment.  The question now is why the address of the list itself is pointing
+  into the text segment.
+
+* The issue turned out to be incorrect loading of elf binaries.  The code was assuming a single program segment but the shell is
+  has 2 load segments, with the second one containing the .bss section (which wasn't included in the memory map), and when the
+  strftime() function's static names are included, it adds a large gap between the end of .text and the start of .data.rel.ro
+  which would account for why the command list address was well beyond the allocated block
+
+
+2021-01-05:
+* I'm not sure how I'd like to implement drivers in general.  The conventional unix way is to have 3 different types of drivers,
+  tty devices, block devices, and network interface drivers.  I tried to implement the tty and serial drivers separately, with
+  their own driver entry points, instead of doing it the conventional way.  I'm not really happy with the specific way it's
+  implemented at the moment, but it works for now.  The plan is to use the serial for both the tty and the network interface,
+  which is why I'd like to make the serial driver independent of the tty driver subsystem.
+
+
+2022-02-07:
+- for the past two days I've been trying to fix a problem with the k30 board that came about all of a sudden.  I was working on
+  the compact flash issue, and in the process had gotten the monitor to properly program the onboard flash so I could update the
+  the interrupt handler to get better debugging info.  For some unknown reason, the board suddenly stopped working, no serial
+  data, no booting, no nothing.  A quick check with the oscilloscope showed the CPU was running and executing instructions, but
+  clearly it was malfunctioning in some way
+- checking around at signals and everything seemed correct except for the RAMSEL signal, which was unusually low.  The signal is
+  produced by the output of an AND gate, which takes two inputs from the 3-to-8 selector.  One of the driving signals rung out
+  but the other didn't and I tried resoldering the lines, to no avail.
+- I've now noticed that things seem to be working, but and the output at the chip is close to 5V, but its first stop is an
+  inverter gate, and at that point it's dropped to 3V or so (the exact same level as at the 40 pin connectors, since I had a
+  probe on each).  The measured resistance between those two points is in the megaohms when every other signal is close to 0.
+  I also tried measuring one of the signals from the selector to the AND gate input and it's 300 ohms, which is also suspicious.
+- I have a hot air station on order, so with that I will be able to get the chip off entirely to inspect underneath.  I'm not
+  sure what might be causing the electrical issue, since the joints seem fine, but the traces run under the chips (the HC08 and
+  the HC14 for the AND output).  Everything seems fine from the selector until the via before it goes into the HC08, hence why
+  I'm thinking there might be something under the chip...
+
+- hooking a logic analyzer up to the RAMSEL, ROMSEL, AS, and the upper address lines shows that the RAMSEL line is going low
+  sometimes at the same time that ROMSEL is low, so I think that's what causing the conflict, but I have no way to test further
+  without getting that chip off.  The address lines are different (and kind of bizzare) when the SEL lines are both low, which
+  kind of seems weird even for the ROMSEL to be low, but either way, I think the RAMSEL going low is incorrect based on the
+  address lines, rather than the ROMSEL being incorrect.  The DS3-0 lines are always active for all requests, so it's only the
+  RAMSEL line that controls whether the RAM chips will respond or not.  The RAMSEL also triggers the DSACK1 line, turning the
+  request into a 32bit one, which could also corrupt the transfer
+
+2022-02-10:
+- after getting a hot air rework station, I managed to get the 74HC08 off and there is no connection between the traces and
+  the pads.  It looks like it's solid, but there is a slight dip at the edge of the pad, and there's continuity in the traces
+  just up to the pad but not on the pad itself.  Having the traces enter from the other side would definitely help because I
+  could more easily bridge them, but being under the chip makes it very difficult and even putting solder on the joints with
+  the chip off still wasn't enough to bridge the gap.
+- it's possible that there was some kind of unintended bridge between some of the traces which causes the traces to overheat
+  and that was likely the weakest point in the trace, since it was coming out of the pads at a sharp 45 degree angle (no real
+  turn length, just straight out at 45 degrees).  I think having at least a short trace coming out of the pad before going
+  45 would have helped here.
+- I ended up fixing it by making sure those pads were disconnected and then soldering a wire from the RAMSEL pin on chip 74HC14
+  to the SEL1 trace that would have gone into 74HC08 as one of the inputs.  This means I'm limited to only 1 MB of memory, but
+  it seems to work now.
+
+- I noticed there was also an issue when pressing the reset button, where RAMSEL and also ROMSEL (but not the others) having a
+  strange high frequency signal on it while the button is pressed.  I'm not sure what's causing it.  It could be some kind of
+  interference from the clock signal, but I didn't investigate further
+

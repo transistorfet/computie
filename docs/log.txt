@@ -90,3 +90,36 @@
   strange high frequency signal on it while the button is pressed.  I'm not sure what's causing it.  It could be some kind of
   interference from the clock signal, but I didn't investigate further
 
+2022-02-20:
+- finally took another look, and the wire for DSACK of the ATA device came off, so I have to resolder it.  Before that happened,
+  I was able to confirm that the DSACK lines are working correctly according to the oscilloscope, but any measuring devices on
+  that DSACK line can upset things.  It doesn't even appear to change on the logic analyzer because it doesn't go high enough
+  before the CPU detects it.  The dips switches were also all ON instead of OFF, and after switching that, I was able to confirm
+  that the timeout is working (4 cycle setting takes about 0.2uS while 16 cycle setting takes about 0.8uS), but the numbers on
+  the data bus roughly seem to correspond to the data being read (0x0B and 0x15).  I confirmed that the data on the card is
+  not what's being read in, so there's something else going on.
+- Once I get the DSACK-ATA line reconnected, I should check to see that the CS lines on the flash card are changing correctly
+- line seems ok, although it stays low after it tries to go high, maybe something else is trying to drive it low because
+  of a short?
+- I could try hooking up the compactflash to IDE thing to see if I can get it working offboard (I'm not sure if it's a design
+  or construction related fault)
+- could the logic levels be an issue?  The 68030 might be producing lower outputs than the 68010
+
+2022-02-21:
+- finally some progress.  I hooked up the CF-to-IDE adapter to an arduino and was able to confirm that reading from the card
+  works, even with a request that lasts less than 200ns.  I hooked it up to the k30 board and at first it didn't work, but
+  tying /CE0 to ground and /CE1 to +5V resulted in the data being read!  Those lines are normally connected to the address
+  lines A4 and A5, but for some reason, that isn't good enough for the CF card
+- it might be possible to fix this by permanently cutting those wires and tying them high and low.  It worked to have /CE1
+  connected to A5 and tying /CE0 low, but after cutting the trace and holding a ground wire to it, that didn't work.
+- There   may still be some kind of fault with the IORD and IOWR lines still.  They didn't seem to change state when the card
+  wasn't in the slot, and they seemed to recover slowly when I tested it a few days ago, so I'm not certain
+- trying to load the kernel failed because for some reason it was trying to read sector 2-3 instead of 0-1, and a few bytes
+  seemed to drop out, but I didn't look through the code so it might be a mistake from when I was last testing
+
+2022-02-22:
+- soldered in the jumpers for /CE0 and /CE1, cutting the traces to the address lines and!... it fails, either illegal
+  instruction or it hangs when setting 8-bit mode.  This problem hasn't quite happened before.  No idea what's going on
+- looking at some other designs, there's an RC filter on the IORD line and resistors on the data lines.  I could try using that
+  for the external card reader.  It would be kind of tricky to put on the board CF socket though...
+

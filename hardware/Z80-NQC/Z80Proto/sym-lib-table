@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "Computie_Memory")(type "KiCad")(uri "/media/work/computie/hardware/kicad-libraries/symbols/Computie_Memory.kicad_sym")(options "")(descr ""))
+)

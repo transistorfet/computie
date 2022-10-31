@@ -460,7 +460,7 @@
         )
       )
     )
-    (symbol "ComputieParts:MC68030FE" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Computie_68k:MC68030FE" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "U" (id 0) (at 0 2.54 0)
         (effects (font (size 1.27 1.27)))
       )
@@ -3691,7 +3691,7 @@
     )
   )
 
-  (symbol (lib_id "ComputieParts:MC68030FE") (at 93.98 104.14 0) (unit 1)
+  (symbol (lib_id "Computie_68k:MC68030FE") (at 93.98 104.14 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00006136b674)
     (property "Reference" "U1" (id 0) (at 67.31 19.05 0))
@@ -4698,7 +4698,7 @@
       (reference "D5") (unit 1) (value "OP6") (footprint "LED_THT:LED_D5.0mm")
     )
     (path "/00000000-0000-0000-0000-0000613cc863/00000000-0000-0000-0000-0000614fafb4"
-      (reference "J1") (unit 1) (value "CompactFlash") (footprint "68k-SMT:CF-Card_3M_N7E50-Q516RB-40")
+      (reference "J1") (unit 1) (value "CompactFlash") (footprint "Computie_Connectors:CF-Card_3M_N7E50-Q516RB-40")
     )
     (path "/00000000-0000-0000-0000-0000613cc863/00000000-0000-0000-0000-0000613d9ce3"
       (reference "J2") (unit 1) (value "Serial1") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical")
@@ -4944,7 +4944,7 @@
       (reference "U12") (unit 3) (value "74HC393") (footprint "Package_SO:TSSOP-14_4.4x5mm_P0.65mm")
     )
     (path "/00000000-0000-0000-0000-0000613cc863/00000000-0000-0000-0000-0000613d9dae"
-      (reference "U13") (unit 1) (value "MC68681") (footprint "Package_LCC:PLCC-44_THT-Socket")
+      (reference "U13") (unit 1) (value "MC68681") (footprint "Package_LCC:PLCC-68_THT-Socket")
     )
     (path "/00000000-0000-0000-0000-0000613dffc0/00000000-0000-0000-0000-0000613f02a2"
       (reference "U14") (unit 1) (value "AS6C8016") (footprint "Package_SO:TSOP-II-44_10.16x18.41mm_P0.8mm")

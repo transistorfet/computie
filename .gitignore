@@ -24,7 +24,7 @@ session.vim
 *.bak
 *.bck
 fp-info-cache
-k30-SBC-backups
+hardware/**/*-backups
 
 # Binary files
 *.img

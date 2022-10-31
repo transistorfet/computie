@@ -1,3 +1,3 @@
 (fp_lib_table
-  (lib (name 68k-SMT)(type KiCad)(uri ${KIPRJMOD}/68k-SMT.pretty)(options "")(descr ""))
+  (lib (name "Computie_Connectors")(type "KiCad")(uri "/media/work/computie/hardware/kicad-libraries/footprints/Computie_Connectors.pretty")(options "")(descr ""))
 )

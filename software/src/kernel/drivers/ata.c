@@ -36,6 +36,25 @@ struct driver ata_driver = {
 };
 
 
+#define ATA_BASE_ADDR		0x600000
+#define ATA_REG_ADDR(x)		((volatile uint8_t *) ATA_BASE_ADDR + ((x) << 1))
+
+
+#define ATA_REG_DEV_CONTROL	((volatile uint8_t *) 0x60001C)
+#define ATA_REG_DEV_ADDRESS	((volatile uint8_t *) 0x60001E)
+#define ATA_REG_DATA		((volatile uint16_t *) 0x600020)
+#define ATA_REG_DATA_BYTE	((volatile uint8_t *) 0x600020)
+#define ATA_REG_FEATURE		((volatile uint8_t *) 0x600022)
+#define ATA_REG_ERROR		((volatile uint8_t *) 0x600022)
+#define ATA_REG_SECTOR_COUNT	((volatile uint8_t *) 0x600024)
+#define ATA_REG_SECTOR_NUM	((volatile uint8_t *) 0x600026)
+#define ATA_REG_CYL_LOW		((volatile uint8_t *) 0x600028)
+#define ATA_REG_CYL_HIGH	((volatile uint8_t *) 0x60002A)
+#define ATA_REG_DRIVE_HEAD	((volatile uint8_t *) 0x60002C)
+#define ATA_REG_STATUS		((volatile uint8_t *) 0x60002E)
+#define ATA_REG_COMMAND		((volatile uint8_t *) 0x60002E)
+
+/*
 #define ATA_REG_DEV_CONTROL	((volatile uint8_t *) 0x60001D)
 #define ATA_REG_DEV_ADDRESS	((volatile uint8_t *) 0x60001F)
 #define ATA_REG_DATA		((volatile uint16_t *) 0x600020)
@@ -49,7 +68,7 @@ struct driver ata_driver = {
 #define ATA_REG_DRIVE_HEAD	((volatile uint8_t *) 0x60002D)
 #define ATA_REG_STATUS		((volatile uint8_t *) 0x60002F)
 #define ATA_REG_COMMAND		((volatile uint8_t *) 0x60002F)
-
+*/
 
 #define ATA_CMD_READ_SECTORS	0x20
 #define ATA_CMD_WRITE_SECTORS	0x30
@@ -83,6 +102,7 @@ int ata_detect()
 	uint8_t status;
 
 	status = *ATA_REG_STATUS;
+printk_safe("status: %x\n", status);
 	// If the busy bit is already set, or the two bits that are always 0, then perhaps nothing is connected
 	if (status & (ATA_ST_BUSY | 0x06))
 		return 0;
@@ -95,6 +115,7 @@ int ata_detect()
 		ATA_DELAY(10);
 
 		status = *ATA_REG_STATUS;
+printk_safe("status: %x\n", status);
 		// If it becomes unbusy within the timeout then a drive is connected
 		if (!(status & ATA_ST_BUSY)) {
 			if (status & ATA_ST_DATA_READY) {
@@ -126,10 +147,12 @@ int ata_read_sector(int sector, char *buffer)
 
 	LOCK(saved_status);
 
+printk_safe("Read sector %x\n", sector);
 	// Set 8-bit mode
 	(*ATA_REG_FEATURE) = 0x01;
 	(*ATA_REG_COMMAND) = ATA_CMD_SET_FEATURE;
 	ATA_WAIT();
+printk_safe("done feature set\n");
 
 	// Read a sector
 	(*ATA_REG_DRIVE_HEAD) = 0xE0;
@@ -142,6 +165,7 @@ int ata_read_sector(int sector, char *buffer)
 	ATA_WAIT();
 
 	char status = (*ATA_REG_STATUS);
+printk_safe("status: %x\n", status);
 	if (status & 0x01) {
 		printk_safe("Error while reading ata: %x\n", (*ATA_REG_ERROR));
 		UNLOCK(saved_status);
@@ -151,6 +175,7 @@ int ata_read_sector(int sector, char *buffer)
 	ATA_WAIT();
 	ATA_WAIT_FOR_DATA();
 
+printk_safe("Reading data\n");
 	for (int i = 0; i < 512; i++) {
 		//((uint16_t *) buffer)[i] = (*ATA_REG_DATA);
 		//asm volatile("rol.w	#8, %0\n" : "+g" (((uint16_t *) buffer)[i]));
@@ -160,14 +185,12 @@ int ata_read_sector(int sector, char *buffer)
 		ATA_DELAY(10);
 	}
 
-	/*
 	printk_safe("Mem %x:\n", sector);
 	for (int i = 0; i < 512; i++) {
 		printk_safe("%x ", 0xff & buffer[i]);
 		if ((i & 0x1F) == 0x1F)
 			printk_safe("\n");
 	}
-	*/
 
 	UNLOCK(saved_status);
 	return 512;

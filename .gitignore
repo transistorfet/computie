@@ -24,9 +24,13 @@ session.vim
 *.bak
 *.bck
 fp-info-cache
+k30-SBC-backups
 
 # Binary files
 *.img
 
 # Build Directory
-build/
+/build/
+
+# Miscellaneous
+/junk/

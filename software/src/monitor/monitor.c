@@ -396,6 +396,128 @@ void command_ramtest(int argc, char **args)
 }
 
 
+
+#define ATA_REG_DEV_CONTROL	((volatile uint8_t *)  0x60001C)
+#define ATA_REG_DEV_ADDRESS	((volatile uint8_t *)  0x60001E)
+#define ATA_REG_DATA		((volatile uint16_t *) 0x600020)
+#define ATA_REG_DATA_BYTE	((volatile uint8_t *)  0x600020)
+#define ATA_REG_FEATURE		((volatile uint8_t *)  0x600022)
+#define ATA_REG_ERROR		((volatile uint8_t *)  0x600022)
+#define ATA_REG_SECTOR_COUNT	((volatile uint8_t *)  0x600024)
+#define ATA_REG_SECTOR_NUM	((volatile uint8_t *)  0x600026)
+#define ATA_REG_CYL_LOW		((volatile uint8_t *)  0x600028)
+#define ATA_REG_CYL_HIGH	((volatile uint8_t *)  0x60002A)
+#define ATA_REG_DRIVE_HEAD	((volatile uint8_t *)  0x60002C)
+#define ATA_REG_STATUS		((volatile uint8_t *)  0x60002E)
+#define ATA_REG_COMMAND		((volatile uint8_t *)  0x60002E)
+
+#define ATA_CMD_READ_SECTORS	0x20
+#define ATA_CMD_WRITE_SECTORS	0x30
+#define ATA_CMD_IDENTIFY	0xEC
+#define ATA_CMD_SET_FEATURE	0xEF
+
+#define ATA_ST_BUSY		0x80
+#define ATA_ST_DATA_READY	0x08
+#define ATA_ST_ERROR		0x01
+
+#define ATA_DELAY(x)		{ for (int delay = 0; delay < (x); delay++) { asm volatile(""); } }
+#define ATA_WAIT()		{ ATA_DELAY(4); while (*ATA_REG_STATUS & ATA_ST_BUSY) { } }
+#define ATA_WAIT_FOR_DATA()	{ while (!(*ATA_REG_STATUS) & ATA_ST_DATA_READY) { } }
+
+void command_cfreset(int argc, char **args)
+{
+	*ATA_REG_DEV_CONTROL = 0xC0;
+	ATA_DELAY(10);
+	*ATA_REG_DEV_CONTROL = 0x80;
+	ATA_DELAY(1000);
+
+	char status = *ATA_REG_STATUS;
+	printf("Status: %x\n", status);
+
+	return 0;
+}
+
+int ata_check_busy()
+{
+	int count = 0;
+	char status;
+
+	do {
+		ATA_DELAY(100);
+		status = *ATA_REG_STATUS;
+		printf("Status: %x\n", status);
+		count += 1;
+		//if (status & ATA_ST_ERROR)
+		//	return -1;
+	} while ((status & 0x80) && count < 20);
+
+	return 0;
+}
+
+void command_cftest(int argc, char **args)
+{
+	char status;
+	char buffer[1024];
+
+	if (ata_check_busy() < 0) {
+		printf("error\n");
+		return -1;
+	}
+
+	ATA_DELAY(10);
+	status = *ATA_REG_ERROR;
+	printf("Error: %x\n", status);
+
+	// Set 8-bit mode
+	(*ATA_REG_FEATURE) = 0x01;
+	(*ATA_REG_COMMAND) = ATA_CMD_SET_FEATURE;
+	//ATA_WAIT();
+	if (ata_check_busy() < 0) {
+		printf("error\n");
+		return -1;
+	}
+	printf("Set 8-bit mode\n");
+
+	// Read a sector
+	int sector = 0;
+	(*ATA_REG_DRIVE_HEAD) = 0xE0;
+	//(*ATA_REG_DRIVE_HEAD) = 0xE0 | (uint8_t) ((sector >> 24) & 0x0F);
+	(*ATA_REG_CYL_HIGH) = (uint8_t) (sector >> 16);
+	(*ATA_REG_CYL_LOW) = (uint8_t) (sector >> 8);
+	(*ATA_REG_SECTOR_NUM) = (uint8_t) sector;
+	(*ATA_REG_SECTOR_COUNT) = 1;
+	(*ATA_REG_COMMAND) = ATA_CMD_READ_SECTORS;
+	//ATA_WAIT();
+
+	if (ata_check_busy() < 0) {
+		printf("error\n");
+		return -1;
+	}
+
+	printf("Transfer setup.  Waiting for data...\n");
+	//ATA_WAIT();
+	ATA_WAIT_FOR_DATA();
+
+	printf("Reading data\n");
+	for (int i = 0; i < 512; i++) {
+		//((uint16_t *) buffer)[i] = (*ATA_REG_DATA);
+		//asm volatile("rol.w	#8, %0\n" : "+g" (((uint16_t *) buffer)[i]));
+		buffer[i] = (*ATA_REG_DATA_BYTE);
+		ATA_DELAY(10);
+
+		ATA_WAIT();
+		ATA_DELAY(10);
+	}
+
+	for (int i = 0; i < 512; i++) {
+		printf("%x ", buffer[i]);
+	}
+	printf("\n");
+
+	return 0;
+}
+
+
 /**************************
  * Command Line Execution *
  **************************/
@@ -424,6 +546,8 @@ int load_commands(struct command *command_list)
 	add_command("writerom", command_writerom);
 	add_command("verifyrom", command_verifyrom);
 
+	add_command("cfreset", command_cfreset);
+	add_command("cftest", command_cftest);
 	add_command("ramtest", command_ramtest);
 
 	return num_commands;

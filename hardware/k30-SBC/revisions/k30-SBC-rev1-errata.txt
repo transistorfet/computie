@@ -2,7 +2,7 @@
 Revision 1 Errata and Notes
 ===========================
 
-- the footprint for the 74HC253s is too small.  I used the 16SSOP - 3.9mm wide, but the chips are
+- the footprint for the 74HC253s is too small.  I used the 16SSOP - 4.9mm wide, but the chips are
   actually 6.2mm wide.  I've tried to bend the pins under to solder them instead
 
 - the HALT light should really be labelled RUN, since it's really ~HALT (ie. running)
@@ -20,4 +20,7 @@ Revision 1 Errata and Notes
   It turned out the traces were broken just before the entered the pads from underneath the chip.
   I was not able to patch it and instead bypassed the AND gate with a bodge wire from the trace
   from HC138 pin 14 (SEL1) to RAMSEL, which means only 1MB of RAM is accessible
+
+- the extra DTACK input into the NAND gate should be pulled high to disable it, or else it could
+  trigger dtack erroneously
 

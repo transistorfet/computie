@@ -17,7 +17,7 @@ Revision 1 Errata and Notes
 - there was an issues with the 74HC08 chip's AND gate that combines the address decode lines to
   produce the RAMSEL signal, and the fact that those two traces go underneath the chip is causing
   a lot of problems for debugging.  Never route traces to pins underneath a surface mount chip!
-  It turned out the traces were broken just before the entered the pads from underneath the chip.
+  It turned out the traces were broken just before they entered the pads from underneath the chip.
   I was not able to patch it and instead bypassed the AND gate with a bodge wire from the trace
   from HC138 pin 14 (SEL1) to RAMSEL, which means only 1MB of RAM is accessible
 

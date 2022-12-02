@@ -4476,7 +4476,7 @@
   (gr_text "R/~{W}" (at 204.47 105.156) (layer "F.SilkS") (tstamp 00000000-0000-0000-0000-00005e5bff64)
     (effects (font (size 0.8 0.8) (thickness 0.15)) (justify left))
   )
-  (gr_text "~{RD\n}" (at 204.47 107.696) (layer "F.SilkS") (tstamp 00000000-0000-0000-0000-00005e5bff71)
+  (gr_text "~{RD}" (at 204.47 107.696) (layer "F.SilkS") (tstamp 00000000-0000-0000-0000-00005e5bff71)
     (effects (font (size 0.8 0.8) (thickness 0.15)) (justify left))
   )
   (gr_text "~{WR}" (at 204.47 110.236) (layer "F.SilkS") (tstamp 00000000-0000-0000-0000-00005e5bff75)
@@ -4712,6 +4712,9 @@
   )
   (gr_text "Designed by\ntransistor fet\n2020" (at 115.316 134.112) (layer "F.SilkS") (tstamp 2f505d3d-3b1a-4579-ba75-5d23af3da5e2)
     (effects (font (size 1.5 1.5) (thickness 0.3)))
+  )
+  (gr_text "D0" (at 198.247 37.846) (layer "F.SilkS") (tstamp c33e7a05-a990-4070-a2c7-23acb0631a34)
+    (effects (font (size 0.8 0.8) (thickness 0.15)) (justify right))
   )
 
   (segment (start 174.371 118.11) (end 174.371 118.11) (width 0.4) (layer "F.Cu") (net 1) (tstamp 00000000-0000-0000-0000-00005fbd6a2d))

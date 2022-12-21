@@ -123,3 +123,25 @@
 - looking at some other designs, there's an RC filter on the IORD line and resistors on the data lines.  I could try using that
   for the external card reader.  It would be kind of tricky to put on the board CF socket though...
 
+2022-12-20:
+- I built the hardware the day before in about 4 to 6 hours this time, much faster than last time.  I used the flat tip to solder
+  the logic chips first, then the big SMT chips.  I'd get a small bit of solder, almost none, on the tip, tack a corner of a chip,
+  and then just touch the tip to all the pins without applying any additional solder.  I almost never needed to take up excess
+  with the solder wick, which sped things up quite a bit.  I had the logic chips done in less than 2 hours, which was the majority
+  the work.
+- I used a cpu with a couple pins bent up to see if it would be an issue to solder, but i was able to push them down with the flat
+  tip of the soldering iron.
+
+- It didn't work at first, and so I checked the power and clock.  The clock was not quite right, although my oscilloscope was also
+  set incorrectly.  I had taken the clock chip from the dead board and put it on the new board, but changing it for a new crystal
+  fixed the issue, so maybe the problem on the old board had been the crystal all along and not the 74HC14.
+
+- With the clock sorted out, it was giving the monitor screen, but booting from what I thought was the boot loader in rom didn't
+  work, and loading the kernel over serial didn't work (hanging).  After some playing, I found that that boot loading could be
+  sent and booted over serial and it loaded the kernel on the compact flash first try, everything working!
+- more experimenting with the fact that commands didn't work in the monitor when it was loaded over serial, I was able to find that
+  printing numbers with printf was what caused a hang or something.  More playing found that it was strlen itself that wasn't working
+  correctly, because commenting it out made it work incorrectly but without hanging.  Putting a putchar in the loop fixed it, so
+  obviously the difference must be an optmization.  Using volatile for the counter in strlen fixed that issue, and now the kernel
+  can be loaded over serial, boot, and mount the compact flash drive.
+

@@ -1,0 +1,6 @@
+
+Revision 2 Errata and Notes
+===========================
+
+- I forgot to add the part name silkscreen for the 74LVC1G32 that was added to rev. 2
+

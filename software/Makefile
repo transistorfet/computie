@@ -93,6 +93,9 @@ KERNEL_OBJS = \
 all: monitor.bin monitor.load boot.bin boot.load kernel.bin kernel.load
 build-system: kernel.bin commands devicefiles otherfiles
 
+term:
+	pyserial-miniterm /dev/ttyUSB0 38400
+
 commands:
 	make -C src/commands clean all
 

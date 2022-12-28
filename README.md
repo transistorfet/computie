@@ -50,15 +50,29 @@ complexity.  Most of the software will be run from RAM, so this shouldn't be a p
 DIP switches are used to select the time delay to use for the CompactFlash card (which is interfaced directly to the
 CPU), to enable the bus error watchdog timer, and to enable/disable the cache and MMU features.
 
-I made a mistake and used the wrong size footprint for the two 74HC253s, which only come in a 16SSOP package and not
-the TSSOP package used by the other logic chips.  The footprint used was 3.9 mm wide but should have been 6.2mm.
-Luckily I managed to bend the pins under the body of the chips which was enough to get all the pins touching all the
-pads.  It was very tricky to solder, and there was a bridge between DS3 and ground which was very difficult to get
-unstuck, but it's working now.
+
+k30 Revision 2
+--------------
+
+This revision fixes the issues of the previous one.  The compact flash card can now be accessed, and the OS is able
+to boot entirely from the compact flash card without issue.
+
+![alt text](images/k30-SBC-rev2/board-top.jpg "k30-SBC Rev. 2 Assembled Board")
 
 
 k30 Revision 1
 --------------
+
+I made a mistake and used the wrong size footprint for the two 74HC253s, which only come in a 16SSOP package and not
+the TSSOP package used by the other logic chips.  The footprint used were 4.9 mm wide but should have been 6.2mm.
+Luckily I managed to bend the pins under the body of the chips which was enough to get all the pins touching all the
+pads.  It was very tricky to solder, and there was a bridge between DS3 and ground which was very difficult to get
+unstuck, but it's working now.
+
+I also made a mistake in the DSACK signals used to terminate a memory cycle, specifically for the compact flash card.
+The logic was inverted, so the card was inaccessible, and my attempts at fixing it fried the clock, although it might
+have just been the crystal.  I set the project aside for a while and then made a new revision.  For details on the
+issues, see the [errata](https://github.com/transistorfet/computie/raw/main/hardware/k30-SBC/revisions/k30-SBC-rev1-errata.txt)
 
 ![alt text](images/k30-SBC-rev1/k30-SBC-running.jpg "k30-SBC Running")
 ![alt text](images/k30-SBC-rev1/k30-PCBs.jpg "k30-SBC Rev. 1 PCB")

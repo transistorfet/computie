@@ -22,5 +22,5 @@ Revision 1 Errata and Notes
   from HC138 pin 14 (SEL1) to RAMSEL, which means only 1MB of RAM is accessible
 
 - the extra DTACK input into the NAND gate should be pulled high to disable it, or else it could
-  trigger dtack erroneously
+  trigger DTACK erroneously
 

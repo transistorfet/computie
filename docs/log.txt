@@ -1,12 +1,20 @@
 
+2020-08-14:
+- the serial issue turns out to be a problem with the crystal for the serial chip.  It is outputting an inconsistent signal around
+  100kHz when powered through USB or power supply.  When powered by the arduino, you have to unplug and replug the serial usb cable to
+  make it work, which seems to reset the oscillator.  Connecting a 22pF capacitor across the crystal jumpstarts it, but the output is
+  a lot lower on the scope with it connected.  The datasheet says to use 15 and 5pF which is pretty low, and I don't have caps that
+  small.  I have to play with it more, but this seems to be a cap issue more than anything
+- [2022-01-08: this turned out to be the caps.  Using the correct cap sizes as listed in one of the MC68681 documents of 5 and 15pF
+  fixed the issue, and I haven't had any trouble with the serial since]
 
 2021-02-04:
-* I found the cause of the gap in between the text segment and the data segment only when .data.rel.ro is included.  There are
+- I found the cause of the gap in between the text segment and the data segment only when .data.rel.ro is included.  There are
   two different values for the page size (common-page-size and max-page-size).  Setting both to be 0x10 removes the gap.  The
   code in the default linker script causing this is: `. = DATA_SEGMENT_ALIGN (CONSTANT (MAXPAGESIZE), CONSTANT (COMMONPAGESIZE))`
 
 2021-01-21:
-* I've narrowed down a strange bug that affects running the shell (with integrated programs) as a standalone executable.  There
+- I've narrowed down a strange bug that affects running the shell (with integrated programs) as a standalone executable.  There
   are two different results, and the appear to be different bugs.  The one where the computer locks up completely is caused by
   an access to non-existent memory, and forcing a bus error would force a fatal exception which gives the address where it
   occurred.  It occurs when doing a strcmp when finding a command in the command list.  I noticed the command list size was
@@ -26,20 +34,20 @@
   and the last two 32bit numbers are 0.  The program data is correct before and after that chunk, so it's just that bit that
   gets overwritten.  I'm not sure yet what's causing it, but it's something memory-related.
 
-* I put some debug statements in the kmalloc/kmfree functions, but nothing stood out there.  So I took a break and as I was
+- I put some debug statements in the kmalloc/kmfree functions, but nothing stood out there.  So I took a break and as I was
   getting ready for bed, realized the pattern in the data.  It's probably the command list being initialized on startup.  Each
   command has two pointers (the name, and the function address).  There are 20 pairs of addresses, plus two 0 entries terminating
   the list, and all the addresses are within the text segment.  The question now is why the address of the list itself is pointing
   into the text segment.
 
-* The issue turned out to be incorrect loading of elf binaries.  The code was assuming a single program segment but the shell is
+- The issue turned out to be incorrect loading of elf binaries.  The code was assuming a single program segment but the shell is
   has 2 load segments, with the second one containing the .bss section (which wasn't included in the memory map), and when the
   strftime() function's static names are included, it adds a large gap between the end of .text and the start of .data.rel.ro
   which would account for why the command list address was well beyond the allocated block
 
 
 2021-01-05:
-* I'm not sure how I'd like to implement drivers in general.  The conventional unix way is to have 3 different types of drivers,
+- I'm not sure how I'd like to implement drivers in general.  The conventional unix way is to have 3 different types of drivers,
   tty devices, block devices, and network interface drivers.  I tried to implement the tty and serial drivers separately, with
   their own driver entry points, instead of doing it the conventional way.  I'm not really happy with the specific way it's
   implemented at the moment, but it works for now.  The plan is to use the serial for both the tty and the network interface,

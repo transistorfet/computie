@@ -1,19 +1,12 @@
 
 
-k30-SBC:
-	* you could use the extra 2-4 decoder for onboard I/O within IOSEL (ie. MC68681 would remain the same, ATA I/O would be moved to 0x700100, and two more devices could be added
-	* need to figure out what chip to get for the 4 input OR gates, either CD4072, or possibly 74HC4002 but I'd have to maybe add an extra chip.  I have 2 NOT gates to play with
-	* should you make the DSx trigger be selectable between DS and AS or just trust it'll work?
-	* can you do something with the counter jumpers, maybe put them onto the DIP switches bank, since they're double ended switches? (need a x6 I think)
-	* is 16 clocks enough for the BERR?  It should be 480us which should be enough
-	* the buses need to be finalized.  If you can put all the new signals on the existing signals connector, then you could shrink the expansion A/D connector to 20 pins
+Multi-Board Computer:
 
-	* look into the CIIN signals and stuff
+	* what bus to use?  VME or CompactPCI?
+	* CompactPCI connectors are kind of expensive and hard to get.  DIN 41612 are easier to get, but still pricey outside of 96-pins
+	* you could ues full CompactPCI, or CompactPCI on a DIN41612, or VME full cards (no), or VME on a 128 or 160-pin DIN41612, or VME but multiplexed on 96-pin
 
-	* current plan is 2MB: 2 x 16-bit AS6C8016s, and 512KB, 8bit flash using the same AM29F040 chips.  It'll be slow running the flash code, but that's ok because it's expected
-	  to load the OS into SRAM, and it uses fewer chips, and it'll be possible to program the flash through the existing supervisor, or to remove it and program it separately
-
-k30-MBC:
+	* you need transceivers anyways so multiplexing actually isn't that difficult.  It's mainly the issue with custom signaling, but you plan to use a CPLD
 
 	* there is some question of the I/O space, which will be different anyways, so the drivers will have to use different addresses.  It would be nice if the RAM could more easily be
 	  variable in size.  This would be ok if you reserved all of 0x00800000 to 0x00FFFFFF for onboard SRAM, and the lower area for I/O and flash, with everything above 0x01000000
@@ -22,8 +15,10 @@ k30-MBC:
 	* I could add headers for a 41612 connector along side the pin headers, with the idea of maybe using this card in a backplane for a single CPU/multi card computer
 	  and the bus arbitration stuff can be on the backplane.  The big question is at what point would I need drivers on the bus lines
 
+
 Post:
 	* I need to elaborate on how I did things, what broke, how I fixed it...  It's a bit too much a list of what I did rather than something helpful
+
 
 Operating System:
 
@@ -121,13 +116,13 @@ Monitor:
 	  for those, you could have it enter a debugger, that possibly allows single stepping?  I'm not sure how to implement that
 
 
+k30-SBC:
+	* you could use the extra 2-4 decoder for onboard I/O within IOSEL (ie. MC68681 would remain the same, ATA I/O would be moved to 0x700100, and two more devices could be added
+	* is 16 clocks enough for the BERR?  It should be 480us which should be enough
+	* look into the CIIN signals and stuff
+
+
 68k Single Board Computer:
-
-	* the serial issue turns out to be a problem with the crystal for the serial chip.  It is outputting an inconsistent signal around 100kHz when powered through
-	  USB or power supply.  When powered by the arduino, you have to unplug and replug the serial usb cable to make it work, which seems to reset the oscillator.
-	  Connecting a 22pF capacitor across the crystal jumpstarts it, but the output is a lot lower on the scope with it connected.  The datasheet says to use 15 and 5pF
-	  which is pretty low, and I don't have caps that small.  I have to play with it more, but this seems to be a cap issue more than anything
-
 
 	* can you add a video/lcd expansion via the expansion connector?  Maybe you could get ends to directly connect it?  Would it be via parallel interface?
 	  would you need a PIT 68230 to interface?  How complex are the interfaces of those graphic ones?

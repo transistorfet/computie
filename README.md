@@ -18,7 +18,7 @@ to this version, but it is also possible to connect a simple breadboarded versio
 
 For more details on how I got up and running, check out [Bootstrapping a Homebuilt Computer Using An Arduino](https://transistorfet.github.io/posts/2021-09-bootstrapping_with_arduino.html)
 
-For instructions on getting a board set up and software compiled, check out [INSTALL.md](INSTALL.md)
+For instructions on getting a board set up and software compiled, check out [INSTALL.md](https://github.com/transistorfet/computie/blob/main/INSTALL.md)
 
 
 The Operating System

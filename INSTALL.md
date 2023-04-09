@@ -1,6 +1,11 @@
 
-Compiling and Running Software
-==============================
+Building and Bootstrapping A Computie Board
+===========================================
+
+If you ever build one of these boards, please drop me a line and maybe send me some pictures (links
+on [jabberwocky.ca](https://jabberwocky.ca/).  I'd love to hear about how it goes, or what you've
+manage to do with it.
+
 
 Building the Boards
 -------------------

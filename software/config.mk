@@ -1,8 +1,8 @@
 
 # Configuration
 
-BOARD = k30
-#BORAD = 68k
+#BOARD = k30
+BOARD = 68k
 
 # End of Configuration
 
@@ -25,7 +25,7 @@ OBJCOPY = m68k-linux-gnu-objcopy
 RANLIB = m68k-linux-gnu-ranlib
 INCLUDE = $(ROOT)/include
 ASFLAGS = $(ASFLAGS_ARCH)
-CFLAGS = -I$(INCLUDE) $(CFLAGS_ARCH) -nostartfiles -nostdlib -fno-zero-initialized-in-bss -g -Os
+CFLAGS = -I$(INCLUDE) $(CFLAGS_ARCH) -DBOARD_$(BOARD) -nostartfiles -nostdlib -fno-zero-initialized-in-bss -g -Os
 LDFLAGS = -Wl,--build-id=none
 
 # reduce the elf output size by reducing the alignment

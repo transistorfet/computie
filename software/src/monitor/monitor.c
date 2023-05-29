@@ -7,6 +7,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if defined(BOARD_k30)
+#define BOARD	"k30"
+#elif defined(BOARD_68k)
+#define BOARD	"68k"
+#else
+#error "Board type not set"
+#endif
+
+#define VERSION		"2023-05-28-" BOARD
+
 
 extern void init_tty();
 char *led = (char *) 0x201c;
@@ -137,6 +147,12 @@ void command_dumpram(int argc, char **args)
 	dump((uint16_t *) RAM_ADDR, 0x1800);
 }
 
+void command_version(int argc, char **args)
+{
+	printf("version: %s\n", VERSION);
+	return;
+}
+
 void command_info(int argc, char **args)
 {
 	uint32_t pc;
@@ -175,7 +191,7 @@ void command_poke(int argc, char **args)
 
 void erase_flash(uint32_t sector)
 {
-	#ifdef BOARD_K30
+	#ifdef BOARD_k30
 	printf("Erasing flash sector %d", sector);
 	*((volatile uint8_t *) 0x555) = 0xAA;
 	putchar('.');
@@ -206,10 +222,12 @@ void erase_flash(uint32_t sector)
 	#endif
 }
 
-#ifdef BOARD_K30
+#if defined(BOARD_k30)
 #define SECTOR_SIZE	0x010000
-#else
+#elif defined(BOARD_68k)
 #define SECTOR_SIZE	0x020000
+#else
+#error "No board type given"
 #endif
 
 void command_eraserom(int argc, char **args)
@@ -246,7 +264,7 @@ void command_eraserom(int argc, char **args)
 
 void program_flash_data(uint16_t *addr, uint16_t data)
 {
-	#ifdef BOARD_K30
+	#ifdef BOARD_k30
 	*((volatile uint8_t *) 0x555) = 0xAA;
 	*((volatile uint8_t *) 0x2AA) = 0x55;
 	*((volatile uint8_t *) 0x555) = 0xA0;
@@ -261,6 +279,7 @@ void program_flash_data(uint16_t *addr, uint16_t data)
 	*((volatile uint16_t *) (0x2AA << 1)) = 0x5555;
 	*((volatile uint16_t *) (0x555 << 1)) = 0xA0A0;
 	*((volatile uint16_t *) addr) = data;
+	delay(200);
 	#endif
 }
 
@@ -414,6 +433,7 @@ int load_commands(struct command *command_list)
 {
 	int num_commands = 0;
 
+	add_command("version", command_version);
 	add_command("info", command_info);
 	add_command("load", command_load);
 	add_command("boot", command_boot);

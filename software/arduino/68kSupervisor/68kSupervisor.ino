@@ -5,6 +5,7 @@
 #define MEM_SIZE	4096
 
 #define FLASH_ADDR	0x000000
+#define SECTOR_SIZE	0x020000
 
 #define M68_XADDR_PORT	PORTF
 #define M68_XADDR_PIN	PINF
@@ -270,6 +271,9 @@ void flush_write_buffer()
 }
 
 
+/*************************
+ * Bus Cycle Interrupter *
+ *************************/
 
 word send_size = 768;
 byte send_mem[] = {
@@ -504,6 +508,33 @@ void snoop_bus_cycle()
 }
 
 
+/********************************
+ * Hardware Interface Functions *
+ ********************************/
+
+void cpu_start()
+{
+	set_bus_mode_device();
+	tty_mode = TTY_PASS;
+	release_bus();
+	Serial.print("Running\n\n");
+}
+
+void cpu_stop()
+{
+	tty_mode = TTY_COMMAND;
+	take_bus();
+	set_bus_mode_controller();
+	Serial.print("\nStopped");
+}
+
+void cpu_reset()
+{
+	M68_ASSERT_RESET();
+	delay(10);
+	M68_UNASSERT_RESET();
+}
+
 inline void write_data(long addr, word data)
 {
 	M68_HDATA_DDR = 0xFF;
@@ -558,7 +589,31 @@ inline word read_data(long addr)
 	return (hvalue << 8) | lvalue;
 }
 
-void run_read_test()
+void program_flash_data(long addr, word data)
+{
+	write_data(FLASH_ADDR + (0x555 << 1), 0xAAAA);
+	write_data(FLASH_ADDR + (0x2AA << 1), 0x5555);
+	write_data(FLASH_ADDR + (0x555 << 1), 0xA0A0);
+	write_data(addr, data);
+}
+
+inline void print_hex_word(word data)
+{
+	if (data < 0x10)
+		Serial.print("000");
+	else if (data < 0x100)
+		Serial.print("00");
+	else if (data < 0x1000)
+		Serial.print("0");
+	Serial.print(data, HEX);
+}
+
+
+/************
+ * Commands *
+ ************/
+
+void command_readtest(int argc, char **argv)
 {
 	int hvalue = 0;
 	int lvalue = 0;
@@ -627,7 +682,7 @@ void run_read_test()
 	Serial.print("\n");
 }
 
-void run_write_test()
+void command_writetest(int argc, char **argv)
 {
 	set_bus_mode_controller();
 	Serial.print("Running Write Test\n");
@@ -679,35 +734,47 @@ void run_write_test()
 	Serial.print("Complete\n");
 }
 
-
-void run_erase_flash()
+void command_erase(int argc, char **argv)
 {
-	Serial.println("Erasing flash");
+	word *dest = FLASH_ADDR;
+	long sector = 0;
+
+	if (argc >= 2) {
+		sector = strtol(argv[1], NULL, 16);
+		if (sector & (SECTOR_SIZE - 1)) {
+			printf("Invalid sector address to erase (%x)\n", sector);
+			return;
+		}
+		dest = (uint16_t *) sector;
+	}
+
+	Serial.print("Erasing flash at sector ");
+	Serial.print(sector, HEX);
+	Serial.println("");
+
 	write_data(FLASH_ADDR + (0x555 << 1), 0xAAAA);
 	write_data(FLASH_ADDR + (0x2AA << 1), 0x5555);
 	write_data(FLASH_ADDR + (0x555 << 1), 0x8080);
 	write_data(FLASH_ADDR + (0x555 << 1), 0xAAAA);
 	write_data(FLASH_ADDR + (0x2AA << 1), 0x5555);
-	write_data(FLASH_ADDR + 0x00, 0x3030);
+	write_data(FLASH_ADDR + sector, 0x3030);
 }
 
-
-void program_flash_data(long addr, word data)
-{
-	write_data(FLASH_ADDR + (0x555 << 1), 0xAAAA);
-	write_data(FLASH_ADDR + (0x2AA << 1), 0x5555);
-	write_data(FLASH_ADDR + (0x555 << 1), 0xA0A0);
-	write_data(addr, data);
-}
-
-void run_send_mem()
+void command_send(int argc, char **argv)
 {
 	word i;
-	long addr;
+	long dest = FLASH_ADDR;
+
+	if (argc >= 2)
+		dest = strtol(argv[1], NULL, 16);
+
+	Serial.print("Sending monitor to ");
+	Serial.print(dest, HEX);
+	Serial.println("");
 
 	set_bus_mode_controller();
 
-	for (addr = FLASH_ADDR; addr < FLASH_ADDR + mem_size; addr += 2) {
+	for (long addr = dest; addr < dest + mem_size; addr += 2) {
 		word data = read_data(addr);
 		if (data != 0xFFFF) {
 			Serial.print("Flash not erased at ");
@@ -719,9 +786,9 @@ void run_send_mem()
 		}
 	}
 
-	for (i = 0, addr = FLASH_ADDR; i < mem_size; i += 2, addr += 2) {
+	for (int i = 0; i < mem_size; i += 2) {
 		word data = (mem[i] << 8) | mem[i + 1];
-		program_flash_data(addr, data);
+		program_flash_data(dest + i, data);
 		Serial.print(data, HEX);
 		Serial.print("\n");
 	}
@@ -729,12 +796,16 @@ void run_send_mem()
 	Serial.print("Sending complete\n");
 }
 
-void run_verify_mem()
+void command_verify(int argc, char **argv)
 {
 	word i;
-	long addr;
+	word diffs = 0;
+	long addr = FLASH_ADDR;
 
-	for (i = 0, addr = FLASH_ADDR; i < mem_size; i += 2, addr += 2) {
+	if (argc >= 2)
+		addr = strtol(argv[1], NULL, 16);
+
+	for (i = 0; i < mem_size; i += 2, addr += 2) {
 		word data = (mem[i] << 8) | mem[i + 1];
 		word actual_data = read_data(addr);
 		if (data != actual_data) {
@@ -743,14 +814,18 @@ void run_verify_mem()
 			Serial.print(" but found ");
 			Serial.print(actual_data, HEX);
 			Serial.print("\n");
+			diffs++;
+			if (diffs > 50) {
+				Serial.println("Bailing out");
+				return;
+			}
 		}
 	}
 
 	Serial.print("Verify complete\n");
 }
 
-
-void run_flash_test()
+void command_flashtest(int argc, char **argv)
 {
 	word value;
 
@@ -762,62 +837,113 @@ void run_flash_test()
 	Serial.print("\n");
 }
 
+void command_dump(int argc, char **argv)
+{
+	word i;
+	word size;
+	long addr;
 
-void cpu_start()
+	if (argc > 1) {
+		addr = strtol(argv[1], NULL, 16);
+	} else {
+		addr = FLASH_ADDR;
+	}
+
+	if (argc > 2) {
+		size = strtol(argv[2], NULL, 16);
+	} else {
+		size = mem_size;
+	}
+
+	for (i = 0; i < size; i += 2, addr += 2) {
+		word data = read_data(addr);
+		print_hex_word(data);
+		Serial.print(" ");
+		if ((addr % 64) == 62) {
+			Serial.print("\n");
+		}
+	}
+}
+
+void command_run(int argc, char **argv)
+{
+	cpu_reset();
+	cpu_start();
+}
+
+void command_stop(int argc, char **argv)
+{
+	cpu_stop();
+}
+
+void command_reset(int argc, char **argv)
 {
 	set_bus_mode_device();
-	tty_mode = TTY_PASS;
-	release_bus();
-	Serial.print("Running\n\n");
-}
-
-void cpu_stop()
-{
-	tty_mode = TTY_COMMAND;
-	take_bus();
-	set_bus_mode_controller();
-	Serial.print("\nStopped");
-}
-
-void cpu_reset()
-{
-	M68_ASSERT_RESET();
-	delay(10);
-	M68_UNASSERT_RESET();
+	cpu_reset();
 }
 
 
-void do_command(String line)
+/**************************
+ * Command Line Processor *
+ **************************/
+
+#define MAX_ARGS	10
+
+int parse_serial_command(char **argv)
 {
-	if (line.equals("read")) {
-		run_read_test();
+	int args = 1;
+
+	argv[0] = serial_rb;
+	for (int i = 0; i < serial_read_tail && serial_rb[i] != '\0'; i++) {
+		if (serial_rb[i] == ' ') {
+			serial_rb[i] = '\0';
+			argv[args] = &serial_rb[i + 1];
+			if (++args >= MAX_ARGS)
+				break;
+		}
 	}
-	else if (line.equals("write")) {
-		run_write_test();
+	argv[args] = NULL;
+
+	return args;
+}
+
+struct command {
+	char *name;
+	void (*func)(int, char **);
+};
+
+
+struct command command_list[] = {
+	{ "readtest", command_readtest },
+	{ "writetest", command_writetest },
+	{ "send", command_send },
+	{ "verify", command_verify },
+	{ "erase", command_erase },
+	{ "dump", command_dump },
+	{ "flashtest", command_flashtest },
+	{ "run", command_run },
+	{ "stop", command_stop },
+	{ "reset", command_reset },
+	{ NULL, NULL },
+};
+
+void do_command(int argc, char **argv)
+{
+	if (!strcmp(argv[0], "help")) {
+		for (int i = 0; command_list[i].name != NULL; i++) {
+			Serial.println(command_list[i].name);
+		}
+		return;
 	}
-	else if (line.equals("send")) {
-		run_send_mem();
+
+	for (int i = 0; command_list[i].name != NULL; i++) {
+		if (!strcmp(argv[0], command_list[i].name)) {
+			(command_list[i].func)(argc, argv);
+			return;
+		}
 	}
-	else if (line.equals("verify")) {
-		run_verify_mem();
-	}
-	else if (line.equals("erase")) {
-		run_erase_flash();
-	}
-	else if (line.equals("testflash")) {
-		run_flash_test();
-	}
-	else if (line.equals("run")) {
-		cpu_reset();
-		cpu_start();
-	}
-	else if (line.equals("stop")) {
-		cpu_stop();
-	}
-	else if (line.equals("reset")) {
-		set_bus_mode_device();
-		cpu_reset();
-	}
+
+	Serial.println("Unknown command");
 }
 
 void setup()
@@ -848,11 +974,15 @@ void setup()
 void loop()
 {
 	if (read_serial() && tty_mode == TTY_COMMAND) {
-		String line = String(serial_rb);
-		clear_read_buffer();
-		Serial.print(line);
+		int argc;
+		char *argv[MAX_ARGS];
+
+		Serial.print(serial_rb);
 		Serial.print("\n");
-		do_command(line);
+		argc = parse_serial_command(argv);
+		do_command(argc, argv);
+		clear_read_buffer();
+
 		if (tty_mode == TTY_COMMAND)
 			Serial.print("\n> ");
 	}
@@ -860,7 +990,4 @@ void loop()
 	check_bus_cycle();
 	//snoop_bus_cycle();
 }
-
-
-
 

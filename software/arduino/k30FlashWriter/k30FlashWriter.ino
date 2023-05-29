@@ -276,33 +276,10 @@ void flush_write_buffer()
 	}
 }
 
-#define MAX_ARGS	10
 
-int parse_serial_command(char **argv)
-{
-	int args = 1;
-
-	argv[0] = serial_rb;
-	for (int i = 0; i < serial_read_tail && serial_rb[i] != '\0'; i++) {
-		if (serial_rb[i] == ' ') {
-			serial_rb[i] = '\0';
-			argv[args] = &serial_rb[i + 1];
-			if (++args >= MAX_ARGS)
-				break;
-		}
-	}
-	argv[args] = NULL;
-
-	return args;
-}
-
-
-
-
-word send_size = 768;
-byte send_mem[] = {
-
-};
+/********************************
+ * Hardware Interface Functions *
+ ********************************/
 
 #define ROM_SIZE	0x1800
 #define ROM_MEM_SIZE	0x1800
@@ -311,7 +288,28 @@ byte mem[ROM_MEM_SIZE] = {
 	#include "/media/work/computie/software/output.txt"
 };
 
+void cpu_start()
+{
+	set_bus_mode_device();
+	tty_mode = TTY_PASS;
+	release_bus();
+	Serial.print("Running\n\n");
+}
 
+void cpu_stop()
+{
+	tty_mode = TTY_COMMAND;
+	take_bus();
+	set_bus_mode_controller();
+	Serial.print("\nStopped\n");
+}
+
+void cpu_reset()
+{
+	M68_ASSERT_RESET();
+	delay(10);
+	M68_UNASSERT_RESET();
+}
 
 inline void write_data(long addr, word data)
 {
@@ -369,18 +367,6 @@ inline byte read_data_byte(long addr)
 	//return ((word) hvalue << 8) | lvalue;
 }
 
-void run_erase_flash()
-{
-	Serial.println("Erasing flash");
-	write_data(FLASH_ADDR + 0x555, 0xAA);
-	write_data(FLASH_ADDR + 0x2AA, 0x55);
-	write_data(FLASH_ADDR + 0x555, 0x80);
-	write_data(FLASH_ADDR + 0x555, 0xAA);
-	write_data(FLASH_ADDR + 0x2AA, 0x55);
-	write_data(FLASH_ADDR + 0x00, 0x30);
-}
-
-
 void program_flash_data(long addr, byte data)
 {
 	write_data(FLASH_ADDR + 0x555, 0xAA);
@@ -396,7 +382,23 @@ inline void print_hex_byte(byte data)
 	Serial.print(data, HEX);
 }
 
-void run_send_mem()
+
+/************
+ * Commands *
+ ************/
+
+void command_erase(int argc, char **argv)
+{
+	Serial.println("Erasing flash");
+	write_data(FLASH_ADDR + 0x555, 0xAA);
+	write_data(FLASH_ADDR + 0x2AA, 0x55);
+	write_data(FLASH_ADDR + 0x555, 0x80);
+	write_data(FLASH_ADDR + 0x555, 0xAA);
+	write_data(FLASH_ADDR + 0x2AA, 0x55);
+	write_data(FLASH_ADDR + 0x00, 0x30);
+}
+
+void command_send(int argc, char **argv)
 {
 	word i;
 	long addr;
@@ -425,7 +427,7 @@ void run_send_mem()
 	Serial.print("Sending complete\n");
 }
 
-void run_verify_mem()
+void command_verify(int argc, char **argv)
 {
 	word i;
 	long addr;
@@ -445,7 +447,7 @@ void run_verify_mem()
 	Serial.print("Verify complete\n");
 }
 
-void run_dump_mem(int argc, char **argv)
+void command_dump(int argc, char **argv)
 {
 	word i;
 	word size;
@@ -473,7 +475,7 @@ void run_dump_mem(int argc, char **argv)
 	}
 }
 
-void run_write_test(int argc, char **argv)
+void command_writetest(int argc, char **argv)
 {
 	word i;
 	word size;
@@ -506,62 +508,79 @@ void run_write_test(int argc, char **argv)
 	}
 }
 
-
-void cpu_start()
+void command_reset(int argc, char **argv)
 {
 	set_bus_mode_device();
-	tty_mode = TTY_PASS;
-	release_bus();
-	Serial.print("Running\n\n");
+	cpu_reset();
 }
 
-void cpu_stop()
+void command_romsel(int argc, char **argv)
 {
-	tty_mode = TTY_COMMAND;
-	take_bus();
-	set_bus_mode_controller();
-	Serial.print("\nStopped\n");
+	digitalWrite(M68_AS, 0);
+	digitalWrite(M68_DS, 0);
+	digitalWrite(M68_SIZ0, 1);
+	digitalWrite(M68_SIZ1, 0);
+	while (1) { }
 }
 
-void cpu_reset()
+
+/**************************
+ * Command Line Processor *
+ **************************/
+
+#define MAX_ARGS	10
+
+int parse_serial_command(char **argv)
 {
-	M68_ASSERT_RESET();
-	delay(10);
-	M68_UNASSERT_RESET();
+	int args = 1;
+
+	argv[0] = serial_rb;
+	for (int i = 0; i < serial_read_tail && serial_rb[i] != '\0'; i++) {
+		if (serial_rb[i] == ' ') {
+			serial_rb[i] = '\0';
+			argv[args] = &serial_rb[i + 1];
+			if (++args >= MAX_ARGS)
+				break;
+		}
+	}
+	argv[args] = NULL;
+
+	return args;
 }
 
+struct command {
+	char *name;
+	void (*func)(int, char **);
+};
+
+struct command command_list[] = {
+	{ "send", command_send },
+	{ "verify", command_verify },
+	{ "erase", command_erase },
+	{ "dump", command_dump },
+	{ "writetest", command_writetest },
+	{ "reset", command_reset },
+	{ "romsel", command_romsel },
+	{ NULL, NULL },
+};
 
 void do_command(int argc, char **argv)
 {
-	if (!strcmp(argv[0], "send")) {
-		run_send_mem();
+	if (!strcmp(argv[0], "help")) {
+		for (int i = 0; command_list[i].name != NULL; i++) {
+			Serial.println(command_list[i].name);
+		}
+		return;
 	}
-	else if (!strcmp(argv[0], "verify")) {
-		run_verify_mem();
+
+	for (int i = 0; command_list[i].name != NULL; i++) {
+		if (!strcmp(argv[0], command_list[i].name)) {
+			(command_list[i].func)(argc, argv);
+			return;
+		}
 	}
-	else if (!strcmp(argv[0], "erase")) {
-		run_erase_flash();
-	}
-	else if (!strcmp(argv[0], "dump")) {
-		run_dump_mem(argc, argv);
-	}
-	else if (!strcmp(argv[0], "writetest")) {
-		run_write_test(argc, argv);
-	}
-	else if (!strcmp(argv[0], "reset")) {
-		set_bus_mode_device();
-		cpu_reset();
-	}
-	else if (!strcmp(argv[0], "romsel")) {
-		digitalWrite(M68_AS, 0);
-		digitalWrite(M68_DS, 0);
-		digitalWrite(M68_SIZ0, 1);
-		digitalWrite(M68_SIZ1, 0);
-		while (1) { }
-	}
-	else {
-		Serial.println("Unknown command");
-	}
+
+	Serial.println("Unknown command");
 }
 
 void setup()

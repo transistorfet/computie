@@ -167,3 +167,25 @@
   flash, which I can't do using the jumpers, I guess because it's too fast, so I'll need to make some external circuitry to switch
   between them.  I can even trigger it through software by hooking it up to OP2 on the bus connector
 
+2023-07-06:
+- I hooked up the k30 to Fidget and got nothing out of one USB, and all "D"s out of the other.  I should have verified which was
+  which sooner, because the one with the "D"s I thought was computie but was actually Fidget.  That was the data coming out, but
+  actually I had the wrong speed, so it was actually a string of 0s with 1s occasionally, which is also wrong... The verilog is
+  probably still buggy and wrong, but that means the USB serial with nothing is computie.
+- I realized it was probably related to DSACK, but at first I was thinking it was related to a logic error on fidget, where instead
+  of using separate I/Os to control the control signals transceiver, I used a single invertor gate, which meant Fidget would have
+  been driving those signals when trying to receive on the others (problem...)
+- I took off the logic gate and soldered a bodge wire to the pad and wirewrapped the other end to one of the pins on the extended
+  I/O headers, so I can at least control, but that didn't fix the fact that it wasn't booting
+- I put the scope on the DSACK0 line and saw some of the normal weird sawtooth signal, but it only lasted a few cycles until it went
+  high (stopped).  Taking the ribbon cable off on the fidget side made computie run but fill the screen with garbage input.
+  Removing it from the computie side made it work normally, so just having the wire connected is enough to increase the capacitance
+  or something enough to make DSACK fail
+- I had this problem with the arduino I think, where it wouldn't run when the arduino was connected, so I had to remove it.  I need
+  to somehow figure out how to fix that.  I'm not sure if it's interference with the serial chip's DSACK, because it's otherwise
+  some HC logic gates driving that pin, which shouldn't be slow to rise.  It could be related to the pull up resistor size though.
+
+- After doing some more testing, if I put a 1k resistor across the pull up for DSACK0, it will work fine with the ribbon cable
+  connected to computie but not fidget.  Connected to Fidget I had to put the resistor on DSACK1 to make it work, and then it would
+  boot fine.  So definetly, for future versions of computie, I must use smaller pullups for DSACK0/1
+

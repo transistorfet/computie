@@ -1,1 +1,8 @@
 
+Revision 1 Errata and Notes
+===========================
+
+- 2023-07: This applies to most versions of Computie: If a ribbon cable is attached to the control
+  signals header, it will cause the CPU to not work correctly due to issues with DSACK0/1.  A
+  larger pull up resistor on those signals should fix the problem (1K was tested)
+

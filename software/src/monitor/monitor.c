@@ -246,7 +246,7 @@ void command_eraserom(int argc, char **args)
 	}
 
 	erase_flash(sector);
-	delay(300000);
+	delay(600000);
 	data = dest[0];
 
 	fputs("\nVerifying erase\n\n", stdout);

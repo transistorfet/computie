@@ -6,6 +6,8 @@ Multi-Board Computer:
 	* CompactPCI connectors are kind of expensive and hard to get.  DIN 41612 are easier to get, but still pricey outside of 96-pins
 	* you could ues full CompactPCI, or CompactPCI on a DIN41612, or VME full cards (no), or VME on a 128 or 160-pin DIN41612, or VME but multiplexed on 96-pin
 
+	* especially if you're using a custom pinout bus, it would be nice to have a serial protocol on there, like SMBus(I2C), or JTAG
+
 	* you need transceivers anyways so multiplexing actually isn't that difficult.  It's mainly the issue with custom signaling, but you plan to use a CPLD
 
 	* there is some question of the I/O space, which will be different anyways, so the drivers will have to use different addresses.  It would be nice if the RAM could more easily be
@@ -21,6 +23,8 @@ Post:
 
 
 Operating System:
+
+	* turn on all warnings and clean them up
 
 	* something is causing the SLIP serial port to mess up somehow which requires restarting the PC side the setup
 	* make the tty68681 driver partially write data... right now it'll suspend if the full request can't be buffered, but it should return the partial number, and the read/write syscalls should do

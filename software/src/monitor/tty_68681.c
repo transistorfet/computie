@@ -1,8 +1,6 @@
 
 #include <stdint.h>
 
-//#include "../kernel/circlebuf.h"
-
 // MC68681 Register Addresses
 #define MR1A_MR2A_ADDR	((volatile uint8_t *) 0x700001)
 #define SRA_RD_ADDR	((volatile uint8_t *) 0x700003)
@@ -75,16 +73,6 @@
 
 #define TTY_INT_VECTOR			7
 
-
-/*
-#define TTY_READ_BUFFER			32
-
-static char tty_read_in = 0;
-static char tty_read_out = 0;
-static char tty_read_buffer[TTY_READ_BUFFER];
-*/
-
-//static struct circular_buffer *tx = (struct circular_buffer *) 0x1d0000;
 
 extern void delay(int count);
 
@@ -190,105 +178,13 @@ int putchar(int ch)
 	*TBA_WR_ADDR = (char) ch;
 	return ch;
 }
-/*
-int putchar_buffered(int ch)
+
+void set_leds(uint8_t bits)
 {
-	while (_buf_is_full(tx)) {
-		asm volatile("");
-		//putchar_direct('@');
-	}
-
-	_buf_put_char(tx, ch);
-
-	//*((char *) 0x201d) = 0x00;
-
-	// Enable the channel A transmitter
-	*CRA_WR_ADDR = CMD_ENABLE_TX;
-
-	//putchar_direct('>');
-	return ch;
-}
-*/
-
-
-__attribute__((interrupt)) void handle_serial_irq()
-{
-
-	/*
-	char isr = *ISR_RD_ADDR;
-
-	if (isr & ISR_CH_A_TX_READY) {
-		//*OUT_SET_ADDR = 0x20;
-
-		int ch = _buf_get_char(tx);
-		if (ch != -1) {
-			*TBA_WR_ADDR = (char) ch;
-		}
-		else {
-			// *IMR_WR_ADDR &= ~ISR_CH_A_TX_READY;
-
-			//putchar_direct('/');
-			//*((char *) 0x201d) = 0x01;
-
-			//if (*SRA_RD_ADDR & SR_TX_EMPTY)
-			// Disable the channel A transmitter
-			*CRA_WR_ADDR = CMD_DISABLE_TX;
-		}
-	}
-	*/
-
-	/*
-	char status = *SRA_RD_ADDR;
-
-	if (tty_read_in == tty_read_out) {
-		tty_read_in = 0;
-		tty_read_out = 0;
-	}
-
-	// De-assert CTS if the transmitter is full
-	if (status & SR_RX_FULL)
-		*OUT_RESET_ADDR = 0x01;
-
-	while (*SRA_RD_ADDR & SR_RX_READY) {
-		tty_read_buffer[tty_read_in++] = *RBA_RD_ADDR;
-	}
-
-	if (!(status & SR_RX_FULL))
-		*OUT_SET_ADDR = 0x01;
-	*/
-
-	/*
-	char in = *SRA_RD_ADDR;
-	if (in & 0xF0) {
-		*OUT_SET_ADDR = in;
-		*OUT_RESET_ADDR = (~in & 0xF0);
-	}
-	*/
-
-	/*
-	register char isr = *ISR_RD_ADDR;
-
-	if (isr & ISR_TIMER_CHANGE) {
-		register char data = *STOP_RD_ADDR;
-		//tty_68681_write(0, "Time\n", 5);
-		tick = !tick;
-		*((volatile unsigned char *) 0x201D) = tick;
-	}
-	*/
-/*
-	if (*ISR_RD_ADDR & ISR_TIMER_CHANGE) {
-		register sp;
-		asm volatile("move.l	%%sp, %0" : "=g" (sp));
-		printf("%x %x\n", *((uint16_t *) sp), *(((uint16_t *) sp) + 1));
-		if (tick) {
-			tick = 0;
-			*OUT_SET_ADDR = 0x80;
-		} else {
-			tick = 1;
-			*OUT_RESET_ADDR = 0x80;
-		}
-		register char reset = *STOP_RD_ADDR;
-	}
-*/
+	*OUT_SET_ADDR = bits << 4;
 }
 
+void reset_leds(uint8_t bits)
+{
+	*OUT_RESET_ADDR = bits << 4;
+}

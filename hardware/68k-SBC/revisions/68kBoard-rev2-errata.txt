@@ -11,3 +11,8 @@ Revision 2 Errata and Notes
   unassertion were causing it to be too slow, but removing them, while resulting in a proper initial startup, still doesn't
   boot correctly.  For the moment, I suspect it's the increased speed from 10MHz to 12MHz of the CPU which is making it too
   fast for the arduino. 
+
+- 2023-07: This applies to most versions of Computie: If a ribbon cable is attached to the control
+  signals header, it will cause the CPU to not work correctly due to issues with DSACK0/1.  A
+  larger pull up resistor on those signals should fix the problem (1K was tested)
+

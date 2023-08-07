@@ -1,4 +1,4 @@
 (sym_lib_table
-  (lib (name "Computie_68k")(type "KiCad")(uri "/media/work/computie/hardware/kicad-libraries/symbols/Computie_68k.kicad_sym")(options "")(descr ""))
-  (lib (name "Computie_Memory")(type "KiCad")(uri "/media/work/computie/hardware/kicad-libraries/symbols/Computie_Memory.kicad_sym")(options "")(descr ""))
+  (lib (name "Computie_68k")(type "KiCad")(uri "/media/work/computie/hardware/kicad-libraries/computie-kicad-library/symbols/Computie_68k.kicad_sym")(options "")(descr ""))
+  (lib (name "Computie_Memory")(type "KiCad")(uri "/media/work/computie/hardware/kicad-libraries/computie-kicad-library/symbols/Computie_Memory.kicad_sym")(options "")(descr ""))
 )

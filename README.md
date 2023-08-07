@@ -20,6 +20,10 @@ For more details on how I got up and running, check out [Bootstrapping a Homebui
 
 For instructions on getting a board set up and software compiled, check out [INSTALL.md](https://github.com/transistorfet/computie/blob/main/INSTALL.md)
 
+This repository uses git submodules, and can be cloned using:
+```
+git clone --recurse-submodules git@github.com:transistorfet/computie.git
+```
 
 The Operating System
 --------------------

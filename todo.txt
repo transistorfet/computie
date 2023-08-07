@@ -1,5 +1,12 @@
 
 
+* reorganizing:
+	* I need to reorganize the repo a bit
+	* keep the arduino code in this repo, but what about the monitor?  It uses the stdlib from computie but it could be moved...
+	  then again, it will be used on the new boards too I think
+	* move the OS into its own directory
+
+
 Multi-Board Computer:
 
 	* what bus to use?  VME or CompactPCI?
@@ -25,6 +32,7 @@ Post:
 Operating System:
 
 	* turn on all warnings and clean them up
+	* add a linter to catch issues
 
 	* something is causing the SLIP serial port to mess up somehow which requires restarting the PC side the setup
 	* make the tty68681 driver partially write data... right now it'll suspend if the full request can't be buffered, but it should return the partial number, and the read/write syscalls should do

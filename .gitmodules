@@ -1,3 +1,6 @@
 [submodule "hardware/kicad-libraries/computie-kicad-library"]
 	path = hardware/kicad-libraries/computie-kicad-library
 	url = git@github.com:transistorfet/computie-kicad-library.git
+[submodule "software/gloworm"]
+	path = software/gloworm
+	url = git@github.com:transistorfet/gloworm.git

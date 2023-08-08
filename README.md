@@ -25,15 +25,16 @@ This repository uses git submodules, and can be cloned using:
 git clone --recurse-submodules git@github.com:transistorfet/computie.git
 ```
 
-The Operating System
---------------------
+The Operating System (Gloworm)
+------------------------------
 
-Currently it doesn't have a name.  It's largely based on reading Operating Systems Design and Implementation 2ed by
-Andrew S. Tanenbaum, although I've gone with a monolithic design, at least for the time being, for the simplicity of
-it.  It can do preemptive multitasking using the 68681 timer.  It also has an implementation of the minix version 1
-filesystem, which uses RAM (through a device driver) to store the data, or a Compact Flash card connected as an IDE
-device.  The second serial port can be configured as a SLIP device, with a basic implementation of UDP and TCP through
-a BSD sockets-style API, and an NTP command is provided for updating the system time on boot (when booting from disk).
+[Gloworm](https://github.com/transistorfet/gloworm/) (now in a separate repository) is largely based on reading
+Operating Systems Design and Implementation 2ed by Andrew S. Tanenbaum, although I've gone with a monolithic design, at
+least for the time being, for the simplicity of it.  It can do preemptive multitasking using the 68681 timer.  It also
+has an implementation of the minix version 1 filesystem, which uses RAM (through a device driver) to store the data, or
+a Compact Flash card connected as an IDE device.  The second serial port can be configured as a SLIP device, with a
+basic implementation of UDP and TCP through a BSD sockets-style API, and an NTP command is provided for updating the
+system time on boot (when booting from disk).
 
 ![alt text](images/OS-basic.gif "OS")
 

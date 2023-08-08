@@ -128,14 +128,14 @@ verifyrom
 Running the Kernel
 ------------------
 
-To compile the kernel, and compile the commands, run:
+To compile the kernel, run:
 ```sh
 make kernel.load
 ```
 
 It can be sent over serial like the monitor.  You might want to modify the kernel configuration in
-`src/kernel/main.c` if you're using a board without the CompactFlash card, or you don't want to use
-networking.
+`gloworm/src/kernel/main.c` if you're using a board without the CompactFlash card, or you don't want
+to use networking.
 
 
 Building A FlashCard Root Image
@@ -195,5 +195,5 @@ sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
 ```
 
 The device will have IP `192.168.1.200` which also needs to be configured in the kernel's
-`src/kernel/main.c` function at the bottom.
+`gloworm/src/kernel/main.c` function at the bottom.
 

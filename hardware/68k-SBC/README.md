@@ -17,9 +17,9 @@ be written in-circuit using the Ardunio-based supervisor shield.
 [Revision 2 Gerbers](revisions/68kBoard-rev2.zip)
 
 
-![alt text](../../images/68k-SBC-rev0/SBC.jpg "68k-SBC board, with an orangey-yellow coloured solder mask,
+![alt text](../../images/68k-SBC-rev2/SBC.jpg "68k-SBC board, with an orangey-yellow coloured solder mask,
 fully populated with all components")
-![alt text](../../images/68k-SBC-rev0/SBC-running.jpg "68k-SBC board hooked up to USB via an FTDI serial
+![alt text](../../images/68k-SBC-rev2/SBC-running.jpg "68k-SBC board hooked up to USB via an FTDI serial
 converter and with the Ardunio supervisor shield connected via two rainbow-coloured 40-pin ribbon
 cables connected to the PCB, and the Ardunio connected by a USB cable to a computer, which is
 supplying power to everything")

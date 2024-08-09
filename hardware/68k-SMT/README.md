@@ -27,6 +27,6 @@ socket](https://www.peconnectors.com/sockets-pga-cpu-and-memory/hws4514/)
 [Revision 1 Gerbers](revisions/68k-SMT-rev1.zip)
 
 
-![alt text](../../images/68k-SMT-rev1/SMT.jpg "68k-SMT board, which is taller than it is wide, with a blue coloured solder mask, blue pin headers, blue ceramic capacitors, and beige 1/6W resistors, fully populated with all components, and with a CompactFlash card in the slot on the middle left with a white and blue label that reads WD SiliconDrive II 8 GB PATA")
+![alt text](../../images/68k-SMT-rev1/SMT.jpg "68k-SMT board, which is taller than it is wide, with a blue coloured solder mask, blue pin headers, blue ceramic capacitors, and beige 1/6W resistors, fully populated with all components, and with a CompactFlash card in the slot on the middle left with a white and blue label that reads SiliconDrive II 2GB - Silicon Systems")
 ![alt text](../../images/68k-SMT-rev1/SMT-running.jpg "68k-SMT board hooked up to USB via an FTDI integrated cable, which is supplying power to everything, and with the right most of 4 clear LEDs glowing blue, and the power indicating LED on the left glowing green")
 ![alt text](../../images/68k-SMT-rev1/SMT-back.jpg "Backside of the 68k-SMT board showing the through-hole solder connections and blue solder mask, but there is no silk screen")

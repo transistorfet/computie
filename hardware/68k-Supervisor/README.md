@@ -13,7 +13,7 @@ rework).
 
 ### 68k-SBC and 68k-SMT
 
-Use the [68kSupervisor](../../software/ardunio/68kSupervisor) sketch to program the flash
+Use the [68kSupervisor](../../software/arduino/68kSupervisor) sketch to program the flash
 in-circuit, debug the CPU, or host memory and serial I/O access via the memory bus.  Make sure to
 set the 68k-* board jumpers correctly for DTACK and the RAM location if debugging or hosting with
 the supervisor.
@@ -26,7 +26,7 @@ This PCB requires some changes before it can be used with the k30-SBC:
     - the WR pin on the SIGBUS 40-pin connector (Pin 14) should be wired to Digital Input #8 of the
       Arudino (D8).  It was a duplicate of R/W on the 68k-* boards, but it's now the DS (data strobe)
       signal from the 68030 on the k30-SBC
-The [k30FlashWriter](../../software/ardunio/k30FlashWriter) sketch should be used, which will only
+The [k30FlashWriter](../../software/arduino/k30FlashWriter) sketch should be used, which will only
 allow running or suspending the CPU, and writing to the flash chip in-circuit to bootstrap the
 board.  The debugging feature has been removed since it didn't work correctly at the 12MHz speed
 that the 68030 is running at.  The k30 board only has one 512kB of flash in a single 8-bit wide

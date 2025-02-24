@@ -25,6 +25,19 @@ This repository uses git submodules, and can be cloned using:
 git clone --recurse-submodules git@github.com:transistorfet/computie.git
 ```
 
+ComputieVME - The Next Generation
+---------------------------------
+
+The next iteration of this project is ComputieVME, a VME-based MC68030 CPU card, which is part of
+the [Retroverse](https://github.com/transistorfet/retroverse/) project, along with a number of other
+VME-based components.  The new system also runs the
+[Gloworm](https://github.com/transistorfet/gloworm/) operating system.  Development is ongoing and
+details can be found in the github repo or at
+[jabberwocky.ca](https://jabberwocky.ca/projects/retroverse/).  I also live streamed some of the
+designing and building process, with recordings available at
+[youtube.com/@transistorfet](https://www.youtube.com/@transistorfet)
+
+
 The Operating System (Gloworm)
 ------------------------------
 

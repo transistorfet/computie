@@ -194,3 +194,45 @@
   doesn't add height beyond the pins of the resistor network.  It's showing about 1.7k on both pins now, and with the wires
   connected for DSACK0/1 to Fidget, it's working without hanging the computer, so I think 2.2k would be fine for the next revision.
 
+2025-02-08 [from gloworm log.txt]
+- I brought out the k30 and 68k-SMT boards to test the builds on those. [...]
+- the k30-SBC just wouldn't do anything, and then it would print the welcome message but not the prompt, and then it would print the
+  prompt but not accept characters, and then it would accept characters but hang when enter was pressed.  Finally I tried a
+  different USB port instead of the one on the monitor stand, I used the on connected by the USB3 type-A extension cable and it
+  worked
+- I was eventually able to get both builds of the kernel and monitor running on them with the ATA drivers using the CONFIG_ATA_BASE
+  select as the only difference, so the new build system should work with those boards
+
+2025-02-16:
+- I tried getting the k30-SBC board working again, and had the same issues as above, but I didn't read it until now, and realize I
+  found a fix of sorts.  I thought it might have been flux damage, and there is some.  I cleaned it off but I'm sure resoldering
+  some of those connections will help too.
+- but yeah, it works on the other USB port.  I wonder if it's voltage or something.  I honestly didn't check voltages (thou shalt
+  always check voltages), but I didn't...  The clock worked fine and CPU was running and executing code, but was having trouble with
+  serial communications, possible due to dtack problems.  I maybe didn't clean the flux off well enough from my DSACK mod
+- it's not booting off the CF card.  Not sure if this was also a problem earlier or not.  It hangs after reading the ram disk
+- maybe I did, but I had to add back in the ATA_DELAY(10); line in the ATA read sector code?  Maybe something else because that
+  didn't work
+- adjusting the timings to what they were before doesn't seem to fix it and I didn't record whether I got it booting or not.  I 
+- Oh, I'm using the wrong base address for the CF card because I'm using the wrong config.  I even noted that in the other log.  I
+  have now copied over that line as well.
+- 30th's time's the charm, got it boot when I finally had the correct ATA_BASE
+- and interestingly enough, it's doing the same thing as it does on the k30p-VME when it's running at 25MHz... so maybe this is a
+  software issue and not the k30p's logic
+
+[from retroverse logs]:
+- I'm kind of getting sidetracked now, I tried to compile the kernel without -O3 in order to test if the optimizations are causing a
+  problem, after reading in the computie logs that I had to add a volatile to strlen in order to get the monitor working previously
+  because otherwise it was hanging.  It's very possible a similar thing is happening here with the kernel, so I thought it would be
+  quick to check, but then I ran into a problem with undefined fwrite, which is almost certainly related to the wrong object files
+  being added to the lib because it compiles both versions of libc.  The only place that fwrite exists that would cause the
+  undefineds is in fputs, which is used by fputs in os/ but not in none/
+- I compiled it with just the kernel and it worked without errors because it was monitor that had the problem
+- trying to load it over serial caused the k30 to reset and run the monitor and start printing out the data instead of reading it
+  in.  It was working before I used the unoptimized kernel.  *sigh*  I feel like I had this recently with one of the 3 boards I've
+  been playing with
+- ok I just checked and it's 100% because the kernel overflows the size that the load script handles (16-bit length) so it loads the
+  first ~0x1800 bytes and then boots, but there's more data to send, so I need to keep that in mind now that I have such a big
+  kernel.  I could modify the format to use a 4 byte number instead, but I guess I'd have to upgrade the roms on the other boards?
+  I'd rather not use a backwards compatible mechanism.
+
